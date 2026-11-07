@@ -318,4 +318,10 @@ def test_shipped_package_declares_no_world_effects() -> None:
         "corridor_watch_lifted",
         "held_carts_known",
         "uplink_eye_seen",
+        "wrist_tags_read",
+        "radio_loop_known",
+        "michelle_private_proof",
+        "checkpoint_opened",
+        "lemon_cake_calendar_read",
+        "detention_uprising_started",
     }

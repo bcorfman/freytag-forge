@@ -1,6 +1,8 @@
 from copy import deepcopy
 from pathlib import Path
+from types import SimpleNamespace
 
+from bench.core import _record_authored_segments
 from bench.judge_input import judge_turns
 from storygame.runtime.item_facts import declared_axes_for_package
 from storygame.story_package.loader import load_story_package
@@ -145,6 +147,7 @@ def test_judge_turns_projects_authored_text_and_reveal_visibility() -> None:
     judged = judge_turns(turns, [], PACKAGE)
 
     assert judged[0]["story_text"] == [reveal.delivery_text]
+    assert judged[0]["story_text_provenance"] == "reconstructed"
     assert judged[0]["narrator_narration"] == "Kristin searches beneath the drawer."
     assert judged[0]["command"] == ""
     assert judged[0]["turn_text"] == [
@@ -154,6 +157,7 @@ def test_judge_turns_projects_authored_text_and_reveal_visibility() -> None:
     assert "Michelle's memory card" not in judged[0]["item_facts_before"]
     assert "Michelle's memory card" in judged[0]["item_facts_after"]
     assert judged[1]["story_text"] == []
+    assert judged[1]["story_text_provenance"] == "reconstructed"
     assert judged[1]["narrator_narration"] == "Kristin waits."
     assert judged[1]["item_facts_before"] == turns[1]["item_facts_before"]
     assert "Michelle's memory card" in judged[1]["item_facts_before"]
@@ -206,6 +210,149 @@ def test_judge_turns_keeps_narration_when_authored_text_is_not_a_suffix() -> Non
     )
 
     assert judged[0]["narrator_narration"] == narration
+
+
+def test_recorded_pocketing_delivery_is_story_text() -> None:
+    pocketing = "It is Michelle's memory card, and she pockets it."
+    judged = judge_turns(
+        [
+            {
+                "narration": f"Kristin searches beneath the drawer. {pocketing}",
+                "authored_segments": [{"kind": "handoff", "text": pocketing}],
+            }
+        ],
+        [],
+        PACKAGE,
+    )[0]
+
+    assert judged["story_text"] == [pocketing]
+    assert judged["story_text_provenance"] == "recorded"
+    assert judged["narrator_narration"] == "Kristin searches beneath the drawer."
+
+
+def test_recorded_delivery_does_not_remove_a_repeated_prior_signal() -> None:
+    signal = "The prior-turn signal repeats here."
+    delivery = "The current authored delivery is here."
+    judged = judge_turns(
+        [
+            {
+                "narration": signal,
+                "authored_segments": [{"kind": "handoff", "text": signal}],
+            },
+            {
+                "narration": f"{signal} {delivery}",
+                "authored_segments": [{"kind": "handoff", "text": delivery}],
+            },
+        ],
+        [],
+        PACKAGE,
+    )[1]
+
+    assert judged["story_text"] == [delivery]
+    assert judged["narrator_narration"] == signal
+
+
+def test_legacy_ordinary_narration_is_reconstructed_unchanged() -> None:
+    narration = "Kristin approaches and spots the open doorway."
+    judged = judge_turns([{"narration": narration}], [], PACKAGE)[0]
+
+    assert judged["story_text"] == []
+    assert judged["story_text_provenance"] == "reconstructed"
+    assert judged["narrator_narration"] == narration
+
+
+def test_legacy_second_reunion_paragraph_stays_narrator_text() -> None:
+    narration = "The reunion is complete. Kristin and Michelle share another emotional paragraph."
+    judged = judge_turns([{"narration": narration}], [], PACKAGE)[0]
+
+    assert judged["story_text"] == []
+    assert judged["narrator_narration"] == narration
+
+
+def test_legacy_incorrect_shared_memory_stays_narrator_text() -> None:
+    narration = "Kristin remembers a shared memory that is not true."
+    judged = judge_turns([{"narration": narration}], [], PACKAGE)[0]
+
+    assert judged["story_text"] == []
+    assert judged["narrator_narration"] == narration
+
+
+def test_recorded_arrival_and_custody_segments_are_story_text() -> None:
+    bridge = "The authored arrival bridge is shown."
+    entry = "The authored final custody entry is shown."
+    judged = judge_turns(
+        [
+            {
+                "narration": "Kristin arrives at the destination.",
+                "authored_segments": [
+                    {"kind": "bridge", "text": bridge},
+                    {"kind": "entry", "text": entry},
+                ],
+            }
+        ],
+        [],
+        PACKAGE,
+    )[0]
+
+    assert judged["story_text"] == [bridge, entry]
+    assert judged["narrator_narration"] == "Kristin arrives at the destination."
+    assert judged["turn_text"] == [
+        {"by": "narrator", "text": "Kristin arrives at the destination."},
+        {"by": "story", "text": bridge},
+        {"by": "story", "text": entry},
+    ]
+
+
+def test_recorded_segments_use_the_delivery_variant_that_was_appended() -> None:
+    variant = "The authored variant delivery is shown."
+    base = "The authored base delivery is not shown."
+    bridge = "The authored bridge is shown."
+    segments = (
+        SimpleNamespace(text="Kristin searches the drawer."),
+        SimpleNamespace(text=variant),
+        SimpleNamespace(text=bridge),
+    )
+
+    assert _record_authored_segments(
+        segments,
+        handoff=SimpleNamespace(delivery_text=variant),
+        cue_texts=(),
+        complication_text=None,
+        complication_verbatim=False,
+        transition_segments=(("bridge", bridge), ("entry", "An entry not appended.")),
+    ) == [
+        {"kind": "handoff", "text": variant},
+        {"kind": "bridge", "text": bridge},
+    ]
+    assert base not in {
+        segment["text"]
+        for segment in _record_authored_segments(
+            segments,
+            handoff=SimpleNamespace(delivery_text=base),
+            cue_texts=(),
+            complication_text=None,
+            complication_verbatim=False,
+            transition_segments=(),
+        )
+    }
+
+
+def test_recorded_segments_use_the_shown_cue_and_verbatim_complication() -> None:
+    cue = "The escalation cue is shown."
+    complication = "The authored complication is shown."
+    segments = tuple(SimpleNamespace(text=text) for text in ("Narrator.", cue, complication))
+
+    assert _record_authored_segments(
+        segments,
+        handoff=None,
+        cue_texts=("The base cue is not shown.", cue),
+        complication_text=complication,
+        complication_verbatim=True,
+        transition_segments=(),
+    ) == [
+        {"kind": "cue", "text": cue},
+        {"kind": "complication", "text": complication},
+    ]
 
 
 def test_judge_turns_projects_typed_command_and_engine_prefix() -> None:

@@ -10,6 +10,7 @@ from bench.core import advance_state_to_scene
 from storygame.runtime.contracts import FactOperation, NarrationSegment, ResolvedTurnProposal, StoryEventProposal
 from storygame.runtime.engine import SCENE_ENTRY_REQUEST, RuntimeEngine
 from storygame.runtime.facts import Fact
+from storygame.runtime.item_facts import ItemFactsProvider
 from storygame.runtime.knowledge import KnowledgeProjector
 from storygame.runtime.persistence import RuntimeStateSqliteStore
 from storygame.runtime.state import RuntimeState
@@ -18,6 +19,14 @@ from storygame.runtime.world_model import apply_scene_placements
 from storygame.story_package.loader import load_story_package
 from storygame.story_package.models import Audience
 from tests._legacy_package import legacy_package
+from tests.test_richer_3a import (
+    ARRIVED,
+    NEW_A_R1_STATEMENT,
+    NEW_A_R2_STATEMENT,
+    OLD_A_R1_STATEMENT,
+    OLD_A_R2_STATEMENT,
+    _engine,
+)
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 
@@ -45,6 +54,37 @@ def _scene_state(scene_id: str) -> RuntimeState:
 
 def _assert_story_fact(state: RuntimeState, fact_id: str) -> None:
     state.facts.assert_fact(Fact(predicate=fact_id, subject="story", value="true"))
+
+
+def test_3a_reunited_statements_project_together_and_shrink_the_scene_prompt() -> None:
+    state, _engine_instance = _engine(true_facts=ARRIVED)
+    provider = ItemFactsProvider(
+        worker_url="https://worker.example/turn",
+        token="",
+        state=state,
+        item_facts={},
+        mode="single_call",
+        seed_from_package=True,
+        held_by=True,
+    )
+    provider.prepare_turn("Look around.")
+    prompt = provider.assemble_turn_prompt("Look around.")
+    scene = provider._section_user_prompt(prompt["context"]).split("SCENE:\n", 1)[1].split("\n\n", 1)[0]
+
+    assert NEW_A_R1_STATEMENT in scene
+    assert NEW_A_R2_STATEMENT in scene
+    assert OLD_A_R1_STATEMENT not in scene
+    assert OLD_A_R2_STATEMENT not in scene
+    old_scene = scene.replace(NEW_A_R1_STATEMENT, OLD_A_R1_STATEMENT).replace(NEW_A_R2_STATEMENT, OLD_A_R2_STATEMENT)
+    assert len(scene) < len(old_scene)
+
+    lines = (
+        provider._section_user_prompt(prompt["context"]).split("CONSTRAINTS:\n", 1)[1].split("\n\n", 1)[0].splitlines()
+    )
+    statement_lines = [line for line in lines if NEW_A_R1_STATEMENT in line or NEW_A_R2_STATEMENT in line]
+    assert len(statement_lines) == 6
+    assert sum(NEW_A_R1_STATEMENT in line for line in statement_lines) == 3
+    assert sum(NEW_A_R2_STATEMENT in line for line in statement_lines) == 3
 
 
 def test_michelles_route_terms_no_longer_collide_with_ordinary_phone_talk() -> None:

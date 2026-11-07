@@ -1,0 +1,51 @@
+{
+  "run_name": "3a-open-issues-d1v-bio",
+  "workdir": "/home/bcorfman/dev/ringer-work/3a-open-issues-d1v-bio",
+  "max_parallel": 1,
+  "tasks": [
+    {
+      "key": "d1v-bio-control-c4",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "max_attempts": 1,
+      "timeout_s": 300,
+      "check_timeout_s": 900,
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/bench/results/richer-3a-probe/d1v-bio/control-c4-ready.txt"
+      ],
+      "spec": "You are a trivial placeholder worker for a billed replay that Ringer's check performs itself. Boundary: do NOT run any replay, do NOT call any model or network service, do NOT touch any file except the one you own, never git commit. Your only job: write the single line 'ready control' into the file /home/bcorfman/dev/freytag-forge/bench/results/richer-3a-probe/d1v-bio/control-c4-ready.txt (create it; the directory exists). Nothing else is needed; the check afterwards replays the frozen c4 payload frozen-control-c4.json twelve times (Amendment 14 of .plans/richer-3a-probe-prereg.md) and writes control-c4-rows.json next to it. Do not read or edit anything else.",
+      "check": "set -o pipefail\ncd /home/bcorfman/dev/freytag-forge\nexport PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/packages/worldkeeper/src\n[ ! -e /home/bcorfman/dev/freytag-forge/bench/results/richer-3a-probe/d1v-bio/control-c4-rows.json ] || { echo 'rows file already exists; refusing to re-bill'; exit 1; }\n.venv/bin/python -m bench.frozen_prompts replay /home/bcorfman/dev/freytag-forge/bench/results/richer-3a-probe/d1v-bio/frozen-control-c4.json --samples 12 --out /home/bcorfman/dev/freytag-forge/bench/results/richer-3a-probe/d1v-bio/control-c4-rows.json 2>&1 | tee /home/bcorfman/dev/freytag-forge/bench/results/richer-3a-probe/d1v-bio/control-c4.log\n.venv/bin/python - <<'PY'\nimport json,sys\nr=json.load(open('/home/bcorfman/dev/freytag-forge/bench/results/richer-3a-probe/d1v-bio/control-c4-rows.json'))\nerrs=[x['n'] for x in r if x.get('error')]\nprint('rows',len(r),'errors',len(errs))\nsys.exit(0 if len(r)==12 else 'expected 12 rows, got %d'%len(r))\nPY",
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/bench/results/richer-3a-probe/d1v-bio/control-c4-ready.txt"
+      ],
+      "verified": "the replay command exited 0 and wrote 12 rows"
+    },
+    {
+      "key": "d1v-bio-candidate-c4",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "max_attempts": 1,
+      "timeout_s": 300,
+      "check_timeout_s": 900,
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/bench/results/richer-3a-probe/d1v-bio/candidate-c4-ready.txt"
+      ],
+      "spec": "You are a trivial placeholder worker for a billed replay that Ringer's check performs itself. Boundary: do NOT run any replay, do NOT call any model or network service, do NOT touch any file except the one you own, never git commit. Your only job: write the single line 'ready candidate' into the file /home/bcorfman/dev/freytag-forge/bench/results/richer-3a-probe/d1v-bio/candidate-c4-ready.txt (create it; the directory exists). Nothing else is needed; the check afterwards replays the frozen c4 payload frozen-candidate-c4.json twelve times (Amendment 14 of .plans/richer-3a-probe-prereg.md) and writes candidate-c4-rows.json next to it. Do not read or edit anything else.",
+      "check": "set -o pipefail\ncd /home/bcorfman/dev/freytag-forge\nexport PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/packages/worldkeeper/src\n[ ! -e /home/bcorfman/dev/freytag-forge/bench/results/richer-3a-probe/d1v-bio/candidate-c4-rows.json ] || { echo 'rows file already exists; refusing to re-bill'; exit 1; }\n.venv/bin/python -m bench.frozen_prompts replay /home/bcorfman/dev/freytag-forge/bench/results/richer-3a-probe/d1v-bio/frozen-candidate-c4.json --samples 12 --out /home/bcorfman/dev/freytag-forge/bench/results/richer-3a-probe/d1v-bio/candidate-c4-rows.json 2>&1 | tee /home/bcorfman/dev/freytag-forge/bench/results/richer-3a-probe/d1v-bio/candidate-c4.log\n.venv/bin/python - <<'PY'\nimport json,sys\nr=json.load(open('/home/bcorfman/dev/freytag-forge/bench/results/richer-3a-probe/d1v-bio/candidate-c4-rows.json'))\nerrs=[x['n'] for x in r if x.get('error')]\nprint('rows',len(r),'errors',len(errs))\nsys.exit(0 if len(r)==12 else 'expected 12 rows, got %d'%len(r))\nPY",
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/bench/results/richer-3a-probe/d1v-bio/candidate-c4-ready.txt"
+      ],
+      "verified": "the replay command exited 0 and wrote 12 rows"
+    }
+  ]
+}

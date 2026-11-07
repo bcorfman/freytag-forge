@@ -1,0 +1,51 @@
+{
+  "run_name": "3a-open-issues-frame-open",
+  "workdir": "/home/bcorfman/dev/ringer-work/3a-open-issues-frame-open",
+  "max_parallel": 1,
+  "tasks": [
+    {
+      "key": "frame-control-open",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "max_attempts": 1,
+      "timeout_s": 300,
+      "check_timeout_s": 900,
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/bench/results/richer-3a-probe/frame/control-open-ready.txt"
+      ],
+      "spec": "You are a trivial placeholder worker for a billed opening probe that Ringer's check performs itself. Boundary: do NOT run any probe, do NOT call any model or network service, do NOT touch any file except the one you own, never git commit. Your only job: write the single line 'ready control' into the file /home/bcorfman/dev/freytag-forge/bench/results/richer-3a-probe/frame/control-open-ready.txt (create it; the directory exists). Nothing else is needed; the check afterwards runs the opening probe for the control arm twelve times (Amendment 16 of .plans/richer-3a-probe-prereg.md) and writes control-open.json next to it. Do not read or edit anything else.",
+      "check": "set -o pipefail\ncd /home/bcorfman/dev/freytag-forge\nexport PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/packages/worldkeeper/src\n[ ! -e /home/bcorfman/dev/freytag-forge/bench/results/richer-3a-probe/frame/control-open.json ] || { echo 'rows file already exists; refusing to re-bill'; exit 1; }\n/home/bcorfman/dev/freytag-forge/.venv/bin/python /home/bcorfman/dev/freytag-forge/scripts/ringer/3a-open-issues/opening_arms.py bench/variations/richer-3a-frame-control.json 12 /home/bcorfman/dev/freytag-forge/bench/results/richer-3a-probe/frame/control-open.json 2>&1 | tee /home/bcorfman/dev/freytag-forge/bench/results/richer-3a-probe/frame/control-open.log\n/home/bcorfman/dev/freytag-forge/.venv/bin/python - <<'PY'\nimport json,sys\nr=json.load(open('/home/bcorfman/dev/freytag-forge/bench/results/richer-3a-probe/frame/control-open.json'))\nerrs=[x['i'] for x in r if x.get('error')]\nprint('rows',len(r),'errors',len(errs))\nwant='Michelle was among them.' in r[0]['prompt']['user']\ngone='Michelle is beside the captives.' not in r[0]['prompt']['user']\nprint('prompt has new sentence:',want,'old sentence gone:',gone)\nok = len(r)==12 and (want and gone if 'control'=='candidate' else (not want and not gone))\nsys.exit(0 if ok else 'rows or prompts not as intended')\nPY\n",
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/bench/results/richer-3a-probe/frame/control-open-ready.txt"
+      ],
+      "verified": "the opening probe exited 0, wrote 12 rows, and the prompts carry the intended frame wording"
+    },
+    {
+      "key": "frame-candidate-open",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "max_attempts": 1,
+      "timeout_s": 300,
+      "check_timeout_s": 900,
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/bench/results/richer-3a-probe/frame/candidate-open-ready.txt"
+      ],
+      "spec": "You are a trivial placeholder worker for a billed opening probe that Ringer's check performs itself. Boundary: do NOT run any probe, do NOT call any model or network service, do NOT touch any file except the one you own, never git commit. Your only job: write the single line 'ready candidate' into the file /home/bcorfman/dev/freytag-forge/bench/results/richer-3a-probe/frame/candidate-open-ready.txt (create it; the directory exists). Nothing else is needed; the check afterwards runs the opening probe for the candidate arm twelve times (Amendment 16 of .plans/richer-3a-probe-prereg.md) and writes candidate-open.json next to it. Do not read or edit anything else.",
+      "check": "set -o pipefail\ncd /home/bcorfman/dev/freytag-forge\nexport PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/packages/worldkeeper/src\n[ ! -e /home/bcorfman/dev/freytag-forge/bench/results/richer-3a-probe/frame/candidate-open.json ] || { echo 'rows file already exists; refusing to re-bill'; exit 1; }\n/home/bcorfman/dev/freytag-forge/.venv/bin/python /home/bcorfman/dev/freytag-forge/scripts/ringer/3a-open-issues/opening_arms.py bench/variations/richer-3a-frame-candidate.json 12 /home/bcorfman/dev/freytag-forge/bench/results/richer-3a-probe/frame/candidate-open.json 2>&1 | tee /home/bcorfman/dev/freytag-forge/bench/results/richer-3a-probe/frame/candidate-open.log\n/home/bcorfman/dev/freytag-forge/.venv/bin/python - <<'PY'\nimport json,sys\nr=json.load(open('/home/bcorfman/dev/freytag-forge/bench/results/richer-3a-probe/frame/candidate-open.json'))\nerrs=[x['i'] for x in r if x.get('error')]\nprint('rows',len(r),'errors',len(errs))\nwant='Michelle was among them.' in r[0]['prompt']['user']\ngone='Michelle is beside the captives.' not in r[0]['prompt']['user']\nprint('prompt has new sentence:',want,'old sentence gone:',gone)\nok = len(r)==12 and (want and gone if 'candidate'=='candidate' else (not want and not gone))\nsys.exit(0 if ok else 'rows or prompts not as intended')\nPY\n",
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/bench/results/richer-3a-probe/frame/candidate-open-ready.txt"
+      ],
+      "verified": "the opening probe exited 0, wrote 12 rows, and the prompts carry the intended frame wording"
+    }
+  ]
+}

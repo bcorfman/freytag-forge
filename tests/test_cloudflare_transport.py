@@ -236,7 +236,8 @@ def test_moving_knowledge_stays_in_constraints_but_not_scene(monkeypatch) -> Non
     constraints = user_prompt.split("\n\nCONSTRAINTS:\n", 1)[1]
     assert statement not in scene
     assert situation not in scene
-    assert "may say this aloud: " + statement in constraints
+    assert f"- Dr. Michelle McGehee may say this aloud: {statement}" in constraints
+    assert f"- Brandon Corfman may say this aloud: {statement}" in constraints
 
 
 def test_transport_caps_long_reply_and_records_telemetry(monkeypatch) -> None:
@@ -1728,7 +1729,9 @@ def test_turn_prompt_matches_what_the_turn_actually_offers(monkeypatch) -> None:
     assert provider.last_projection is not None and provider.last_projection.candidates == ()
     quiet_prompt = payloads[-1]["user"]
     assert "This turn has no candidates." in quiet_prompt
-    assert "When one or more offered candidates match the player's action, randomly pick one candidate" in quiet_prompt
+    assert (
+        "When one or more offered candidates match the player's action, randomly pick one candidate" not in quiet_prompt
+    )
     assert '"grounding_ids":[' not in payloads[-1]["system"]
     assert '"selected_knowledge_ids":[]' in payloads[-1]["system"]
 
@@ -2024,7 +2027,7 @@ def test_request_size_stays_flat_as_the_story_accumulates(monkeypatch) -> None:
     # The player context must not repeat the speakers' dialogue basis.
     context = captured[-1]["user"]
     assert "sayable_knowledge" not in context
-    assert "may say this aloud" in context
+    assert "may say this aloud:" in context
 
 
 def test_prompts_forbid_echoing_the_request(monkeypatch) -> None:

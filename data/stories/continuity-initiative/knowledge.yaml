@@ -79,6 +79,16 @@ facts:
   purpose: Kristin has read the three checks listed in the build record's access section.
 - id: held_transfers_seen
   purpose: Kristin has seen the prisoner transfers held under repeated sensor fault tickets.
+- id: wrist_tags_read
+  purpose: Kristin has read the wrist tags showing the captives were due out a week ago.
+- id: radio_loop_known
+  purpose: Kristin knows Michelle's coded words ride inside the facility's repeating message.
+- id: michelle_private_proof
+  purpose: Michelle has answered Kristin's private question about the kitchen calendar.
+- id: checkpoint_opened
+  purpose: Kristin has watched Brandon open the checkpoint reader on the first pass.
+- id: lemon_cake_calendar_read
+  purpose: Kristin has read the lemon cake note on the kitchen calendar.
 - id: corridor_watch_lifted
   purpose: The corridor camera has returned from watching Brandon to its normal sweep.
 - id: uplink_eye_seen
@@ -364,7 +374,7 @@ facts:
   purpose: The safe opening frame for scene 3C has been established.
 scene_frames:
 - scene_id: 1A
-  situation: "Michelle's home is otherwise untouched, but the back door has been forced. The lock is splintered out of the wood. Michelle is missing, and her tablet and work bag are gone. Kristin knows Michelle would not leave her kitchen like this. A drawer on Michelle's workstation has Kristin's initials, KMS, newly carved into it. Kristin did not carve them."
+  situation: "Michelle's home is otherwise untouched, but the back door has been forced. The deadbolt is still thrown. Michelle is missing, and her tablet and work bag are gone. Kristin knows Michelle would not leave her kitchen like this. A drawer on Michelle's workstation has Kristin's initials, KMS, newly carved into it. Kristin did not carve them."
   pressure: Find evidence of Michelle's disappearance
 - scene_id: 1B
   situation: A damaged public park with an ordinary bench near the service path. Checkpoints and emergency patrols make a simple search feel exposed.
@@ -385,8 +395,8 @@ scene_frames:
   situation: "A command corridor on the command levels, closed at both ends by guards. Transfer orders for the captives are moving, and a maintenance network runs through the walls. Security activity is rising faster than Kristin can explain."
   pressure: Decide what to do before the purge begins
 - scene_id: 3A
-  situation: "The detention sector: rows of holding blocks, scattered stolen radios, and captives who are alert rather than passive. Security is tightening around the lower levels."
-  pressure: Reach Michelle and join the uprising
+  situation: "The detention sector: rows of holding blocks, scattered stolen radios, and captives who are alert rather than passive. Security is tightening around the lower levels. Michelle is beside the captives."
+  pressure: Join the uprising
 - scene_id: 3B
   situation: "JANUS is tracking Kristin's moves."
   pressure: Reach the broadcast controls
@@ -478,6 +488,9 @@ knowledge:
     value: true
   - op: assert
     fact_id: michelle_abduction_suspicion
+    value: true
+  - op: assert
+    fact_id: lemon_cake_calendar_read
     value: true
   source:
     kind: storylet_realization
@@ -1363,7 +1376,7 @@ knowledge:
     That will cost us the chance to copy the full set of numbers.
     There is time for one choice before the transfer leaves."
 - id: k_sl_1c_b_r2
-  statement: Kristin sees living captives in the processing line. She glimpses a woman who could be Michelle before the woman's face slips from sight.
+  statement: Kristin sees living captives in the processing line. She spots someone who looks like Michelle but cannot be sure.
   voiceable: false
   earn_when: watches the processing line for Michelle
   action_evidence:
@@ -1400,7 +1413,9 @@ knowledge:
     priority: 0
   delivery_text: >-
     Kristin watches the sedated captives in the processing line. They are alive.
-    She glimpses a woman who could be Michelle. The woman's face slips from sight.
+    She spots someone in the line who looks like Michelle, but she can't be sure.
+    The woman goes around the corner out of sight before Kristin can be certain,
+    and guards standing over the prisoners block her from investigating further.
     The transfer is still moving. Brandon says, "Copy the prisoner numbers if you
     want stronger proof. Or ask me about the transfer route.
     I can help with the service entrance. That will cost us the chance to copy
@@ -2363,7 +2378,7 @@ knowledge:
   - [seen]
   delivery_text: Whatever goes out will be seen.
 - id: k_sl_3a_a_r1
-  statement: 'Kristin reaches Michelle alive, and the two share one unhurried moment before Michelle returns to directing prisoners through stolen radios and coded announcements.'
+  statement: 'Kristin and Michelle have reunited. Michelle coordinates the prisoners through stolen radios and coded announcements.'
   earn_when: "finds Michelle in detention, frees the captives, or helps Michelle"
   action_evidence:
   - [look, search, check, examine, inspect, read, study, find, trace, follow, enter, listen, free, help, use, organize, coordinate, rescue]
@@ -2392,9 +2407,9 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "Kristin finds Michelle alive, speaking into a stolen radio beside the captives. They are awake: the dose they were given is for the trip, and it wears off in the detention block. For one unhurried moment the two of them talk to each other and nobody asks anything of either. Then Michelle turns back to her coded announcements and points toward the medical level, where the experiment records wait."
+  delivery_text: "Kristin joins Michelle beside the captives. They are awake: the dose they were given is for the trip, and it wears off in the detention block. For one unhurried moment the two of them talk to each other and nobody asks anything of either. Then Michelle turns back to her coded announcements and points toward the medical level, where the experiment records wait."
 - id: k_sl_3a_a_r2
-  statement: 'Michelle shares one unhurried moment with Kristin, then explains that freeing this block means little without exposing the other sites.'
+  statement: 'Michelle has explained that freeing this block means little without exposing the other sites.'
   earn_when: "asks Michelle about other sites"
   action_evidence:
   - [ask, question, talk, speak, tell, press, discuss, inquire, probe, consult, listen, hear]
@@ -2661,6 +2676,126 @@ knowledge:
     entity_ids: []
     priority: 0
   delivery_text: "Kristin warns Michelle that the emergency-gate authorization is about to expire. Michelle hands Kristin the stolen radio, and Kristin gives the signal because the authorization is about to expire."
+- id: k_sl_3a_f_r1
+  statement: "The wrist tags show every captive was due out a week ago."
+  aliases: [wrist tags read]
+  voiceable: false
+  reach_entity_ids: [wrist_tags]
+  earn_when: reads the wrist tags
+  action_evidence:
+  - [read, look at, check, examine, inspect, study]
+  - [wrist tags, wrist tag, tags, tag]
+  entity_ids: [kristin, wrist_tags, captives, michelle]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [3A]
+  requires:
+  - fact_id: michelle_reached
+    equals: true
+  establishes:
+  - op: assert
+    fact_id: wrist_tags_read
+    value: true
+  source: {kind: storylet_realization, storylet_id: SL-3A-F, realization_id: SL-3A-F-R1}
+  relevance: {entity_ids: [wrist_tags], priority: -1}
+  must_convey:
+  - [tag, wrist tag]
+  - [held]
+  delivery_text: >-
+    Michelle says she held the transfer behind every tag, one ticket at a time, from a terminal in the archive, because it was all she could reach.
+  delivery_variants:
+  - requires: [held_transfers_seen]
+    text: >-
+      The closing code on every tag is sensor fault: these are the transfers Kristin saw held. Michelle says she held them all, one ticket at a time, from a terminal in the archive, because it was all she could reach.
+- id: k_sl_3a_g_r1
+  statement: "Michelle's coded words ride inside the facility's own repeating message."
+  aliases: [radio loop known]
+  voiceable: false
+  reach_entity_ids: [stolen_radio]
+  earn_when: listens to the stolen radio
+  action_evidence:
+  - [listen to, listen, hear, tune, study, check, examine, trace]
+  - [stolen radio, the stolen radio, radio, radios, announcement, announcements, coded announcement, coded announcements, loop]
+  entity_ids: [kristin, stolen_radio, michelle]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [3A]
+  requires:
+  - fact_id: michelle_reached
+    equals: true
+  establishes:
+  - op: assert
+    fact_id: radio_loop_known
+    value: true
+  source: {kind: storylet_realization, storylet_id: SL-3A-G, realization_id: SL-3A-G-R1}
+  relevance: {entity_ids: [stolen_radio], priority: -1}
+  leak_terms: []
+  must_convey:
+  - [coded words, coded announcements]
+  - [one word]
+  delivery_text: >-
+    Michelle's coded words ride inside the message and change one word. The captives know it by heart, and the guards no longer hear it. Michelle says that when it stops, everyone will know.
+  delivery_variants:
+  - requires: [broadcast_loop_confirmed]
+    text: >-
+      It is the same ninety seconds Kristin timed on the truck radio. Michelle's coded words ride inside it and change one word. The captives know it by heart, and the guards no longer hear it. Michelle says that when it stops, everyone will know.
+- id: k_sl_3a_h_r1
+  statement: "Michelle answers a question about the kitchen calendar that the facility never saw."
+  aliases: [Michelle private proof]
+  voiceable: false
+  earn_when: asks Michelle about the lemon cake or the calendar
+  action_evidence:
+  - [ask, test, question, quiz, press, probe]
+  - [lemon cake, the lemon cake, calendar, the calendar, kitchen calendar, birthday]
+  entity_ids: [kristin, michelle]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [3A]
+  requires:
+  - fact_id: michelle_reached
+    equals: true
+  - fact_id: behavioral_experiments_known
+    equals: true
+  - fact_id: lemon_cake_calendar_read
+    equals: true
+  establishes:
+  - op: assert
+    fact_id: michelle_private_proof
+    value: true
+  source: {kind: storylet_realization, storylet_id: SL-3A-H, realization_id: SL-3A-H-R1}
+  relevance: {entity_ids: [michelle], priority: -1}
+  must_convey:
+  - [lemon cake]
+  - [Saturday, birthday]
+  delivery_text: >-
+    Michelle answers without a pause and gets every detail right: Saturday, the circle, the lemon cake.
+- id: k_sl_3a_i_r1
+  statement: "Brandon opens the checkpoint reader on the first pass."
+  aliases: [checkpoint opened]
+  voiceable: false
+  reach_entity_ids: [checkpoint_reader]
+  earn_when: watches the checkpoint reader
+  action_evidence:
+  - [watch, check, examine, study, look at, inspect]
+  - [checkpoint reader, the checkpoint reader, reader, card reader, checkpoint door]
+  entity_ids: [kristin, brandon, checkpoint_reader]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [3A]
+  requires:
+  - fact_id: michelle_reached
+    equals: true
+  establishes:
+  - op: assert
+    fact_id: checkpoint_opened
+    value: true
+  source: {kind: storylet_realization, storylet_id: SL-3A-I, realization_id: SL-3A-I-R1}
+  relevance: {entity_ids: [checkpoint_reader, brandon], priority: -1}
+  must_convey:
+  - [checkpoint reader, reader]
+  - [first pass]
+  delivery_text: >-
+    The checkpoint reader clears on the first pass and the door opens. Michelle's people watch Brandon instead of the door.
+  delivery_variants:
+  - requires: [badge_craft_noted]
+    text: >-
+      The checkpoint reader clears on the first pass and the door opens. Michelle's people watch Brandon instead of the door. It is the same ease he showed at the gate.
 - id: k_sl_3b_a_r1
   statement: 'Kristin feeds JANUS false water-pressure and ventilation alarms in empty service corridors until human operators must take control.'
   earn_when: "feeds JANUS false alarms, uses the inspection console, or traces, follows, or inspects water-pressure warnings"
@@ -3483,7 +3618,7 @@ knowledge:
   establishes: [{op: assert, fact_id: scene_2c_entry_known, value: true}]
   source: {kind: scene_entry}
 - id: k_scene_3a_entry
-  statement: Reaching Michelle and supporting the uprising are immediate priorities.
+  statement: Supporting the uprising is the immediate priority.
   entity_ids: [kristin, michelle, detention_level]
   aliases: [Michelle, uprising]
   audience: {kind: public, player_visible: true}

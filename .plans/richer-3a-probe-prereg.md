@@ -1,0 +1,918 @@
+# Preregistration: the richer scene 3A, the detention level
+
+Written 2026-11-03 before any billed 3A run. Same method and instruments as `.plans/richer-2c-probe-prereg.md` (including the
+1B value rule: presence is necessary but not sufficient; every added detail must do a job). Read every turn by hand with
+`.plans/richer-probe-report.py`; report replicates separately, never pooled.
+
+**Smoke (free).** `bench describe` runs on both arms (package hashes: baseline `5ab57e3e...`, candidate `7b6d8c45...`). Offline,
+`tests/test_richer_3a.py` hands each scripted command to its intended reveal given the facts the earlier commands establish. Whole
+quick suite on the branch: 4127 passed, 31 skipped; ruff clean. Both arms use `entry_state: thorough`. The thorough entry state earns
+`broadcast_loop_confirmed`, `lemon_cake_calendar_read` and `committed_to_rescue` but NOT `held_transfers_seen` or `badge_craft_noted`
+(checked offline), so the candidate arm sets `entry_facts` to those two (this exercises the variants of the wrist tags and the reader).
+The frozen baseline does not declare them, so its arm cannot set them; it has nothing authored for tags, the radio loop, the proof or
+the reader anyway.
+
+## What changed in 3A (each addition has a job)
+- **Wrist tags** (F, 3A.1): every captive's transfer date is a week old; Michelle held them one ticket at a time from the archive
+  terminal. Pays off the 2B held transfers and the 2C cart tags, answers "who held them" and "why are they alive". With
+  `held_transfers_seen` the tags carry the closing code. Declared thing: `wrist_tags`.
+- **Loop in the radios** (G, 3A.1): Michelle's coded words ride inside the facility's own repeating message and change one word; the
+  guards no longer hear it. Pays off the loops of 1A, 1B and 1C, answers how the captives came to trust a voice they could not see, and
+  plants 3B/3C ("when it stops, everyone will know"). No new thing (uses `stolen_radio`); with `broadcast_loop_confirmed` it says "the same
+  ninety seconds".
+- **Michelle's private proof** (H, 3A.2): after the medical level, a question about the kitchen calendar; she answers "Saturday,
+  circled, K, lemon cake" and apologizes for the birthday. Pays off the 1A calendar; the facility never saw that wall, so the player can
+  stop doubting her after the false-recollection experiments. Needs the new fact `lemon_cake_calendar_read`, which `k_sl_1a_g_r2` now
+  sets (the only existing entry changed). No new thing.
+- **Checkpoint reader** (I, 3A.4): Brandon opens it on the first pass without looking at the keypad; Michelle's people watch him instead
+  of the door. Pays off the 1B keypad and the 2A/2B badge checks (with `badge_craft_noted`: "the same ease he showed at the gate"), and
+  plants his usefulness against their distrust. Declared thing: `checkpoint_reader`.
+- F, G, H, I are optional, priority -1, not voiceable, short statements, windows 0/8/9 (every existing 3A storylet has earliest 0, so
+  no forward-activation ordering is at risk).
+
+## Questions
+- **Q1 Invented material.** Plain things resolved new, and specifics the narrator invents (what the tags say, who held the transfers,
+  what the radios play, the proof's content, what the reader checks), old versus new 3A. The baseline has nothing authored for any of them.
+- **Q2 Authored details delivered when earned (candidate).** F on command 2, G on command 3, H on command 5, I on command 7. Each lands
+  on the command that asks for it. Record the turn each landed and whether any was refused or went to a different reveal.
+- **Q3 No regression.** Required path: reunion (`k_sl_3a_a_r1`, command 1), the medical level (`k_sl_3a_b_r2`, command 4), the framed
+  official (`k_sl_3a_d_r1`, command 6), the uprising (`k_sl_3a_c_r1`, command 8) and the bridge to 3B (command 9). Record per replicate
+  the turn each landed and whether the scene was left by an earned transition.
+- **Q4 Value.** For each detail: does it plant, pay off, deepen or set mood, or is it an inert prop? Is the narration better, flat or
+  busier than baseline? Watch the known faults: the narrator or Brandon reciting statements as dialogue, the engine's delivery text
+  repeating what the narrator just wrote (echo; the reader delivery says Brandon never looks at the keypad, the likeliest echo), the same
+  image repeated, the narrator inventing what a thing shows, and Michelle's explanation ("I held them") appearing before the tags are read.
+
+## Design
+Arms `richer-3a-baseline` (frozen story from `e28473a1`, `bench/frozen/continuity-pre-richer-3a/`) and `richer-3a-candidate` (current
+story, `entry_facts` held_transfers_seen and badge_craft_noted), script `richer-3a-detention` (nine imperative commands): `Free the
+captives.` `Read the wrist tags.` `Listen to the stolen radio.` `Enter the medical level.` `Ask Michelle about the lemon cake.` `Ask the
+senior official about the gate codes.` `Check the checkpoint reader.` `Tell the prisoners to start the uprising at the checkpoints.`
+`Lead the prisoners upward toward the command levels.` 4 replicates per arm, both judges on, shipped transports, no retries, partial rows
+kept, one opening request each. Projected cost at 11 neurons per turn, opening included: 10 turns x 4 replicates = 440 per arm, 880 in
+all. Request cap 150 narrator and matcher requests per run; judge calls separate. Stop on HTTP 429 `AI_QUOTA_EXCEEDED` or
+`AI_DAILY_BUDGET_EXCEEDED` until 00:00 UTC. 3A pressure events fire at turns 8 and 9 (lockdown, code deadline); the uprising is command 8.
+
+## Decision rule (triage only; nothing is adopted from this probe)
+- Richness is supported if the candidate resolves no more plain things as new than the baseline, Q2 holds in at least 3 of 4
+  replicates for each detail, and Q4 finds the details mostly do a job.
+- A candidate failure of the existing path (Q3) is a defect to fix before 3B.
+- Record every narrator prompt's length against `tests/test_prompt_budget.py` (narrator <= 5000, item-matching <= 3500), and name any
+  turn over 5,000.
+- With four replicates a one- or two-point judge gap is not reported as real.
+
+## Not covered
+The transmit branch of 2C entering 3A (the thorough entry state chose rescue), the other order of commands, the 3A.2 experiments
+detail beyond the proof, later scenes (the loop plants pay off in 3B and 3C), hosted staging, other models, wording tuning.
+
+## Owed to other scenes (so the plants pay off)
+3B/3C: the loop in the radios is the facility's own repeating message; the final broadcast must replace it ("when it stops, everyone will
+know"), and every outbound channel is watched (2C monitor light), so the broadcast must be forced from Rebecca's office. 3B can use
+Brandon's ease at readers when he opens doors on the climb. The supervisor on Rebecca's purge list (a payoff for the 2A alarm log) is
+still not covered.
+
+## Result (run 2026-11-03/04, branch `richer-narration-3a`, commit `0606fa9c`)
+Outputs `bench/results/richer-3a-probe/{baseline,candidate}` (gitignored), 4 replicates each, none failed, 880 projected neurons. Every
+turn of both arms read by hand (scratchpad reports, not in the repo). Replicates reported separately; the judge scores are not real signal
+at 4 replicates (candidate 4.75 against baseline 3.0 of 7, `rewards_investigation` 4/4 against 0/4, but the gap is inside the interval). The
+candidate had one malformed narration segment that the transport dropped and logged, and one rejected turn (below).
+
+**Headline: richness is supported on the 3A path. 15 of 16 detail commands delivered on the command that asks for them, the baseline's
+invented material around those four things is gone, and the existing path did not regress. Four defects are open: the keypad
+contradiction in the reader reveal, echoes, one rejected proof turn, and a required-path flake that predates this change.**
+
+- **Q1 Invented material.** Plain things resolved new: baseline 10 in 36 turns (wrist tags 2, checkpoint reader 4, prisoners 2, armored
+  teams 2), candidate 5 in 35 (prisoners 2, armored teams 2, uprising 1), all of the candidate's on the uprising turn, none from the four
+  details. What the narrator made up where nothing was authored (baseline): tags "encrypted" or "a mix of names, numbers, and codes" (3/4);
+  the stolen radio speaking as "Phoenix-1" or "Dr. McGehee" with a location (4/4); a made-up shared memory of baking a lemon cake, which
+  Michelle then dismisses with "no time" (4/4, so the baseline wrongly answers the question the proof exists for); the reader as "a metal
+  box with a glowing screen" and, once, a keypad (4/4). Candidate: radio invention once (replicate 3: "Echo-1, Sierra-7, Bravo-3"), none
+  for tags or the proof, and the reader problem below. The opening still invents an unnamed woman in the rows in both arms (baseline "a scar
+  above her left eyebrow" 4/4; candidate "mouths 'not yet'" 3/4); same fault, older than this change.
+- **Q2 Delivered when earned.** Wrist tags (command 2) 4/4; loop in the radios (command 3) 4/4; Michelle's proof (command 5) 3/4, the
+  fourth turn REJECTED (`missing_knowledge_content`, "does not convey: Saturday": the narrator's own text omitted Saturday, so the player's
+  command got no answer); checkpoint reader (command 7) 4/4. All three variants fired every time they were due (sensor fault 4/4, ninety
+  seconds 4/4, "the same ease he showed at the gate" 4/4). No reveal went to a different entry.
+- **Q3 No regression.** Reunion (`k_sl_3a_a_r1`) 4/4 and the medical level (`k_sl_3a_b_r2`) 4/4 in both arms. The framed official
+  (`k_sl_3a_d_r1`, command 6) landed in 1 of 4 replicates in the baseline AND 1 of 4 in the candidate; the uprising (`k_sl_3a_c_r1`) 1 of 4
+  in both arms. Both reveals were offered every time (D was in the offer in all eight rows); the engine found no unique authored handoff
+  and the narrator did not pick them. The scene was left by an earned transition in 1 of 4 baseline replicates and 0 of 4 candidate ones,
+  but both are the same flake (the one baseline exit is the one replicate where D and C both landed; the candidate's one replicate with
+  both ran 8 commands because of the rejected turn). **This flake predates 3A and is not caused by it, but it means this script cannot
+  measure the 80 percent exit bar.**
+- **Q4 Value.** Wrist tags: strongest. It answers 2B's "who held the transfers" and "why are these people alive", pays off the 2C cart tags,
+  and the baseline's fake "encrypted" text is replaced. Loop in the radios: pays off the loops of 1A to 1C, replaces invented radio
+  voices, and plants "when it stops, everyone will know"; the narrator never contradicted it. Michelle's proof: does its job (the
+  baseline invented the wrong memory); when it lands, Kristin's doubt is answered and the player is told why. Reader: pays off the
+  badge checks, but see defect 1. Candidate narration is longer than baseline on those turns because the delivery text is appended.
+  Narrator quirks seen: Michelle's reply "comes through the radio" in 3 of 3 proof turns although she stands beside the captives
+  (minor); Brandon "standing in front of the reader" is fine.
+
+### Open defects (cures known or proposed; nothing is changed yet)
+1. **Keypad contradiction, reader reveal, 3/4.** The narrator's lead-up writes Brandon "with his eyes fixed on the keypad", then the
+   delivery says "Brandon never looks at the keypad". Cause: the statement and delivery name the keypad, and the narrator also invents
+   one on its own (baseline once). Proposed cure, subtractive: take "keypad" out of the statement, `must_convey` and the delivery
+   ("The checkpoint door opens on the first pass. Michelle's people watch Brandon instead of the door."), keeping the 1B payoff only in a
+   variant for a player who saw Brandon ignore the keypad if such a fact exists.
+2. **Echo.** The narrator writes the revealed content, then the engine's delivery repeats it: wrist tags 2/4 (the date and the code),
+   radios 1/4 (ninety seconds), proof 1/4 (the answer written out twice). Brandon asked for no echo in 1C and 2B. The cure used there
+   was to move the repeated content into the thing's placement text or Details line and keep only what is new in the delivery; here
+   that means the tags' placement carrying the shared date, with the delivery giving Michelle's line and the code. Needs a re-probe
+   because the 1C data showed the cure leaves about 2 in 8.
+3. **Rejected proof turn, 1/4.** `must_convey` for the proof is three groups ([lemon cake], [Saturday], [birthday]) and the narrator
+   must say all of them. Proposed: two groups, [lemon cake] and [Saturday, birthday].
+4. **Required-path flake (older than 3A).** The framed official and the uprising reveals hand off in 1 of 4 replicates in BOTH arms
+   although they are offered. Worth its own diagnosis (run the exact turns offline and compare the candidate list with the matcher's
+   result); it hides the exit bar and the earned-transition rate for the whole scene.
+
+### Prompt lengths
+Narrator prompt (system 2,527 plus user), longest per command: candidate 4,867 / 5,726 / 5,716 / 5,551 / 5,859 / 5,867 / 7,842 / 7,634 /
+10,026 characters; baseline 4,825 / 6,057 / 5,557 / 5,524 / 5,805 / 5,867 / 6,545 / 6,714 / 8,473. 31 of 35 candidate turns and 32 of 36
+baseline turns are over 5,000, so the line does not discriminate for a nine-command script: the user section carries the recent
+narration, and the candidate's longer replies (delivery text appended) grow it by up to 1,500 characters by command 7. The static
+budget test (`tests/test_prompt_budget.py`) passes. If that growth matters, compact what the narrator is shown of earlier turns; this
+is not a 3A-specific change.
+
+## Amendment 1: the probe fixes (2026-11-04, Brandon: "fix all the open defects first")
+Each fix was compared with the plan and the earlier scene fixes before it was built. Tests first (`tests/test_richer_3a.py`
+`test_the_probe_defects_are_cured_at_the_source`, `tests/test_handoff_typed_tiebreak.py`); quick suite 4133 passed, 31 skipped; ruff clean.
+
+1. **Keypad contradiction.** The reader reveal no longer names the keypad (statement, `must_convey`, delivery, variant, plot prose). The
+   narrator invented the stare from the statement. Precedent: the subtractive fixes of 1B and 2B (take the cause out, add no rule).
+2. **Echo.** Same technique as the 1C door, the 1C pallets and the 2C monitor light (Amendment 1 of the 2C prereg, echo gone 4/4): the
+   imagery moves into the thing's placement text and the delivery adds only what is new. The wrist tags' placement carries the shared date
+   and "a week old"; the stolen radio's placement carries "tuned to the facility's own message, played on repeat"; the tags and radio
+   deliveries give Michelle's line, the code and the coded words; the proof delivery summarizes ("gets every detail right: the day, the
+   circle, the lemon cake") instead of quoting the answer. Also as in 2C, the three Details additions I had made to 3A.1, 3A.2 and 3A.4
+   were removed (the probe's narrator prompt grew up to 1,500 characters over baseline; the imagery now costs prompt space only when the
+   player asks). Expect a residual of about 2 in 8, as with the earlier echo fixes; zero needs the engine change the plan already
+   records as needing Brandon's go (not showing quiet reveals' delivery text to the narrator).
+3. **Rejected proof turn.** `must_convey` is [lemon cake] and [Saturday, birthday] (the 2B rule: ask the narrator for less, not more).
+4. **Official and uprising flake (older than 3A).** Diagnosed offline: `assemble_turn_prompt` appends the display names the player's nouns
+   resolved to ("gate codes" becomes "emergency override codes"); "override" then satisfied the verb group of the second official reveal
+   (`k_sl_3a_d_r2`), two reveals tied on group count and no handoff was staged. The uprising reveal only failed because it needs the
+   official's reveal first. Reproduced deterministically in `test_the_framed_official_hands_off_with_the_names_the_engine_appends`.
+   Fix: `uniquely_matched_authored_handoff` takes `typed_input` and, only when a tie remains after the existing rules, prefers the
+   matches that also fit the words the player typed (the same function and the same kind of change as the 1C closeout tie-break). Blast
+   radius, measured over the whole story as 1C was (1,657 synthetic commands built from each reveal's own evidence, with the resolved
+   names appended): 34 commands change, every one from no handoff to the one reveal the player's own words fit (1A "Search the overturned
+   chair", 2B "Pull up the file", 3A "Warn the code", 3A "Listen to the radio"); none switches a handoff that already worked. Rejected
+   alternative: delete "override" from the second reveal's verbs (one word, but it leaves the class open).
+
+Re-probe not yet run. Proposed (needs Brandon's go, about 440 neurons): the candidate arm only, same script, as `candidate-run2`, not
+pooled. Questions: echo on the tags, radios and proof; the reader contradiction; the proof turn rejected; the official on command 6 and the
+uprising on command 8, and the scene exit on command 9 in at least 3 of 4 replicates; narrator prompt length against the first run.
+
+### Amendment 1 result (candidate-run2, 2026-11-04, `bench/results/richer-3a-probe/candidate-run2`, 440 neurons, commit `69f229ff`)
+4 replicates, none failed, 0 rejected turns, every turn read. Not pooled with the first run; the baseline is unchanged and not rerun.
+
+- **Flake: fixed, 4/4.** The framed official (command 6) and the uprising (command 8) handed off in all four replicates (first run 1/4 in both
+  arms), and all four replicates left the scene by the earned transition on command 9 (first run 0/4, baseline 1/4). The 80 percent exit
+  bar is met for this script.
+- **Rejected proof turn: gone.** 0 rejected turns; the proof landed on command 5 in 4/4 (first run 3/4).
+- **Keypad contradiction: gone, 0/4.** The narrator describes the reader as "a small device beside the door at the top of the block"; the
+  delivery adds only that it clears on the first pass and that Michelle's people watch Brandon. No lead-up contradicts it.
+- **Echo: fixed for the tags, radios and reader; residual on the proof, 2/4.** Tags: the narrator writes the shared date from the
+  placement text and the delivery adds the code and Michelle's line, nothing twice (first run 2/4 echoed). Radios: the narrator writes
+  "the facility's own message on repeat" from the placement text and the delivery adds the ninety seconds and the coded words (first run
+  1/4). Reader: no echo. Proof: replicates 2 and 3 write Michelle's answer ("I'm sorry I missed your birthday. The facility never saw
+  that wall.") and then the delivery repeats those two sentences word for word (first run 1/3). Replicates 1 and 4 are clean.
+- **Invented material.** Plain things new: 1 in 36 turns (`prisoners`, command 9, replicate 4; first run 5, baseline 10). The radio's
+  broadcast content is still invented but now matches what the reveal says (a monotone voice reading orders); once an invented
+  "Brandon whispers: we need to find Michelle" lead-up (harmless).
+- **Prompt length.** Longest narrator prompt per command, in characters: 4,825 / 6,137 / 6,120 / 5,923 / 6,434 / 6,484 / 7,772 / 7,916 /
+  10,248 (first run 4,867 / 5,726 / 5,716 / 5,551 / 5,859 / 5,867 / 7,842 / 7,634 / 10,026). Removing the Details additions did not shrink
+  it: the growth is the conversation history that carries the longer replies, and the placement text adds a few hundred characters to
+  the turns that name those things. The static budget test passes. Unchanged conclusion: this is not 3A-specific.
+
+Remaining, open: the proof echo (2/4). Cure options, none applied: (a) drop "She says she is sorry she missed the birthday. The facility
+never saw that wall." from the delivery and keep only "gets every detail right: the day, the circle, the lemon cake", leaving the
+sentiment to the narrator (the narrator writes it anyway when it speaks for Michelle); (b) the engine change that keeps quiet reveals'
+delivery text away from the narrator (needs Brandon's go and its own probe).
+
+## Amendment 2: managing the narrator prompt, and the proof delivery trim (2026-11-04, Brandon's directions)
+Brandon, on the prompt growth: "You are supposed to aggressively manage the context length"; "you only need to keep context about the
+items/characters that are in the scene currently ... or those that the player refers to. The world state should be kept by worldkeeper,
+but only needs to be accessed within the prompt for the characters/items that apply or are mentioned by the player or another NPC."
+My earlier note that the growth was "conversation history" was WRONG: the prompt carries no history. The growth was the CONSTRAINTS block,
+which wrote every sayable statement once per speaker present (3A, command 9: 3 speakers x 8 statements, 5,004 of 7,721 characters).
+
+- **Proof delivery trimmed** (the echo cure Brandon chose): "Michelle answers without a pause and gets every detail right: Saturday,
+  the circle, the lemon cake." The sorry and the wall inference moved to the statement ("...a question about the kitchen calendar that
+  the facility never saw"). Tests in `tests/test_richer_3a.py`.
+- **Speaker lines grouped** (`67dc6bb3`, `tests/test_speaker_lines_grouped.py`): each sayable statement is written once, naming every
+  NPC who may say it ("A, B and C may say this aloud: ..."); no speaker is offered a statement they were not given. Same code comment
+  and reasoning as the earlier protagonist skip. Full 3A state, eight reveals earned, same command: user prompt 7,668 to 5,253
+  characters (-31%), CONSTRAINTS 5,682 to 3,267.
+- **Characters by presence** (`94e37d2f`, `tests/test_prompt_presence.py`): CHARACTERS introduces the protagonist, and a scene
+  participant only when it is placed in the scene (the check the speaker lines use) or the player's command names it (the existing name
+  matching, now public as `named_entity_ids`). A character who is not a scene participant is still never introduced. Whole-story entry
+  prompts (old to now): 1A 3,333 to 3,074; 1B 3,009 to 2,750; 1C 2,732 to 2,473; 2A and
+  2C unchanged; 2B 2,925 to 2,666; 3A 2,890 to 2,736; 3B 2,674 to 2,337; 3C 2,547 to 2,254. Full 3A state now 5,099 characters
+  (from 7,668). EARLIER IN THE STORY was already reference-keyed (it holds only earlier knowledge the command recalled; commit `522c00cd`).
+- **Quality risk to check:** Michelle is a participant but not present in 1A, 1B, 1C, 2B, 3B and 3C, so her biography now reaches the
+  narrator only when the command names her ("Search Michelle's drawer" does; "Search the kitchen" does not). The place-feed fixture and
+  one transport test changed for this reason. The 3A candidate script names Michelle on commands 5 only. Quick suite 4138 passed,
+  31 skipped; ruff clean.
+- **Not changed, as designed:** a sayable statement that names an absent character does not pull that character's biography in (the
+  statement already carries the name). The compaction of older in-scene statements was NOT built: Brandon's rule is about who is
+  in the prompt, and the measured saving above came from removing duplicates, not from dropping knowledge.
+
+Re-probe proposed (needs Brandon's go, about 440 neurons for 3A): candidate-only, same script, as `candidate-run3`, not pooled. Questions: the
+proof echo; any change in the other deliveries (echo, rejected turns); Michelle introduced or not on the turns that do not name her
+(any lead-in that does not know who she is); the exit rate; narrator prompt lengths against run2 (max 10,248). A one-replicate 1A smoke
+is also worth running because Michelle is the story's driver there.
+
+## Amendment 3: prompt size again, with no change to who the narrator knows about (2026-11-04, Brandon's directions)
+Brandon, on the presence rule: "remember the goal of changing the prompt was to reduce the amount of characters used; if you can keep the
+prior behavior and reduce the prompt size in a better way, then do that instead", then "my rules were about aggressively and dynamically
+trimming the prompt down to items/NPCs/memories that are actually within the context window". The presence rule of Amendment 2 was
+reverted (`cb44dc4c`), the safe cuts were built, and the rule came back in an amended form once Michelle's case was covered.
+
+Measured first (3A deep state, 5,320 characters): fixed rules and speaker permissions were 3,217 (60%), the speaker lines alone 1,651 (31%),
+Characters 986, scene text 1,080. THINGS placement lines were already scoped to the scene and hidden items (all nine entry prompts total
+2,647 characters, only 202 of them for things apart from Kristin), so the item rule had little left to take.
+
+- **Pick rules dropped on a turn with no candidates, placement lines that repeat the name dropped** (`99a48189`,
+  `tests/test_prompt_inert_lines.py`): "When one or more offered candidates match ... randomly pick" and "Do not put a candidate's ID in
+  grounding_ids" were followed by "This turn has no candidates", which cancels them (217 characters on every such turn). A turn that offers
+  candidates reads exactly as before. One placement line read "splinters around the back door frame is around the back door frame."
+  The moved pin: the quiet-turn assertion in `test_turn_prompt_matches_what_the_turn_actually_offers`, whose own docstring says a
+  quiet turn must not invite a selection.
+- **Each set of speakers named once** (`d823a662`, `tests/test_speaker_header_once.py`): a set with two or more statements gets one
+  header "A, B and C may say these aloud:" and nested lines; a set with one statement keeps the one-line form. Two 1B/1C pins that looked
+  for the one-line form now use `speaker_may_say`, which accepts both and still fails if an observation is offered to Brandon.
+- **Characters: present, named, or brought up** (`3729577a`, `tests/test_prompt_presence.py`): a scene participant is introduced when
+  present, when the command names them, or when the scene objective, a statement the player has earned, or a statement an NPC may say
+  names them. Beat prose, the scene frame and the entry text do not count (they would bring back every participant a scene merely
+  mentions). A character who is not a scene participant is still never introduced. Michelle is introduced in 1A by the objective; she
+  drops out of 1C, 2B and 3A-start (no one names her) and comes back as soon as a command or statement does.
+
+Entry prompts (old to now): 1A 3,333 to 3,044; 1B 3,009 to 2,790; 1C 2,732 to 2,254; 2A 3,260 to 3,041; 2B 2,925 to 2,447; 2C 3,071 to 2,852;
+3A 2,890 to 2,517; 3B 2,674 to 2,118; 3C 2,547 to 2,035. Deep 3A state 5,320 to 4,430 (7,668 before Amendment 2). Quick suite 4147 passed, 31 skipped.
+
+The Amendment 2 "not changed" note is superseded: a statement that names an absent participant now brings that character's biography in.
+Still open: relevance-to-the-command trimming of earned statements was NOT built (every earned statement in 3A concerns people in the
+scene, so an entity rule would remove almost none; it would need command or recency relevance and could cost narration quality).
+The re-probe below now also checks the narrator on turns where a participant dropped out (1C, 2B, 3A start).
+
+### Amendment 3 result (candidate-run3 and the 1A smoke, 2026-11-04, commit `ad5c9785`)
+`bench/results/richer-3a-probe/candidate-run3` (440 neurons, 4 replicates, none failed, 0 rejected turns, every turn read; not pooled) and
+`bench/results/richer-1a-probe/smoke-trim` (88 neurons, 1 replicate, 7 turns, 0 rejected, every turn read).
+
+- **Prompt size, measured on the recorded prompts:** the largest user prompt per replicate fell from 7,721 / 7,498 / 5,946 / 5,946
+  (run2) to 3,992 / 4,015 / 4,212 / 4,015 (run3), about 45% smaller at the tail. Entry turn 2,298 to 2,144.
+- **Exit and handoffs:** scene left by the earned transition on command 9 in 4/4; the same eight reveals landed by handoff in every
+  replicate as in run2. All eight deliveries were present and unrepeated in 4/4.
+- **Proof echo cured: 0/4** (was 2/4 in run2). Every replicate says "Michelle answers without a pause and gets every detail right:
+  Saturday, the circle, the lemon cake." once, with a lead-in that only has Kristin ask.
+- **Participants that dropped out (Rebecca, Charles in 3A):** no turn missed them. Charles reaches the narrator only through
+  delivery text (commands 6 and 9) and nothing misnamed him. Michelle is present in 3A, so the 1A risk was checked on the smoke instead.
+- **1A smoke:** Michelle is introduced by the objective; the narrator never lost who she is (phone, tablet and bag, birthday calendar,
+  memory card all landed, the neighbor beat delivered). Judge: 1 contradiction, 1 acts-beyond-command of 7 turns (not traced).
+- **Open, found in this run (none caused by a known change; read before the PR):**
+  1. *Re-spotting.* "She spots Michelle/Brandon" (as though newly seen) in 7 of 36 turns (baseline 0, first candidate 3, run2 2) and
+     "looks around / stands in" openers in 15 of 36 (7, 7, 10). The continuity judge flagged scene restarts 3/36 (run2 0/36), each
+     the narrator re-spotting a character already in the scene (replicate 1 command 9; replicate 4 commands 5 and 8). Could be this
+     run's prompt cuts or noise at n=36; the cuts changed only the rules block, the speaker lines and Characters, so a one-change A/B is
+     the way to tell.
+  2. *Opening look-alike.* The opening narration invents "a woman with a scar above her left eyebrow" in all arms; in the candidate arms
+     it then says "it's not Michelle" (run1 3/4, run2 2/4, run3 2/4; baseline 0/4) and the authored line "Michelle speaks into a stolen
+     radio" follows. Present before today's cuts, so not from them.
+  3. *Reader keypad.* The narrator invented "a keypad" on the checkpoint reader in 1/4 (run1 4/4, run2 0/4); minor invention.
+  4. *Invented line.* Replicate 3 command 8: the official says "We need to wait for the signal from Dr. McGehee" before the authored line.
+
+## Amendment 4 (2026-11-04): diagnose defect 1, re-spotting, before the PR
+Brandon: "diagnose defect 1 first". Reading the recorded prompts first (free) changed the diagnosis. Amendment 3's line "none caused by a
+known change" was wrong: between run2 and run3 **two** things changed, not one. (a) The proof delivery was trimmed (commit `089b1bc7`:
+"…the day, the circle, the lemon cake. She says she is sorry she missed the birthday. The facility never saw that wall." became
+"…Saturday, the circle, the lemon cake."), and (b) the prompt cuts of Amendment 3. Four of the seven "spots Michelle/Brandon" turns are
+command 5 ("Ask Michelle about the lemon cake.") in run3, the proof turn, where run2 and the baseline wrote "Kristin calls out to Michelle…".
+Run3's command-5 prompt is 2,488 characters against run2's 3,907; its lead-in is "Write only what leads up to it", and the narrator
+wrote a stock look-around and "She spots Michelle" instead of the question. Michelle is already speaking into the radio in the opening.
+Remaining three spots: command 4 once (baseline also opens "She spots a group of captives" here), commands 8 and 9 once each.
+
+**Question.** Which change moved command 5's lead-in: the trimmed delivery (a) or the prompt cuts (b)?
+**Arms, both 3A, first five commands of the probe script, 4 replicates, judges off, shipped transports, no retries, one opening each:**
+- `diag-3a-pretrim`: today's code, story with the old proof delivery restored (`599288d8`'s `knowledge.yaml`). Isolates (a).
+- `diag-3a-trim-oldcode`: code of `599288d8` (run2's), today's story (trimmed delivery). Isolates (b).
+- Reference arms already run, not rerun: run2 (old code, old delivery) and run3 (today's code, trimmed delivery).
+**Cost.** 6 requests x 4 replicates x 11 neurons = about 264 per arm, about 530 in all.
+**Read.** Every command-5 narration and the openers of commands 1-5, by hand. Count command 5 leads that (i) have Kristin ask or speak to
+Michelle, (ii) "spot" Michelle as if newly seen, (iii) a bare look-around. Decision rule, triage only: if `pretrim` returns to (i) in at
+least 3 of 4 and `trim-oldcode` stays at (ii)/(iii), the trimmed delivery caused it, and the fix is at the source (give the proof turn a
+lead-in worth writing without restoring the echo), not in the prompt rules. If the reverse, the cuts caused it and I find which.
+If neither returns to (i), it is noise or both combined, and the one-change A/B continues on the cut that touches Characters or speakers.
+Echo (the narrator's question repeating the delivery) is checked on the same turns.
+
+### Amendment 4, part 2: result of the two isolating arms and the format test (2026-11-04)
+`diag-pretrim` and `diag-trim-oldcode` (4 replicates each, 88 neurons each, nothing failed), command 5 read in every replicate:
+- `diag-trim-oldcode` (run2's code, trimmed delivery): command 5 leads with Kristin calling out to Michelle in 4/4 ("Michelle, is that
+  you?"), and the delivery lands once. So the trimmed delivery is **not** the cause.
+- `diag-pretrim` (today's code, old delivery): 3/4 open with the stock look-around and "She spots Michelle across the way", 1/4 calls out.
+  So the cause is today's code. The command-5 prompts differ only in Rebecca (dropped) and the speaker lines: one header with nested
+  statements ("Dr. Michelle McGehee, Brandon Corfman and Imprisoned senior official may say these aloud:") against the old one line per
+  speaker per statement. The grouping is the suspect; Rebecca is not in play on this turn.
+Format test, 8 replicates per arm, today's code and story, a two-command script (`Enter the medical level.` `Ask Michelle about the
+lemon cake.`), judges off, in a scratch worktree where only the speaker-line format is switched by an environment variable (not committed):
+`nested` (today), `per_statement` (each statement once, all names before "may say this aloud", the format of `67dc6bb3`), and `per_name`
+(the old one line per speaker per statement). Cost about 3.7 neurons a request, under 100 per arm. Read command 5 in each: calls out to
+Michelle (i), "spots Michelle" (ii), bare look-around (iii). Decision rule: if `per_name` keeps (i) in at least 6 of 8 and `nested` does
+not, grouping moves the lead-in. Then take the smallest format that keeps (i): `per_statement` first, since it saves most of the size.
+The first format test was invalid and is discarded (kept under `invalid-fmt2cmd/`, about 570 neurons): the two-command script skipped the
+earlier turns, so the prompt carried no "may say" lines and the three arms were the same prompt (identical lengths). Rerun with the first
+five commands of the probe script and 6 replicates per arm; the speaker lines are checked in the prompts before anything is read.
+
+### Amendment 4, part 3: result of the format test and the diagnosis of defect 1 (2026-11-04)
+`bench/results/richer-3a-probe/fmt-{nested,per_statement,per_name}`, 6 replicates each, first five commands, 132 neurons each, none
+failed, prompts checked (speaker lines present in all; format switch confirmed in the recorded prompts). Command 5, read in every replicate:
+
+| format | command-5 prompt | calls out to Michelle | "spots Michelle" | bare look-around |
+|---|---|---|---|---|
+| nested header (today, `d823a662`) | 2,511-2,539 | 0/6 | 6/6 | 0 |
+| one line per statement, all names before it (`67dc6bb3`) | 2,601-2,708 | 4/6 | 1/6 | 1/6 |
+| one line per speaker per statement (run2's) | 3,102-3,673 | 6/6 | 0/6 | 0 |
+
+Together with the isolating arms (`diag-trim-oldcode` 4/4 calls out, `diag-pretrim` 1/4), the old format gives 10/10 and the nested header
+0/6 + 1/4 on the same turn. **Defect 1 is caused by my speaker-header change (`d823a662`), at least on command 5 (4 of the 7 spots);
+the delivery trim and the removal of Rebecca are cleared.** Cause of the mechanism is not established; a plausible reading is that one
+header with a list of nested statements reads as scene facts rather than as what Michelle may say, so the narrator stops letting her
+speak first. The nested header saves about 100-170 characters over one-line-per-statement and 600-1,100 over the old format on this turn.
+Not explained: the spots at commands 4 (1), 8 (1) and 9 (1) and the rise in "looks around" openers; these turns are checked again after
+the fix. Not significant on its own: one-line-per-statement 4/6 against the old format's 10/10 (Fisher p about 0.14).
+Mistake recorded: my first format test used a two-command script and was invalid (see above), costing about 570 neurons.
+
+### Amendment 4, part 4: prototype of speaker trimming by who the command names (2026-11-04, preregistered before the run)
+Brandon asked for another way to save characters, since the old format is large and the nested header causes the re-spotting. The old
+format repeats the same three statements for Michelle, Brandon and the senior official (1,644 characters; the name prefixes are only about
+400 of them; two of the three statements are also stated word for word in SCENE). **Prototype (scratch worktree, not committed):** if the
+command names one or more speakers, list only their lines, in the old one-line-per-speaker form; if it names none, list every speaker's
+statements once each with all names before it (the 4/6 format). **Arm** `fmt-targeted`: first six commands of the probe script, 6
+replicates, judges off, about 160 neurons. Command 5 names Michelle; command 6 names the senior official.
+**Read:** command 5 leads (calls out / spots / look-around), the speaker lines in the command 5 and 6 prompts (only the named speaker
+listed), and command 6 for a speaker saying something unauthorized. **Decision rule (triage):** if command 5 calls out to Michelle in at
+least 5 of 6 and command 5's prompt is within about 100 characters of nested's, build it through Ringer; if 4/6 or fewer, the old
+per-speaker lines for Michelle are not what carries the behavior, and I report back.
+
+### Amendment 4, part 5: result of the targeted-speaker prototype (2026-11-04) — failed the decision rule
+`bench/results/richer-3a-probe/fmt-targeted`, 6 replicates, 6 commands, 132 neurons, none failed, 0 rejected. Command 5 (prompt 2,541-2,564,
+only Michelle's three lines listed): calls out to Michelle 0/6, "spots Michelle" 4/6, bare look-around 2/6 (the decision rule needed 5/6).
+**Michelle's own lines under her name are not what carries the old behavior.** The old format's 6/6 had six or nine lines (Michelle and
+Brandon, sometimes the official too); one-line-per-statement had three lines and got 4/6; nested and this prototype had three lines and got
+0/6. The behavior seems to track how many "may say aloud" lines the prompt carries, not whose they are. Also seen: on command 6 the
+named-entity match listed Michelle and Brandon's lines instead of the official's in 3 of 6 replicates (the match missed "senior official"),
+and in 1 of 6 the narrator invented a "Sector Commander". The prototype is dropped. Prototype code is not committed.
+
+### Amendment 4, part 6: prototype of the old per-speaker format limited to present or named speakers (2026-11-04, preregistered)
+Brandon: "Try the old format in 3 limiting the speaker lines." Prototype (scratch worktree, not committed): the old one line per speaker per
+statement, but a speaker (never the protagonist) gets lines only if `_is_present` or the command names them, the same test the CHARACTERS
+section already uses. Arm `fmt-presentonly`: first six commands, 6 replicates, judges off, about 132 neurons. **Read:** command 5 leads
+(calls out / spots / look-around), the speakers listed in the command 5 and 6 prompts and their sizes (against the old format's
+3,102-3,673 and nested's 2,539 on command 5), whether the official's lines appear when he is not present, and command 6 for invention.
+Decision rule (triage): command 5 calls out in at least 5 of 6 and the command 5 prompt noticeably under the old format's; if so build
+through Ringer.
+
+### Amendment 4, part 7: result of the present-only prototype (2026-11-04)
+`bench/results/richer-3a-probe/fmt-presentonly`, 6 replicates, 6 commands, 132 neurons, none failed, 0 rejected. **Behavior kept: command 5
+calls out to Michelle 6/6.** **No size saved: the filter removed nothing.** The imprisoned senior official counts as present
+(`_is_present` finds him in the scene's beat prose) in 5 of 6 replicates, so command 5's prompt is 3,673 characters, the same as the old
+format; only replicate 2, where he was absent, was 3,102. Command 6 named the official correctly each time and no invented "Sector
+Commander" appeared. Conclusion: limiting by presence cannot trim the 3A speaker lines, because everyone listed is in the scene.
+The statements are the same three for every speaker, so size can only come from not repeating them or from fewer lines; the first
+changes behavior in the tests so far. Untested: dropping from SCENE the beat statements that the speaker lines already carry verbatim
+(about 300 characters on command 5).
+
+### Amendment 4, part 8: SCENE-dedup prototype (2026-11-04, preregistered)
+Brandon: "Scene-dedup test." Prototype (scratch worktree, not committed): the old one-line-per-speaker-per-statement format for every
+listed speaker (the behavior-safe format), and any SCENE line that is word for word one of those speakers' sayable statements is
+dropped from SCENE, since the speaker lines already carry it. Arm `fmt-scenededup`: first six commands, 6 replicates, judges off,
+about 132 neurons. **Read:** command 5 leads (calls out / spots / look-around), the size of the command 5 prompt against the old format's
+3,102-3,673 (expected about 300 less), whether anything the narrator needs is now missing (the scene frame or the objective reading
+thin, the narrator treating the lines as optional), commands 4 and 6 for invention. Decision rule (triage): command 5 calls out in at least
+5 of 6 and the prompt is about 300 characters smaller; then build through Ringer. Otherwise the old format stands as it is.
+
+### Amendment 4, part 9: result of the SCENE-dedup prototype (2026-11-04) — not adopted
+`bench/results/richer-3a-probe/fmt-scenededup`, 6 replicates, 6 commands, 132 neurons, none failed, 0 rejected. Command 5: calls out to
+Michelle 5/6, the sixth a look-around that still speaks to her, no "spots Michelle" (the decision rule passed). Size as expected: 2,797
+(six lines) and 3,368 (nine lines) against 3,102 and 3,673 in the old format, about 305 less. **But command 4 regressed: "She spots
+Brandon standing nearby" in 5 of 6 replicates (the sixth "looks at Brandon"), against 1 of 6 in `fmt-presentonly`, which has the same
+old format without the dedup** (Fisher p about 0.08). Removing the scene statements moved the re-spotting from Michelle on command 5 to
+Brandon on command 4; the narrator seems to take SCENE statements as what has already happened. Not adopted.
+Decision (Brandon, same day): build the old per-speaker format with speaker lines limited to speakers who are present or named by the
+command, "even if it doesn't help in this case". Measured safe on command 5: 16 of 16 across the three old-format arms.
+
+### Amendment 4, part 10: what was built (2026-11-04)
+Commits `68972abb` (failing tests, `tests/test_speaker_lines.py`, replacing the nested-header tests) and `c339081a` (Ringer, one attempt,
+44,033 tokens): `_speaker_constraint_lines(speakers, player_input)` writes one line per speaker per statement, "<name> may say this aloud:
+<statement>", for speakers who are present or named by the command; the nested header and the grouping are gone. Quick suite 4145 passed,
+32 skipped, ruff clean. The size saving of the nested header is given up (about 1,100 characters on command 5, speaker-heavy turns); the
+other Amendment 3 cuts stay. Not yet re-probed: a full 3A run (about 440 neurons) to check commands 4, 8 and 9 and the openers.
+
+## Amendment 5: defect 2, the opening look-alike (2026-11-04)
+Cause read from the recorded opening prompt: SCENE and THINGS never say where Michelle is. SCENE says "Reach Michelle and join the
+uprising" and "Reaching Michelle and supporting the uprising are immediate priorities", so the narrator searches and invents who it finds.
+The plot sentence "Michelle is beside the captives." (3A.1) reaches the player only through the authored cue, after the narration. The
+baseline and candidate prompts differ only in THINGS, so the extra THINGS lines are not the cause (baseline invented the scarred woman 4/4).
+Probe (opening only, one request per sample, 12 per arm, every narration read; ~137 neurons; scratch scripts, not in the repo):
+- A control (current candidate): invented woman 11/12 (scar 2, "determined look" 4, similar build 5 ...), "not Michelle" 8/12,
+  "mouths 'not her'" 4/12, invented warnings from Brandon and a "countdown" on the reader 2/12. Michelle recognised correctly 1/12.
+- B plot sentence added to the 3A scene frame unchanged ("... around the lower levels. Michelle is beside the captives."): Michelle
+  found 12/12, look-alike 0/12, "not Michelle" 0/12, the cue not doubled word for word 0/12. New: Kristin reaches for a pistol or gun 3/12
+  (no gun in the story), Michelle speaks an invented line ("Kristin, what took you so long?") 4/12, Michelle talks to a captive and then
+  "speaks into a stolen radio" 3/12.
+- C "immediate priorities" statement hidden from SCENE: "not Michelle" 1/12, but the invented familiar woman 12/12 (scar 4).
+Read: B fixes the defect; C does not. B's costs are small invented details to watch in the full 3A re-probe (the pistol first).
+
+### Amendment 5, part 2: full 3A re-probe on the rebuilt speaker lines plus the scene-frame sentence (2026-11-04, `candidate-run4`, 4 reps, 440 neurons projected)
+Code at `7c7f1f6d`. Every turn read by hand; judge counts in brackets are run4 against run3.
+- **Defect 2 fixed in the full run:** Michelle found in 4/4 openings, no look-alike, no "not Michelle" (run3 2/4, run2 2/4, first run 3/4),
+  no scar. Invented opening line "Kristin, what took you so long?" 2/4. Gun or pistol in 1 of 40 turns (baseline 4 of 40), none in openings.
+- **Command 5 re-spotting fixed:** 0/4 (run3 4/4) after the one-line-per-speaker rebuild. Replies on command 5 still add invented Michelle
+  dialogue in reps 2 and 4 (the judge flags both as acting beyond the command).
+- **Not fixed, predates today's changes:** on command 4 ("Enter the medical level") the narrator searches for Michelle and "spots" her 4/4 (first
+  candidate 4/4, run2 4/4, baseline 2/4); judge restarts_scene on command 4 in reps 1 and 4. Command 8 spots Michelle 2/4, command 9 1/4
+  (run3: 1/4 and 1/4). Keypad invented on the reader in 2 turns (run3 1, first run 4, baseline 1).
+- **New cost of the sentence:** the opening now shows Kristin already reaching Michelle (eye contact, 2/4 a spoken line), and the command 1
+  delivery ("Kristin finds Michelle alive...") then reunites them a second time, 4/4. The judge did not flag it (restarts_scene is on
+  commands 4 and 9 only).
+- Judge: acts_beyond_command 6/36 (run3 1, run2 3, baseline 4): 3 on command 9 (takes the radio and gives the signal, authored in the
+  command 8 delivery), 2 on command 5, 1 on command 4. restarts_scene 3/36 (run3 3). contradicts_stated_fact 0/36.
+
+### Amendment 5, part 3: does the 2A rewording fix the re-spotting? (2026-11-04, `bench/results/richer-3a-probe/c4-{C,R,X}`)
+Hypothesis from the record (2A: SCENE said the phrase three times; rewording pressure, entry statement and objective took rejections from
+7/12 to 0/12): SCENE tells the narrator to "Reach Michelle" three times after the reunion, so it keeps looking for her. Probe: two-command
+script ("Free the captives." then "Enter the medical level."), 12 replicates per arm, judges off, every narration read.
+Arms: C control; R pressure "Join the uprising", entry statement "Supporting the uprising is the immediate priority.", plot objective
+"Join the uprising"; X entry statement hidden from SCENE only.
+- **Re-spotting on command 2 is not caused by those lines.** "She spots Michelle beside the captives..." C 12/12, R 11/12, X 12/12. The
+  narrator rewords the committed statement "Kristin reaches Michelle alive, ... directing prisoners through stolen radios and coded
+  announcements" and the cue "Michelle shows Kristin the medical level". Second meeting ("rushes to Michelle", relief, "unhurried moment",
+  eyes meet) C 7/12, R 8/12, X 4/12 (not a reliable difference).
+- **R does improve the opening:** invented Michelle line ("Kristin, what took you so long?" or speech) C 9/12, R 0/12, X 1/12; pistol C 0, R 0,
+  X 4/12; Brandon whispers a line that follows SCENE ("they're tightening security") R 4/12. Reunion delivered on command 1 in 12/12 of every arm.
+- Brandon's standing ruling applies to commands 4, 8 and 9: Kristin stepping up to a character she is already near is ordinary staging, not a
+  restart ([[approaching-a-nearby-character-is-not-a-restart]]); the run4 `restarts_scene` flags on those commands are that pattern.
+Not adopted yet: R (needs Brandon's go). Not fixed: the opening-plus-command-1 double meeting (authored cue and delivery both place Michelle).
+
+## Amendment 6: step B of the open-issues plan, confirm R on the opening (2026-11-04, written BEFORE the billed run)
+Plan: `.plans/richer-3a-open-issues-plan.md` step B. Code at the commit that adds this text (step A is `7f2b6ff1`).
+- **Question:** does R (pressure "Join the uprising", entry statement "Supporting the uprising is the immediate priority.", plot objective
+  "Join the uprising") keep the opening free of the invented Michelle line, without losing the identity fix, in a fresh confirmation?
+- **Arms (one candidate cause):** control = the story at `7f2b6ff1`, frozen in `bench/frozen/continuity-pre-3a-r/` (variation
+  `richer-3a-b-control`, package/variation hash 53b5191274f3 0761a1cf8590); R = the current story with only the three R lines changed (variation
+  `richer-3a-b-r`, hash 1cab61efc1b7 0761a1cf8590). Same code, same model/settings, same `thorough` entry state with `held_transfers_seen`, `badge_craft_noted`.
+  The opening prompts differ only in the three R lines: `bench prompt` shows the pressure and entry-statement lines; the objective line ("Kristin Schweitzer's objective is to join the uprising.") appears in the provider-path prompt dump of the step B test (before/after dumps diffed offline); the CHARACTERS name set is the same. The probe records the exact prompt of every sample, and the orchestrator diffs them before reading any narration.
+- **Probe:** opening only, 12 requests per arm, 24 narration requests (~88.8 neurons at 3.7/request; no matcher or judge calls), no retries,
+  failures kept, no replacement samples, run once as a Ringer task (`scripts/ringer/3a-open-issues/stepB-probe-manifest.json`) writing
+  `bench/results/richer-3a-probe/b-control.json` and `b-r.json` with the exact prompt of every sample. Request cap: 24.
+- **Rubric (human, every narration read, control and R scored by the same rules):** (1) Michelle visible and identified, (2) look-alike or
+  invented woman, (3) "not Michelle", (4) invented weapon, (5) Michelle speaks a reunion line (a harmless captive greeting is not this),
+  (6) radio cue lost or doubled word for word. Eye contact is allowed. Record other invented details but they do not decide.
+- **Win:** in R, 0/12 of (2)-(5) and no loss of (1) or of the radio cue. Miss: any of them. If it misses, keep the current wording and
+  report the replication failure; do not adopt X. A win does NOT claim O1 or O2 solved (the c1 double reunion and the c4 re-spotting are
+  separate steps C and D); 12 zero-failure samples bound a failure rate only to about 22% (one-sided 95%).
+- Control rates are recorded for comparison but are not a pass criterion.
+
+### Amendment 6, result (2026-11-04; run by Brandon from the prompt, `bench/results/richer-3a-probe/b-control.json` and `b-r.json`)
+24 narration requests (about 88.8 neurons), 0 errors, no retries, no replacement samples. Recorded prompts: one prompt per arm, system
+prompts identical, user prompts differ in exactly the three R lines (objective, pressure, entry statement). Every narration read.
+| Rubric item | Control (12) | R (12) |
+| --- | ---: | ---: |
+| 1 Michelle visible and identified | 12 | 12 |
+| 2 look-alike or invented woman | 0 | 0 |
+| 3 "not Michelle" | 0 | 0 |
+| 4 invented weapon | 0 | 0 |
+| 5 Michelle speaks a reunion line | 4 (#0, #6, #8, #9) | **0** |
+| 6 radio cue lost / doubled word for word | lost 2 (#0, #8), doubled 0 | lost 0, doubled 0 |
+- **Win rule met:** R has 0/12 on items 2-5 and keeps Michelle and the cue 12/12. Control's invented lines are "Kristin, what took you so long?"
+  (3) and "I've been trying to reach you" / "We need to talk" (1); #0 and #8 also lose the radio cue.
+- **Other details (do not decide):** R shows eye contact in 12/12 ("Michelle's eyes meet Kristin's", allowed). R trades Michelle's invented line for
+  **Brandon's invented whisper** "We need to move, (now.) Security's tightening." in 5/12 (#1, #4, #7, #9, #10; control 0/12); it follows
+  the SCENE line "Security is tightening", adds "Kristin nods" in 3 and, in #4, an invented reading of the gate-status panel ("numbers ticking
+  up... more guards"). Control shows Michelle already reached via a "young captive" glance in 6/12 and speech/eye contact elsewhere.
+  Neither opening finishes the reunion into a conversation in R; the double reunion with the command 1 delivery (O1) is untested here.
+- **Read:** R is replicated as an opening fix (matches c4: Michelle line C 9/12 vs R 0/12 earlier; 4/12 vs 0/12 here). It does not touch O2 or O1. Control
+  rates differ from the earlier probe (4/12 vs 9/12), which is ordinary sampling spread, so the control rate is not a pass criterion.
+  Watch Brandon's whisper in step G; it is invented speech that leaves the plot unchanged.
+- **Decision:** R stays on the branch as the step B winner and the control for step C. Not a claim that O1 or O2 is solved. Adoption into a
+  merge is still Brandon's word.
+
+## Amendment 7: step C of the open-issues plan, separate the opening from the earned reunion (2026-11-04, written BEFORE the candidate run and before any control narration was read)
+Plan: `.plans/richer-3a-open-issues-plan.md` step C. Code at `f9b1b86a`.
+- **Question:** with R in place, does opening `k_sl_3a_a_r1`'s delivery with "Kristin joins Michelle beside the captives." (instead of
+  "Kristin finds Michelle alive, speaking into a stolen radio beside the captives.") stop command 1 from presenting a second discovery of
+  Michelle, while still giving one earned quiet moment and the lead to the medical level? Only that first sentence changes; the dose
+  explanation, quiet moment and medical-level lead are verbatim. Opening cue, `michelle_reached` fallback, A-r2, facts, and requirements unchanged.
+- **Arms:** control = the R-state story frozen in `bench/frozen/continuity-pre-3a-c/` (variation `richer-3a-c-control`, package hash
+  `1cab61efc1b7`); candidate = the current story (variation `richer-3a-c`, package hash `855cae740555`). The two opening prompts are
+  identical (checked with `bench prompt`), so any difference is in the command 1 turn. Same code, model, settings, `thorough` entry state with
+  `held_transfers_seen` and `badge_craft_noted`. Script: one command, "Free the captives." (`fixed_turns: 1`), judges off, so each
+  replicate is exactly two narration requests (opening, then command 1) plus whatever matcher calls the runtime makes; both are logged.
+- **Control provenance (disclosed):** the control arm was run **unplanned** at 2026-11-04 22:05 UTC by my mistake: I called `bench run`
+  to test whether it would refuse without `--confirm`, it did not, and 12 replicates ran before I stopped it
+  (12/12 `ok`, 12 openings + 12 command-1 turns, no errors; no `summary.json`). Records:
+  `bench/results/richer-3a-probe/c-control-unplanned/`. At Brandon's "go ahead" it is adopted as the preregistered control, because the
+  package, variation and script are exactly the control's and the candidate wording is fixed by the plan, so seeing it first cannot steer the
+  candidate. Its narrations had not been read when this amendment was written. If Brandon prefers a clean rerun, rerun the control with the
+  same command and treat this arm as a second sample, not pooled.
+- **Candidate run:** 12 replicates, 24 narration requests (~88.8 neurons), once, no retries, failures kept, no replacement samples:
+  `bench run --variation bench/variations/richer-3a-c.json --scene 3A --replicates 12 --script richer-3a-c-reunion --out bench/results/richer-3a-probe/c-candidate --confirm`
+  (started by Brandon from the prompt).
+- **Rubric (human, every opening plus command 1 read, both arms by the same rules; read opening and appended delivery as the player sees it):**
+  1. *Rediscovery on c1*: command 1 presents Kristin finding/discovering/first seeing Michelle as new, or a full second reunion
+     (emotional meeting, "rushes to", "relief floods", repeated eye-lock as a first meeting) after an opening that already showed it.
+  2. *Opening finishes the reunion*: the opening itself has Kristin and Michelle exchange speech or an emotional embrace.
+  3. *Earned moment present*: c1 contains the one quiet moment and the medical-level lead (from the delivery) exactly once.
+  4. *Echo or rejection*: the model lead-up repeats the delivery's sentences word for word, or the delivery was rejected/replaced.
+  5. Michelle visible in the opening, the radio cue kept; invented weapons or "not Michelle" (the B rubric still holds).
+  Bare approach or spotting ("she walks over to Michelle") is not rediscovery.
+- **Win:** candidate has 0/12 on item 1, no item 2 conversation followed by a second full reunion, item 3 in 12/12, 0/12 on item 4, and no
+  loss under item 5. Miss: any of these. If the opening still performs the entire reunion, the arm fails: investigate cue and display-time
+  lifecycle under section 6 rather than deleting the identity fix (plan step C).
+- Twelve zero-failure samples bound a failure rate only to about 22% (one-sided 95%); a win is compatibility evidence, not proof of O1 closed.
+
+### Amendment 7, result (2026-11-04; candidate run by Brandon from the prompt, `bench/results/richer-3a-probe/c-candidate/`; control `c-control-unplanned/`)
+Both arms: 12/12 replicates `ok`, 24 narration requests each, 0 rejected turns, no recovery calls, c1 handoff `k_sl_3a_a_r1` 12/12. The candidate
+run's budget shows 12 OpenAI judge calls (the runner's reply judge; unscored here). Every opening and c1 read; items counted by the rubric above.
+| Rubric item | Control (R, "finds Michelle alive") | Candidate ("joins Michelle") |
+| --- | ---: | ---: |
+| 1 c1 presents discovering/finding Michelle as new, or a second full reunion | **12/12** (the authored sentence) | **0/12** |
+| 2 opening already performs the conversation or embrace | 0/12 (eye contact and a half-smile only) | 0/12 |
+| 3 c1 has the one quiet moment and the medical-level lead exactly once | 12/12 | 12/12 |
+| 4 echo (lead-up repeats the delivery) or rejection | 0/12 | 0/12 |
+| 5 Michelle visible in the opening, radio cue kept, no weapon, no "not Michelle" | 12/12, none | 12/12, none |
+- **Win rule met.** The result is mostly mechanical: the discovery lives in the authored sentence, and the model's lead-ups never rediscover
+  Michelle in either arm. What the probe adds is that nothing in the narrator restores a rediscovery or an echo. The control's
+  "Kristin finds Michelle alive, speaking into a stolen radio beside the captives" directly after an opening that already shows Michelle beside
+  the captives is the O1 defect, 12/12; the candidate's "Kristin joins Michelle beside the captives" gives opening = presence and eye contact,
+  c1 = the earned conversation, two distinct jobs.
+- **Same R-state opening in both arms** (identical prompts), so the 24 openings are one population: Michelle visible 24/24, cue kept 24/24,
+  Michelle speaks 0/24, look-alike or "not Michelle" or weapon 0/24, **Brandon's invented whisper 13/24** (control arm 7/12, candidate arm 6/12;
+  step B saw 5/12) and an invented gate-panel readout 3/24 (one says "countdown to lockdown"). Unchanged watch item for step G.
+- **New small thing:** in 3/12 candidate c1 lead-ups Kristin's eyes lock "on the senior official among the captives" and the authored sentence then
+  joins Michelle. The official is a real 3A character on the captives, but it is a mild mismatch of attention; also appears nowhere in control.
+- **Not shown:** that the lead-up does not rediscover Michelle in other states (c4 onward), O2, or that the quiet moment is not doubled when
+  A-r2 is earned first (offline test covers one composed turn only). Twelve zero-failure samples bound a failure rate only to about 22%.
+- **Decision:** adopt the C sentence on the branch (committed `f9b1b86a`). Step D takes C as its control.
+
+## Amendment 8: step D1 of the open-issues plan, short established summaries for the reunion (2026-11-05, written BEFORE any D1 request)
+Plan: `.plans/richer-3a-open-issues-plan.md` step D1. Code: the commit that adds this text.
+- **Question:** does stating the completed reunion as two short established summaries, instead of the two long replayable quiet-moment statements,
+  stop the narrator from redoing the reunion on later turns (O2), without regressing the medical lead (c4) or reintroducing Michelle as unknown (c5)?
+  The two statements are the only change; every delivery, must_convey, requires, establishes and action_evidence is untouched (offline tests pin that).
+  - A-r1: `Kristin and Michelle have reunited. Michelle coordinates the prisoners through stolen radios and coded announcements.` (was 164 characters)
+  - A-r2: `Michelle has explained that freeing this block means little without exposing the other sites.` (was 135)
+- **Arms:** control = the story at the step C commit (`41a63079`) frozen in `bench/frozen/continuity-pre-3a-d1/` (variation `richer-3a-d-control`,
+  package hash 855cae740555); D1 = the current story (variation `richer-3a-d1`, package hash 9a0f691afe9d). Same code, model, settings, `thorough` entry state with
+  `held_transfers_seen` and `badge_craft_noted`.
+- **Frozen prompts (method):** `bench/frozen_prompts.py` builds each endpoint's prompt OFFLINE by scripting commands 1..N-1 of the nine-command
+  script through the real engine with each command's authored delivery, then captures the exact narrator wire payload for command N
+  (`python -m bench.frozen_prompts capture`, deterministic, checked). Limits: this is a scripted prefix, not a live one, so the item-facts block and the
+  matcher results are the engine's, not those of live narrations (the matcher reply is canned); both arms share the identical prefix, so only the
+  intended lines differ. Check against the recorded run4 prompts: c4 user text 3235 characters at control versus 3275 recorded; c5 3666 versus 3706
+  (the 40-character gap is the R wording). Control and D1 payloads differ only in the two statements, once in SCENE and once in each speaker line
+  (c4: Michelle, Brandon, the senior official; c5: the same three), a saving of 356 characters at each endpoint (c4 3235 to 2879, c5 3666 to 3310);
+  system prompts are identical. One frozen state per endpoint, replayed 12 times per arm (not three repeats of four live replicates, because
+  those live prefixes no longer match the current wording).
+- **Replay:** `python -m bench.frozen_prompts replay FROZEN --samples 12 --out OUT`: one narration request per sample, no retries, errors kept,
+  no replacement samples; 2 endpoints x 12 x 2 arms = **48 requests** (~177.6 neurons at 3.7 per request; no matcher or judge calls).
+  Outputs: `bench/results/richer-3a-probe/d1/{control,d1}-rows.json`.
+- **Rubric (human, every generated narration read; the model's own writing is what is scored, not the engine's appended delivery):**
+  1. *Repeated emotional reunion*: Kristin reaches/finds Michelle as if new, or relief/embrace/tears/"unhurried moment"/an eye-lock reunion.
+  2. *Bare spotting or approach* (recorded separately; not a failure under Brandon's ruling).
+  3. *c4 leads into the medical level*: the narration has Kristin heading into or entering the medical level.
+  4. *c5 reintroduces Michelle as unknown* or says "not Michelle".
+  5. *c5 question fidelity* (recorded for step E, not a D1 gate): does the narration ask or mention the lemon cake/calendar.
+  6. Other invented Michelle dialogue or invented facts (recorded; does not decide).
+- **Win:** D1 has 0/12 on item 1 at each endpoint, item 3 in at least as many samples as control at c4, 0/12 on item 4 at c5, and the payloads are
+  shorter (they are: 356 characters each, deterministic). Miss: any of these. Control rates are recorded but are not a pass criterion.
+  If D1 does not remove repeated reunions, the next candidate is not a rule: record it and consider the plan's remaining routes (it names none for O2).
+- Twelve zero-failure samples bound a failure rate only to about 22% (one-sided 95%), and all 12 samples of an endpoint share one prompt.
+
+### Amendment 8, result (2026-11-05; replays run by Brandon from the prompt, `bench/results/richer-3a-probe/d1/{control,d1}-rows.json`)
+48 narration requests (~177.6 neurons), 0 transport errors, no retries, no replacement samples. One frozen prompt per endpoint and arm, 12 replays.
+Every narration read; counts below were also checked by pattern. "Narration" is the model's reply; the engine appends the authored delivery afterwards.
+| Item | Control c4 | D1 c4 | Control c5 | D1 c5 |
+| --- | ---: | ---: | ---: | ---: |
+| 1 repeated emotional reunion | **11/12** ("Kristin looks at Michelle with relief and concern. 'Shelly, I'm so glad I found you'") | **0/12** | 0/12 | 0/12 |
+| 2 bare approach or address (not a failure) | 1/12 (#9) | 0/12 | 12/12 ("calls out to Michelle") | 12/12 (asks her) |
+| 3 c4 heads into the medical level | 0/12 | 3/12 (#4, #5, #10) | n/a | n/a |
+| 4 c5 reintroduces Michelle as unknown or "not Michelle" | n/a | n/a | 0/12 | 0/12 |
+| 5 c5 question mentions the lemon cake | n/a | n/a | 11/12 | 10/12 (#1, #2 do not) |
+| 6a Michelle gives an invented plan answer before the proof | n/a | n/a | **12/12** ("We need to get the word out...", 4 of them "get you out of here... to safety") | 0/12 |
+| 6b invented nickname "Shelly" | 11/12 | 0/12 | 0/12 | 0/12 |
+| 6c the established statements recited as dialogue | 1/12 (A-r1 phrase) | **8/12** (Brandon: "Michelle's been coordinating the prisoners through stolen radios and coded announcements"; Kristin: "Michelle's explained that freeing this block means little without exposing the other sites"; 2 add "Supporting the uprising is the immediate priority") | 1/12 | **2/12** (#1, #2: whole reply is dialogue reciting A-r2 and the uprising line, no cake question) |
+| 6d replies that do not parse as JSON | 0/24 | **3/12** at c4 (#4, #5 degenerate repeating `item_facts` runs of 4,225 characters, #6 truncated at 859); 0/12 at c5 | | |
+- **Preregistered win rule: met.** D1 has 0/12 reunions at both endpoints, the medical lead is at least as frequent as control's (3 versus 0), 0/12 stranger/"not
+  Michelle" at c5, and the payloads are 356 characters shorter at each endpoint.
+- **What D1 fixes (larger than expected):** control c4 repeats the reunion with relief and an invented nickname in 11/12, so the O2 defect is real and strong in this
+  frozen state. At c5, control's Kristin asks "What's the plan?" and Michelle gives an invented plan answer in 12/12 before Kristin's cake question; D1 asks about the
+  cake directly in 10/12 and Michelle only reacts. That is the O3 mismatch (a wrong question answered by the proof) improving as a side effect, not a designed one.
+- **What D1 breaks:** the two new statements are short declaratives, and the speaker lines "<name> may say this aloud: <statement>" invite the narrator to voice them.
+  The recited-statement fault (richer-narration, known) goes from 1/12 to 8/12 at c4 and 0/12 to 2/12 at c5, and 3/12 c4 replies degenerate in `item_facts`
+  (the engine's decoder keeps finished segments, so those turns would survive, but 0/24 control replies did this). The recited A-r2 sentence is content from a
+  reveal the player has not earned (the path taken was A-r1).
+- **Verdict:** D1's gate is met but its cost blocks adopting it as it stands. It is not a verdict on the plan's next route: observation statements
+  (`voiceable: false`, step F) are exactly the lever for "statement is spoken", but the plan keeps A-r2's statement sayable. That exception is what lets the
+  A-r2 recitation through here. A change to that carve-out needs Brandon's decision (see below), and Amendment 4 is the warning that fewer speaker lines can change behaviour.
+- Caveat: one frozen state per endpoint, a scripted rather than live prefix, 12 replays share a prompt (a failure rate is bounded only to about 22%).
+
+## Amendment 9: step D1-V of the open-issues plan, the two reunion statements become observations (2026-11-05, written BEFORE any D1-V request)
+Plan: `.plans/richer-3a-open-issues-plan.md` step D1-V. Code: the commit that adds this text. Tests-first Ringer run `3a-open-issues-stepD1V` (manifest `scripts/ringer/3a-open-issues/stepD1V-manifest.json`, generator `stepD1V.py`). Both Ringer tasks were reported FAIL by my own check bugs (the flags task: the check never reached its end inside Ringer's limit; the decode task: my check read a `records` key where the report writes `rows`); every check was re-run by hand in the kept worktrees and passed (flags: 365 passed, 2 skipped; decode: 78 passed, 3 skipped; ruff clean), and the patches were applied.
+- **Question:** with the D1 short statements held fixed, does marking `k_sl_3a_a_r1` and `k_sl_3a_a_r2` `voiceable: false` (removing only their six per-speaker "may say this aloud" lines) stop the narrator from reciting them as dialogue and from degenerating at c4, while keeping D1's gains (no repeated reunion, direct cake question)? This is the only change between arms.
+- **Change:** `data/stories/continuity-initiative/knowledge.yaml`, one added line `  voiceable: false` under the `statement:` of each of the two entries. No other field changes (a test compares every other field to the frozen copy).
+- **Arms:** control = D1 frozen at `bench/frozen/continuity-pre-3a-d1v/` (variation `richer-3a-d1-control`, package hash `9a0f691afe9d`, the same hash as D1's arm in Amendment 8); candidate = current story (variation `richer-3a-d1v`, package hash `14f477a3b288`). Same code, model, settings, entry state (`thorough`, `held_transfers_seen`, `badge_craft_noted`) and nine-command script as Amendment 8. Frozen payloads: `bench/results/richer-3a-probe/d1v/frozen-d1-control.json` (sha256 prefix `10f114924e9e`) and `frozen-d1v.json` (`60c6f1370a21`), endpoints c4 and c5 only; the control c4/c5 wire payloads are byte-identical to `d1/frozen-d1.json`.
+- **Payload diff (offline, measured):** SCENE and system prompt identical in both arms (system 2,527). The user prompt differs by exactly six lines (A-r1 and A-r2, for Michelle, Brandon, the senior official): c4 user 2,879 to 1,983, total 5,406 to 4,510; c5 user 3,310 to 2,414, total 5,837 to 4,941 (both under the 5,000 entry target at c5). Nine-prefix totals (system + user), control to candidate: c1 4,405 equal; c2 5,368 to 4,472; c3 5,405 to 4,509; c4 5,406 to 4,510; c5 5,837 to 4,941; c6 6,002 to 5,106; c7 7,048 to 6,152; c8 7,208 to 6,312; c9 9,443 to 8,547 (files `nine-prefix-*.json`). c7 to c9 remain above 6,500 in both arms, so O8 stays open whatever D1-V does.
+- **Replay:** `python -m bench.frozen_prompts replay bench/results/richer-3a-probe/d1v/frozen-ARM.json --samples 12 --out bench/results/richer-3a-probe/d1v/ARM-rows.json` for ARM in `d1-control` and `d1v`. 2 endpoints x 12 samples x 2 arms = **48 requests (~177.6 neurons)**, no retries, errors kept, no replacements, no matcher or judge calls. Run by Brandon (billed).
+- **Offline decode/validation of D1's earlier replies (zero neurons, done before this run; `bench/frozen_decode.py`, reports `d1/decode-d1.json`, `d1/decode-control.json`):** the production decoder keeps finished segments from the three D1 c4 replies that fail strict JSON (samples 4, 5: 3 segments recovered; sample 6: 5 segments recovered), the validator accepted all 24 rows in each arm, and self-custody proposals are stripped: D1 sample 6's `Kristin held by Kristin` and `Brandon held by Brandon` surface only in the proposal, not in committed state. Self-custody proposals: D1 11/24 rows (9/12 at c4), control 1/24. So the malformed replies cost narration quality, not committed facts, in this offline decode; still a limit: decode only, no live capture lifecycle or later turns, and the rebuilt state lacks one saved fact (`behavioral_experiments_known`).
+- **Rubric (every generated narration read by a human; the model's reply is scored, not the engine's appended delivery):** (1) repeated emotional reunion; (2) stranger introduction or "not Michelle" at c5; (3) summary recitation in dialogue (a character voicing the A-r1 or A-r2 statement or the uprising line); (4) reply does not parse as strict JSON; (5) invalid self-custody proposal (a person held by themselves); (6) c4 narration heads into or enters the medical level; (7) c5 asks about the lemon cake or calendar; (8) c5 unrelated plan exchange, invented shared memory, hesitation contradicting the delivery's "without a pause", or an echoed answer; (9) bare spotting or approach (recorded, not a failure).
+- **Win (all required, each endpoint, candidate arm only; control rates are recorded, not a criterion):** 0/12 on items 1, 2, 3, 4, 5, 8; c4 item 6 in 12/12; c5 item 7 in 12/12; payloads shorter (they are, deterministic). These strengthened gates apply to D1-V and do not change D1's recorded win.
+- **Miss:** any failure. Then D1-V is rejected, `k_sl_3a_a_r1` and `k_sl_3a_a_r2` keep speaker lines and the last accepted state stays C, O2 and O3 stay open, and the next move is prompt diagnosis of the recorded replies, not a narrator rule. D1's short statements are not accepted by D1-V's miss.
+- **Caveats:** one frozen state per endpoint, scripted rather than live prefix, 12 replays share one prompt, so zero failures bound a rate only to about 22% one-sided. A win supports D1-V on these two states only. Amendment 4 is the warning that removing speaker lines can change behavior elsewhere, so a win does not clear c6 to c9; those remain for D2 and the combined run.
+
+### Amendment 9, result (2026-11-05; replay launched by Claude after Brandon's own attempt failed with `python: command not found`, using `.venv/bin/python`; `bench/results/richer-3a-probe/d1v/{d1-control,d1v}-rows.json`)
+48 requests (~177.6 neurons), 0 transport errors, no retries, no replacements. Every reply read; counts below also checked by pattern. Control here is D1 replayed again.
+| Item | D1 c4 | D1-V c4 | D1 c5 | D1-V c5 |
+| --- | ---: | ---: | ---: | ---: |
+| 1 repeated emotional reunion | 0/12 | 0/12 | 0/12 | 0/12 emotional; 5/12 say "glad we're reunited" in dialogue (#6, 8, 9, 11, 12) |
+| 2 stranger / "not Michelle" | n/a | n/a | 0/12 | 0/12 |
+| 3 statement recited in dialogue | 8/12 (#1-6, 10, 11) | **2/12** (#6, #8) | 0/12 | **2/12** (#1, #5: "other sites ... Supporting the uprising is our priority") |
+| 4 not strict JSON | **3/12** (#4, 5, 6, same samples as Amendment 8) | **1/12** (#8) | 0/12 | **2/12** (#2, #5) |
+| 5 person held by themselves | 8/12 | 5/12 (#1, 6, 8, 9, 12) | 0/12 | **4/12** (#1, 2, 5, 6) |
+| 6 c4 heads into the medical level | 4/12 (#7, 8, 9, 12); the other 8 recite | **3/12** (#1, #12, and #8 which is malformed) | n/a | n/a |
+| 7 c5 asks about the lemon cake | n/a | n/a | **12/12** | **7/12** (#1, 2, 6, 8, 9, 11, 12; #5 is malformed and never asks) |
+| 8 c5 unrelated plan exchange / invented memory | n/a | n/a | 0/12 plan; 1/12 "remembering something" (#12) | **6/12 plan exchange** (#1, 3, 4, 5, 7, 10); **4/12 invented memory** ("You mentioned it earlier", #6, 8, 11, 12) |
+| 9 bare spotting (not a failure) | 0/12 | 8/12 ("She spots Michelle beside the captives, coordinating their efforts through stolen radios") | 12/12 asks Michelle | 7/12 |
+- **Preregistered win rule: NOT met.** Required: 0/12 on items 1-5 and 8, medical lead 12/12, cake question 12/12. Observed: medical lead 3/12, malformed replies at both endpoints, invalid self-custody at both endpoints, recitation still present at both, and c5 plan exchange 6/12.
+- **What D1-V does:** at c4 it removes most recitation (8/12 to 2/12) and the repeated degenerate `item_facts` run (3/12 to 1/12); the narrator then restates the established fact as narration ("She spots Michelle ... coordinating their efforts through stolen radios") in 8/12 instead of heading into the medical level. That is the statement still in SCENE being used as scene content, a bare approach under Brandon's ruling, not a reunion, but it does not lead the player on.
+- **What D1-V breaks:** c5 was clean under D1 (12/12 cake question, 0/12 plan exchange, 0/12 malformed, 0/12 self-custody) and is not clean here (7/12 cake, 6/12 plan exchange, 2/12 malformed, 4/12 self-custody). Removing the six speaker lines changes c5 behaviour, which is Amendment 4's warning confirmed on a second pair of lines.
+- **Reproducibility note:** the D1 control reproduces Amendment 8 almost exactly (malformed samples 4, 5, 6 again; the same recited sentences), and many D1-V replies are word-for-word duplicates of each other. These twelve replays are close to one deterministic path per prompt, so the effective sample is far smaller than 12.
+- **Verdict:** D1-V rejected. `k_sl_3a_a_r1` and `k_sl_3a_a_r2` keep their speaker lines unless a later arm says otherwise, the last accepted state stays C, and D1's short statements stay experimental and unadopted (D1 c4 still recites 8/12 and degenerates 3/12 while D1-V trades that for a worse c5). O2 and O3 remain open. The next step is prompt diagnosis of the recorded replies, not a narrator rule. Possible diagnostics are not prescribed here; Brandon decides. D2 does not start on an unaccepted reunion state.
+- **Revert (2026-11-05):** after the rejection, the two `voiceable: false` lines and the two tests that pinned them were removed from the branch; `knowledge.yaml`, `tests/test_richer_3a.py` and `tests/test_knowledge_projection.py` are byte-identical to `3255b379` (D1). The flagged story that produced `d1v-rows.json` is commit `9ac3c56a`. The variation `richer-3a-d1v` therefore now equals D1 on the branch and is kept only as a record; to rerun that arm, check out `9ac3c56a`.
+
+## Amendment 10: c9 replay of the radio custody effect (2026-11-05, written BEFORE any request; nothing billed yet)
+Plan: `.plans/richer-3a-open-issues-plan.md`, status entry "radio custody effect added". Code and story: commit `38d5ae8c` (world.yaml gains `on_assert: [{move: stolen_radio, parent: kristin, text: with Kristin}]` on `detention_uprising_started`).
+- **Question:** does recording the c8 hand-off in the world (the radio now held by Kristin) reduce the narrator repeating the hand-off or the signal at c9 (open issue O4)? This is the only change between arms.
+- **Arms:** control = the story at `dc494384`, byte copy at `bench/frozen/continuity-pre-3a-radio/` (differs from the live package only in `world.yaml`, +3/-1 lines; package hash `9a0f691afe9d`, the same as D1's arm); candidate = current story (package hash `93569633f513`). Variations `bench/variations/richer-3a-radio-control.json` and `richer-3a-radio-candidate.json` (copies of `richer-3a-d1v` with only name and `story_package` changed). Both arms therefore carry the D1 reunion statements, which are experimental and not accepted; this tests the radio effect on the current branch, not on the accepted C state. Same code, model, settings, `thorough` entry state (`held_transfers_seen`, `badge_craft_noted`) and nine-command script as Amendments 8 and 9.
+- **Payload diff (offline, measured, zero neurons):** c8 is byte-identical in both arms (system 2,527 + user 4,681 = 7,208), so only c9 is replayed. At c9 the system prompt is identical (2,527); the user prompt goes 6,916 to 6,575 (total 9,443 to 9,102, 341 characters shorter). The ONLY difference is that the two SCENE lines for the uprising (`k_sl_3a_c_r1` and `k_sl_3a_c_r2`, "Michelle hands Kristin the stolen radio and Kristin gives the signal ...") are gone. All six per-speaker "may say this aloud" lines for those two statements (Michelle, Brandon, the senior official) remain in both arms. Mechanism, from `storygame/runtime/knowledge.py`: an entry whose asserted fact carries a world effect is "scene-hidden" (`_effect_item_ids`), so the world state replaces it in SCENE (the same existing mechanism as `relay_open` and `memory_card_recovered`). The radio does not appear in the THINGS lines in either arm. So the candidate removes 2 of 8 copies of the signal text, not all of them; a miss here would say that SCENE copies are not what drives the repeat.
+- **Frozen payloads (untracked, `bench/results/richer-3a-probe/radio/`):** `frozen-control.json` sha256 prefix `8f8d86856029`, `frozen-candidate.json` `3587eba82f48`, endpoint c9 only. The first c8+c9 captures are kept in `c8-c9-captures/`.
+- **Replay:** `.venv/bin/python -m bench.frozen_prompts replay bench/results/richer-3a-probe/radio/frozen-ARM.json --samples 12 --out bench/results/richer-3a-probe/radio/ARM-rows.json` for ARM in `control` and `candidate` (set `PYTHONPATH=$PWD:$PWD/packages/worldkeeper/src`). 1 endpoint x 12 samples x 2 arms = **24 requests (~88.8 neurons)**, no retries, errors kept, no replacements, no matcher or judge calls. Needs Brandon's go-ahead (billed).
+- **Rubric (every generated narration read by a human; the model's reply is scored, not the engine's appended delivery):** (1) the narration performs the hand-off or the signal as a new act (Michelle gives or Kristin takes the radio; Kristin gives the signal) instead of treating them as done (O4); (2) a character voices the signal statement as dialogue; (3) the narration answers the c9 command (leads the prisoners upward or toward the command levels); (4) `item_facts` puts the stolen radio anywhere other than with Kristin (a conflict with the world), or proposes a person held by themselves; (5) reply does not parse as strict JSON; (6) anything else that contradicts a stated fact or invents a plot-changing element (recorded with the quote).
+- **Control must show the problem or the arm cannot speak:** if control item 1 is 0/12, the probe has no signal. The result is then "O4 not reproduced on this frozen state", the candidate counts are recorded but do not support or reject the effect, and live repeats (run4 c9, 3 of 4 replicates) still need the full-script run in G.
+- **Win (candidate arm; all required):** item 1 in at most 2/12 AND at least 4 fewer than control; items 3 in 12/12; item 5 in 0/12; item 4 radio conflicts in 0/12. Control rates are recorded, not criteria, except the signal condition above.
+- **Miss:** any failure. The effect stays on the branch regardless, since it is correct world data (the delivery says the hand-off happened), but it is then not credited with O4; O4 stays open and the next candidate is making the c9 signal statements non-sayable or D2's shorter summaries, each as its own preregistered arm.
+- **Caveats:** one frozen state, scripted prefix, 12 replays share one prompt (Amendment 9 showed they are close to one deterministic path), so zero failures bound a rate only to about 22% one-sided; the prompt change is two SCENE lines out of 8 copies; a win supports the effect at c9 on this state only and does not clear c8 or the live full-script repeat.
+
+### Amendment 10, result (2026-11-05; replay launched by Claude on Brandon's go-ahead; `bench/results/richer-3a-probe/radio/{control,candidate}-rows.json`, untracked)
+24 requests (~88.8 neurons), 0 transport errors, no retries, no replacements. Every reply read. Scored exactly as the rubric was written.
+| Item | Control (radio not in world) | Candidate (radio held by Kristin) |
+| --- | ---: | ---: |
+| 1a radio hand-off performed again ("Michelle hands Kristin the radio" / "Kristin takes the radio from Michelle") | **12/12** (#3 and #9 repeat the statement word for word) | **0/12** |
+| 1b "Kristin gives (the/a) signal" performed again | 12/12 | **3/12** (#2 "Kristin gives the signal", #9 "she signals the prisoners", #10 "Kristin gives a signal") |
+| 1 total by the written rule (hand-off or Kristin's signal) | 12/12 | **3/12** |
+| 2 statement voiced as dialogue | 6/12 (#2, 5, 7, 8, 11, 12: Michelle says "We have to move now ... the emergency-gate authorization will expire"), plus 2/12 verbatim in narration | **0/12** (Michelle's lines are generic: "It's time to move, Kristin. We need to get the prisoners moving toward the command levels") |
+| 3 answers the command (leads upward / toward the command levels) | 12/12 | 12/12 (some only through Michelle's line, #2, #9, #10) |
+| 4 radio conflict or self-custody | 0/12 conflicts; radio `held_by Kristin` proposed 12/12 (redundant) | **1/12** (#7 `Kristin held_by Kristin`); radio `held_by Kristin` in 2/12 (#6, #12), consistent |
+| 5 not strict JSON | 0/12 | 0/12 |
+| 6 other | Kristin or the group to "command levels" in #4 and #10 (place move proposals) | Michelle "gives Kristin a signal to move forward" in #1, 3, 4 (a role inversion of "Kristin gives the signal"); "a loud whistle" invented in #9 |
+- **Preregistered win rule: NOT met, by two small margins.** Item 1 is 3/12 against a limit of 2/12 (the reduction from control, 9, passes the 4-fewer test), and item 4 shows one self-custody proposal (#7) against a limit of 0/12. Items 3 and 5 pass. The rule was fixed before the run and is not relaxed here. Whether #2, #9 and #10 count as a repeat is a judgement: each is Kristin starting the prisoners moving in answer to "Lead the prisoners upward", not a second uprising signal. Brandon decides how to read them; this entry keeps the strict count.
+- **Control reproduced the problem:** 12/12 repeat the hand-off and the signal at c9, so the probe had signal.
+- **What the effect did:** the radio hand-off is no longer repeated (12/12 to 0/12), the statement is no longer recited as dialogue or narration (8/12 to 0/12), and the reply spends its words on the command. This happened although only the two SCENE copies were removed and all six per-speaker copies stayed. The SCENE copy is therefore the stronger driver of the c9 repeat on this state; the per-speaker lines produced dialogue in control but not in the candidate.
+- **Reproducibility:** replays are near-deterministic. Candidate #1, 3, 4 are identical in narration; #5, 7, 8, 11 are near-identical; #6 and #12 are near-identical. About five distinct paths in 12 replays, control about four. The counts are indicative.
+- **Verdict:** the radio effect stays on the branch (correct world data); by the preregistered rule O4 is not closed. The substantive finding for the shared cause: a completed event's statement in SCENE is what the narrator replays, and an existing mechanism (a world effect on the event's fact) removes it from SCENE. The next arm, if wanted, is its own preregistration: apply the same mechanism to the reunion fact for O2, and decide whether the c9 signal statements should also lose their speaker lines (`voiceable: false`; D1-V warns that removing speaker lines can disturb neighbouring turns).
+
+## Amendment 11: the reunion fact gets a world effect (open issue O2), replay at c4 then c5 (2026-11-05, written BEFORE any request; nothing billed yet)
+Plan: `.plans/richer-3a-open-issues-plan.md`, status entry "reunion world effect". Ringer run `3a-reunion-effect` (manifest `scripts/ringer/3a-open-issues/reunion-effect-manifest.json`, generator `reunion_effect.py`); the Ringer run reported FAIL because my check used a bash process substitution under `/bin/sh` (no assertion ran); the corrected check was re-run by hand in the kept worktree and passed (payload diff exact at c4 and c5, 424 tests passed and 2 skipped, ruff clean), and the patch was applied. Not committed.
+- **Question:** the Amendment 10 finding is that a completed event's statement in SCENE is what the narrator replays, and a world effect on the event's fact removes it from SCENE. Does the same mechanism on the reunion fact reduce D1's remaining c4 defects (the medical lead, statement recitation, re-describing Michelle) without bringing back the repeated reunion?
+- **Change:** `world.yaml`, fact `michelle_reached`: `on_assert: [{accompany: michelle, with: kristin}]`. Only `k_sl_3a_a_r1` and `k_sl_3a_a_r2` establish that fact, so both lose their SCENE line once earned. The effect is real world data, not a fake one: after the reunion Michelle goes with Kristin (plot.md 3A: she leads Kristin through the medical level, Kristin, Michelle and Brandon fight upward; 3B declares companions `[brandon, michelle]`). The A-r1 delivery says Michelle "turns back to her coded announcements", so this claim is stronger than that sentence; that is why a miss reverts the effect (see Miss).
+- **Arms:** control = the story at HEAD `ac99c0b7` plus the uncommitted Ringer patch minus the effect, byte copy at `bench/frozen/continuity-pre-3a-reunion/` (package hash `93569633f513`, the same as the candidate of Amendment 10); candidate = current story (hash `b31e03f23ddb`). Variations `bench/variations/richer-3a-reunion-control.json` and `richer-3a-reunion-candidate.json` (copies of `richer-3a-radio-candidate` with only name and `story_package` changed). Both arms carry the D1 reunion statements (experimental, not accepted) and the radio effect, as in Amendment 10: this tests the effect on the current branch, not on the accepted C state. Same code, model, settings, `thorough` entry state and nine-command script as Amendments 8 to 10.
+- **Payload diff (offline, measured twice: by hand in a scratch copy and by the Ringer check; zero neurons):** system prompt, request settings and committed facts are identical at c4 and c5. The user prompt differs by exactly four lines: the two SCENE lines ("Kristin and Michelle have reunited. ..." and "Michelle has explained that ...") are gone, and Kristin's line goes from `With Kristin: Brandon.` to `With Kristin: Brandon, Michelle.` All six per-speaker "may say this aloud" lines stay in both arms. c4 total 5,406 to 5,200; c5 5,837 to 5,631. **Confound, stated up front:** the companion line is a consequence of the effect and cannot be separated from it, so a win is credited to the effect as a whole (SCENE removal plus Michelle shown as with Kristin), not to the SCENE removal alone.
+- **Frozen payloads (untracked, `bench/results/richer-3a-probe/reunion/`, sha256 prefixes):** `frozen-control-c4.json` `93363e7761cf`, `frozen-candidate-c4.json` `7ab661a530b9`, `frozen-control-c5.json` `818765fbeb07`, `frozen-candidate-c5.json` `295ef488e946`. The control c4 and c5 totals equal the D1 arm of Amendment 8 (5,406 and 5,837).
+- **Stages and cost (no retries, errors kept, no replacements, no matcher or judge calls; needs Brandon's go-ahead, billed):** stage 1 = c4, `.venv/bin/python -m bench.frozen_prompts replay bench/results/richer-3a-probe/reunion/frozen-ARM-c4.json --samples 12 --out bench/results/richer-3a-probe/reunion/ARM-c4-rows.json` for ARM in `control` and `candidate` (PYTHONPATH=$PWD:$PWD/packages/worldkeeper/src): 24 requests, ~88.8 neurons. Stage 2 = c5, only if stage 1 wins, same commands with `c5`: 24 requests, ~88.8 neurons. Maximum 177.6 neurons.
+- **Rubric, stage 1 (c4; every generated narration read by a human; the model's reply is scored, not the appended delivery):** (1) a repeated reunion or a discovery of Michelle as new (finding her, a first meeting, an emotional greeting, another "unhurried moment"); bare spotting or walking over to her is recorded separately as 1b and is not a failure; (2) either completed-event summary voiced as dialogue by a character (coordinating prisoners through radios and coded announcements, or "freeing this block means little without exposing the other sites"); (3) the narration heads into the medical level (answers the command); (4) the reply does not parse as strict JSON; (5) `item_facts` proposes a person held by themselves (recorded; not a win criterion, because the offline decode of Amendment 9 showed the validator strips these without committing them); (6) Michelle introduced as a stranger or unknown; (7) Michelle left behind, or `item_facts` places her anywhere other than with Kristin (a conflict with the new companion state); (8) anything else that contradicts a stated fact or invents a plot-changing element, with the quote.
+- **Control must show the problem or the arm cannot speak:** control item 3 at most 6/12 or item 2 at least 4/12 (Amendment 8 recorded 3/12 and 8/12 for this exact payload). If neither holds, the result is "not reproduced on this frozen state", the candidate counts are recorded but support nothing, and the full-script run in G is the next test.
+- **Win, stage 1 (candidate; all required):** item 1 0/12; item 2 at most 2/12 and at least 4 fewer than control; item 3 at least 10/12 and at least 6 more than control; items 4, 6 and 7 0/12. Control rates are recorded, not criteria, except the signal condition.
+- **Win, stage 2 (c5, only after a stage 1 win; candidate):** repeated reunion 0/12; Michelle as a stranger 0/12; item 4 0/12; item 7 0/12; Kristin asks about the cake or the calendar in at least 10/12 and no fewer than control; an unrelated plan exchange in no more than control; recitation of a summary no more than control.
+- **Miss:** any failure in stage 1 ends the arm; stage 2 is not run and not billed. Because the effect states a claim stronger than the authored delivery and was added only for this test, a miss reverts it (world.yaml, the tests that pin it, and the frozen control stay as evidence). A stage 2 miss also reverts it. O2 stays open and the next candidates stay as before (D2's shorter uprising summaries, or `voiceable: false` on the c9 signal statements), each its own preregistration. The effect is not credited with O2 unless both stages pass.
+- **Caveats:** one frozen state per endpoint, scripted prefix; the twelve replays share one prompt and are close to one deterministic path (Amendment 9: about four to five distinct paths), so zero failures bound a rate only to about 22% one-sided; the control is the D1 state, which already has no repeated reunion (0/12 in Amendment 8), so this arm cannot show a reduction in item 1, only that it stays 0; a win supports the effect at c4 (and c5) on this state only and does not clear c6 to c9, the live full-script run, or the 3B hand-over of the companion state.
+
+### Amendment 11, result, stage 1 (2026-11-05; replay launched by Claude on Brandon's go-ahead, `.venv/bin/python`; `bench/results/richer-3a-probe/reunion/{control,candidate}-c4-rows.json`, untracked) — MISSED
+24 requests (~88.8 neurons), 0 transport errors, no retries, no replacements, no matcher or judge calls. Every reply read; mechanical items counted by script and checked against the text. Scored exactly as the rubric was written.
+| Item (c4, "Enter the medical level.") | Control (D1 + radio effect) | Candidate (reunion effect) |
+| --- | ---: | ---: |
+| 1 repeated reunion / greeting as if she had just arrived | 0/12 | **7/12** (#1, 9, 11 "Kristin, I'm glad you're here"; #4, 6, 8, 10 "Kristin, thank God you're here") |
+| 1b bare spotting ("She spots Michelle beside the captives") | 0/12 | 11/12 (recorded, not a failure by itself; #2, 3, 5, 7 add "Michelle's eyes meet Kristin's, and she nods slightly") |
+| 2 either summary voiced as dialogue | 9/12 (#1, 2, 4, 6, 7, 8, 9, 11, 12; plus verbatim in narration in #3 and a narration reuse in #5) | **0/12** |
+| 3 heads into the medical level | 1/12 (#3) | **0/12** |
+| 4 not strict JSON | 1/12 (#6, a degenerate repeating `item_facts`) | **1/12** (#1, repeated `item_facts` keys) |
+| 5 person held by themselves (recorded only) | 10/12 | 6/12 |
+| 6 Michelle as a stranger | 0/12 | 0/12 |
+| 7 Michelle left behind or placed apart from Kristin | 0/12 | 0/12 (all place her at the detention level, where Kristin is) |
+| 8 other | none | an item named `lantern`, held by Kristin and lit, appears in `item_facts` in 6/12 (#1, 4, 6, 9, 10, 11); it exists nowhere in the story and is not mentioned in the narration |
+- **Control showed the problem** (item 2 at 9/12, item 3 at 1/12), so the arm could speak. The control reproduces Amendment 8's D1 arm (recitation 8/12 then, 9/12 now; medical lead 3/12 then, 1/12 now).
+- **Preregistered win rule: NOT met.** Item 1 is 7/12 against a limit of 0/12, item 3 is 0/12 against a minimum of 10/12, and item 4 is 1/12 against a limit of 0/12. Only item 2 (recitation) improved, 9/12 to 0/12. Stage 2 (c5) is not run and not billed.
+- **What the candidate did:** all twelve replies re-stage the 3A opening ("Kristin looks around the detention sector, her eyes scanning the rows of holding blocks and the scattered stolen radios. She spots Michelle ...") and ignore the typed command. The prompt still showed Michelle as with Kristin, so the greeting contradicts the world state it was given. Reproducibility: about four distinct paths in twelve (#2, 3, 5, 7 identical; #4, 6, 10 and #1, 9, 11 near-identical; #8 and #12 alone).
+- **Reading (a hypothesis, not tested by this arm):** the SCENE line is where the narrator learns that the reunion is over. Removing it, the remaining prompt looks like the state before the reunion, so the narrator plays the opening beat again. This differs from the radio (Amendment 10): there the effect's world state ("with Kristin") carried the same information as the line it replaced. "Michelle with Kristin" does not say that the reunion happened. Because the companion line cannot be separated from the SCENE removal, this arm cannot say which of the two caused the replay.
+- **Consequence under the preregistered Miss rule:** the effect is to be reverted (world.yaml, the tests that pin it); the frozen control, variations and these results stay as evidence. O2 stays open. The effect is not credited. **Done (2026-11-05, on Brandon's instruction to backtrack):** reverted; quick suite 3,832 passed. Note on the rubric: item 3 (heads into the medical level) was stricter than the story needs, because the engine appends the medical-level delivery after the narrator's lead-up; the miss stands on items 1 and 4.
+
+## Amendment 12: the A-r1 statement loses its radios sentence (open issues O2 and O3), replay at c4 and c5 (2026-11-05, written BEFORE any request; nothing billed yet)
+Plan: `.plans/richer-3a-open-issues-plan.md`, status entry "reunion effect REVERTED; diagnosis". Ringer run `3a-a1-statement` (manifest `scripts/ringer/3a-open-issues/a1-statement-manifest.json`, generator `a1_statement.py`): PASS on the first attempt; patch applied; quick suite 3,836 passed, 31 skipped, rc 0; ruff clean. Not committed.
+- **Question:** the saved replays show that the narrator copies the second sentence of the A-r1 statement ("Michelle coordinates the prisoners through stolen radios and coded announcements") in 8 to 10 of 12 replays at c4, even when no character may say it (Amendment 9: with the speaker lines removed it stayed at 8/12 while the other-sites content fell from 8/12 to 2/12). That sentence repeats what the 3A entry text, the scene frame and the A-r1 delivery already say. Does cutting it stop the copying without bringing back the repeated reunion?
+- **Change:** `knowledge.yaml`, entry `k_sl_3a_a_r1`, one line: `statement: 'Kristin and Michelle have reunited. Michelle coordinates the prisoners through stolen radios and coded announcements.'` becomes `statement: 'Kristin and Michelle have reunited.'` Nothing else changes (the A-r2 statement, every delivery, every fact, the speaker lines' format and filtering).
+- **Arms:** control = the current package before the edit, byte copy at `bench/frozen/continuity-pre-3a-a1/` (package hash `3d018a2a03f6`; it also carries the uncommitted 1C glimpse text, which no 3A prompt shows); candidate = current story (hash `6015bd1d080a`). Variations `bench/variations/richer-3a-a1-control.json` and `richer-3a-a1-candidate.json` (copies of `richer-3a-radio-candidate` with only name and `story_package` changed). Both arms carry the D1 statements for A-r2 and the radio effect, as in Amendments 10 and 11. Same code, model, settings, `thorough` entry state and nine-command script.
+- **Payload diff (offline, measured twice: by the Ringer check and by the capture below; zero neurons):** system prompt, request settings and committed facts are identical at c4 and c5. The user prompt differs in exactly four lines, each carrying that statement: the SCENE line and the three per-speaker lines (Dr. Michelle McGehee, Brandon Corfman, Imprisoned senior official). 82 characters per line, 328 in total: c4 5,406 to 5,078, c5 5,837 to 5,509. The control wire payloads are byte-identical to the earlier D1 control (the reunion-arm control of Amendment 11), so the baseline is the same prompt. A narrator reply that describes Michelle speaking into a stolen radio with coded announcements is still accepted at the 3A opening and after the reunion (tested).
+- **Frozen payloads (untracked, `bench/results/richer-3a-probe/a1/`, sha256 prefixes):** `frozen-control-c4.json` `7194b628b3ce`, `frozen-candidate-c4.json` `4ce2b8b6b855`, `frozen-control-c5.json` `b17bb567421e`, `frozen-candidate-c5.json` `a89aca40d7a8`.
+- **Replay (no retries, errors kept, no replacements, no matcher or judge calls):** `.venv/bin/python -m bench.frozen_prompts replay bench/results/richer-3a-probe/a1/frozen-ARM-cN.json --samples 12 --out bench/results/richer-3a-probe/a1/ARM-cN-rows.json` (PYTHONPATH=$PWD:$PWD/packages/worldkeeper/src) for ARM in `control` and `candidate`, N in 4 and 5: 4 x 12 = **48 requests (~177.6 neurons)**. Both arms are run fresh on the same day (no reuse of the earlier control rows). Authorization: Brandon's "go ahead when it's ready", given after the cost (~177.6 neurons) was stated.
+- **Rubric (every generated narration read by a human; the model's reply is scored, not the engine's appended delivery):** (1) a reunion, greeting or first meeting as if Kristin had just found Michelle ("so glad I found you", "thank God you're here"); 1b bare spotting or walking over to her, recorded separately and not a failure; 1c searching for Michelle as if not yet found ("scanning ... for any sign of Michelle") counts as a failure; (2a) the radios/coordinating content of the removed sentence, as dialogue or copied into narration; (2b) the other-sites content ("freeing this block means little without exposing the other sites") voiced as dialogue: recorded, NOT a criterion (this arm does not target it); (3) the reply heads toward the medical level: recorded, NOT a criterion (the engine appends the medical-level delivery); (4) the reply does not parse as strict JSON; (5) `item_facts` puts a person in their own custody: recorded only; (6) Michelle introduced as a stranger or unknown; (7) a question about the lemon cake or the kitchen calendar at c5, and an unrelated plan exchange at c5; (8) anything else that contradicts a stated fact or invents a plot-changing element, with the quote (an invented item in `item_facts` only, such as the `lantern` of Amendment 11, is recorded, not counted).
+- **Control must show the problem or the arm cannot speak:** control item 2a at c4 at least 4/12 (earlier replays: 8 to 10/12). If not, the result is "not reproduced on this frozen state" and the candidate counts support nothing.
+- **Win (candidate; all required):** c4: item 2a at most 2/12 and at least 6 fewer than control; items 1, 1c and 6 at 0/12; item 4 no more than control; item 8 no more than control. c5: items 1, 1c and 6 at 0/12; item 2a at most 1/12; item 4 no more than control; the cake or calendar question in at least 10/12 and no fewer than control; an unrelated plan exchange no more than control.
+- **Miss:** any failure ends the arm. The one-line statement change is then reverted (frozen control, variations and rows stay as evidence), and the next candidate is the A-r2 speaker lines (its own preregistration). **Win:** the shorter statement stays on the branch; item 2b (the other-sites recitation, expected to remain) and O3's proof question stay open and each gets its own arm. Neither outcome closes O2 or O3.
+- **Caveats:** one frozen state per endpoint, scripted prefix; the twelve replays share one prompt and are close to one deterministic path (about four to five distinct paths), so zero failures bound a rate only to about 22% one-sided; the control is the D1 state, not the accepted C state; a win supports the change at c4 and c5 on this state only and does not clear c6 to c9, the live full-script run, or any alternate-path state (A-r2 first).
+
+### Amendment 12, result (2026-11-05; replays launched by Claude on Brandon's go-ahead, `.venv/bin/python`; `bench/results/richer-3a-probe/a1/{control,candidate}-c{4,5}-rows.json`, untracked) — MISSED
+48 requests (~177.6 neurons), 0 transport errors, no retries, no replacements, no matcher or judge calls. Every reply read; mechanical items counted by script and checked against the text. Scored exactly as the rubric was written.
+| Item | c4 control | c4 candidate | c5 control | c5 candidate |
+| --- | ---: | ---: | ---: | ---: |
+| 2a radios/coordinating content copied (dialogue or narration) | 11/12 | **0/12** | 2/12 | 0/12 |
+| 1 reunion or greeting as if just found ("I'm glad we're together again", hug) | 0/12 | 0/12 | 0/12 | **4/12** (#2 hug and "I've missed you", #4, #5, #12) |
+| 1c searching for Michelle as if not found | 0/12 | 0/12 | 0/12 | 0/12 |
+| 6 Michelle as a stranger | 0/12 | 0/12 | 0/12 | 0/12 ("What's this place?" in #5 sits with the greeting) |
+| 4 not strict JSON | 0/12 | **3/12** (#1, #3 truncated; #8 repeating `item_facts`) | 0/12 | 0/12 |
+| 7 question about the lemon cake | not asked | not asked | 11/12 | **5/12** |
+| 7 unrelated plan / other-sites exchange | 8/12 recite other-sites | 3/12 | 1/12 | **6/12** |
+| 8 treats Michelle as a captive to rescue ("We need to get Michelle out of here", "We're getting you out of here, Shelly") | 0/12 | **4/12** (#2, 5, 8, 9) | 0/12 | 0/12 |
+| 3 heads toward the medical level (recorded) | 1/12 | 0/12 | n/a | n/a |
+| 5 self-custody proposals (recorded) | 10/12 | 9/12 | 1/12 | 1/12 |
+- **Control showed the problem:** item 2a at c4 was 11/12 (limit 4/12), so the arm could speak.
+- **Preregistered win rule: NOT met.** The change did its one job (2a at c4 11/12 to 0/12, c5 2/12 to 0/12), but: c4 item 4 is 3/12 against no more than control (0); c4 item 8 is 4/12 against no more than control (0); c5 item 1 is 4/12 against 0/12; c5 cake question is 5/12 against at least 10/12 and no fewer than control (11/12); c5 plan exchange is 6/12 against no more than control (1/12).
+- **What the candidate did:** with the radios sentence gone, the narrator at c4 no longer knows what Michelle is doing: four replies treat her as someone to be rescued, three replies are malformed or degenerate, and all twelve invent a "we need to get out of here" planning talk and ignore the command. At c5 it reads "have reunited" as an invitation to play the reunion again (four replies, one with a hug) and mostly stops asking about the lemon cake.
+- **My premise was partly wrong:** the preregistration said the sentence "repeats what the scene already says". The SCENE line at c4 and c5 says "scattered stolen radios" and "Michelle is beside the captives", but nothing says that Michelle runs the uprising. The sentence was the only place in the narrator's prompt that gave Michelle her role, so it carried real information, not just a copyable sentence. (The 3A opening text is not shown at c4 or c5.)
+- **Consequence under the preregistered Miss rule:** the one-line statement change and its test pins are reverted; the frozen control, the variations and these rows stay as evidence. O2 and O3 stay open. The A-r2 speaker lines are the next candidate named in the preregistration, but this result changes what to try first (see the plan entry).
+
+## Amendment 13: Kristin's bio loses its goal sentence (open issues O2, O3), replay at c4 and c5 (2026-11-06, written BEFORE any request; nothing billed yet)
+Plan: `.plans/richer-3a-open-issues-plan.md`, status entry "Kristin bio goal". Ringer run `3a-bio-goal` (manifest `scripts/ringer/3a-open-issues/bio-goal-manifest.json`, generator `bio_goal.py`, payload builder `bio_payloads.py`): the worker's change passed every substantive check (story diff exact, payload diffs, 434 passed and 2 skipped in the check's suites, ruff); the run is marked FAIL only because MY check looked for report lines starting with `Kristin Schweitzer` while the lines carry a `- ` bullet. I ran the remaining steps (report validation, ruff, patch export) by hand in the kept worktree and applied the patch. I then cut the worker's test file to two lasting rules (Kristin's bio names no goal; every scene prompt carries its own "What presses on Kristin now" line) because the worker had pinned all nine bios and pressure lines as literals. Focused suites in the main tree: 184 passed, 1 skipped. Not committed.
+- **Question (Brandon's diagnosis):** the CHARACTERS section says Kristin "wants to find her best friend, Michelle", while SCENE and CONSTRAINTS say she and Michelle have reunited. A goal is not who she is; it changes by scene, and every scene already has its own goal line (`scene_frames[].pressure`, shown as "What presses on Kristin now"). Does removing the stale goal from the bio stop the failures that appear when the narrator's prompt gives it room to follow the bio (searching for Michelle, "rescue Michelle", replayed reunions)?
+- **Change:** `world.yaml`, npc `kristin`: `narrator_bio` loses its last sentence, " She wants to find her best friend, Michelle." (45 characters), and the comment above it now says the bio names no goal. Nothing else changes; Michelle's own bio still says she is Kristin's closest friend.
+- **Payload diff (offline, zero neurons; measured by the Ringer check and again by capture):** system prompt, request settings and committed facts are identical; the user prompt differs in exactly one line, Kristin's CHARACTERS line, by those 45 characters (c4 2,879 to 2,834 user characters, c5 3,310 to 3,265). The same holds for the first-turn prompt of all nine scenes (tested). Scenes whose CHARACTERS section does not mention Michelle at all after the change (she is not present or named): 1C, 2A, 2B; for them the bio goal was the only mention of her in CHARACTERS. Not measured by this arm.
+- **Why two stages.** The shipped D1 state is robust to the old bio: yesterday's D1 control showed none of the bio-sensitive items at c4 or c5 (Amendment 12 control: items 1, 1c, 4, 6, 8 all 0/12). So a test on D1 cannot show a benefit; it can only show no harm. The state where the bio conflict appeared to bite is the A-r1 statement without its radios sentence (Amendment 12 candidate: item 8 rescue 4/12, item 4 malformed 3/12 at c4; item 1 reunion 4/12 and cake 5/12 at c5). Stage A tests the hypothesis there; stage B checks the shipped state for harm.
+- **Stage A (hypothesis).** Control = the Amendment 12 candidate payloads (A-r1 statement trimmed to "Kristin and Michelle have reunited.", OLD bio): `bench/results/richer-3a-probe/bio/frozen-trim-old-c{4,5}.json`, sha256 prefixes `4ce2b8b6b855` (c4), `a89aca40d7a8` (c5), byte-identical to the saved Amendment 12 payloads. Candidate = the same payloads with only Kristin's CHARACTERS line swapped to the new bio (asserted by script: exactly one line changed, 45 characters shorter): `frozen-trim-new-c{4,5}.json`, `3e60b3cd22b4`, `7db2f8daf043`. Both arms run fresh on the same day.
+  - **Replay:** `PYTHONPATH=$PWD:$PWD/packages/worldkeeper/src .venv/bin/python -m bench.frozen_prompts replay bench/results/richer-3a-probe/bio/frozen-ARM-cN.json --samples 12 --out bench/results/richer-3a-probe/bio/ARM-cN-rows.json` for ARM in `trim-old` and `trim-new`, N in 4 and 5: 4 x 12 = **48 requests (~177.6 neurons)**, no retries, errors kept, no replacements, no matcher or judge calls.
+  - **Rubric:** exactly Amendment 12's (items 1, 1b, 1c, 2a, 2b, 3, 4, 5, 6, 7, 8; every narration read by a human; the model's reply is scored, not the engine's appended delivery).
+  - **Control must show the problem or the arm cannot speak:** at c4, replies with item 4 or item 8 at least 3/12 in total, or at c5 item 1 at least 2/12 (yesterday: 7/12 and 4/12).
+  - **Win (candidate, all required):** c4: items 1, 1c, 6 and 8 at 0/12, item 4 at most 1/12, item 2a at most 2/12. c5: items 1, 1c, 6 and 4 at 0/12, item 2a at most 1/12, the cake or calendar question in at least 10/12, the other-sites or unrelated plan exchange at most 2/12. (The absolute limits are the D1 control levels of Amendment 12.)
+  - **Miss:** any failure ends stage A. The contradiction is then not shown to be the cause of those failures. The bio edit is not reverted on this evidence alone, because it removes a goal that is false in most scenes; stage B decides whether it stays.
+- **Stage B (harm check on the shipped D1 state; run only after stage A is reported and Brandon approves its cost).** Control = D1 with the OLD bio (frozen copy `bench/frozen/continuity-pre-3a-bio/`, payloads `frozen-control-c{4,5}.json`, `0d9276991f1a`, `f3a8987de442`); candidate = the current story (`frozen-candidate-c{4,5}.json`, `c3f98a8f9601`, `8e8555fa004d`). Same replay command with ARM in `control` and `candidate`: **48 requests (~177.6 neurons)**. Same rubric. Win: items 1, 1c, 6 and 8 at 0/12 in both turns, item 4 no more than control, c5 cake question at least 10/12 and no more than one fewer than control, c5 plan exchange no more than control plus one. Miss: the bio edit is reverted (world.yaml; the test file stays only if it still describes the story).
+- **Maximum cost:** 355.2 neurons for both stages, each stage separately authorized.
+- **Caveats:** one frozen state per endpoint, scripted prefix; replays are near-deterministic (about four to five distinct paths in twelve), so zero failures bound a rate only to about 22% one-sided; stage A derives its candidate by swapping one line in a saved payload, not by a fresh capture (stage B uses fresh captures; the two methods agree because the bio affects only that line); neither stage covers c6 to c9, 1A to 2C scenes or a live full-script run; scenes 1C, 2A and 2B lose their only CHARACTERS mention of Michelle and need their own check.
+
+### Amendment 13, stage A result (2026-11-06; replays launched by Claude on Brandon's "yes" after the cost was stated, `.venv/bin/python`; `bench/results/richer-3a-probe/bio/{trim-old,trim-new}-c{4,5}-rows.json`, untracked) — MISSED, narrowly, but the hypothesis is largely supported
+48 requests (~177.6 neurons), 0 transport errors, no retries, no replacements, no matcher or judge calls. Every reply read; mechanical items counted by script and checked against the text. Scored exactly as the rubric was written (Amendment 12's items, same definitions; I did not relax any item after seeing the rows).
+| Item | c4 control (old bio) | c4 candidate (new bio) | c5 control | c5 candidate |
+| --- | ---: | ---: | ---: | ---: |
+| 4 not strict JSON | **3/12** (#1 repeated-key `item_facts`; #4, #7 truncated) | **0/12** | 0/12 | 0/12 |
+| 8 treats Michelle as a captive to rescue | 0/12 | 0/12 | 0/12 | 0/12 |
+| Michelle absent from the narration (recorded; Kristin and Brandon "move towards the stairs") | **3/12** (#9, 10, 12) | **0/12** | n/a | n/a |
+| 1 greeting as if just reunited ("I'm glad we're together again") | 0/12 | 0/12 | **3/12** (#1, 2, 8) | **2/12** (#3, 4) |
+| 1c searching for Michelle | 0/12 | 0/12 | 0/12 | 0/12 ("eyes scanning the area cautiously" in #3, 4 is not a search for her) |
+| 6 Michelle as a stranger | 0/12 | 0/12 | 0/12 | 0/12 |
+| 2a radios/coordinating content | 0/12 | 0/12 | 0/12 | 0/12 |
+| 2b other-sites content voiced (recorded) | 4/12 | 1/12 (#6) | 8/12 | 0/12 |
+| 7 question about the lemon cake | not asked | not asked | **5/12** | **10/12** |
+| unrelated plan exchange ("What's the plan, Shelly? We can't just sit here") | n/a | n/a | other-sites or plan exchange in 8/12 | 2/12 (#3, 4), plus #5 where a block-and-system argument precedes the cake question |
+| 3 medical level mentioned (recorded) | 1/12 (#10) | 0/12 | 0/12 | 0/12 |
+- **Control showed the problem:** c4 item 4 at 3/12 (needed at least 3/12 of items 4 and 8 together) and c5 item 1 at 3/12 (needed at least 2/12), so the arm could speak. Item 8, which was 4/12 in Amendment 12's run, did not reproduce (0/12): the same frozen prompt gave different replies on a different day, so single-day counts of this kind carry real noise.
+- **Preregistered win rule: NOT met, by one item.** c5 item 1 is 2/12 against 0/12 (both replies say "I'm glad we're together again", which Amendment 12 also scored as item 1). Every other c4 and c5 criterion is met except that the c5 unrelated-plan exchange is 2/12 (#3, 4) at the limit of 2, or 3/12 if #5 counts. I scored the phrase as yesterday and did not relax the rule; a stricter reading of "reunion" would pass it, but that is a post-hoc choice.
+- **What changed with the new bio (same prompt otherwise):** c4 malformed replies 3/12 to 0/12; Michelle dropped from the scene in 3/12 to 0/12 (all twelve now have Kristin and Michelle talking); c5 cake question 5/12 to 10/12; c5 other-sites recitation 8/12 to 0/12. Still unchanged: all twelve c4 replies, in both arms, open with a made-up "We need to get out of here" talk, and none gives Michelle her role (2a is 0/12 in both, by design of the trimmed statement). c5 #10 has Michelle answer "Saturday, the circle, the lemon cake" in the narrator's own text, which the engine's appended delivery then repeats.
+- **Reading:** the failures that appeared when the radios sentence was cut are mostly explained by the stale goal in the bio: with it gone, the trimmed statement behaves close to the shipped D1 prompt at c5 and better than it at c4 for malformed replies. This supports Brandon's diagnosis. It does not show the trimmed statement is better than D1, because no D1 arm was run today.
+- **Consequence under the preregistered Miss rule:** the bio edit is NOT reverted on this evidence. Stage B (D1 old bio vs new bio, 48 requests, ~177.6 neurons) is the harm check and needs Brandon's approval. The trimmed statement is not adopted: it fixes nothing the D1 statement did not already do except the 2a recitation, and it still leaves c5 item 1 at 2/12.
+
+### Amendment 13, stage B result (2026-11-06; replays launched by Claude on Brandon's "yes" after the cost was stated, `.venv/bin/python`; `bench/results/richer-3a-probe/bio/{control,candidate}-c{4,5}-rows.json`, untracked) — WIN on the preregistered rule, with one unrubricated regression reported
+48 requests (~177.6 neurons), 0 transport errors, no retries, no replacements, no matcher or judge calls. Every reply read; mechanical items counted by script. Control = shipped D1 prompt with the OLD bio; candidate = the same prompt with the NEW bio (one CHARACTERS line, 45 characters).
+| Item | c4 control | c4 candidate | c5 control | c5 candidate |
+| --- | ---: | ---: | ---: | ---: |
+| 1 greeting or reunion as if just found | 0/12 | 0/12 | 0/12 | 0/12 |
+| 1c searching for Michelle | 0/12 | 0/12 | 0/12 | 0/12 |
+| 6 Michelle as a stranger | 0/12 | 0/12 | 0/12 | 0/12 |
+| 8 treats Michelle as a captive to rescue | 0/12 | 0/12 | 0/12 | 0/12 |
+| 4 not strict JSON | 1/12 (#3, degenerate repeated `item_facts` keys) | 0/12 | 0/12 | 0/12 |
+| 7 question about the lemon cake | not asked | not asked | 12/12 | 12/12 |
+| unrelated plan exchange | n/a | n/a | 0/12 | 1/12 (#8: plan, medical level, then the cake) |
+| Michelle herself acts or speaks in the narration (recorded) | **2/12** (#7, 8) | **12/12** | 12/12 | 11/12 |
+| 2a radios/coordinating content (recorded) | 9/12 | 8/12 | 1/12 | 5/12 |
+| 2b other-sites sentence voiced (recorded) | 7/12 | 8/12 | 0/12 | 1/12 |
+| **NOT in the rubric:** the statement "Kristin and Michelle have reunited" spoken aloud, verbatim | **0/12** | **8/12** (#2, 3, 6, 8, 9, 10, 11, 12: `"Kristin and Michelle have reunited," Michelle says aloud, "Michelle coordinates the prisoners ..."`) | 0/12 | 0/12 |
+- **Control showed the problem or at least the baseline:** the control reproduces the earlier D1 control (c4 recitation 9/12, cake 12/12); item 4 is 1/12 as before.
+- **Preregistered stage B win rule: met.** Items 1, 1c, 6 and 8 are 0/12 in both turns; item 4 is 0/12 against control 1/12; the c5 cake question is 12/12 against 12/12; the c5 plan exchange is 1/12 against a limit of control plus one (1/12). No criterion failed.
+- **What the rule did not ask, and the rows show:** with the stale goal gone, Michelle now acts in all twelve c4 replies (she was in two before: the other ten had Kristin and Brandon talking about her while she stood off-stage). Because Michelle is now on stage, she is the speaker of her "may say this aloud" lines, and in 8 of 12 replies she speaks the statement itself, including the bookkeeping sentence, in the third person. The control never voiced "Kristin and Michelle have reunited" (0/12), though it voiced the other two sentences through Brandon and Kristin (9/12 and 7/12). So the recitation defect (O2 and O4 family) is unchanged in size but is now more visibly wrong, and it is not caught by items 1, 1c, 6 or 8. One c5 reply (#8) has Michelle say the engine's appended delivery sentences herself, then the cake answer.
+- **Consequence:** the bio edit stays on the branch (it met its preregistered rule, and Stage A showed it fixes the failures of the trimmed-statement prompt). It does not close O2 or O4. Open: the recitation of the A-r1 statement by Michelle at c4. Because every earlier arm that removed a statement or speaker line (D1-V, the reunion effect, the A-r1 trim) ran with the stale bio, their misses cannot be assumed to hold under the new bio; D1-V (speaker lines removed) is the cheapest to retest, since its saved payloads need only the one-line bio swap.
+
+## Amendment 14: D1-V retested under the new Kristin bio, stage 1 = c4 only (open issues O2, O4; 2026-11-06, written BEFORE any request; nothing billed yet)
+Plan: `.plans/richer-3a-open-issues-plan.md`, "Where things stand" next candidate. Brandon's go-ahead: "D1-V retest" (cost stated beforehand: 24 requests, ~88.8 neurons for stage 1).
+- **Question:** Amendment 13 stage B showed that with the stale goal removed Michelle acts in 12/12 c4 replies and speaks the A-r1 statement herself in 8/12 ("Kristin and Michelle have reunited"). Amendment 9's D1-V miss (speaker lines removed) ran with the OLD bio. With the new bio, does removing the six reunion speaker lines (`voiceable: false` on `k_sl_3a_a_r1` and `k_sl_3a_a_r2`) stop the recitation at c4 without the other regressions Amendment 9 saw?
+- **Arms (one change only, six prompt lines):** control = the Amendment 13 stage B candidate payload (D1 statements, speaker lines present, NEW bio), `bench/results/richer-3a-probe/d1v-bio/frozen-control-c4.json`, sha256 prefix `c3f98a8f9601` (byte-identical to `bio/frozen-candidate-c4.json`). Candidate = the saved D1-V c4 payload from Amendment 9 (`d1v/frozen-d1v.json`) with only Kristin's CHARACTERS line swapped to the new bio (the same one-line swap as Amendment 13 stage A), `d1v-bio/frozen-candidate-c4.json`, `312b6e1da77c`. Built by `scripts/ringer/3a-open-issues/d1v_bio_payloads.py`, which asserts system and settings are identical and that the user prompt differs by exactly six removed lines and nothing added. The six lines: "may say this aloud" for Michelle, Brandon and the senior official, each for the A-r1 and A-r2 statements. User prompt 2,834 to 1,938 characters (total 5,361 to 4,465). SCENE, system, committed facts identical. The story files on the branch do NOT carry the `voiceable: false` flags on `k_sl_3a_a_r1` and `k_sl_3a_a_r2` (checked: neither entry has the flag), so the control equals the current story; the candidate exists only as a replayed payload, and a win would have required adding the two flags to the story.
+- **Replay (stage 1):** `PYTHONPATH=$PWD:$PWD/packages/worldkeeper/src .venv/bin/python -m bench.frozen_prompts replay bench/results/richer-3a-probe/d1v-bio/frozen-ARM-c4.json --samples 12 --out bench/results/richer-3a-probe/d1v-bio/ARM-c4-rows.json` for ARM in `control`, `candidate`: 2 x 12 = **24 requests (~88.8 neurons)**, no retries, errors kept, no replacements, no matcher or judge calls. Run as a Ringer manifest (two probe tasks, `max_parallel` 1, `max_attempts` 1).
+- **Rubric (every reply read by a human; the model's reply is scored, not the engine's appended delivery):** Amendment 9's items 1 (repeated reunion, greeting as if just found), 1c (searching for Michelle), 3 (statement recitation in dialogue, now explicitly including Michelle speaking the A-r1 or A-r2 statement or "Kristin and Michelle have reunited"), 4 (not strict JSON), 5 (self-custody proposal), 6 (heads into or enters the medical level), 8 (rescue of Michelle, unrelated plan exchange), 9 (bare spotting, recorded only). Recorded, not criteria: Michelle acts or speaks; Michelle re-described from SCENE (Amendment 9 saw 8/12).
+- **Control must show the problem or the arm cannot speak:** control recitation (item 3) at least 6/12. (Stage B: 8/12 for the statement alone, 9/12 for any of the content.)
+- **Win (candidate, all required):** items 1, 1c, 3, 4, 5, 8 at 0/12; item 6 at 12/12 (Amendment 9's strengthened bar, kept; no partial credit); payload shorter (it is).
+- **Miss:** any failure. D1-V is rejected again, this time under the new bio; the speaker lines stay; stage 2 (c5) does not run; the next candidate is the Michelle placement-text idea from Amendment 12 (needs its own preregistration and Brandon's yes).
+- **Stage 2 (only on a stage 1 win, separately authorized):** c5 payloads built the same way, control vs candidate, 24 requests (~88.8 neurons); win = Amendment 9's c5 rule (items 1, 2, 3, 4, 5, 8 at 0/12, cake or calendar question 12/12).
+- **Caveats:** one frozen state, scripted prefix; replays are near-deterministic (a few distinct paths in twelve), so 0/12 bounds a rate only to about 22% one-sided; the candidate is a payload derived by a one-line swap, not a fresh capture (the swap touches one line that the flags do not affect); a win covers c4 only, not c5 to c9 (Amendment 4 is the warning that removing speaker lines can change behavior elsewhere).
+
+### Amendment 14, stage 1 result (2026-11-06; Ringer run `3a-open-issues-d1v-bio-20261106T192005Z-p3536021`, both tasks PASS; rows `bench/results/richer-3a-probe/d1v-bio/{control,candidate}-c4-rows.json`, untracked) — MISSED
+24 requests (~88.8 neurons), 0 transport errors, no retries, no replacements, no matcher or judge calls. Every reply read; mechanical items counted by script on the `narration` field (the reply text), not the `raw` wrapper.
+| Item (c4) | control (speaker lines present) | candidate (speaker lines removed) |
+| --- | ---: | ---: |
+| 1 greeting or reunion as if just found | 0/12 | 0/12 |
+| 1c searching for Michelle | 0/12 | 0/12 |
+| 3 Michelle speaks "Kristin and Michelle have reunited" or the radios sentence | **8/12** (#1, 3, 4, 5, 6, 7, 8, 12) | **0/12** |
+| 3 other recitation: the A-r2 sentence voiced (Michelle or Kristin) | 3/12 more (#2 paraphrase, #10, #8 repeated) | **6/12**, all by Kristin: "But Michelle said freeing this block means little without exposing the other sites." (#1, 6, 7, 9, 10, 11) |
+| 4 reply is not strict JSON | 0/12 | **3/12** (#1, 6, 10: cut off after the third segment, ends `],"}`) |
+| 5 self-custody proposal (a person `held_by` themselves) | 9/12 | **9/12** (all Kristin held by Kristin) |
+| 6 heads into the medical level | 3/12 (#4, 6, 12, Michelle says it) | **0/12** |
+| 8 rescue of Michelle, unrelated plan exchange | 0/12 (#2 has a short plan exchange, recorded) | 0/12 |
+| 9 bare spotting or re-staging ("She sees Michelle standing beside the captives", recorded) | 0/12 | 6/12 (#2, 3, 4, 5, 8, 12) |
+- **Control showed the problem:** Michelle voices the statement in 8/12, above the 6/12 requirement.
+- **Preregistered win rule: failed** on item 3 (6/12 against 0/12), item 4 (3/12), item 5 (9/12) and item 6 (0/12 against 12/12). Stage 2 (c5) does not run. D1-V is rejected a second time, now under the new bio; the speaker lines stay.
+- **What the rows add (hypotheses, not tested):** removing the lines does what it was meant to for Michelle (statement recitation 8/12 to 0/12), but the narrator then reuses the same sentence through Kristin, so the content moves rather than leaves; SCENE still carries it. Without the speaker lines the narrator also stops leading into the medical level (3/12 to 0/12) and falls back to re-staging the opening (6/12 "looks around the detention sector ... sees Michelle"), the same pattern Amendment 11 saw. The replays are close to deterministic: the candidate has about three distinct paths in twelve (Kristin and Brandon quote, in six rows; look-around and see Michelle, in six), so these rates carry a small effective sample. Self-custody is unchanged at 9/12 in both arms, so it is not driven by the speaker lines.
+- **Consequence:** `voiceable: false` on `k_sl_3a_a_r1` and `k_sl_3a_a_r2` is rejected as an O2 fix under the shipped bio. The next candidate on the table is the Michelle placement-text idea from Amendment 12 (a short text on Michelle in the 3A data, shown in THINGS, not sayable and not a SCENE statement); it needs its own preregistration and Brandon's yes.
+
+## Amendment 15: the reunion world effect retested under the new Kristin bio, stage 1 = c4 only (open issues O2, O4; 2026-11-06, written BEFORE any request; nothing billed yet)
+Plan: `.plans/richer-3a-open-issues-plan.md`. Brandon's go-ahead: "no that's the one. go." (after the cost was stated: 24 requests, ~88.8 neurons for stage 1).
+- **Question:** Amendment 11 (reunion fact `michelle_reached` gets `on_assert: [{accompany: michelle, with: kristin}]`, so the two reunion SCENE lines disappear once earned and Kristin's companion line gains Michelle) was MISSED: 7/12 greeted Michelle as if just arrived, 0/12 headed into the medical level (all twelve re-staged the opening), 6/12 invented a `lantern`. That arm ran with the stale bio ("She wants to find her best friend, Michelle."). Amendment 13 showed that deleting the sentence removes searching and rescue behaviour of the same kind (stage A: c4 rescue and malformed 3/12 to 0/12). Does the effect arm behave differently under the new bio?
+- **Arms (one change only):** control = Amendment 13 stage B candidate payload (D1 statements, reunion SCENE lines present, new bio), `bench/results/richer-3a-probe/reunion-bio/frozen-control-c4.json`, sha256 prefix `c3f98a8f9601`. Candidate = the saved Amendment 11 effect payload (`reunion/frozen-candidate-c4.json`) with only Kristin's CHARACTERS line swapped to the new bio, `reunion-bio/frozen-candidate-c4.json`, `2610fda2566d`. Built by `scripts/ringer/3a-open-issues/reunion_bio_payloads.py`, which asserts system and settings are identical and prints the user-prompt diff: exactly four lines (the two reunion SCENE lines removed; Kristin's line gains `Michelle`). User prompt 2,834 to 2,628 characters. The per-speaker "may say this aloud" lines stay. The branch's world.yaml does NOT carry the effect (reverted), so a win would require re-adding it with its tests.
+- **Replay:** `PYTHONPATH=$PWD:$PWD/packages/worldkeeper/src .venv/bin/python -m bench.frozen_prompts replay bench/results/richer-3a-probe/reunion-bio/frozen-ARM-c4.json --samples 12 --out bench/results/richer-3a-probe/reunion-bio/ARM-c4-rows.json` for ARM in `control`, `candidate`: **24 requests (~88.8 neurons)**, no retries, errors kept, no replacements, no matcher or judge calls; Ringer manifest `scripts/ringer/3a-open-issues/reunion-bio-manifest.json` (check performs the replay, `max_parallel` 1, `max_attempts` 1).
+- **Rubric:** Amendment 11's, every reply read by a human, counted on the `narration` field: (1) greeting or reunion as if just found; 1b bare spotting, recorded not a failure; 1c searching for Michelle as if not yet found, a failure; (2a) radios/coordinating content as dialogue or copied narration; (2b) other-sites sentence voiced, recorded; (3) heads toward the medical level, recorded not a criterion; (4) not strict JSON; (5) self-custody in `item_facts`, recorded; (6) Michelle as a stranger; (8) contradiction or plot-changing invention, with the quote (an invented item only in `item_facts`, such as `lantern`, is recorded, but I report its count since Amendment 11 saw 6/12).
+- **Control must show the problem:** Michelle voices the statement (2a) in at least 6/12 (stage B: 8/12).
+- **Win (candidate, all required):** items 1, 1c, 4, 6, 8 at 0/12; item 2a at most 2/12. Not required, reported: medical lead, re-staging of the opening (the "looks around the detention sector ... sees Michelle" pattern), lantern.
+- **Miss:** any failure. The effect stays reverted and O2/O4 stay open; no stage 2.
+- **Stage 2 (only on a stage 1 win, separately authorized):** c5, same construction, 24 requests (~88.8 neurons), Amendment 11's c5 rule.
+- **Caveats:** one frozen state, scripted prefix; near-deterministic replays (a few distinct paths in twelve), so 0/12 bounds a rate only to about 22% one-sided; the candidate is a one-line swap of a saved payload; a win covers c4 only.
+
+### Amendment 15, stage 1 result (2026-11-06; Ringer run `3a-open-issues-reunion-bio`, both tasks PASS; rows `bench/results/richer-3a-probe/reunion-bio/{control,candidate}-c4-rows.json`, untracked) — MISSED
+24 requests (~88.8 neurons), 0 transport errors, no retries, no replacements, no matcher or judge calls. Every reply read; mechanical items counted by script on the `narration` field.
+| Item (c4) | control (reunion lines in SCENE, new bio) | candidate (effect payload, new bio) |
+| --- | ---: | ---: |
+| 1 greeting or reunion as if just found ("glad I found you") | 0/12 | **0/12** (Amendment 11: 7/12 under the old bio) |
+| 1c searching for Michelle | 0/12 | 0/12 (but all 12 open "Kristin looks around the detention sector, her eyes scanning ...") |
+| 1b bare spotting ("She spots/sees Michelle beside the captives"), recorded | 0/12 | 8/12 (#1, 2, 3, 5, 8, 10, 11, 12) |
+| 2a Michelle says "Kristin and Michelle have reunited" aloud | 9/12 | **5/12** (#1, 2, 10, 11, 12) |
+| 2a coordinating or "speaks into a stolen radio" in narration (also in control) | with the dialogue above | 4/12 more (#4, 6, 7, 9) |
+| 4 not strict JSON | 4/12 (#4, 6, 10, 12, repeated `item_facts` keys) | **1/12** (#2, repeated keys, and an empty `lantern`) |
+| 5 self-custody proposal, recorded | 8/12 | 12/12 |
+| 6 Michelle as a stranger | 0/12 | 0/12 |
+| 3 heads toward the medical level, recorded | 0/12 | 0/12 (Amendment 11: 0/12) |
+| invented `lantern` in `item_facts`, recorded | 1/12 | 1/12 (#2; Amendment 11: 6/12) |
+- **Control shows the problem:** Michelle recites the statement in 9/12 (needs 6/12). The control also degenerated in 4/12 here, against 0/12 for the same payload in Amendment 13 stage B, so day-to-day noise in this rate is large.
+- **Preregistered win rule: failed.** Item 4 is 1/12 against a limit of 0/12, and item 2a is 5/12 (dialogue) or 9/12 (dialogue plus narration) against a limit of 2/12. Items 1, 1c, 6 and 8 are 0/12. No stage 2.
+- **What the new bio changed (compared with Amendment 11, recorded not tested):** the greeting as if just arrived (7/12) and the invented lantern (6/12) mostly went away, as the stale-goal reading predicted. What stayed is the part the bio cannot touch: with the SCENE lines gone and Michelle in Kristin's companion line, the narrator still re-stages the opening in 12/12 replies ("looks around the detention sector ... spots Michelle beside the captives"), none head into the medical level, and in 5/12 Michelle still says "Kristin and Michelle have reunited" from her speaker line. So the stale goal explained the greeting and the lantern, but not the re-staging or the recitation.
+- **Consequence:** the reunion world effect stays reverted. O2/O4 stay open. Every cut-the-statement arm (D1-V twice, A-r1 trim, reunion effect twice) has now missed under both bios.
+
+## Amendment 16: the frame sentence "Michelle is beside the captives." moves to the opening only (open issues O1, O2; 2026-11-06, written BEFORE any request; nothing billed yet)
+Plan: `.plans/richer-3a-open-issues-plan.md`, "Where things stand". Brandon's go-ahead: chose "Opening-only text" after the cost was stated (24 requests, ~88.8 neurons, then c4).
+- **Question:** the 3A frame `situation` ends with "Michelle is beside the captives." and is shown in SCENE on every turn. It is the only line of the opening prompt that says Michelle is there, and it is the only Michelle location line left at c4 once a reunion statement or speaker line is cut (the D1-V arm re-staged the opening in 6/12 replies, the reunion-effect arm in 12/12; the shipped control re-stages in 0/12). Does moving the information to the opening only (frame loses the sentence; 3A `entry_text` gains "Michelle was among them.") keep the opening identity fix and leave c4 unchanged?
+- **What failed first (recorded):** a placement `text` on Michelle was built and rejected before any billing. The shipped narrator prompt lists a person in THINGS only when the command refers to them, so the text would not have appeared at the opening or at c1 or c4 (offline captures; the first Ringer worker passed its own tests only by using a test provider that forced people into THINGS). An `accompany` effect on the reunion fact was rejected because `_effect_item_ids` would hide the two reunion SCENE statements, which is the Amendment 11 failure.
+- **Arms (one change):** control = the shipped story frozen in `bench/frozen/continuity-pre-3a-frame/` (variation `richer-3a-frame-control`; nine files copied from the working tree before the edit; world.yaml sha256 prefix 931979b54fa5; includes the new bio and the 1C glimpse). Candidate = the current story (variation `richer-3a-frame-candidate`): `knowledge.yaml` 3A `situation` without its last sentence; `plot.md` 3A `entry_text` ends "... before rescue arrived. Michelle was among them." Nothing else. Same code, model, settings, thorough entry state.
+- **Offline checks done (Ringer run `3a-michelle-frame`, whose own check failed only on an opening-prompt assertion of mine that used `bench prompt`, which omits the entry text; the story diffs, the c1 and c4 payload diffs and the 425-test suites had passed; patch applied by hand):** opening prompt, real provider path, diffed offline: system identical; exactly two lines differ (entry text +25 characters, frame line -33), user prompt 2,608 to 2,600 characters. c4 payload: only the frame line differs (-33), system and settings identical, reunion statements and all six speaker lines unchanged; the candidate sentence does not appear at c1 or c4. Capture hashes: control c4 `306a55128f9d` (byte-identical to `d1v-bio/frozen-control-c4.json`), candidate c4 `21bb963e804d`.
+- **Stage 1 (opening):** `scripts/ringer/3a-open-issues/opening_arms.py bench/variations/richer-3a-frame-ARM.json 12 bench/results/richer-3a-probe/frame/ARM-open.json` for control and candidate: 2 x 12 = **24 requests (~88.8 neurons)**, one request per sample, no retries or replacements, errors kept, no matcher or judge calls. Exact prompt of every sample recorded and diffed before any narration is read.
+- **Rubric (Amendment 6, every narration read, both arms scored by the same rules):** (1) Michelle visible and identified, (2) look-alike or invented woman, (3) "not Michelle", (4) invented weapon, (5) Michelle speaks a reunion line (a harmless captive greeting is not this), (6) radio cue lost or doubled word for word. Recorded, not criteria: the new sentence repeated verbatim, eye contact, other invented details.
+- **Win (candidate):** item 1 12/12; items 2-6 at 0/12. **Miss:** any failure: the patch is reverted (`git apply -R`), the frame sentence returns, stage 2 does not run, and the next step is the "leave as is" path.
+- **Stage 2 (only on a stage 1 win; cost stated beforehand and chosen):** c4, control vs candidate, `bench/results/richer-3a-probe/frame/frozen-ARM-c4.json`, 12 samples each, **24 requests (~88.8 neurons)**. Rubric = Amendment 14 items 1, 1c, 3, 4, 5, 6, 8, 9. Win = no harm: items 1, 1c, 4, 8, 9 at 0/12 in the candidate; items 3, 5 and 6 not worse than the same-day control by more than 2/12. This stage cannot show a benefit, since the control re-stages in 0/12; it checks that the deletion costs nothing before cut-the-statement arms are stacked on it.
+- **Caveats:** one frozen state and replays that are close to deterministic; 0/12 bounds a rate only to about 22% one-sided; the opening is sampled from one seeded state; no claim about c1-c3, c5-c9 or live play.
+
+### Amendment 16, stage 1 result (2026-11-06; Ringer run `3a-open-issues-frame-open-20261106T234800Z-p3618410`, both tasks PASS; rows `bench/results/richer-3a-probe/frame/{control,candidate}-open.json`, untracked) — MISSED; patch reverted
+24 requests (~88.8 neurons), 0 transport errors, no retries or replacements, no matcher or judge calls. One distinct prompt per arm (as intended: control has the old frame sentence, candidate has "Michelle was among them."). Every opening read.
+| Item | control (12) | candidate (12) |
+| --- | ---: | ---: |
+| 1 Michelle visible and identified | 12/12 | 12/12 |
+| 2 look-alike or invented woman | 0 | 0 |
+| 3 "not Michelle" | 0 | 0 |
+| 4 invented weapon | 0 | 0 |
+| 5 Michelle speaks a reunion line | 0 | **1** (#7 "Kristin, I'm glad you're here.") |
+| 6 radio cue lost | 0 (cue once at the end, 12/12) | **1** (#2 is cut off mid-sentence, so the appended cue is missing; 11/12) |
+- Recorded, not criteria: Michelle speaks in 6/12 candidate openings against 3/12 control, mostly "Kristin, we have to move, now"; the candidate opening has Michelle's eyes lock on Kristin with "relief" or "a hint of a smile" in 9/12 (control: "She spots Michelle standing beside the captives" in 11/12, no recognition moment); in #2 Kristin answers "I'm with you, Shelly, let's go." The 3/12 control "We need to move, now" lines are operational, not a reunion.
+- **Preregistered win rule: failed** on items 5 and 6 (1/12 each against 0/12). Stage 2 (c4) does not run. The patch (frame loses the sentence, entry text gains "Michelle was among them.") was reverted with `git apply -R`; the frozen control `bench/frozen/continuity-pre-3a-frame/`, the two variations, the capture files and the rows stay as evidence. Tests back to green (69 passed on the touched suites).
+- **What the rows add (hypothesis, not tested):** telling the narrator at the opening that Michelle "was among them" turns the opening into a recognition scene, which is the job the earned reunion is meant to do (the O1 opening/earned-reunion split that Amendment 7 fixed). The frame sentence "Michelle is beside the captives." is a place statement, and the narrator answers it with a plain sighting ("She spots Michelle"); a presence statement in the entry text is answered with a meeting. So the sentence cannot simply move into the opening text.
+- **Consequence:** the frame sentence stays as it is. The shipped control re-stages the opening in 0/12 at c4, so nothing is lost by leaving it; it only matters if a later arm cuts a reunion statement or speaker lines, and then it needs a different carrier (an engine change that drops a frame sentence once its discovery cue is consumed was offered and not chosen).
+
+## Amendment 17: c9 re-measure of the radio custody effect under the new Kristin bio (open issue O4; 2026-11-06, written BEFORE any request; nothing billed yet)
+Plan: `.plans/richer-3a-open-issues-plan.md`. Brandon's go-ahead: "remeasure c9" after the cost was stated (12 requests, ~44.4 neurons).
+- **Question:** Amendment 10 missed its win rule by two small margins (candidate: Kristin gives the signal 3/12 against a limit of 2/12; one self-custody proposal against 0/12). It ran with the old bio ("She wants to find her best friend, Michelle."), which Amendment 13 showed makes the narrator contradict its own prompt. Under the new bio, does the same candidate state meet the rule?
+- **Arm (single, one change since Amendment 10):** the shipped story (radio effect, D1 reunion statements, new bio), c9 only. Payload `bench/results/richer-3a-probe/c9bio/frozen-candidate-c9.json`, sha256 prefix `04ef13b0e21d`, captured offline from `bench/variations/richer-3a-bio-candidate.json` (zero neurons). Diff to the Amendment 10 candidate payload (`radio/frozen-candidate.json`, `3587eba82f48`): system, request settings, command and committed facts identical; the user prompt differs by exactly one line, Kristin's CHARACTERS line without the goal sentence (6,575 to 6,530 characters). No control arm is run: the Amendment 10 control (radio not in the world, old bio) is the reference, 12/12 repeat; a same-day control would cost another 12 requests and is not needed to test the rule, which is absolute for the candidate. This weakens the "at least 4 fewer than control" clause only in that the reference is two days of model state old; it is recorded, not re-run.
+- **Replay:** `.venv/bin/python -m bench.frozen_prompts replay bench/results/richer-3a-probe/c9bio/frozen-candidate-c9.json --samples 12 --out bench/results/richer-3a-probe/c9bio/candidate-c9-rows.json`: **12 requests (~44.4 neurons)**, no retries, errors kept, no replacements, no matcher or judge calls. Run as a one-task Ringer probe whose check performs the replay.
+- **Rubric and win rule: exactly Amendment 10's** (items 1 to 6; every reply read; the reply is scored, not the appended delivery). Win (all required): item 1 (hand-off or Kristin's signal performed again) in at most 2/12; item 3 12/12; item 5 0/12; item 4 (radio conflict or a person held by themselves) 0/12. Counted strictly, as before; #2/#9/#10-type "Kristin starts the prisoners moving" replies are scored by the same reading used in Amendment 10 (a second signal is a repeat; leading the prisoners upward is the command).
+- **Miss:** any failure: O4 stays open and the radio effect stays as correct world data; the candidates after that are the ones named in Amendment 10 (non-sayable c9 signal statements, or D2).
+- **Caveats:** one frozen state; replays are near-deterministic (about five distinct paths in 12), so 0/12 bounds a rate only to about 22% one-sided; the control reference is from 2026-11-05; no claim about the live nine-command run.
+
+### Amendment 17, result (2026-11-06; Ringer run `3a-open-issues-c9-bio`, task PASS; rows `bench/results/richer-3a-probe/c9bio/candidate-c9-rows.json`, untracked) — MISSED, and the Amendment 10 improvement did not reproduce
+12 requests (~44.4 neurons), 0 transport errors, 12/12 strict JSON, no retries or replacements. Every reply read; scored by Amendment 10's rubric.
+| Item (c9, shipped state, new bio) | Amendment 10 candidate (old bio, 2026-11-05) | now (new bio) |
+| --- | ---: | ---: |
+| 1 hand-off or Kristin's signal performed again | 3/12 (hand-off 0/12) | **11/12** (hand-off in #2-#7, #9-#12 as "Michelle hands her the stolen radio" or "Kristin takes the radio from Michelle"; Kristin also gives the signal in #8, #9, #10, #11; only #1 has neither) |
+| 2 signal or authorization statement voiced as dialogue | 0/12 | 6/12 in Michelle's lines (#2, #3 "The uprising is active, and the group is moving toward the command and broadcast levels", #5, #8, #10, #11 "the emergency-gate authorization will expire soon"), plus #9 narrated ("seizing checkpoints, opening a fighting route toward the command levels") |
+| 3 answers the command | 12/12 | 12/12 on the lenient reading of Amendment 10 (#2, #3, #5 only through Michelle's line) |
+| 4 radio conflict or self-custody | 1/12 | **0/12** (radio `held_by` Kristin in 11/12, consistent) |
+| 5 not strict JSON | 0/12 | 0/12 |
+| 6 other | "gives Kristin a signal to move forward" 3/12, invented whistle 1/12 | #1 "Michelle gives Kristin a signal to move forward"; #4 and #6, #7 Kristin shouts into the radio (shown as her speech) |
+- **Preregistered win rule: failed** on item 1 (11/12 against a limit of 2/12). Items 3, 4, 5 pass. O4 stays open. The result is at the level of the Amendment 10 control (12/12 repeat, dialogue recitation 6/12), not of its candidate.
+- **The only prompt difference to the Amendment 10 candidate is Kristin's bio line** (checked offline: system, settings, command, committed facts and every other user-prompt line identical). Two readings, NOT separated by this run: (a) the new bio changes c9 behaviour (Amendment 13 stage B saw Michelle acting in 12/12 c4 replies against 2/12 under the old bio, so without the goal sentence she is a more active character); (b) day-to-day model drift (Amendments 13 stage A/B and 15 each saw the same payload give different counts on different days; Amendment 10 ran on 2026-11-05). A same-day replay of the Amendment 10 candidate payload (old bio) would separate them: 12 requests, ~44.4 neurons; not run, needs Brandon's go-ahead.
+- **Consequence:** the radio effect is not credited with closing O4. If reading (a) holds, the new bio helps c4 and c5 (Amendment 13) and hurts c9, and the cost of the bio edit is real.

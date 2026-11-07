@@ -847,6 +847,9 @@ storylets:
     - op: assert
       fact_id: michelle_abduction_suspicion
       value: true
+    - op: assert
+      fact_id: lemon_cake_calendar_read
+      value: true
     eligible_storylet_event_id: null
     helps_transition_triggers: []
     protected_knowledge_boundaries: [janus_selection_system, brandon_history, janus_phase_two]
@@ -2990,6 +2993,134 @@ storylets:
     - scene_id_not: 3A
   non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
     as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
+- id: SL-3A-F
+  scene_id: 3A
+  title: The Wrist Tags
+  activation:
+    scene_id: 3A
+    conditions:
+    - fact_id: michelle_reached
+      equals: true
+    pacing:
+      earliest_turn: 0
+      target_turn: 8
+      latest_turn: 9
+      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
+  pressure_role: Let Kristin read the wrist tags and learn what happened to the captives.
+  realization_options:
+  - id: SL-3A-F-R1
+    dramatic_intent: Kristin reads the wrist tags.
+    source_beats: [scene-3a1--the-detention-block]
+    operations:
+    - op: assert
+      fact_id: wrist_tags_read
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: []
+    protected_knowledge_boundaries: [janus_phase_two]
+  completion_or_abort:
+    complete_when:
+    - fact_id: wrist_tags_read
+      equals: true
+    abort_when:
+    - scene_id_not: 3A
+- id: SL-3A-G
+  scene_id: 3A
+  title: The Loop in the Radios
+  activation:
+    scene_id: 3A
+    conditions:
+    - fact_id: michelle_reached
+      equals: true
+    pacing:
+      earliest_turn: 0
+      target_turn: 8
+      latest_turn: 9
+      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
+  pressure_role: Let Kristin listen to the stolen radio and learn what the captives hear.
+  realization_options:
+  - id: SL-3A-G-R1
+    dramatic_intent: Kristin listens to the stolen radio.
+    source_beats: [scene-3a1--the-detention-block]
+    operations:
+    - op: assert
+      fact_id: radio_loop_known
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: []
+    protected_knowledge_boundaries: [janus_phase_two]
+  completion_or_abort:
+    complete_when:
+    - fact_id: radio_loop_known
+      equals: true
+    abort_when:
+    - scene_id_not: 3A
+- id: SL-3A-H
+  scene_id: 3A
+  title: Michelle's Proof
+  activation:
+    scene_id: 3A
+    conditions:
+    - fact_id: michelle_reached
+      equals: true
+    - fact_id: behavioral_experiments_known
+      equals: true
+    - fact_id: lemon_cake_calendar_read
+      equals: true
+    pacing:
+      earliest_turn: 0
+      target_turn: 8
+      latest_turn: 9
+      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
+  pressure_role: Let Kristin ask Michelle about the lemon cake or the calendar.
+  realization_options:
+  - id: SL-3A-H-R1
+    dramatic_intent: Kristin asks Michelle about the lemon cake or the calendar.
+    source_beats: [scene-3a2--the-experiments]
+    operations:
+    - op: assert
+      fact_id: michelle_private_proof
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: []
+    protected_knowledge_boundaries: [janus_phase_two]
+  completion_or_abort:
+    complete_when:
+    - fact_id: michelle_private_proof
+      equals: true
+    abort_when:
+    - scene_id_not: 3A
+- id: SL-3A-I
+  scene_id: 3A
+  title: The Reader Opens
+  activation:
+    scene_id: 3A
+    conditions:
+    - fact_id: michelle_reached
+      equals: true
+    pacing:
+      earliest_turn: 0
+      target_turn: 8
+      latest_turn: 9
+      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
+  pressure_role: Let Kristin watch the checkpoint reader and Brandon's first pass.
+  realization_options:
+  - id: SL-3A-I-R1
+    dramatic_intent: Kristin watches the checkpoint reader.
+    source_beats: [scene-3a4--the-uprising-begins]
+    operations:
+    - op: assert
+      fact_id: checkpoint_opened
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: []
+    protected_knowledge_boundaries: [janus_phase_two]
+  completion_or_abort:
+    complete_when:
+    - fact_id: checkpoint_opened
+      equals: true
+    abort_when:
+    - scene_id_not: 3A
 - id: SL-3B-A
   scene_id: 3B
   title: Give JANUS Too Many Emergencies

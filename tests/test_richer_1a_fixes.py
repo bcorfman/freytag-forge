@@ -23,6 +23,15 @@ def _candidate_ids(state: RuntimeState, engine: RuntimeEngine, command: str) -> 
     return {candidate.id for candidate in engine.projector.project(state, "player", command).candidates}
 
 
+def test_1a_frame_uses_deadbolt_wording_and_keeps_outward_splinters_clue():
+    frame = next(item for item in PACKAGE.knowledge.scene_frames if item.scene_id == "1A")
+    earned_entry = PACKAGE.knowledge_indexes.by_id["k_sl_1a_a_r1"]
+
+    assert "The deadbolt is still thrown." in frame.situation
+    assert "splintered out of the wood" not in frame.situation
+    assert "splinters around the frame point outward" in earned_entry.delivery_text
+
+
 def _walk_to_the_neighbor() -> tuple[RuntimeState, RuntimeEngine]:
     state = RuntimeState.bootstrap(PACKAGE)
     count = {"n": 0}
@@ -61,11 +70,15 @@ def test_the_kitchen_storylet_has_two_separate_reveals():
     routes = yaml.safe_load((ROOT / "storylet-routes.yaml").read_text(encoding="utf-8"))
     storylet = next(item for item in routes["storylets"] if item["id"] == "SL-1A-G")
     assert [option["id"] for option in storylet["realization_options"]] == ["SL-1A-G-R1", "SL-1A-G-R2"]
-    for entry in (workstation, walls):
-        assert {operation.fact_id for operation in entry.establishes} == {
-            "kitchen_last_hour_read",
-            "michelle_abduction_suspicion",
-        }
+    assert {operation.fact_id for operation in workstation.establishes} == {
+        "kitchen_last_hour_read",
+        "michelle_abduction_suspicion",
+    }
+    assert {operation.fact_id for operation in walls.establishes} == {
+        "kitchen_last_hour_read",
+        "michelle_abduction_suspicion",
+        "lemon_cake_calendar_read",
+    }
 
 
 def test_a_calendar_command_offers_only_the_walls_reveal():

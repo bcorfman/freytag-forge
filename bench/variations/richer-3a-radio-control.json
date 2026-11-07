@@ -1,0 +1,35 @@
+{
+  "name": "richer-3a-radio-control",
+  "story_package": "bench/frozen/continuity-pre-3a-radio",
+  "fixed_turns": 9,
+  "runtime": true,
+  "continuity_judge": false,
+  "fact_tracking_judge": false,
+  "item_facts": {
+    "mode": "single_call",
+    "seed_from_package": true
+  },
+  "scripts": {
+    "3A": [
+      {
+        "name": "richer-3a-detention",
+        "inputs": [
+          "Free the captives.",
+          "Read the wrist tags.",
+          "Listen to the stolen radio.",
+          "Enter the medical level.",
+          "Ask Michelle about the lemon cake.",
+          "Ask the senior official about the gate codes.",
+          "Check the checkpoint reader.",
+          "Tell the prisoners to start the uprising at the checkpoints.",
+          "Lead the prisoners upward toward the command levels."
+        ]
+      }
+    ]
+  },
+  "entry_state": "thorough",
+  "entry_facts": [
+    "held_transfers_seen",
+    "badge_craft_noted"
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "schema": 1,
+  "scenes": {
+    "1A": {
+      "narration_chars": 5485,
+      "narration_chars_all_alternates": 5597
+    },
+    "1B": {
+      "narration_chars": 5728,
+      "narration_chars_all_alternates": 5843
+    },
+    "1C": {
+      "narration_chars": 4562,
+      "narration_chars_all_alternates": 4961
+    },
+    "2A": {
+      "narration_chars": 5187,
+      "narration_chars_all_alternates": 5575
+    },
+    "2B": {
+      "narration_chars": 5700,
+      "narration_chars_all_alternates": 6009
+    },
+    "2C": {
+      "narration_chars": 5696,
+      "narration_chars_all_alternates": 6317
+    },
+    "3A": {
+      "narration_chars": 9052,
+      "narration_chars_all_alternates": 9052
+    },
+    "3B": {
+      "narration_chars": 8652,
+      "narration_chars_all_alternates": 8652
+    },
+    "3C": {
+      "narration_chars": 6939,
+      "narration_chars_all_alternates": 6905
+    }
+  }
+}

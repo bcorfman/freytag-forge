@@ -95,8 +95,8 @@ npcs:
   - Kristin
   - Kristin Schweitzer
   # plot.md gives Kristin's expertise a future role in the conspiracy's facilities.
-  # This narrator-safe bio preserves her characterisation and immediate goal without previewing that role.
-  narrator_bio: A 47-year-old former assessment lead for the U.S. Army with a background in Army intelligence, infrastructure, and operations who is practical, persistent, and reluctant to trust conspiracy theories. She wants to find her best friend, Michelle.
+  # This narrator-safe bio preserves her characterisation without previewing that role. It names no goal: each scene's pressure line gives the current one.
+  narrator_bio: A 47-year-old former assessment lead for the U.S. Army with a background in Army intelligence, infrastructure, and operations who is practical, persistent, and reluctant to trust conspiracy theories.
 - id: michelle
   name: Dr. Michelle McGehee
   aliases:
@@ -427,6 +427,16 @@ items:
   scoped_aliases: [tags, tag, cart tag]
   fixed: true
   kind: thing
+- id: wrist_tags
+  name: wrist tags
+  scoped_aliases: [tags, tag, wrist tag]
+  fixed: true
+  kind: thing
+- id: checkpoint_reader
+  name: checkpoint reader
+  scoped_aliases: [reader, card reader]
+  fixed: true
+  kind: thing
 - id: cooling_service_archive_panel
   name: cooling-service archive panel
   kind: thing
@@ -548,6 +558,11 @@ facts:
 - id: badge_craft_noted
 - id: badge_checks_read
 - id: held_transfers_seen
+- id: wrist_tags_read
+- id: radio_loop_known
+- id: michelle_private_proof
+- id: checkpoint_opened
+- id: lemon_cake_calendar_read
 - id: corridor_watch_lifted
 - id: uplink_eye_seen
 - id: held_carts_known
@@ -661,7 +676,9 @@ facts:
 - purge_recovery_ready
 - audit_reaches_stacks
 - purge_alarm_active
-- detention_uprising_started
+- id: detention_uprising_started
+  on_assert:
+  - {move: stolen_radio, parent: kristin, text: with Kristin}
 - park_pursuit_resolved
 - park_left_behind_read
 - stranger_knows_script

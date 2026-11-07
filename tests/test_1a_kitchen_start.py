@@ -56,7 +56,7 @@ def test_1a_opening_and_turn_prompts_keep_kitchen_grounding_and_hide_card(monkey
     assert len(captured) == 2
     required_sentences = (
         "Michelle's home is otherwise untouched, but the back door has been forced.",
-        "The lock is splintered out of the wood.",
+        "The deadbolt is still thrown.",
         "Michelle is missing, and her tablet and work bag are gone.",
         "Kristin knows Michelle would not leave her kitchen like this.",
         "A drawer on Michelle's workstation has Kristin's initials, KMS, newly carved into it.",

@@ -1,8 +1,8 @@
 # Richer narration with bounded invention
 
-Status: in progress. Last updated 2026-11-03 (end of the session). 1A, 1B, 1C, 2A and 2B are merged to main (2A as PR #748, 2B as PR #749,
-merge commit `123499dd`). Next is scene 2C on branch `richer-narration-2c`. Whole quick suite on that branch:
-4074 passed, 30 skipped. The full suite with coverage has NOT been run; run it once at the very end.
+Status: in progress. Last updated 2026-11-03. 1A, 1B, 1C, 2A, 2B and 2C are merged to main (2C as PR #750, merge commit
+`7186e9aa`). Scene 3A is built and preregistered on branch `richer-narration-3a` (probe awaits Brandon). Whole quick suite at the 2C merge: 4100 passed, 31 skipped. The full suite with
+coverage has NOT been run; run it once at the very end.
 
 **Direction (Brandon, 2026-11-02):** richness comes from the plot itself, not runtime embellishment. The current story is an outline;
 Claude drafts it richer scene by scene, `plot.md` first, settling story problems itself and reporting afterwards. Steps 1 and 2 of
@@ -10,6 +10,57 @@ the original embellishment design are built but unused; step 3 (prompt work) and
 rules for every scene are in "Richness rules" below and in the `richer-scene-checklist` memory.
 
 ## Resume here (in order)
+
+0000. **Scene 3A: plot drafted, tests committed, propagation running (2026-11-03, branch `richer-narration-3a`).** Plot `4090cc65`, failing
+   acceptance tests `be6a4d3c` (`tests/test_richer_3a.py`, hash `312644bb...`). Four optional quiet reveals, each with a job: wrist tags
+   (every captive's transfer date is a week old; Michelle held them from the archive terminal, which answers 2B's "who held them"; with
+   `held_transfers_seen` the tags carry the closing code), the loop in the stolen radios (coded announcements ride inside the facility's
+   repeating message and change one word; pays off 1A/1B/1C, plants 3B/3C: "when it stops, everyone will know"), Michelle's private proof
+   (needs the medical level and the 1A calendar: "Saturday, K, lemon cake"; answers the false-recollection fear; adds the fact
+   `lemon_cake_calendar_read` to `k_sl_1a_g_r2`, the only existing entry touched), Brandon at the checkpoint reader (opens it first pass
+   without looking at the keypad; pays off 1B keypad and the 2A/2B badge checks). Windows 0/8/9, priority -1, not voiceable. Ringer task
+   `3a-richer-scene` (`manifest_3a_data.json`, check `check_3a_data.sh`, run name `richer-narration-3a`). Not covered: the supervisor on the
+   purge list.
+   **Propagated and preregistered (2026-11-03):** patch applied and committed (Ringer task passed on attempt 2); I tidied two padded
+   deliveries (a filler sentence, "repeating message on repeat") and reverted the worker's hack in `tests/test_hidden_bench_prose_probe.py`.
+   Quick suite on the branch: 4127 passed, 31 skipped; ruff clean. The G entry carries an empty `leak_terms` list (the worker's choice so
+   "stolen radio" stays safe before the reveal is earned). Probe preregistered in `.plans/richer-3a-probe-prereg.md`; arms
+   `richer-3a-baseline` (`bench/frozen/continuity-pre-richer-3a/`, from `e28473a1`) and `richer-3a-candidate`, script `richer-3a-detention`
+   (nine commands), about 440 neurons per arm. **Next:** Brandon runs the two `bench run` commands (billed), I read every turn, then the 3A PR
+   (merge only on his word); then 3B, 3C.
+   **Probe run and read (2026-11-04): richness supported** (result in the prereg). Details delivered 15/16 on their commands, invented
+   material around the four things gone (plain things new 10 -> 5, none from the details), no regression attributable. Open: reader
+   keypad contradiction 3/4, echoes (tags 2/4, radios 1/4, proof 1/4), proof turn rejected 1/4 (`must_convey` Saturday), and an OLDER
+   flake: the framed-official and uprising reveals hand off in only 1 of 4 replicates in BOTH arms, which hides the exit bar. **Next:**
+   Brandon's decision on the fixes and on diagnosing the flake; then the 3A PR; then 3B, 3C.
+   **Probe fixes built (2026-11-04, Brandon: "fix all the open defects first"; compared with the plan and earlier fixes at his request):**
+   keypad out of the reader reveal; echo cured by placement text (tags, radio) and a summarizing proof delivery, 3A Details additions
+   removed (the 2C technique); proof `must_convey` loosened; flake diagnosed and fixed in the engine (resolved names appended to the typed
+   command tied the two official reveals; new `typed_input` tie-break in `uniquely_matched_authored_handoff`, whole-story sweep: 34 of 1,657
+   synthetic commands change, all from no handoff to one reveal). Tests `tests/test_handoff_typed_tiebreak.py`, `tests/test_richer_3a.py`.
+   Quick suite 4133 passed, 31 skipped. Details in the prereg's Amendment 1. **Next:** Brandon's go on the candidate-only re-probe
+   (about 440 neurons), then the 3A PR; then 3B, 3C.
+   **Re-probe run and read (2026-11-04, `candidate-run2`):** flake fixed (official and uprising 4/4, scene left by the earned transition
+   4/4), no rejected turns, keypad contradiction gone, echo gone on tags, radios and reader; ONE residual: the proof echoes in 2/4
+   (the narrator writes the two closing sentences, then the delivery repeats them). Cure options in the prereg. **Next:** Brandon's call on
+   the proof echo, then the 3A PR (merge only on his word); then 3B, 3C.
+   **Prompt-size work (2026-11-04, Brandon: "aggressively manage context"; "only items/characters in the scene or that the player
+   refers to"):** proof delivery trimmed; speaker lines grouped (full 3A state 7,668 -> 5,253 characters); characters introduced only when
+   present or named (entry prompts down 150 to 340 characters in seven scenes). Quick suite 4138 passed. My earlier "conversation
+   history" explanation was wrong; the prompt has no history. Prereg Amendment 2. **Prompt size again (2026-11-04, prereg Amendment 3):** the
+   presence rule was reverted at Brandon's word (keep behavior, cut size another way), then rebuilt as "present, named by the command, or
+   brought up by the objective, an earned statement or an NPC's sayable statement"; also built: the pick rules dropped on a turn with no
+   candidates, placement lines that repeat the name dropped, each speaker set named once. Entry prompts 7 to 21% smaller (3B 2,674 to 2,118),
+   deep 3A 5,320 to 4,430. Quick suite 4147 passed. **Next:** Brandon's go on `candidate-run3` (3A, about 440 neurons) and a one-replicate
+   1A smoke, now also reading the turns where a participant dropped out (1C, 2B, 3A start); then the 3A PR; then 3B, 3C.
+   **Re-spotting diagnosed (2026-11-04, prereg Amendment 4, `bench/results/richer-3a-probe/{diag-*,fmt-*}`):** run3's "She spots Michelle" on
+   the proof turn was caused by my nested speaker header, not by the trimmed delivery (old format 16/16 call out; nested 0/6; one line
+   per statement 4/6; Michelle's lines only 0/6). Tried to keep the size: speakers limited to the one the command names (failed, 0/6),
+   limited to present or named (kept, 6/6, but saves nothing in 3A, the official is present), SCENE dedup (command 5 kept, but command 4 re-spotted
+   Brandon 5/6; dropped). **Built (`c339081a`, tests first `68972abb`): the old one line per speaker per statement, speakers listed only
+   when present or named by the command (Brandon: keep the limit even though it saves nothing in 3A); the nested header is gone.** Quick suite
+   4145 passed, 32 skipped. Other cuts kept (pick rules, placement repeats, characters by presence). **Next:** a 3A re-probe (about 440
+   neurons, Brandon's go) to recheck commands 4, 8, 9 and the "looks around" openers; defect 2 (opening look-alike) is still open.
 
 000. **Scene 2B: merged (PR #749, 2026-11-03).** Result in `.plans/richer-2b-probe-prereg.md` "Result":
    richness supported. All three details delivered 4/4 on the command that asks for them, the choice landed on command 4 and Michelle's reply on
@@ -26,7 +77,8 @@ rules for every scene are in "Richness rules" below and in the `richer-scene-che
    explicit `leak_terms` list keeps every vocabulary term they guarded (such as "left behind as bait") guarded in earlier scenes; the `act2_probe.py`
    scripted copies match. Tests `tests/test_2b_delivery_repeat.py` (tests-first commit `24463175`). Quick suite 4074 passed, 30 skipped. NOT re-probed
    live (the fix is subtractive; a re-probe would cost about 350 neurons per arm). **Echo fixes (2026-11-03, Brandon: "I don't want any echo on either scene"; tests-first `b0d4ae11`).** The narrator is shown the delivery text on a reveal turn and copies it, so the engine then repeats it. Probe, 8 replicates per arm, every narration read (scratchpad only, not in the repo): 2B badge checks, closing sentence "Brandon watches her read and says nothing" doubled 8/8 -> dropped it, 0/8. 1C door (`k_sl_1c_f_r1`): original doubled stance and quote 8/8; quote-only delivery left the lead-up ignoring Brandon in 7/8 ("him" with no referent); stance-only delivery doubled the stance 8/8; indirect speech and "turns his head" wording made the narrator ignore Brandon 7/8 and 8/8. **Chosen:** the delivery is only `Brandon says only, "Somebody has to watch the door."` and the stance moved into the 1C.2 Details line ("Brandon at the top of the stairs with his back to the processing line, watching the door"), the same technique as the pallets fix. Probe: stance never doubled, quote doubled 2/8; live confirmation on the real package 0/4 doubled, narrator follows "Watch Brandon" 4/4. **Residual 1C echo is possible (about 2 in 8)**; zero needs an engine change (not showing quiet reveals' delivery text to the narrator), which would touch 14 of 79 deliveries (1A 1, 1B 3, 1C 3, 2A 4, 2B 3; none in 2C, 3A to 3C) and narrows the "narrator sees its own delivery" exception, so it needs Brandon's go and its own probe first. Open: in one live 2B replicate the narrator missed "held, week" for `k_sl_2b_f_r1` (rejected turn; unrelated to this change; it delivered 4/4 in the original probe).
-   **Scene 2C: built, probe preregistered, billed run awaits Brandon (2026-11-03, branch `richer-narration-2c`).** Three optional quiet
+   **Scene 2C: MERGED (PR #750, 2026-11-03).** Details below.
+   Scene 2C: built, probe preregistered, billed run awaits Brandon (2026-11-03, branch `richer-narration-2c`).** Three optional quiet
    reveals, each with a job: the corridor camera (held on Brandon during the offer; lets go when he says yes; pays off the 2A camera),
    the cart tags (week-old date and "sensor fault"; pays off the 2B held transfers; needs `held_transfers_seen`), and the uplink monitor
    light (one outbound channel, amber, "whatever goes out will be seen": a clue to the cost of transmitting). Michelle's second message
@@ -50,7 +102,9 @@ rules for every scene are in "Richness rules" below and in the `richer-scene-che
    (`tests/test_2c_probe_fixes.py`); quick suite 4100 passed, 31 skipped. The first fix task failed on two errors in my own work (an unquoted
    comma in the plot's flow mapping; a spec that said "single group" without the list shape). **Second candidate run read: all four fixes
    hold** (echo gone 4/4; commitment-turn prompt max 6,474, 26 under the cap; no new groups 0/20; details unchanged 4/4; result in the
-   prereg's Amendment 1). **Next:** the 2C PR (his word to open and to merge), then 3A, 3B, 3C.
+   prereg's Amendment 1). **Next:** 3A (branch `richer-narration-3a`), then 3B, 3C. 3A owes: the captives
+   are alive because the transfers were held (the 2C cart tags say so); the transfer dose wears off in the detention block (see 1C); 3B and 3C owe
+   the monitor light's "whatever goes out will be seen": every outbound channel is watched, so the final broadcast must be forced from Rebecca's office.
    Not covered by 2C: the supervisor on Rebecca's purge list (a payoff for the 2A alarm log was considered; the tablet leaves with
    Rebecca, so it would have to go in the required delivery; left for 3A or a later pass).
    Owed to later scenes: 2C.5 Michelle's second message travels as a maintenance ticket with the same header and closing code; 3A uses the
@@ -251,6 +305,7 @@ Same list as the `richer-scene-checklist` memory. Apply to 1B through 3C.
 8. Optional ambient reveals use `relevance.priority: -1` and the spec says so; the projector offers four candidates ranked by established-and-mentioned, priority, id (and, once the ranking task lands, evidence match first). A worker's priorities of 1, 30 and 30 once crowded out story-critical reveals.
 9. A held item shows only "Held by" to the narrator: put what it shows in its name or reveal text.
 10. Probe each scene (preregistered baseline versus candidate, offline replay as smoke, every turn read).
+11. Pattern review (added 2026-11-05, after Scene 3A). Before a scene's probe and again after each fix, ask whether each defect matches a known pattern: a delivery repeated by a cue, statement or later turn; completed-event statements fed back to the narrator every turn; stale state carried across scene revisits; source text that disagrees with the plot; authored prose with no matching world effect or entity binding; a late-scene term or owner colliding with an earlier scene. If it matches and a guard exists (`storygame/audit.py`, the prompt-budget tests, `packages/worldkeeper` tests), find out why the guard missed it and fix the guard. If it matches and no guard exists, add one once the pattern has appeared a second time; a one-off defect does not earn a guard. Guards read declared data (ids, facts, effects, placements), never narrator prose, and list known items in an explicit allowlist so a new finding fails. Record the pattern, and the guard added or why none fits, in the scene's status entry. Model-behaviour defects (malformed replies, invented props or lines) are not guardable; they stay a sampling matter.
 
 ## Step 3 proposal (needs Brandon's approval before any prompt edit)
 

@@ -90,6 +90,18 @@ test("continuity judge sends also_called and explains its meaning", async () => 
   assert.doesNotMatch(request.input[0].content, /the narration must show what that character does; only holding a thing out is not finished/);
   assert.match(request.input[0].content, /drives away from the house does not finish drive to the park/);
   assert.match(request.input[0].content, /Repeating a journey the story already finished is also a restart/);
+  assert.equal(
+    request.input[0].content.match(/Seeing or approaching someone who is already nearby is not a restart\./g)?.length,
+    1,
+  );
+  assert.equal(
+    request.input[0].content.match(/Repeating a completed reunion as a new meeting is a restart\./g)?.length,
+    1,
+  );
+  assert.match(
+    request.input[0].content,
+    /protagonist_acts_beyond_command: answer yes if a narrator passage has the player character physically do something the command did not ask for/,
+  );
   assert.deepEqual(request.text.format.schema.properties.turns.items.required, [
     "turn",
     "contradicts_stated_fact",

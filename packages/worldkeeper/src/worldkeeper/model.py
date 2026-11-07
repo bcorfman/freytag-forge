@@ -1054,6 +1054,9 @@ class World(IncidentalWorldMixin):
         )
         if text is not None:
             self._replace("wk_place_text", entity_id, value=text)
+        else:
+            for fact in self._facts("wk_place_text", entity_id):
+                self.backend.retract_fact(fact)
         for fact in self._facts("wk_moved", entity_id):
             self.backend.retract_fact(fact)
         return OpResult(True, id=entity_id)

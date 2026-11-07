@@ -19,7 +19,7 @@ F_STORYLET = "SL-1A-F"
 CARD_STORYLET = "SL-1A-E"
 SITUATION = (
     "Michelle's home is otherwise untouched, but the back door has been forced. "
-    "The lock is splintered out of the wood. Michelle is missing, and her tablet and "
+    "The deadbolt is still thrown. Michelle is missing, and her tablet and "
     "work bag are gone. Kristin knows Michelle would not leave her kitchen like this. "
     "A drawer on Michelle's workstation has Kristin's initials, "
     "KMS, newly carved into it. Kristin did not carve them."

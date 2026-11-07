@@ -9,7 +9,7 @@ from worldkeeper import BASE_KINDS, WorldSchema
 from storygame.runtime.contracts import ResolvedTurnProposal, SceneTransitionProposal
 from storygame.runtime.item_facts import package_seed
 from storygame.runtime.state import RuntimeState
-from storygame.runtime.world_model import world_for
+from storygame.runtime.world_model import apply_scene_placements, world_for
 from storygame.story_package.loader import StoryPackageError, load_story_package
 from storygame.story_package.models import ItemPlacement, placement_text
 from storygame.story_package.world_schema import world_source_schema_data
@@ -130,6 +130,31 @@ def test_scene_change_applies_new_scene_placements(tmp_path):
     assert state.current_scene_id == "1B"
     assert world.parent("michelle_phone") == "los_angeles_park"
     assert world.place_label("michelle_phone") == "beside the park bench"
+
+
+def test_scene_replacement_clears_stale_character_placement_text():
+    package = load_story_package(ROOT / "data/stories/continuity-initiative")
+    state = RuntimeState.bootstrap(package)
+
+    apply_scene_placements(package, state.facts, "1C")
+    world = world_for(package, state.facts)
+    assert world.place_text("captives") == "moving through the processing line below"
+
+    scene_2c = next(scene for scene in package.scenes if scene.metadata.scene_id == "2C").metadata
+    if "captives" in scene_2c.character_placements:
+        apply_scene_placements(package, state.facts, "2C")
+    apply_scene_placements(package, state.facts, "3A")
+
+    assert world.parent("captives") == "detention_level"
+    assert world.place_text("captives") != "moving through the processing line below"
+    assert world.place_label("captives") == "detention level"
+
+    apply_scene_placements(package, state.facts, "1C")
+    assert world.parent("captives") == "processing_line"
+    assert world.place_text("captives") == "moving through the processing line below"
+    assert world.place_label("captives") == "moving through the processing line below"
+    apply_scene_placements(package, state.facts, "1C")
+    assert world.place_text("captives") == "moving through the processing line below"
 
 
 def test_item_placement_forms_and_text():

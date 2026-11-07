@@ -39,7 +39,7 @@ from storygame.runtime.facts import Fact
 from storygame.runtime.hedged_request import HedgedResult, configured_hedge_delay, hedged_call
 from storygame.runtime.knowledge import KnowledgeProjector, RevealCandidate, TurnKnowledgeContext
 from storygame.runtime.narration_json import escape_stray_quotes, extract_json_object
-from storygame.runtime.recent_cue import recent_cue_referent_text
+from storygame.runtime.recent_cue import named_entity_ids, recent_cue_referent_text
 from storygame.runtime.reference_resolution import resolved_reference_names
 from storygame.runtime.reveal_eligibility import together_or_unplaced
 from storygame.runtime.state import RuntimeState
@@ -508,7 +508,7 @@ class CloudflareTurnProvider:
         universe = self._reveal_universe()
         self.last_reveal_selection["universe_size"] = len(universe)
         evidence_input = self._evidence_input(player_input)
-        self.authored_handoff = uniquely_matched_authored_handoff(evidence_input, universe)
+        self.authored_handoff = uniquely_matched_authored_handoff(evidence_input, universe, typed_input=player_input)
         if self.authored_handoff is not None:
             self.last_reveal_selection.update(outcome="exact_match", matched=self.authored_handoff.candidate.id)
         elif self._exact_match_count(evidence_input, universe) > 1:
@@ -957,13 +957,15 @@ class CloudflareTurnProvider:
         )
         if handoff_turn:
             selection_rules: list[str] = []
-        else:
+        elif candidates:
             selection_rules = [
                 (
                     "When one or more offered candidates match the player's action, randomly pick one candidate "
                     "from that list and put its ID in selected_knowledge_ids."
                 ),
             ]
+        else:
+            selection_rules = []
         no_candidate_rule = "This turn has no candidates. Leave selected_knowledge_ids empty."
         if not handoff_turn and not candidates:
             selection_rules.append(no_candidate_rule)
@@ -987,12 +989,10 @@ class CloudflareTurnProvider:
             *self._turn_rules_before_grounding(),
             *(self._authored_handoff_rules() if handoff_turn else ()),
             *(
-                (
-                    "In grounding_ids, use only an ID you were given as known, or the one candidate you picked.",
-                    "Do not put a candidate's ID in grounding_ids unless you picked it.",
-                )
+                ["In grounding_ids, use only an ID you were given as known, or the one candidate you picked."]
+                + (["Do not put a candidate's ID in grounding_ids unless you picked it."] if candidates else [])
                 if model_grounding
-                else ()
+                else []
             ),
             self._turn_grounding_rule(),
             *selection_rules,
@@ -1087,7 +1087,7 @@ class CloudflareTurnProvider:
         rules = []
         for item_id, (item, placement) in self._visible_placed_items(world).items():
             text = self._placement_text(item_id, placement, world)
-            if text is not None:
+            if text is not None and not item.name.casefold().endswith(text.casefold()):
                 rules.append(f"{item.name} is {text}.")
         return rules
 
@@ -1583,20 +1583,22 @@ class CloudflareTurnProvider:
         delivery = NarrationSegment(kind="narration", text=text)
         return proposal.model_copy(update={"segments": (*proposal.segments, delivery)})
 
-    def _character_lines(self) -> list[str]:
-        """Introduce only the characters this scene actually involves.
-
-        A package's cast is written for a reader who finishes the story, so
-        sending all of it would hand the narrator later characters and their
-        motives before the player has met them.
-        """
+    def _character_lines(self, player_input: str = "", brought_up: tuple[str, ...] = ()) -> list[str]:
+        """Introduce present, referred-to, or story-brought-up scene participants."""
 
         package = self.state.package
         scene = self._current_scene()
         involved = {package.protagonist_id, *scene.participant_ids}
+        named_ids = named_entity_ids(self.state, " ".join((player_input, *brought_up)))
         lines = []
         for character in package.characters:
             if character.id not in involved:
+                continue
+            if (
+                character.id != package.protagonist_id
+                and not self._is_present(character.id)
+                and character.id not in named_ids
+            ):
                 continue
             bio = character.bio
             article = next((item for item in ("A ", "An ") if bio.startswith(item)), None)
@@ -1617,6 +1619,26 @@ class CloudflareTurnProvider:
         player_input = str(user.get("player_input", "")).strip()
         return [player_input] if player_input else []
 
+    def _speaker_constraint_lines(self, speakers: object, player_input: str = "") -> list[str]:
+        """List one line per speaker per statement when present or named.
+
+        Grouping moved the narrator's lead-in, so each speaker and statement
+        gets its own line.
+        """
+
+        if not isinstance(speakers, dict):
+            return []
+        named_ids = named_entity_ids(self.state, player_input)
+        lines = []
+        for speaker_id, speaker in speakers.items():
+            if speaker_id == self.state.package.protagonist_id or not isinstance(speaker, dict):
+                continue
+            if not self._is_present(speaker_id) and speaker_id not in named_ids:
+                continue
+            for item in speaker.get("sayable_knowledge", []):
+                lines.append(f"{self._display_name(speaker_id)} may say this aloud: {item['statement']}")
+        return lines
+
     def _section_user_prompt(self, user: dict[str, object]) -> str:
         """Render turn context as the authored roleplay sections.
 
@@ -1627,6 +1649,7 @@ class CloudflareTurnProvider:
         scene: list[str] = []
         earlier_in_story: list[str] = []
         constraints: list[str] = []
+        brought_up: list[str] = []
         handoff_turn = self._is_authored_handoff_turn()
 
         def paragraphs(text: str) -> list[str]:
@@ -1638,6 +1661,7 @@ class CloudflareTurnProvider:
         if isinstance(scene_entry, dict):
             scene.append(f"The scene takes place at {scene_entry['location']}.")
             objective = str(scene_entry["objective"])
+            brought_up.append(objective)
             scene.append(f"{scene_entry['protagonist']}'s objective is to {objective[0].lower()}{objective[1:]}.")
             scene.extend(paragraphs(scene_entry["entry_text"]))
             for detail in scene_entry["opening_beat"].get("details", []):
@@ -1652,6 +1676,7 @@ class CloudflareTurnProvider:
                 scene.extend(where.splitlines())
             scene.extend(paragraphs(player["scene_frame"]))
             scene.append(f"What presses on {self._protagonist_name()} now: {player['pressure']}")
+            brought_up.append(str(player["pressure"]))
             scene_setting = user.get("scene_setting")
             if isinstance(scene_setting, dict):
                 for beat in scene_setting.get("beats", []):
@@ -1665,6 +1690,7 @@ class CloudflareTurnProvider:
             for item in player.get("committed_knowledge", []):
                 if item.get("id") in player.get("scene_hidden_ids", []):
                     continue
+                brought_up.append(item["statement"])
                 definition = self.state.package.knowledge_indexes.by_id.get(item.get("id"))
                 if definition is not None and self.state.current_scene_id not in definition.available_in_scenes:
                     earlier_in_story.append(item["statement"])
@@ -1695,24 +1721,25 @@ class CloudflareTurnProvider:
                             constraints.append(f"If you reveal {candidate['id']}, you must say this: {group[0]}")
         if isinstance(context, dict):
             speakers = context.get("speakers", {})
+            constraints.extend(self._speaker_constraint_lines(speakers, str(user.get("player_input", ""))))
             if isinstance(speakers, dict):
-                for speaker_id, speaker in speakers.items():
-                    # The protagonist's sayable knowledge mirrors what SCENE already
-                    # states, so listing it repeated every established statement
-                    # verbatim and grew with every beat. The narrator writes the
-                    # player character from the same SCENE material either way; what
-                    # genuinely constrains a turn is which NPC may say what aloud.
-                    if speaker_id == self.state.package.protagonist_id:
+                for speaker in speakers.values():
+                    if not isinstance(speaker, dict):
                         continue
-                    for item in speaker.get("sayable_knowledge", []):
-                        constraints.append(f"{self._display_name(speaker_id)} may say this aloud: {item['statement']}")
+                    brought_up.extend(item["statement"] for item in speaker.get("sayable_knowledge", []))
         rules = user.get("_rules", [])
         constraints.extend(rule for rule in rules if isinstance(rule, str))
         player_lines = self._player_lines(user)
 
         blocks = []
         for heading, items in (
-            ("CHARACTERS", self._character_lines()),
+            (
+                "CHARACTERS",
+                self._character_lines(
+                    player_input=str(user.get("player_input", "")),
+                    brought_up=tuple(brought_up),
+                ),
+            ),
             ("SCENE", scene),
             ("EARLIER IN THE STORY", earlier_in_story),
             ("CONSTRAINTS", constraints),
