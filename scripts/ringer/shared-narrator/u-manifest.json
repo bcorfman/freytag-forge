@@ -1,0 +1,75 @@
+{
+  "run_name": "shared-narrator-u",
+  "workdir": "/home/bcorfman/dev/ringer-work/shared-narrator-u",
+  "max_parallel": 3,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "u-1-4",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "max_attempts": 1,
+      "timeout_s": 300,
+      "check_timeout_s": 3000,
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/bench/results/shared-narrator/u/u-1-4-ready.txt"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/bench/results/shared-narrator/u/u-1-4-ready.txt"
+      ],
+      "spec": "You are a trivial placeholder worker for a billed replay that Ringer's check performs itself. Boundary: do NOT run any replay, do NOT call any model or network service, do NOT touch any file except the one you own, never git commit. Your only job: write the single line 'ready u-1-4' into the file /home/bcorfman/dev/freytag-forge/bench/results/shared-narrator/u/u-1-4-ready.txt (create it; the directory exists). Nothing else is needed; the check afterwards replays samples 1 to 4 of the frozen C/U payloads (experiment U in .plans/shared-narrator-instruction-conflicts-prereg.md) and writes /home/bcorfman/dev/freytag-forge/bench/results/shared-narrator/u/u-1-4-rows.json. Do not read or edit anything else.",
+      "check": "set -o pipefail\ncd /home/bcorfman/dev/freytag-forge\nexport PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/packages/worldkeeper/src TMPDIR=/tmp\n[ ! -e /home/bcorfman/dev/freytag-forge/bench/results/shared-narrator/u/u-1-4-rows.json ] || { echo 'rows file already exists; refusing to re-bill'; exit 1; }\n/home/bcorfman/dev/freytag-forge/.venv/bin/python scripts/ringer/shared-narrator/u_replay.py /home/bcorfman/dev/freytag-forge/bench/results/shared-narrator/u/u-1-4-rows.json 1 4 --confirm 2>&1 | tee /home/bcorfman/dev/freytag-forge/bench/results/shared-narrator/u/u-1-4.log | tail -5\n/home/bcorfman/dev/freytag-forge/.venv/bin/python - <<'PY'\nimport json,sys\nr=json.load(open('/home/bcorfman/dev/freytag-forge/bench/results/shared-narrator/u/u-1-4-rows.json'))\nerrs=[(x['arm'],x['n'],x['sample']) for x in r if x.get('error')]\nprint('rows',len(r),'errors',len(errs),errs)\nsys.exit(0 if len(r)==24 else 'expected 24 rows, got %d'%len(r))\nPY\n",
+      "verified": "the replay wrote every row (errors kept as rows)"
+    },
+    {
+      "key": "u-5-8",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "max_attempts": 1,
+      "timeout_s": 300,
+      "check_timeout_s": 3000,
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/bench/results/shared-narrator/u/u-5-8-ready.txt"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/bench/results/shared-narrator/u/u-5-8-ready.txt"
+      ],
+      "spec": "You are a trivial placeholder worker for a billed replay that Ringer's check performs itself. Boundary: do NOT run any replay, do NOT call any model or network service, do NOT touch any file except the one you own, never git commit. Your only job: write the single line 'ready u-5-8' into the file /home/bcorfman/dev/freytag-forge/bench/results/shared-narrator/u/u-5-8-ready.txt (create it; the directory exists). Nothing else is needed; the check afterwards replays samples 5 to 8 of the frozen C/U payloads (experiment U in .plans/shared-narrator-instruction-conflicts-prereg.md) and writes /home/bcorfman/dev/freytag-forge/bench/results/shared-narrator/u/u-5-8-rows.json. Do not read or edit anything else.",
+      "check": "set -o pipefail\ncd /home/bcorfman/dev/freytag-forge\nexport PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/packages/worldkeeper/src TMPDIR=/tmp\n[ ! -e /home/bcorfman/dev/freytag-forge/bench/results/shared-narrator/u/u-5-8-rows.json ] || { echo 'rows file already exists; refusing to re-bill'; exit 1; }\n/home/bcorfman/dev/freytag-forge/.venv/bin/python scripts/ringer/shared-narrator/u_replay.py /home/bcorfman/dev/freytag-forge/bench/results/shared-narrator/u/u-5-8-rows.json 5 8 --confirm 2>&1 | tee /home/bcorfman/dev/freytag-forge/bench/results/shared-narrator/u/u-5-8.log | tail -5\n/home/bcorfman/dev/freytag-forge/.venv/bin/python - <<'PY'\nimport json,sys\nr=json.load(open('/home/bcorfman/dev/freytag-forge/bench/results/shared-narrator/u/u-5-8-rows.json'))\nerrs=[(x['arm'],x['n'],x['sample']) for x in r if x.get('error')]\nprint('rows',len(r),'errors',len(errs),errs)\nsys.exit(0 if len(r)==24 else 'expected 24 rows, got %d'%len(r))\nPY\n",
+      "verified": "the replay wrote every row (errors kept as rows)"
+    },
+    {
+      "key": "u-9-12",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "max_attempts": 1,
+      "timeout_s": 300,
+      "check_timeout_s": 3000,
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/bench/results/shared-narrator/u/u-9-12-ready.txt"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/bench/results/shared-narrator/u/u-9-12-ready.txt"
+      ],
+      "spec": "You are a trivial placeholder worker for a billed replay that Ringer's check performs itself. Boundary: do NOT run any replay, do NOT call any model or network service, do NOT touch any file except the one you own, never git commit. Your only job: write the single line 'ready u-9-12' into the file /home/bcorfman/dev/freytag-forge/bench/results/shared-narrator/u/u-9-12-ready.txt (create it; the directory exists). Nothing else is needed; the check afterwards replays samples 9 to 12 of the frozen C/U payloads (experiment U in .plans/shared-narrator-instruction-conflicts-prereg.md) and writes /home/bcorfman/dev/freytag-forge/bench/results/shared-narrator/u/u-9-12-rows.json. Do not read or edit anything else.",
+      "check": "set -o pipefail\ncd /home/bcorfman/dev/freytag-forge\nexport PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/packages/worldkeeper/src TMPDIR=/tmp\n[ ! -e /home/bcorfman/dev/freytag-forge/bench/results/shared-narrator/u/u-9-12-rows.json ] || { echo 'rows file already exists; refusing to re-bill'; exit 1; }\n/home/bcorfman/dev/freytag-forge/.venv/bin/python scripts/ringer/shared-narrator/u_replay.py /home/bcorfman/dev/freytag-forge/bench/results/shared-narrator/u/u-9-12-rows.json 9 12 --confirm 2>&1 | tee /home/bcorfman/dev/freytag-forge/bench/results/shared-narrator/u/u-9-12.log | tail -5\n/home/bcorfman/dev/freytag-forge/.venv/bin/python - <<'PY'\nimport json,sys\nr=json.load(open('/home/bcorfman/dev/freytag-forge/bench/results/shared-narrator/u/u-9-12-rows.json'))\nerrs=[(x['arm'],x['n'],x['sample']) for x in r if x.get('error')]\nprint('rows',len(r),'errors',len(errs),errs)\nsys.exit(0 if len(r)==24 else 'expected 24 rows, got %d'%len(r))\nPY\n",
+      "verified": "the replay wrote every row (errors kept as rows)"
+    }
+  ]
+}

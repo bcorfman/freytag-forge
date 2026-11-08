@@ -25,6 +25,8 @@ def _commit(state, entry_ids: tuple[str, ...]) -> None:
     for entry_id in entry_ids:
         for operation in entries[entry_id].establishes:
             state.facts.assert_fact(Fact(predicate=operation.fact_id, subject="story", value="true"))
+        if entries[entry_id].voiceable:
+            state.facts.assert_fact(Fact(predicate="knowledge_narrated", subject=entry_id, value="true"))
 
 
 def test_observation_reveals_are_not_voiceable():

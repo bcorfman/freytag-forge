@@ -44,6 +44,10 @@ A 58-year-old former senior government official and the principal architect of t
 
 Charles’s 56-year-old wife and the chief executive of a biotechnology and defense contractor. She oversees the technical operation that made the disappearances possible. Unlike Charles, she is motivated less by ideology than by survival, influence, and the opportunity to control the rebuilding of the country.
 
+### Imprisoned senior official
+
+A senior government official whom Charles has publicly blamed for the catastrophe. He is exhausted, observant, and has kept one piece of emergency authority out of Charles's hands.
+
 # Expanded Scene Outline
 
 ## Interactive pacing contract
@@ -719,8 +723,8 @@ item_placements:
 character_placements:
   captives: {parent: detention_level}
   senior_official: {parent: captives}
-  michelle: {parent: detention_level}
-entry_text: "A partly unsecured detention sector opened onto rows of captives. Coded announcements crackled through stolen radios, and the prisoners moved with a discipline no captor had taught them - someone inside had been organizing this long before rescue arrived.\n\n"
+  michelle: {parent: detention_level, text: beside the captives}
+entry_text: "A partly unsecured detention sector opened onto rows of captives. Secret messages crackled through stolen radios, and the prisoners moved with a discipline no captor had taught them - someone inside had been organizing this long before rescue arrived.\n\n"
 entry_variants:
 - requires: [committed_to_rescue]
   text: "The captives Kristin had freed from the transfer carts were already on this level. They stood among the organized rows as if they had always belonged there."
@@ -744,9 +748,9 @@ bridge_text:
 
 ### Scene 3A.1 — The Detention Block
 
-**Details:** detention sector; rows of captives; scattered radios; coded announcements; tightening security
+**Details:** detention sector; rows of captives; scattered radios; secret messages; tightening security
 
-Kristin follows Michelle's maintenance route into one partly unsecured detention sector, not a mass release. She expects rows of helpless captives. Instead, Michelle speaks into a stolen radio, coordinating prisoners through coded announcements and sympathetic facility workers.
+Kristin follows Michelle's maintenance route into one partly unsecured detention sector, not a mass release. She expects rows of helpless captives. Instead, Michelle speaks into a stolen radio, coordinating prisoners through secret messages and sympathetic facility workers.
 
 Michelle is beside the captives.
 
@@ -754,7 +758,7 @@ They are awake. The dose they were given is for the trip, and it wears off in th
 
 Each captive wears a plastic tag on the wrist, and every tag carries the same transfer date, a week old. They were all due out a week ago. They are alive because Michelle held them, one ticket at a time, from the medical terminal in the archive; she could reach nothing else. If Kristin has seen the held transfers, she knows the closing code on the tags, and she knows who wrote the tickets she could not place in 2B. If she freed a cart in 2C, the tags on the cart's captives are the same.
 
-The stolen radios are tuned to the facility's own loop, the same ninety seconds that played in the park and at the freight terminal. Michelle's coded announcements ride inside it and change one word. The captives know the loop by heart, and the guards have stopped hearing it, so it is the one voice upstairs does not listen to. That is how she taught them to trust a voice they could not see. When the loop stops, Michelle says, everyone will know.
+The stolen radios are tuned to the facility's own loop, the same ninety seconds that played in the park and at the freight terminal. Michelle's secret messages ride inside it and change one word. The captives know the loop by heart, and the guards have stopped hearing it, so it is the one voice upstairs does not listen to. That is how she taught them to trust a voice they could not see. When the loop stops, Michelle says, everyone will know.
 
 The reunion gets one unhurried moment before the purge countdown takes over again. Kristin and Michelle can speak to each other before anyone asks either of them for anything.
 

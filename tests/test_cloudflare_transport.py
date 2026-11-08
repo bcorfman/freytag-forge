@@ -225,6 +225,7 @@ def test_moving_knowledge_stays_in_constraints_but_not_scene(monkeypatch) -> Non
     state._assert_scene_entry_fact("3B")
     state.facts.assert_fact(Fact(predicate="human_security_control", subject="story", value="true"))
     state.facts.assert_fact(Fact(predicate="rebecca_office_reached", subject="story", value="true"))
+    state.facts.assert_fact(Fact(predicate="knowledge_narrated", subject="k_sl_3b_e_r1", value="true"))
 
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
     provider("Inspect the executive office.")

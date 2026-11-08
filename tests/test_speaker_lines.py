@@ -18,6 +18,8 @@ def _commit(state, entry_ids: tuple[str, ...]) -> None:
             state.facts.assert_fact(
                 Fact(predicate=operation.fact_id, subject="story", value=str(operation.value).lower())
             )
+        if entries[entry_id].voiceable:
+            state.facts.assert_fact(Fact(predicate="knowledge_narrated", subject=entry_id, value="true"))
 
 
 def _provider_and_context(command: str = "Look at the captives."):
@@ -46,7 +48,9 @@ def test_each_present_speaker_gets_one_line_per_statement_they_may_say():
         if speaker_id == provider.state.package.protagonist_id:
             continue
         for item in speaker["sayable_knowledge"]:
-            expected.append(f"- {provider._display_name(speaker_id)} may say this aloud: {item['statement']}")
+            expected.append(
+                f"- {provider._display_name(speaker_id)} may say this aloud: {item.get('spoken', item['statement'])}"
+            )
     assert len({line.split(" may say")[0] for line in expected}) >= 2, "the state must list several speakers"
     assert len(expected) >= 6
     assert [line for line in lines if " may say " in line] == expected

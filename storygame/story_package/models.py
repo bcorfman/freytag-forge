@@ -6,10 +6,25 @@ import re
 from collections.abc import Collection, Mapping
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, StrictBool, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr, field_validator, model_validator
 
 _ID = r"^[a-z][a-z0-9_]*$"
 _SCENE_ID = r"^[1-9][A-Z]$"
+
+
+class _FrozenSpeakerText(dict[str, str]):
+    """Hashable mapping for authored speech that cannot be mutated after loading."""
+
+    def __reduce__(self):
+        return type(self), (dict(self),)
+
+    def __hash__(self) -> int:
+        return hash(frozenset(self.items()))
+
+    def _immutable(self, *args, **kwargs):
+        raise TypeError("speaker_text is immutable")
+
+    __delitem__ = __setitem__ = clear = pop = popitem = setdefault = update = _immutable
 
 
 class _Model(BaseModel):
@@ -181,9 +196,28 @@ class KnowledgeDefinition(_Model):
     leak_terms: tuple[str, ...] | None = None
     delivery_text: str | None = None
     delivery_variants: tuple[DeliveryVariant, ...] = Field(default=(), exclude_if=lambda value: not value)
+    speaker_text: Mapping[str, StrictStr] = Field(
+        default_factory=_FrozenSpeakerText, exclude_if=lambda value: not value
+    )
     action_contract: ActionContract | None = None
     voiceable: StrictBool = Field(default=True, exclude_if=lambda value: value is True)
     repeatable: StrictBool = Field(default=False, exclude_if=lambda value: value is False)
+
+    @field_validator("speaker_text")
+    @classmethod
+    def non_blank_speaker_text(cls, value: Mapping[str, StrictStr]) -> Mapping[str, StrictStr]:
+        for speaker_id, text in value.items():
+            if re.fullmatch(_ID, speaker_id) is None:
+                raise ValueError(f"speaker_text has malformed speaker id '{speaker_id}'")
+            if not text.strip():
+                raise ValueError(f"speaker_text for '{speaker_id}' must not be blank")
+        return _FrozenSpeakerText(value)
+
+    @model_validator(mode="after")
+    def speaker_text_requires_voiceable(self) -> KnowledgeDefinition:
+        if self.speaker_text and not self.voiceable:
+            raise ValueError("speaker_text requires voiceable=true")
+        return self
 
 
 class SceneFrame(_Model):

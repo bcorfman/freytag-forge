@@ -82,7 +82,7 @@ facts:
 - id: wrist_tags_read
   purpose: Kristin has read the wrist tags showing the captives were due out a week ago.
 - id: radio_loop_known
-  purpose: Kristin knows Michelle's coded words ride inside the facility's repeating message.
+  purpose: Kristin knows Michelle's code words ride inside the facility's repeating message.
 - id: michelle_private_proof
   purpose: Michelle has answered Kristin's private question about the kitchen calendar.
 - id: checkpoint_opened
@@ -2378,11 +2378,11 @@ knowledge:
   - [seen]
   delivery_text: Whatever goes out will be seen.
 - id: k_sl_3a_a_r1
-  statement: 'Kristin and Michelle have reunited. Michelle coordinates the prisoners through stolen radios and coded announcements.'
+  statement: 'Kristin and Michelle have reunited. Michelle coordinates the prisoners through stolen radios and secret messages.'
   earn_when: "finds Michelle in detention, frees the captives, or helps Michelle"
   action_evidence:
   - [look, search, check, examine, inspect, read, study, find, trace, follow, enter, listen, free, help, use, organize, coordinate, rescue]
-  - [Michelle, Michelle's voice, radio voice, the radio voice, stolen radio, stolen radios, coded announcement, coded announcements, holding block, holding blocks, captives, the captives, prisoners, the prisoners, prisoner escape, the prisoner escape, detention block]
+  - [Michelle, Michelle's voice, radio voice, the radio voice, stolen radio, stolen radios, secret message, secret messages, holding block, holding blocks, captives, the captives, prisoners, the prisoners, prisoner escape, the prisoner escape, detention block]
   entity_ids: []
   aliases:
   - michelle reached
@@ -2407,7 +2407,11 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "Kristin joins Michelle beside the captives. They are awake: the dose they were given is for the trip, and it wears off in the detention block. For one unhurried moment the two of them talk to each other and nobody asks anything of either. Then Michelle turns back to her coded announcements and points toward the medical level, where the experiment records wait."
+  delivery_text: 'Kristin joins Michelle beside the captives. They are awake: the dose they were given is for the trip, and it wears off in the detention block. Michelle looks up, goes completely still, and then pulls Kristin into a tight embrace. "You''re here," she says, her voice breaking. "You''re really here." Kristin holds on just as hard, and for one unhurried moment nobody asks anything of either of them. Then Michelle wipes her eyes, turns back to her secret messages, and points toward the medical level, where the experiment records wait.'
+  speaker_text:
+    michelle: "I've been organizing everyone with secret announcements over our stolen radios."
+    brandon: "Dr. McGehee's been organizing everyone with secret announcements over the stolen radios."
+    senior_official: "Dr. McGehee's been organizing everyone with secret announcements over the stolen radios."
 - id: k_sl_3a_a_r2
   statement: 'Michelle has explained that freeing this block means little without exposing the other sites.'
   earn_when: "asks Michelle about other sites"
@@ -2438,7 +2442,11 @@ knowledge:
   relevance:
     entity_ids: []
     priority: 0
-  delivery_text: "Michelle shares one unhurried moment with Kristin. She explains that freeing this block means little without exposing the other sites. Michelle points toward the medical level, where the experiment records wait."
+  delivery_text: 'Michelle looks up, goes completely still, and pulls Kristin into a tight embrace. "You''re really here," she says, her voice breaking. For one unhurried moment nobody asks anything of either of them. Then she wipes her eyes and explains that freeing this block means little without exposing the other sites. Michelle points toward the medical level, where the experiment records wait.'
+  speaker_text:
+    michelle: "Freeing this block doesn't mean much unless we expose the other sites too."
+    brandon: 'Dr. McGehee says freeing this block means little unless we expose the other sites.'
+    senior_official: 'Dr. McGehee says freeing this block means little unless we expose the other sites.'
 - id: k_sl_3a_b_r1
   statement: 'Michelle shows Kristin experiment records proving planned "survivors" were conditioned to support Charles''s story.'
   earn_when: "reads the experiment records"
@@ -2471,6 +2479,10 @@ knowledge:
     entity_ids: [detention_medical_records]
     priority: 0
   delivery_text: "Michelle shows Kristin experiment records. They prove planned survivors were conditioned to support Charles's story. The senior official waits among the government prisoners."
+  speaker_text:
+    michelle: "Those records prove the \"survivors\" were planned. They were conditioned to support Charles's story."
+    brandon: "Those records prove the \"survivors\" were planned. They were conditioned to support Charles's story."
+    senior_official: "Those records prove the \"survivors\" were planned. They were conditioned to support Charles's story."
 - id: k_sl_3a_b_r2
   statement: 'Michelle shows Kristin the medical level where prisoners were subjected to memory, compliance, and resistance experiments.'
   earn_when: "enters the medical level"
@@ -2500,6 +2512,10 @@ knowledge:
     entity_ids: []
     priority: 0
   delivery_text: "Michelle shows Kristin the medical level. The prisoners were subjected to memory, compliance, and resistance experiments. The senior official waits among the government prisoners."
+  speaker_text:
+    michelle: 'The medical level is where they ran memory, compliance, and resistance experiments on the prisoners.'
+    brandon: 'The medical level is where they ran memory, compliance, and resistance experiments on the prisoners.'
+    senior_official: 'The medical level is where they ran memory, compliance, and resistance experiments on the prisoners.'
 - id: k_sl_3a_e_r1
   statement: 'Michelle shows Kristin experiment records proving planned "survivors" were conditioned to support Charles''s story.'
   earn_when: "reads the experiment records"
@@ -2531,6 +2547,10 @@ knowledge:
     entity_ids: [detention_medical_records]
     priority: 10
   delivery_text: "Michelle shows Kristin experiment records. They prove planned survivors were conditioned to support Charles's story. The senior official waits among the government prisoners."
+  speaker_text:
+    michelle: "Those records prove the \"survivors\" were planned. They were conditioned to support Charles's story."
+    brandon: "Those records prove the \"survivors\" were planned. They were conditioned to support Charles's story."
+    senior_official: "Those records prove the \"survivors\" were planned. They were conditioned to support Charles's story."
 - id: k_sl_3a_d_r1
   statement: 'The senior official Charles framed gives Kristin one-use authorization for the emergency surface gates, which will expire when Charles activates his new authority.'
   earn_when: "speaks with the senior official"
@@ -2569,6 +2589,10 @@ knowledge:
     entity_ids: []
     priority: 0
   delivery_text: "The senior official Charles framed gives Kristin one-use authority for the emergency surface gates. It expires when Charles activates his new authority. Michelle turns toward the prisoners at the checkpoints."
+  speaker_text:
+    michelle: "That authorization opens the emergency surface gates, but only once. It expires when Charles activates his new authority."
+    brandon: "That authorization opens the emergency surface gates, but only once. It expires when Charles activates his new authority."
+    senior_official: "That authorization opens the emergency surface gates, but only once. It expires when Charles activates his new authority."
 - id: k_sl_3a_d_r2
   statement: 'The framed official proves the emergency gate authorization is real, but its brief response makes clear that the one-use code is about to expire.'
   earn_when: "checks the gate-status panel"
@@ -2607,6 +2631,10 @@ knowledge:
     entity_ids: []
     priority: 0
   delivery_text: "The framed official proves the emergency gate authorization is real. The brief panel response shows the one-use code is about to expire. Michelle turns toward the prisoners at the checkpoints."
+  speaker_text:
+    michelle: "The authorization is real, but the panel's brief response shows the one-use code is about to expire."
+    brandon: "The authorization is real, but the panel's brief response shows the one-use code is about to expire."
+    senior_official: "The authorization is real, but the panel's brief response shows the one-use code is about to expire."
 - id: k_sl_3a_c_r1
   statement: 'Michelle hands Kristin the stolen radio and Kristin gives the signal; prisoners seize checkpoints and open a fighting route toward the command and broadcast levels.'
   earn_when: "Players may lead the prisoners to the checkpoints or surface gates."
@@ -2640,6 +2668,10 @@ knowledge:
     entity_ids: []
     priority: 0
   delivery_text: "Michelle hands Kristin the stolen radio and Kristin gives the signal. Prisoners seize checkpoints and open a fighting route toward the command and broadcast levels."
+  speaker_text:
+    michelle: "Your signal worked. The prisoners have the checkpoints, and they're fighting their way up toward the command and broadcast levels."
+    brandon: "The signal worked. The prisoners have the checkpoints, and they're fighting their way up toward the command and broadcast levels."
+    senior_official: "The signal worked. The prisoners have the checkpoints, and they're fighting their way up toward the command and broadcast levels."
 - id: k_sl_3a_c_r2
   statement: 'With the emergency-gate authorization about to expire under Charles''s new authority, Michelle hands Kristin the stolen radio and Kristin gives the signal rather than wait.'
   earn_when: "warns Michelle about expiring codes"
@@ -2676,6 +2708,10 @@ knowledge:
     entity_ids: []
     priority: 0
   delivery_text: "Kristin warns Michelle that the emergency-gate authorization is about to expire. Michelle hands Kristin the stolen radio, and Kristin gives the signal because the authorization is about to expire."
+  speaker_text:
+    michelle: "Good thing we didn't wait. That authorization was about to run out."
+    brandon: "Dr. McGehee didn't wait. The authorization was about to expire."
+    senior_official: "Dr. McGehee didn't wait. The authorization was about to expire."
 - id: k_sl_3a_f_r1
   statement: "The wrist tags show every captive was due out a week ago."
   aliases: [wrist tags read]
@@ -2705,16 +2741,16 @@ knowledge:
   delivery_variants:
   - requires: [held_transfers_seen]
     text: >-
-      The closing code on every tag is sensor fault: these are the transfers Kristin saw held. Michelle says she held them all, one ticket at a time, from a terminal in the archive, because it was all she could reach.
+      The closing code on every tag is the same one on the held transfers Kristin saw in the archive: sensor fault. Michelle says she held them all, one ticket at a time, from a terminal in the archive, because it was all she could reach.
 - id: k_sl_3a_g_r1
-  statement: "Michelle's coded words ride inside the facility's own repeating message."
+  statement: "Michelle's code words ride inside the facility's own repeating message."
   aliases: [radio loop known]
   voiceable: false
   reach_entity_ids: [stolen_radio]
   earn_when: listens to the stolen radio
   action_evidence:
   - [listen to, listen, hear, tune, study, check, examine, trace]
-  - [stolen radio, the stolen radio, radio, radios, announcement, announcements, coded announcement, coded announcements, loop]
+  - [stolen radio, the stolen radio, radio, radios, announcement, announcements, secret message, secret messages, loop]
   entity_ids: [kristin, stolen_radio, michelle]
   audience: {kind: public, player_visible: true}
   available_in_scenes: [3A]
@@ -2729,14 +2765,14 @@ knowledge:
   relevance: {entity_ids: [stolen_radio], priority: -1}
   leak_terms: []
   must_convey:
-  - [coded words, coded announcements]
+  - [code words, secret messages]
   - [one word]
   delivery_text: >-
-    Michelle's coded words ride inside the message and change one word. The captives know it by heart, and the guards no longer hear it. Michelle says that when it stops, everyone will know.
+    Michelle's code words ride inside the message and change one word. The captives know it by heart, and the guards no longer hear it. Michelle says that when it stops, everyone will know.
   delivery_variants:
   - requires: [broadcast_loop_confirmed]
     text: >-
-      It is the same ninety seconds Kristin timed on the truck radio. Michelle's coded words ride inside it and change one word. The captives know it by heart, and the guards no longer hear it. Michelle says that when it stops, everyone will know.
+      It is the same ninety seconds Kristin timed on the truck radio. Michelle's code words ride inside it and change one word. The captives know it by heart, and the guards no longer hear it. Michelle says that when it stops, everyone will know.
 - id: k_sl_3a_h_r1
   statement: "Michelle answers a question about the kitchen calendar that the facility never saw."
   aliases: [Michelle private proof]
@@ -2791,11 +2827,11 @@ knowledge:
   - [checkpoint reader, reader]
   - [first pass]
   delivery_text: >-
-    The checkpoint reader clears on the first pass and the door opens. Michelle's people watch Brandon instead of the door.
+    Brandon steps up to the reader. It clears on the first pass and the door opens. Michelle's people watch Brandon instead of the door.
   delivery_variants:
   - requires: [badge_craft_noted]
     text: >-
-      The checkpoint reader clears on the first pass and the door opens. Michelle's people watch Brandon instead of the door. It is the same ease he showed at the gate.
+      Brandon steps up to the reader. It clears on the first pass and the door opens. Michelle's people watch Brandon instead of the door. It is the same ease he showed at the gate.
 - id: k_sl_3b_a_r1
   statement: 'Kristin feeds JANUS false water-pressure and ventilation alarms in empty service corridors until human operators must take control.'
   earn_when: "feeds JANUS false alarms, uses the inspection console, or traces, follows, or inspects water-pressure warnings"

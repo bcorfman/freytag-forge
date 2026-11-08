@@ -34,6 +34,8 @@ def _commit(state, entry_ids: tuple[str, ...]) -> None:
             state.facts.assert_fact(
                 Fact(predicate=operation.fact_id, subject="story", value=str(operation.value).lower())
             )
+        if entry.voiceable:
+            state.facts.assert_fact(Fact(predicate="knowledge_narrated", subject=entry_id, value="true"))
 
 
 def test_scene_1c_observations_are_not_voiceable_and_brandons_own_beats_are():

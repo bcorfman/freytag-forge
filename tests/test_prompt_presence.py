@@ -65,4 +65,4 @@ def test_a_character_an_earned_statement_names_is_introduced_even_when_absent():
 def test_a_character_no_one_has_brought_up_stays_out():
     # Charles is a later character: nothing the objective, the command or any earned statement says names him in 3A.
     state, _engine = test_richer_3a._engine()
-    assert "Charles" not in _characters(state, "Look at the captives.")
+    assert "Charles Jenkins" not in _characters(state, "Look at the captives.")

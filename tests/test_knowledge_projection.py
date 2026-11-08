@@ -58,6 +58,8 @@ def _assert_story_fact(state: RuntimeState, fact_id: str) -> None:
 
 def test_3a_reunited_statements_project_together_and_shrink_the_scene_prompt() -> None:
     state, _engine_instance = _engine(true_facts=ARRIVED)
+    for knowledge_id in ("k_sl_3a_a_r1", "k_sl_3a_a_r2"):
+        state.facts.assert_fact(Fact(predicate="knowledge_narrated", subject=knowledge_id, value="true"))
     provider = ItemFactsProvider(
         worker_url="https://worker.example/turn",
         token="",
@@ -81,10 +83,22 @@ def test_3a_reunited_statements_project_together_and_shrink_the_scene_prompt() -
     lines = (
         provider._section_user_prompt(prompt["context"]).split("CONSTRAINTS:\n", 1)[1].split("\n\n", 1)[0].splitlines()
     )
-    statement_lines = [line for line in lines if NEW_A_R1_STATEMENT in line or NEW_A_R2_STATEMENT in line]
-    assert len(statement_lines) == 6
-    assert sum(NEW_A_R1_STATEMENT in line for line in statement_lines) == 3
-    assert sum(NEW_A_R2_STATEMENT in line for line in statement_lines) == 3
+    authored_lines = [
+        line
+        for line in lines
+        if "may say this aloud:" in line
+        and any(
+            text in line
+            for text in (
+                "I've been organizing everyone with secret announcements over our stolen radios.",
+                "Freeing this block doesn't mean much unless we expose the other sites too.",
+                "Dr. McGehee's been organizing everyone with secret announcements over the stolen radios.",
+                "Dr. McGehee says freeing this block means little unless we expose the other sites.",
+            )
+        )
+    ]
+    assert len(authored_lines) == 6
+    assert all(NEW_A_R1_STATEMENT not in line and NEW_A_R2_STATEMENT not in line for line in authored_lines)
 
 
 def test_michelles_route_terms_no_longer_collide_with_ordinary_phone_talk() -> None:
@@ -151,6 +165,7 @@ def test_moving_3b_knowledge_hides_frame_and_scene_line_but_stays_projected() ->
     state = _scene_state("3B")
     _assert_story_fact(state, "human_security_control")
     _assert_story_fact(state, "rebecca_office_reached")
+    state.facts.assert_fact(Fact(predicate="knowledge_narrated", subject="k_sl_3b_e_r1", value="true"))
 
     projection = KnowledgeProjector().project(state, "player", "Inspect the executive office.")
 

@@ -860,6 +860,22 @@ class World(IncidentalWorldMixin):
         """Return companions following an entity."""
         return tuple(sorted(fact.subject for fact in self._facts("wk_companion") if fact.object == entity_id))
 
+    def people_alongside(self, entity_id):
+        """Return visible non-companion characters in the entity's exact spot."""
+        companions = set(self.companions(entity_id))
+        return tuple(
+            sorted(
+                candidate
+                for candidate in self._ids()
+                if candidate != entity_id
+                and self.is_a(candidate, "character")
+                and self.is_visible(candidate)
+                and self.alongside(entity_id, candidate)
+                and candidate not in companions
+                and not self.is_a(self.parent(candidate), "group")
+            )
+        )
+
     def members(self, group_id):
         """Return the character IDs whose parent is this group."""
         if not self._is_a(group_id, "group"):

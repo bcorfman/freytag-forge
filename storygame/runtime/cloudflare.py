@@ -1636,7 +1636,9 @@ class CloudflareTurnProvider:
             if not self._is_present(speaker_id) and speaker_id not in named_ids:
                 continue
             for item in speaker.get("sayable_knowledge", []):
-                lines.append(f"{self._display_name(speaker_id)} may say this aloud: {item['statement']}")
+                lines.append(
+                    f"{self._display_name(speaker_id)} may say this aloud: {item.get('spoken', item['statement'])}"
+                )
         return lines
 
     def _section_user_prompt(self, user: dict[str, object]) -> str:
@@ -2134,16 +2136,25 @@ class CloudflareTurnProvider:
 
         scene = self._current_scene()
         npc_ids = {item.id for item in self.state.package.world.npcs}
-        return {
-            speaker_id: {
-                "sayable_knowledge": [
-                    {"id": item.id, "statement": item.statement}
-                    for item in self.projector.project(self.state, speaker_id, player_input).sayable_knowledge
-                ]
-            }
-            for speaker_id in scene.participant_ids
-            if speaker_id in npc_ids and self._is_present(speaker_id)
-        }
+        knowledge_by_id = {item.id: item for item in self.state.package.knowledge.knowledge}
+        contexts = {}
+        for speaker_id in scene.participant_ids:
+            if speaker_id not in npc_ids or not self._is_present(speaker_id):
+                continue
+            sayable = []
+            for item in self.projector.project(self.state, speaker_id, player_input).sayable_knowledge:
+                authored = knowledge_by_id[item.id]
+                if authored.speaker_text and speaker_id not in authored.speaker_text:
+                    continue
+                sayable.append(
+                    {
+                        "id": item.id,
+                        "statement": item.statement,
+                        **({"spoken": authored.speaker_text[speaker_id]} if authored.speaker_text else {}),
+                    }
+                )
+            contexts[speaker_id] = {"sayable_knowledge": sayable}
+        return contexts
 
     def _is_present(self, speaker_id: str) -> bool:
         """Placement in the protagonist's area tree makes a speaker present.

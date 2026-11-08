@@ -1,0 +1,31 @@
+{
+  "run_name": "lead-up-contradictions-replay-script",
+  "workdir": "/home/bcorfman/dev/ringer-work/lead-up-contradictions-replay-script",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "write-lead-up-replay",
+      "task_type": "code-feature",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=medium"
+      ],
+      "max_attempts": 2,
+      "timeout_s": 900,
+      "check_timeout_s": 300,
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/lead-up-contradictions/replay.py"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/lead-up-contradictions/replay.py"
+      ],
+      "spec": "You are a code worker for the freytag-forge repository at /home/bcorfman/dev/freytag-forge. Boundary: NO model call, NO network call, never git commit. You own only /home/bcorfman/dev/freytag-forge/scripts/ringer/lead-up-contradictions/replay.py (create it). Do not edit or read /home/bcorfman/dev/freytag-forge/scripts/ringer/lead-up-contradictions/validate_replay.py (the independent check); only run it at the end.\n\nGOAL: a billed-replay script for experiments 1A, 1B, 2A of .plans/lead-up-contradictions-prereg.md. Pattern: /home/bcorfman/dev/freytag-forge/scripts/ringer/shared-narrator/gue1_replay.py (same header '# ruff: noqa: E501', same transport). Frozen inputs are in /home/bcorfman/dev/freytag-forge/bench/results/lead-up-contradictions/: frozen-C0.json (nine endpoints n='c1'..'c9', each with command and wire_payload) and frozen-1A.json / frozen-1B.json / frozen-2A.json (one endpoint each: 1A n='c6', 1B and 2A n='c4').\n\nInterface: a function `run(cmp, out, first, last, send=None)` and a CLI `replay.py CMP OUT FIRST LAST [--confirm]` run from the repo root, CMP one of 1A, 1B, 2A. Rules:\n- Arms are 'C0' (the endpoint with the same n from frozen-C0.json, wire_payload verbatim) and CMP (wire_payload from frozen-CMP.json). Row order is sample-major, then C0, then CMP: for each sample FIRST..LAST send C0 then CMP. One request per cell, NO retries, NO replacements; every exception is kept as a row with error=str(e), narration=None.\n- Row fields: arm, n, sample, command, narration, error, raw (raw = response body decoded utf-8 errors='replace'; narration = bench.frozen_prompts._decode_replay_body(body)). Rewrite the whole rows JSON (ensure_ascii=False, indent=1) after every cell so partial progress survives.\n- Guards: assert 1 <= FIRST <= LAST <= 12 (so at most 24 requests); refuse (raise FileExistsError) if OUT already exists; print f'requests {count}' ; without --confirm print 'dry run: nothing sent' and exit 0 BEFORE importing or building any transport or reading any secret.\n- Transport (only when sending and send is None): `import bench.frozen_prompts as fp; fp.SCENE = '3A'; from bench.core import load_dotenv; load_dotenv(); transport = fp._default_transport({'variation': 'richer-3a-live'})`. If `send` is given, use it instead (this is how the offline check drives it).\n- The function must be importable without side effects (CLI parsing under `if __name__ == '__main__'`), and must work run both as a script from the repo root and when loaded by importlib (put the repo root on sys.path as gue1_replay.py's neighbours do).\n\nHOW TO RUN (from /home/bcorfman/dev/freytag-forge): `/home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff format scripts/ringer/lead-up-contradictions/replay.py && /home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff check scripts/ringer/lead-up-contradictions/replay.py` then `TMPDIR=/tmp PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/packages/worldkeeper/src /home/bcorfman/dev/freytag-forge/.venv/bin/python scripts/ringer/lead-up-contradictions/validate_replay.py`; fix until it prints REPLAY VALIDATION OK. Never use bare python.",
+      "check": "set -o pipefail\ncd /home/bcorfman/dev/freytag-forge\nexport TMPDIR=/tmp PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/packages/worldkeeper/src\n/home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff check scripts/ringer/lead-up-contradictions/replay.py && /home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff format --check scripts/ringer/lead-up-contradictions/replay.py && /home/bcorfman/dev/freytag-forge/.venv/bin/python scripts/ringer/lead-up-contradictions/validate_replay.py\n",
+      "verified": "an offline validator drives run() with a fake sender and proves order, payload identity, error-as-row, caps and the dry-run guard"
+    }
+  ]
+}

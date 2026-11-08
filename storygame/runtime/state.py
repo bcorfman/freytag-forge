@@ -231,6 +231,10 @@ class RuntimeState(BaseModel):
                 self._apply_operation(candidate_facts, operation)
             candidate_active.remove(event.event_id)
             candidate_fired.add(event.event_id)
+        for knowledge_id in proposal.selected_knowledge_ids:
+            # Known limit: Engine._prepare_handoff's fallback_text path selects no knowledge ID,
+            # so an entry delivered by that forced handoff is not marked narrated.
+            candidate_facts.assert_fact(Fact(predicate="knowledge_narrated", subject=knowledge_id, value="true"))
         next_scene_id = self.current_scene_id
         next_phase = self.phase
         if proposal.transition:

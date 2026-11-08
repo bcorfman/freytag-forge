@@ -53,6 +53,7 @@ def _generic_state(item: KnowledgeDefinition) -> RuntimeState:
     state = RuntimeState.bootstrap(_generic_package(item))
     for effect in item.establishes:
         state.facts.assert_fact(Fact(predicate=effect.fact_id, subject="story", value="true"))
+    state.facts.assert_fact(Fact(predicate="knowledge_narrated", subject=item.id, value="true"))
     return state
 
 
@@ -63,6 +64,7 @@ def _real_recovery_state(*, witnessed: bool) -> RuntimeState:
     if witnessed:
         state.facts.assert_fact(Fact(predicate="card_challenged", subject="story", value="true"))
         state.facts.assert_fact(Fact(predicate="kristin_marked_by_patrol", subject="story", value="true"))
+        state.facts.assert_fact(Fact(predicate="knowledge_narrated", subject="k_sl_1a_b_r0w", value="true"))
     apply_world_effects(PACKAGE, state.facts)
     return state
 
@@ -147,6 +149,7 @@ def test_dialogue_grounding_uses_voiceable_projection(knowledge_id: str, witness
             RuntimeEngine(state, lambda _: payload).turn("Ask the patrol officer about the memory card.")
         assert caught.value.code == "dialogue_grounding_not_sayable"
     else:
+        state.facts.assert_fact(Fact(predicate="knowledge_narrated", subject=knowledge_id, value="true"))
         result = RuntimeEngine(state, lambda _: payload).turn("Ask the patrol officer about the memory card.")
         assert result.segments[0].text == statement
 

@@ -1,0 +1,31 @@
+{
+  "run_name": "lead-up-contradictions-smoke-1A",
+  "workdir": "/home/bcorfman/dev/ringer-work/lead-up-contradictions-smoke-1A",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "smoke-1A",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "max_attempts": 1,
+      "timeout_s": 300,
+      "check_timeout_s": 3000,
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/bench/results/lead-up-contradictions/smoke-1A-ready.txt"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/bench/results/lead-up-contradictions/smoke-1A-ready.txt"
+      ],
+      "spec": "You are a trivial placeholder worker for a billed replay that Ringer's check performs itself. Boundary: do NOT run any replay, do NOT call any model or network service, do NOT touch any file except the one you own, never git commit. Your only job: write the single line 'ready smoke-1A' into the file /home/bcorfman/dev/freytag-forge/bench/results/lead-up-contradictions/smoke-1A-ready.txt (create it; the directory exists). Nothing else is needed; the check afterwards replays samples 1 to 1 of comparison 1A (C0 vs 1A, .plans/lead-up-contradictions-prereg.md) and writes /home/bcorfman/dev/freytag-forge/bench/results/lead-up-contradictions/smoke-1A-rows.json. Do not read or edit anything else.",
+      "check": "set -o pipefail\ncd /home/bcorfman/dev/freytag-forge\nexport PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/packages/worldkeeper/src TMPDIR=/tmp\n[ ! -e /home/bcorfman/dev/freytag-forge/bench/results/lead-up-contradictions/smoke-1A-rows.json ] || { echo 'rows file already exists; refusing to re-bill'; exit 1; }\n/home/bcorfman/dev/freytag-forge/.venv/bin/python scripts/ringer/lead-up-contradictions/replay.py 1A /home/bcorfman/dev/freytag-forge/bench/results/lead-up-contradictions/smoke-1A-rows.json 1 1 --confirm 2>&1 | tee /home/bcorfman/dev/freytag-forge/bench/results/lead-up-contradictions/smoke-1A.log | tail -5\n/home/bcorfman/dev/freytag-forge/.venv/bin/python - <<'PY'\nimport json,sys\nr=json.load(open('/home/bcorfman/dev/freytag-forge/bench/results/lead-up-contradictions/smoke-1A-rows.json'))\nerrs=[(x['arm'],x['n'],x['sample']) for x in r if x.get('error')]\nprint('rows',len(r),'errors',len(errs),errs)\nsys.exit(0 if len(r)==2 else 'expected 2 rows, got %d'%len(r))\nPY\n",
+      "verified": "the replay wrote every row (errors kept as rows)"
+    }
+  ]
+}

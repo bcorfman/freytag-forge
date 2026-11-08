@@ -1,0 +1,145 @@
+diff --git a/storygame/runtime/cloudflare.py b/storygame/runtime/cloudflare.py
+index da68c67a..4cae683b 100644
+--- a/storygame/runtime/cloudflare.py
++++ b/storygame/runtime/cloudflare.py
+@@ -1636,7 +1636,7 @@ class CloudflareTurnProvider:
+             if not self._is_present(speaker_id) and speaker_id not in named_ids:
+                 continue
+             for item in speaker.get("sayable_knowledge", []):
+-                lines.append(f"{self._display_name(speaker_id)} may say this aloud: {item['statement']}")
++                lines.append(f"{self._display_name(speaker_id)} may talk about this fact: {item['statement']}")
+         return lines
+ 
+     def _section_user_prompt(self, user: dict[str, object]) -> str:
+diff --git a/tests/test_bench.py b/tests/test_bench.py
+index e0d16c90..561acf08 100644
+--- a/tests/test_bench.py
++++ b/tests/test_bench.py
+@@ -1681,7 +1681,7 @@ def test_the_player_character_is_not_listed_as_a_speaker_of_scene_statements() -
+ 
+     prompts = prompt_for(default_variation(), "1A", "Play back the recording.", "1A.3")
+ 
+-    assert "Kristin Schweitzer may say this aloud" not in prompts["user"]
++    assert "Kristin Schweitzer may talk about this fact" not in prompts["user"]
+ 
+ 
+ def test_an_optional_storylet_is_excluded_once_its_rival_has_fired() -> None:
+diff --git a/tests/test_cloudflare_transport.py b/tests/test_cloudflare_transport.py
+index 7e69e6ab..181181d9 100644
+--- a/tests/test_cloudflare_transport.py
++++ b/tests/test_cloudflare_transport.py
+@@ -236,8 +236,8 @@ def test_moving_knowledge_stays_in_constraints_but_not_scene(monkeypatch) -> Non
+     constraints = user_prompt.split("\n\nCONSTRAINTS:\n", 1)[1]
+     assert statement not in scene
+     assert situation not in scene
+-    assert f"- Dr. Michelle McGehee may say this aloud: {statement}" in constraints
+-    assert f"- Brandon Corfman may say this aloud: {statement}" in constraints
++    assert f"- Dr. Michelle McGehee may talk about this fact: {statement}" in constraints
++    assert f"- Brandon Corfman may talk about this fact: {statement}" in constraints
+ 
+ 
+ def test_transport_caps_long_reply_and_records_telemetry(monkeypatch) -> None:
+@@ -2027,7 +2027,7 @@ def test_request_size_stays_flat_as_the_story_accumulates(monkeypatch) -> None:
+     # The player context must not repeat the speakers' dialogue basis.
+     context = captured[-1]["user"]
+     assert "sayable_knowledge" not in context
+-    assert "may say this aloud:" in context
++    assert "may talk about this fact:" in context
+ 
+ 
+ def test_prompts_forbid_echoing_the_request(monkeypatch) -> None:
+diff --git a/tests/test_speaker_lines.py b/tests/test_speaker_lines.py
+index f54bd14e..3369646f 100644
+--- a/tests/test_speaker_lines.py
++++ b/tests/test_speaker_lines.py
+@@ -46,10 +46,11 @@ def test_each_present_speaker_gets_one_line_per_statement_they_may_say():
+         if speaker_id == provider.state.package.protagonist_id:
+             continue
+         for item in speaker["sayable_knowledge"]:
+-            expected.append(f"- {provider._display_name(speaker_id)} may say this aloud: {item['statement']}")
+-    assert len({line.split(" may say")[0] for line in expected}) >= 2, "the state must list several speakers"
++            expected.append(f"- {provider._display_name(speaker_id)} may talk about this fact: {item['statement']}")
++    assert len({line.split(" may talk")[0] for line in expected}) >= 2, "the state must list several speakers"
+     assert len(expected) >= 6
+-    assert [line for line in lines if " may say " in line] == expected
++    assert [line for line in lines if " may talk about this fact: " in line] == expected
++    assert all("may say this aloud" not in line for line in lines)
+     assert not any("may say these aloud" in line for line in lines)
+     assert not any(line.startswith("  - ") for line in lines)
+ 
+@@ -59,7 +60,7 @@ def test_a_speaker_who_is_neither_present_nor_named_is_not_listed():
+     assert provider._is_present("rebecca") is False
+     speakers = {"michelle": _sayable("Michelle one."), "rebecca": _sayable("Rebecca one.", "Rebecca two.")}
+     assert provider._speaker_constraint_lines(speakers, "Look around.") == [
+-        "Dr. Michelle McGehee may say this aloud: Michelle one."
++        "Dr. Michelle McGehee may talk about this fact: Michelle one."
+     ]
+ 
+ 
+@@ -68,9 +69,9 @@ def test_a_speaker_the_command_names_is_listed_even_when_absent():
+     assert provider._is_present("rebecca") is False
+     speakers = {"michelle": _sayable("Michelle one."), "rebecca": _sayable("Rebecca one.", "Rebecca two.")}
+     assert provider._speaker_constraint_lines(speakers, "Ask Rebecca about the lemon cake.") == [
+-        "Dr. Michelle McGehee may say this aloud: Michelle one.",
+-        "Rebecca Jenkins may say this aloud: Rebecca one.",
+-        "Rebecca Jenkins may say this aloud: Rebecca two.",
++        "Dr. Michelle McGehee may talk about this fact: Michelle one.",
++        "Rebecca Jenkins may talk about this fact: Rebecca one.",
++        "Rebecca Jenkins may talk about this fact: Rebecca two.",
+     ]
+ 
+ 
+@@ -78,7 +79,7 @@ def test_the_protagonist_is_never_listed_as_a_speaker():
+     provider, _context = _provider_and_context()
+     speakers = {"kristin": _sayable("Kristin one."), "michelle": _sayable("Michelle one.")}
+     assert provider._speaker_constraint_lines(speakers, "Look around.") == [
+-        "Dr. Michelle McGehee may say this aloud: Michelle one."
++        "Dr. Michelle McGehee may talk about this fact: Michelle one."
+     ]
+ 
+ 
+@@ -88,7 +89,7 @@ def test_the_turn_prompt_applies_the_limit_with_the_player_s_command():
+         provider, context = _provider_and_context(command)
+         context["knowledge_context"]["speakers"]["rebecca"] = _sayable("Rebecca one.")
+         lines = _constraint_lines(context, provider)
+-        assert ("- Rebecca Jenkins may say this aloud: Rebecca one." in lines) is listed, command
++        assert ("- Rebecca Jenkins may talk about this fact: Rebecca one." in lines) is listed, command
+ 
+ 
+ def speaker_may_say(prompt: str, name: str, statement: str) -> bool:
+diff --git a/tests/test_underside_exhausted.py b/tests/test_underside_exhausted.py
+index 220d7ee0..c9a6f402 100644
+--- a/tests/test_underside_exhausted.py
++++ b/tests/test_underside_exhausted.py
+@@ -161,4 +161,4 @@ def test_real_recovered_drawer_prompt_has_underside_line_and_no_recovery_cue() -
+     prompt = provider._section_user_prompt(context)
+ 
+     assert UNDERSIDE_LINE.format(name="drawer") in prompt
+-    assert "may say this aloud: Kristin finds Michelle" not in prompt
++    assert "may talk about this fact: Kristin finds Michelle" not in prompt
+diff --git a/tests/test_voiceable_knowledge.py b/tests/test_voiceable_knowledge.py
+index d4fc714e..f3533f91 100644
+--- a/tests/test_voiceable_knowledge.py
++++ b/tests/test_voiceable_knowledge.py
+@@ -102,8 +102,8 @@ def test_real_recovery_prompt_omits_non_voiceable_player_action_but_keeps_office
+     prompt = provider.assemble_turn_prompt("Search the kitchen for signs of a struggle.")["context"]
+     user_prompt = provider._section_user_prompt(prompt)
+ 
+-    assert "may say this aloud: Kristin finds Michelle" not in user_prompt
+-    assert "may say this aloud: An officer saw Kristin take Michelle's memory card" in user_prompt
++    assert "may talk about this fact: Kristin finds Michelle" not in user_prompt
++    assert "may talk about this fact: An officer saw Kristin take Michelle's memory card" in user_prompt
+ 
+ 
+ def test_real_gap_prompt_omits_non_voiceable_player_actions_but_keeps_committed_knowledge() -> None:
+@@ -115,8 +115,8 @@ def test_real_gap_prompt_omits_non_voiceable_player_actions_but_keeps_committed_
+     user_prompt = provider._section_user_prompt(prompt)
+     committed_ids = {item.id for item in KnowledgeProjector().project(state, "player", command).committed_knowledge}
+ 
+-    assert "may say this aloud: Kristin looks over the drawer" not in user_prompt
+-    assert "may say this aloud: Kristin opens the drawer" not in user_prompt
++    assert "may talk about this fact: Kristin looks over the drawer" not in user_prompt
++    assert "may talk about this fact: Kristin opens the drawer" not in user_prompt
+     assert {"k_sl_1a_f_r1", "k_sl_1a_f_r2"} <= committed_ids
+ 
+ 
