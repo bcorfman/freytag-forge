@@ -212,8 +212,10 @@ Process note: the first implementation attempt also altered `_segment_shape`'s k
 also reproduced once locally and passed on a rerun of the same commit; root cause not found, see below). Live greeting check through the real provider and
 engine, 12 samples per arm, 31 real requests: with the repair 1/12 greetings left the officer silent and no turn spent a recovery request; without it 5/12 were silent
 (all 5 recovered turns) at 1.42 requests per turn. Preregistered rule met; details at the end of `.plans/1a-password-officer-prereg.md`.
-Open: (1) the shard-0 flake: test_web_demo session creation intermittently returns 503 "CLOUDFLARE_WORKER_URL is not configured" under `-n 4` scheduling; passes alone,
-in single-process order, and on a rerun, so it looks like order-dependent state leaking between tests; not caused by the repair; needs its own investigation;
+Open: (1) the shard-0 flake: FIXED. Cause: `live_baseline.main()` writes `FREYTAG_WORLD_CAPTURE=1` into `os.environ` and `tests/test_live_baseline_feedback_routes.py` calls it
+in-process, so the flag leaked into later tests in the same xdist worker and `web_demo.engine_for` took the world-capture path (503 without a worker URL);
+deterministic with those two files in one process (26 failures before, 0 after). An autouse fixture now restores `os.environ` after every test, with a
+pytester regression test that fails without it; full suite 4274 passed;
 (2) the remaining ~8 percent of greetings whose clean first reply omits the officer; (3) the 1A pacing play-through and staged E2E.
 
 Order of work if approved: (1) failing tests for A, (2) A through Ringer behind the flag, (3) free golden comparison on
