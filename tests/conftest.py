@@ -4,6 +4,7 @@ import ast
 import asyncio
 import inspect
 import json
+import os
 import textwrap
 import time
 import urllib.request
@@ -536,3 +537,14 @@ def _block_outbound_network(request: pytest.FixtureRequest, monkeypatch: pytest.
     monkeypatch.setattr(urllib.request, "urlopen", _blocked_urlopen)
     # The transport imports urlopen by name, so patching urllib.request alone leaves it reachable.
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", _blocked_urlopen)
+
+
+@pytest.fixture(autouse=True)
+def _restore_environment() -> Any:
+    """Prevent a test or script that writes os.environ directly from leaking into later tests."""
+    snapshot = dict(os.environ)
+    yield
+    for name in list(os.environ):
+        if name not in snapshot:
+            del os.environ[name]
+    os.environ.update(snapshot)

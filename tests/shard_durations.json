@@ -134,6 +134,7 @@
     "tests/test_entry_variants.py": 0.11,
     "tests/test_environment_baseline.py": 6.55,
     "tests/test_environment_classifier_smoke.py": 1.03,
+    "tests/test_environment_isolation.py": 0.12,
     "tests/test_environment_screen.py": 0.0,
     "tests/test_environment_smoke_direct.py": 0.1,
     "tests/test_established_reveal_match.py": 2.4,
