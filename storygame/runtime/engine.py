@@ -1347,7 +1347,10 @@ class RuntimeEngine(CanonicalEventMixin):
                 and turns_since_entry >= event.at_turn
                 and all(self._predicate_matches(predicate) for predicate in event.when)
             ):
-                if defer_guarded_events and any(predicate.equals is False for predicate in event.when):
+                # The pre-narration pass also defers authored trailing events.
+                if defer_guarded_events and (
+                    event.trailing or any(predicate.equals is False for predicate in event.when)
+                ):
                     continue
                 for effect in event.effects:
                     self.state.facts.assert_fact(
