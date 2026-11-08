@@ -9,7 +9,7 @@ from pathlib import Path
 R = "/home/bcorfman/dev/freytag-forge"
 D = f"{R}/scripts/ringer/1a-password-officer"
 OUT = f"{R}/bench/results/1a-password-officer"
-CELLS = {"officer": 4, "walt": 2, "password": 3, "voice": 4}
+CELLS = {"officer": 4, "walt": 2, "password": 3, "voice": 4, "recovery": 1}
 stage, first, last, tag = sys.argv[1], int(sys.argv[2]), int(sys.argv[3]), sys.argv[4]
 assert stage in CELLS and 0 <= first <= last <= 12 and tag in {"smoke", "run"}
 name = f"{tag}-{stage}"

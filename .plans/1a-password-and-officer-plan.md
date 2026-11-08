@@ -189,6 +189,12 @@ in 6/12 versus 1/12 without it. Story data was not changed for this probe. See t
   rule about separate segment objects (narrator rules are last in the fix order), or tolerating this fused shape in salvage (a typed repair in the provider,
   not regex over prose); both need their own preregistered screens.
 
+**Recovery request measured (2026-11-08, 12 requests approved):** the provider's recovery reply parsed in 12/12, so the live player does not lose the
+turn on this path; but the officer answers the greeting in only 1/12 recovered replies (11/12: Kristin greets, the officer never speaks; 8 leave the quoted
+greeting unterminated). So the visible symptom at the greeting is an unanswered greeting plus an extra model call about 58 percent of the time.
+No fix applied. Candidates, each needing a preregistered screen: a narrator rule that every greeting or question to a present character gets that
+character's own segment (rules are last in the fix order), or a typed repair of the fused-segment shape in the provider. Details in the prereg.
+
 Order of work if approved: (1) failing tests for A, (2) A through Ringer behind the flag, (3) free golden comparison on
 recorded requests, (4) B data edit with its test updates, (5) then the billed source screens, with the officer stage first.
 The billed spend in the preregistration (now 117 requests) is still **not approved**.

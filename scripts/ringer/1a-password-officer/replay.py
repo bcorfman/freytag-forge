@@ -14,6 +14,7 @@ ARMS = {
     "walt": ("CTRL", "BIO"),
     "password": ("CTRL", "SUB", "ADD"),
     "voice": ("CTRL", "NOVOICE"),
+    "recovery": ("REC",),
 }
 ENDPOINTS = {
     "officer": ("OFF6", "OFF7"),
@@ -21,6 +22,7 @@ ENDPOINTS = {
     "walt": ("WALT",),
     "password": ("PW",),
     "voice": ("VOICE8", "VOICE9"),
+    "recovery": ("REC8",),
 }
 
 

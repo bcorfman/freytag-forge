@@ -33,6 +33,7 @@ STAGES = {
     "walt": ("CTRL", ["BIO"], ["WALT"]),
     "password": ("CTRL", ["SUB", "ADD"], ["PW"]),
     "voice": ("CTRL", ["NOVOICE"], ["VOICE8", "VOICE9"]),
+    "recovery": ("REC", [], ["REC8"]),
 }
 COMMANDS = {
     "OFF6": "Greet the officer.",
@@ -42,6 +43,7 @@ COMMANDS = {
     "PW": "Type in the password.",
     "VOICE8": "Greet the officer.",
     "VOICE9": "Ask the officer where Dr. McGehee is.",
+    "REC8": "Greet the officer.",
 }
 VOICE_STATEMENT = '  statement: "Kristin reads the kitchen walls as a life interrupted: the calendar with Saturday circled and the photograph of the two of them at a lake."'
 VOICE_LINE = "- Officer Reyes may say this aloud: Kristin reads the kitchen walls as a life interrupted: the calendar with Saturday circled and the photograph of the two of them at a lake."
@@ -111,6 +113,9 @@ def package_diff(name, rel, block=None, alias=False, also=()):
         need(base.count(ALIAS_OLD) == 1, "shipped world.yaml no longer has the expected Reyes alias anchor")
         expected = base.replace(ALIAS_OLD, ALIAS_NEW)
     else:
+        # The Reyes heading was later added to the shipped plot.md (PR #753); the arm packages were built from the
+        # file as it was, so compare against the pre-change file (shipped minus that block).
+        base = base.replace("\n".join(REYES_BLOCK) + "\n", "") if "\n".join(REYES_BLOCK) in base else base
         need(base.count("\n" + ANCHOR + "\n") == 1, "shipped plot.md no longer has the expected anchor")
         expected = base.replace("\n" + ANCHOR + "\n", "\n" + "\n".join(block) + "\n" + ANCHOR + "\n")
     actual = arm.read_text(encoding="utf-8")
@@ -249,6 +254,27 @@ need(
     "pkg/officer-alias/world.yaml is not the shipped file plus exactly the `officer` alias",
 )
 
+# recovery stage: the provider's recovery request for the recorded fused-segment reply at the officer greeting
+_rec = frozen[("recovery", "REC")].get("REC8")
+_first = frozen[("officer", "BIO")].get("OFF6")
+if _rec and _first:
+    rp, fp0 = _rec["wire_payload"], _first["wire_payload"]
+    need(rp["user"] == fp0["user"], "recovery: the user text must equal the frozen officer-BIO greeting request")
+    need(rp["system"].startswith(fp0["system"] + " "), "recovery: system must be the frozen system text plus a suffix")
+    need(
+        "Your last answer was not valid" in rp["system"][len(fp0["system"]) :],
+        "recovery: suffix lacks the provider's correction instruction",
+    )
+    need(
+        all(rp.get(k) == fp0.get(k) for k in ("max_tokens", "response_format")),
+        "recovery: max_tokens/response_format differ from the first request",
+    )
+    need(
+        _rec.get("first_user_sha256") == hashlib.sha256(fp0["user"].encode()).hexdigest(),
+        "recovery: first_user_sha256 missing or wrong",
+    )
+    notes.append(f"recovery: suffix = {rp['system'][len(fp0['system']) :][:260]!r}")
+
 # provenance
 prov_path = OUT / "provenance.json"
 need(prov_path.exists(), "missing provenance.json")
@@ -279,6 +305,13 @@ if replay.exists():
         need(
             "requests 4" in voice.stdout and voice.returncode == 0,
             f"replay voice stage count wrong: {voice.stdout[-200:]}",
+        )
+        rec = subprocess.run(
+            [sys.executable, str(replay), "recovery", str(target), "1", "12"], capture_output=True, text=True, cwd=ROOT
+        )
+        need(
+            "requests 12" in rec.stdout and rec.returncode == 0,
+            f"replay recovery stage count wrong: {rec.stdout[-200:]}",
         )
         smoke = subprocess.run(
             [sys.executable, str(replay), "officer", str(target), "0", "0"], capture_output=True, text=True, cwd=ROOT
