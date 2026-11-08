@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from storygame.runtime.candidate_matcher import _matches_all
 from storygame.runtime.delivery_text import AMBIGUOUS, resolve_delivery_text, true_fact_ids
+from storygame.runtime.facts import FactStore
 from storygame.runtime.reveal_eligibility import explain_reveal, together_or_unplaced
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.world_model import world_for
@@ -34,6 +35,10 @@ class RevealCandidate(_KnowledgeModel):
     delivery_text: str | None = Field(default=None, exclude=True)
     repeatable: bool = Field(default=False, exclude=True)
     action_contract: ActionContract | None = Field(default=None, exclude=True)
+
+
+def is_narrated(item: KnowledgeDefinition, facts: FactStore) -> bool:
+    return any(fact.value == "true" for fact in facts.matching("knowledge_narrated", item.id))
 
 
 class TurnKnowledgeContext(_KnowledgeModel):
@@ -328,6 +333,7 @@ class KnowledgeProjector:
             and self._established(item, state)
             and self._visible_to(item, audience_id)
             and item.voiceable
+            and (item.source.kind != "storylet_realization" or is_narrated(item, state.facts))
             # Scene framing belongs in context, not in a character's dialogue.
             and not (item.source.kind == "scene_entry" and item.audience.kind == "public")
         ]

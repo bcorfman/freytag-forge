@@ -32,7 +32,7 @@ NEW_FACTS = {
 ARRIVED = ("michelle_reached", "uprising_prepared")
 OLD_A_R1_STATEMENT = (
     "Kristin reaches Michelle alive, and the two share one unhurried moment before Michelle returns to directing "
-    "prisoners through stolen radios and coded announcements."
+    "prisoners through stolen radios and secret messages."
 )
 OLD_A_R2_STATEMENT = (
     "Michelle shares one unhurried moment with Kristin, then explains that freeing this block means little without "
@@ -41,19 +41,21 @@ OLD_A_R2_STATEMENT = (
 OLD_A_R1_LENGTH = 169
 OLD_A_R2_LENGTH = 135
 NEW_A_R1_STATEMENT = (
-    "Kristin and Michelle have reunited. Michelle coordinates the prisoners through stolen radios and coded "
-    "announcements."
+    "Kristin and Michelle have reunited. Michelle coordinates the prisoners through stolen radios and secret messages."
 )
 NEW_A_R2_STATEMENT = "Michelle has explained that freeing this block means little without exposing the other sites."
 A_R1_DELIVERY = (
     "Kristin joins Michelle beside the captives. They are awake: the dose they were given is for the trip, and it "
-    "wears off in the detention block. For one unhurried moment the two of them talk to each other and nobody asks "
-    "anything of either. Then Michelle turns back to her coded announcements and points toward the medical level, "
-    "where the experiment records wait."
+    "wears off in the detention block. Michelle looks up, goes completely still, and then pulls Kristin into a tight "
+    'embrace. "You\'re here," she says, her voice breaking. "You\'re really here." Kristin holds on just as hard, '
+    "and for one unhurried moment nobody asks anything of either of them. Then Michelle wipes her eyes, turns back to "
+    "her secret messages, and points toward the medical level, where the experiment records wait."
 )
 A_R2_DELIVERY = (
-    "Michelle shares one unhurried moment with Kristin. She explains that freeing this block means little without "
-    "exposing the other sites. Michelle points toward the medical level, where the experiment records wait."
+    'Michelle looks up, goes completely still, and pulls Kristin into a tight embrace. "You\'re really here," she '
+    "says, her voice breaking. For one unhurried moment nobody asks anything of either of them. Then she wipes her "
+    "eyes and explains that freeing this block means little without exposing the other sites. Michelle points toward "
+    "the medical level, where the experiment records wait."
 )
 
 
@@ -163,6 +165,19 @@ def test_3a_a_variants_keep_their_literal_dependencies_and_a_r2_delivery() -> No
     assert entries["k_sl_3a_a_r2"].delivery_text == A_R2_DELIVERY
 
 
+def test_3a_reunion_deliveries_preserve_the_opening_and_canonical_statements() -> None:
+    entries = _entries()
+    assert all("embrace" in entries[entry_id].delivery_text for entry_id in ("k_sl_3a_a_r1", "k_sl_3a_a_r2"))
+    assert all(
+        not any(word in entries[entry_id].delivery_text for word in ("Shelly", "Shelly,"))
+        for entry_id in ("k_sl_3a_a_r1", "k_sl_3a_a_r2")
+    )
+    delivery = next(item for item in PACKAGE.deliveries if item.fact_id == "michelle_reached")
+    assert delivery.cue_text == "Michelle speaks into a stolen radio beside the captives."
+    assert entries["k_sl_3a_a_r1"].statement == NEW_A_R1_STATEMENT
+    assert entries["k_sl_3a_a_r2"].statement == NEW_A_R2_STATEMENT
+
+
 def test_3a_a_statements_change_together_without_changing_their_contracts() -> None:
     entries = _entries()
     expected_contracts = {
@@ -199,8 +214,8 @@ def test_3a_a_statements_change_together_without_changing_their_contracts() -> N
                     "the radio voice",
                     "stolen radio",
                     "stolen radios",
-                    "coded announcement",
-                    "coded announcements",
+                    "secret message",
+                    "secret messages",
                     "holding block",
                     "holding blocks",
                     "captives",
@@ -317,8 +332,8 @@ def test_3a_michelle_handoff_delivery_is_unchanged() -> None:
     delivery = next(item for item in PACKAGE.deliveries if item.fact_id == "michelle_reached")
     assert delivery.cue_text == "Michelle speaks into a stolen radio beside the captives."
     assert delivery.fallback_text == (
-        "Kristin reaches Michelle among the holding blocks in the detention sector. They share one unhurried moment "
-        "before Michelle turns back to the radio and the rescue."
+        "Kristin reaches Michelle among the holding blocks in the detention sector. They embrace and share one "
+        "unhurried moment before Michelle turns back to the radio and the rescue."
     )
     assert delivery.must_convey == (
         (
@@ -480,8 +495,8 @@ def test_the_new_reveals_are_quiet_short_and_exact():
                     "radios",
                     "announcement",
                     "announcements",
-                    "coded announcement",
-                    "coded announcements",
+                    "secret message",
+                    "secret messages",
                     "loop",
                 ],
             ),
@@ -546,9 +561,9 @@ def test_the_probe_defects_are_cured_at_the_source():
     assert [list(group) for group in tags.must_convey] == [["tag", "wrist tag"], ["held"]]
     loop = entries["k_sl_3a_g_r1"]
     assert "on repeat" not in loop.delivery_text.casefold()
-    assert [list(group) for group in loop.must_convey] == [["coded words", "coded announcements"], ["one word"]]
-    assert "coded words" in loop.delivery_text.casefold()
-    assert all("coded words" in variant.text.casefold() for variant in loop.delivery_variants)
+    assert [list(group) for group in loop.must_convey] == [["code words", "secret messages"], ["one word"]]
+    assert "code words" in loop.delivery_text.casefold()
+    assert all("code words" in variant.text.casefold() for variant in loop.delivery_variants)
     proof = entries["k_sl_3a_h_r1"]
     assert "Saturday, circled, K, lemon cake" not in proof.delivery_text
     # Echo: the narrator writes Michelle's feeling itself (2 of 4 replicates), so the delivery says only that the

@@ -304,6 +304,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         self._selected_names = None
         self._referred_names = []
         self._referred_lines = []
+        self._referred_person_ids = set()
         self._last_scene_seeded = None
         self._match_offered_names = set()
         self._schema_cache = {}
@@ -481,8 +482,26 @@ class ItemFactsProvider(CloudflareTurnProvider):
                     continue
                 observation_lines.append(self._observation_thing_line(thing))
                 listed_names.add(thing.name)
-        lines = ["THINGS:"] if names or observation_lines or (narration and self._referred_lines) else []
         protagonist_id = self.state.package.world.protagonist_id
+        automatic_people = []
+        if narration:
+            excluded_people = set(self._referred_person_ids)
+            excluded_people.update(entity_id for name in names if (entity_id := world.resolve(name)) is not None)
+            if context is not None:
+                excluded_people.update(
+                    entity_id
+                    for thing in context.visible_things
+                    if (entity_id := world.resolve(thing.name)) is not None
+                )
+            npc_ids = {npc.id for npc in self.state.package.world.npcs}
+            for entity_id in world.people_alongside(protagonist_id):
+                if entity_id in npc_ids and entity_id not in excluded_people:
+                    automatic_people.append(self._person_line(world, entity_id, narration=False))
+        lines = (
+            ["THINGS:"]
+            if names or observation_lines or automatic_people or (narration and self._referred_lines)
+            else []
+        )
         protagonist_index = None
         for name in names:
             facts = self.item_facts[name]
@@ -544,9 +563,16 @@ class ItemFactsProvider(CloudflareTurnProvider):
                     line += f" With {name}: {labels}."
                 protagonist_index = len(lines)
             lines.append(line)
+        if automatic_people:
+            insert_at = protagonist_index + 1 if protagonist_index is not None else len(lines)
+            lines[insert_at:insert_at] = automatic_people
         lines.extend(observation_lines)
         if narration and self._referred_lines:
-            insert_at = protagonist_index + 1 if protagonist_index is not None else len(lines)
+            insert_at = (
+                protagonist_index + 1 + len(automatic_people) + len(observation_lines)
+                if protagonist_index is not None
+                else len(lines)
+            )
             lines[insert_at:insert_at] = self._referred_lines
         return "\n".join(lines)
 
@@ -1060,6 +1086,22 @@ class ItemFactsProvider(CloudflareTurnProvider):
         npc = next((entity for entity in self.state.package.world.npcs if entity.id == entity_id), None)
         return _character_label(self.state.facts, npc, world.name(entity_id), shortest=shortest) if npc else None
 
+    def _person_line(self, world, entity_id, *, narration):
+        label = self._referred_entity_label(world, entity_id)
+        line = f"- {label}."
+        place = world.place_text(entity_id)
+        if place is None:
+            parent_id = world.parent(entity_id)
+            if parent_id is not None:
+                place = (
+                    self._entity_label(world, parent_id)
+                    if world.is_a(parent_id, "character")
+                    else world.place_label(entity_id)
+                )
+        if place is not None:
+            line += f" Place: {place}."
+        return line + self._state_text(world, entity_id, narration=narration)
+
     def _existing_unnamed_person(self, world, key):
         wanted = _normalize_refer(key).split()
         if not wanted:
@@ -1106,6 +1148,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
             return min(positions, default=len(command))
 
         people = []
+        self._referred_person_ids = set()
         for npc in self.state.package.world.npcs:
             entity_id = npc.id
             if (
@@ -1119,17 +1162,8 @@ class ItemFactsProvider(CloudflareTurnProvider):
             label = self._referred_entity_label(world, entity_id)
             if label in existing_names:
                 continue
-            parent_id = world.parent(entity_id)
-            line = f"- {label}."
-            if parent_id is not None:
-                parent_label = (
-                    self._entity_label(world, parent_id)
-                    if world.is_a(parent_id, "character")
-                    else world.name(parent_id)
-                )
-                line = f"- {label}. Place: {parent_label}."
-            line += self._state_text(world, entity_id, narration=True)
-            people.append((command_position(entity_id), line))
+            self._referred_person_ids.add(entity_id)
+            people.append((command_position(entity_id), self._person_line(world, entity_id, narration=True)))
 
         protagonist_area = world.area(protagonist_id)
         excluded_areas = {protagonist_area, *world.chain(protagonist_area)} if protagonist_area is not None else set()
@@ -1989,6 +2023,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
             fact_id for fact_id in self.state.package.world.fact_effects if _true(self.state.facts, fact_id)
         }
         self._referred_names = []
+        self._referred_person_ids = set()
         self._referred_lines = self._referred_lines_for_command(player_input)
         dependencies = self.dependency_names()
         candidates = [name for name in self.item_facts if name not in dependencies]

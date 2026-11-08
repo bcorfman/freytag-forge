@@ -546,6 +546,10 @@ def _validate_knowledge(package: StoryPackage) -> None:
         if unknown_reach_entities:
             unknown = next(iter(unknown_reach_entities))
             raise StoryPackageError(f"knowledge '{item.id}' references unknown reach entity '{unknown}'")
+        unknown_speakers = set(item.speaker_text) - {npc.id for npc in package.world.npcs}
+        if unknown_speakers:
+            unknown = next(iter(unknown_speakers))
+            raise StoryPackageError(f"knowledge '{item.id}' references unknown speaker '{unknown}'")
         if set(item.available_in_scenes) - scenes:
             raise StoryPackageError(f"knowledge '{item.id}' references an unknown scene")
         required_facts = {predicate.fact_id for predicate in item.requires}

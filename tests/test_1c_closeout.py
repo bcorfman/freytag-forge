@@ -107,13 +107,14 @@ def test_no_other_unique_1c_handoff_changes():
 def test_3a_reunion_says_the_captives_are_awake():
     entry = _entries()["k_sl_3a_a_r1"]
     planned_text = (
-        "Kristin joins Michelle beside the captives. They are awake: the dose "
-        "they were given is for the trip, and it wears off in the detention block. For one unhurried moment the two "
-        "of them talk to each other and nobody asks anything of either. Then Michelle turns back to her coded "
-        "announcements and points toward the medical level, where the experiment records wait."
+        "Kristin joins Michelle beside the captives. They are awake: the dose they were given is for the trip, and it "
+        "wears off in the detention block. Michelle looks up, goes completely still, and then pulls Kristin into a "
+        'tight embrace. "You\'re here," she says, her voice breaking. "You\'re really here." Kristin holds on just '
+        "as hard, and for one unhurried moment nobody asks anything of either of them. Then Michelle wipes her eyes, "
+        "turns back to her secret messages, and points toward the medical level, where the experiment records wait."
     )
     assert re.sub(r"\s+", " ", entry.delivery_text).strip() == planned_text
     assert entry.statement == (
-        "Kristin and Michelle have reunited. Michelle coordinates the prisoners through stolen radios and coded "
-        "announcements."
+        "Kristin and Michelle have reunited. Michelle coordinates the prisoners through stolen radios and secret "
+        "messages."
     )

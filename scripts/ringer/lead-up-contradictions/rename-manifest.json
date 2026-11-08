@@ -1,0 +1,41 @@
+{
+  "run_name": "lead-up-contradictions-rename-phrase",
+  "workdir": "/home/bcorfman/dev/ringer-work/lead-up-contradictions-rename-phrase",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "rename-coded-announcements",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=medium"
+      ],
+      "max_attempts": 2,
+      "timeout_s": 1500,
+      "check_timeout_s": 900,
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/data/stories/continuity-initiative/plot.md",
+        "/home/bcorfman/dev/freytag-forge/data/stories/continuity-initiative/knowledge.yaml",
+        "/home/bcorfman/dev/freytag-forge/data/stories/continuity-initiative/handoffs.yaml",
+        "/home/bcorfman/dev/freytag-forge/tests/test_richer_3a.py",
+        "/home/bcorfman/dev/freytag-forge/tests/test_1c_closeout.py",
+        "/home/bcorfman/dev/freytag-forge/tests/test_speaker_text.py",
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/lead-up-contradictions/capture_3a.py",
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/lead-up-contradictions/build_3a_manifest.py",
+        "/home/bcorfman/dev/freytag-forge/.plans/lead-up-contradictions-prereg.md",
+        "/home/bcorfman/dev/freytag-forge/bench/results/lead-up-contradictions/frozen-3A-CUR.json",
+        "/home/bcorfman/dev/freytag-forge/bench/results/lead-up-contradictions/frozen-3A-CAND.json"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/bench/results/lead-up-contradictions/frozen-3A-CUR.json"
+      ],
+      "spec": "You are a code worker for the freytag-forge repository at /home/bcorfman/dev/freytag-forge. Boundary: NO model call, NO network call, never git commit, never revert or reformat uncommitted work that is not yours (the tree is deliberately dirty). You own only the files listed below and the two frozen JSON files that capture_3a.py rewrites. Do not read or edit /home/bcorfman/dev/freytag-forge/scripts/ringer/lead-up-contradictions/validate_rename.py or /home/bcorfman/dev/freytag-forge/scripts/ringer/lead-up-contradictions/validate_3a.py (independent checks; only run them).\n\nGOAL: a pure wording rename in the Scene 3A story text, approved by Brandon. 'coded announcements' (the phrase has little meaning) becomes 'secret messages', and 'coded words' becomes 'code words'. Exactly these replacements, nothing else:\n- 'coded announcement' -> 'secret message' (so 'coded announcements' -> 'secret messages', 'her coded announcements' -> 'her secret messages'), and capitalised 'Coded announcements' -> 'Secret messages'.\n- 'coded words' -> 'code words' (and 'Coded words' -> 'Code words').\n- Python strings that are split across lines, such as `... and coded \"` followed by a next-line `\"announcements.\"`, are renamed the same way (`secret \"` / `\"messages.\"`); a line that gets longer or shorter may be re-wrapped by `ruff format`, but the joined string must be exactly the renamed text.\nDo NOT touch any other use of the word 'coded' (for example 'coded message', 'coded maintenance messages', 'coded route', 'coded records', 'coded path'): those are other story ideas. Do NOT touch the speaker lines that say 'secret announcements' (Brandon's approved organizing wording stays). Do NOT edit anything under tests/fixtures/, bench/frozen/, bench/results/ (except the two frozen-3A files written by the script), docs/, or any other file.\nFiles to change (the only files you may edit):\n- data/stories/continuity-initiative/plot.md\n- data/stories/continuity-initiative/knowledge.yaml\n- data/stories/continuity-initiative/handoffs.yaml\n- tests/test_richer_3a.py\n- tests/test_1c_closeout.py\n- tests/test_speaker_text.py\n- scripts/ringer/lead-up-contradictions/capture_3a.py\n- scripts/ringer/lead-up-contradictions/build_3a_manifest.py\n- .plans/lead-up-contradictions-prereg.md\nA copy of each file as it was before your edit is under /tmp/claude-1000/-home-bcorfman-dev-freytag-forge/5249d927-7382-457d-8bc9-509a8e23fa87/scratchpad/rename_pre/<same relative path>; applying the rename above to that copy must reproduce your result (Python files only need to match as parsed code).\n\nTHEN refresh the frozen payloads: from /home/bcorfman/dev/freytag-forge run `TMPDIR=/tmp PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/packages/worldkeeper/src /home/bcorfman/dev/freytag-forge/.venv/bin/python scripts/ringer/lead-up-contradictions/capture_3a.py` (zero model calls). Then `/home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff format tests/test_richer_3a.py tests/test_1c_closeout.py tests/test_speaker_text.py scripts/ringer/lead-up-contradictions/capture_3a.py scripts/ringer/lead-up-contradictions/build_3a_manifest.py` and `/home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff check` on the same files.\nThen run the focused suites: `TMPDIR=/tmp /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q --no-cov -p no:cacheprovider --deselect tests/test_bench_item_facts.py::test_prepare_turn_refers_to_nested_place_but_not_current_place tests/test_richer_3a.py tests/test_1c_closeout.py tests/test_speaker_text.py tests/test_knowledge_projection.py tests/test_markdown_story_package.py tests/test_prompt_presence.py tests/test_cloudflare_transport.py tests/test_place_scoped_feed.py tests/test_frozen_prompts.py tests/test_bench.py tests/test_senior_official_bio.py tests/test_speaker_lines.py tests/test_voiceable_knowledge.py tests/test_referred_reach.py tests/test_richer_1b_value.py tests/test_richer_1c_voice.py tests/test_bench_item_facts.py`. One test in tests/test_bench_item_facts.py (test_prepare_turn_refers_to_nested_place_but_not_current_place) was already failing before this task because of unrelated uncommitted work; it is deselected, leave it. Every other failure is yours to fix (a test that pins the old phrase should be updated by the same rename, never weakened). Never use bare python.",
+      "check": "set -o pipefail\ncd /home/bcorfman/dev/freytag-forge\nexport TMPDIR=/tmp PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/packages/worldkeeper/src\n/home/bcorfman/dev/freytag-forge/.venv/bin/python scripts/ringer/lead-up-contradictions/validate_rename.py /tmp/claude-1000/-home-bcorfman-dev-freytag-forge/5249d927-7382-457d-8bc9-509a8e23fa87/scratchpad/rename_pre\n/home/bcorfman/dev/freytag-forge/.venv/bin/python scripts/ringer/lead-up-contradictions/capture_3a.py > /dev/null\n/home/bcorfman/dev/freytag-forge/.venv/bin/python scripts/ringer/lead-up-contradictions/validate_3a.py\n/home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff check tests/test_richer_3a.py tests/test_1c_closeout.py tests/test_speaker_text.py scripts/ringer/lead-up-contradictions/capture_3a.py scripts/ringer/lead-up-contradictions/build_3a_manifest.py\n/home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff format --check tests/test_richer_3a.py tests/test_1c_closeout.py tests/test_speaker_text.py scripts/ringer/lead-up-contradictions/capture_3a.py scripts/ringer/lead-up-contradictions/build_3a_manifest.py\n/home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q --no-cov -p no:cacheprovider --deselect tests/test_bench_item_facts.py::test_prepare_turn_refers_to_nested_place_but_not_current_place tests/test_richer_3a.py tests/test_1c_closeout.py tests/test_speaker_text.py tests/test_knowledge_projection.py tests/test_markdown_story_package.py tests/test_prompt_presence.py tests/test_cloudflare_transport.py tests/test_place_scoped_feed.py tests/test_frozen_prompts.py tests/test_bench.py tests/test_senior_official_bio.py tests/test_speaker_lines.py tests/test_voiceable_knowledge.py tests/test_referred_reach.py tests/test_richer_1b_value.py tests/test_richer_1c_voice.py tests/test_bench_item_facts.py\n",
+      "verified": "every owned file equals its saved copy with only the rename applied, the 3A payloads are refreshed and validate, and the focused suites pass"
+    }
+  ]
+}

@@ -718,7 +718,7 @@ def test_referred_npc_line_shows_declared_state():
     lines = provider._referred_lines_for_command("Ask the man who he is.")
 
     assert (
-        "- the man watching Kristin. Place: Los Angeles park. State: conscious. "
+        "- the man watching Kristin. Place: watching Kristin in the park. State: conscious. "
         'If it changes, give "state": "unconscious".'
     ) in lines
     assert all("captive" not in line and "free" not in line for line in lines)
@@ -2923,12 +2923,12 @@ def test_prepare_turn_refers_to_nested_place_but_not_current_place():
 
     provider.prepare_turn("Follow Michelle into the medical level.")
     assert provider._referred_lines == [
-        "- Michelle. Place: detention level.",
+        "- Michelle. Place: beside the captives.",
         "- medical level. This is a place.",
     ]
 
     provider.prepare_turn("Lead Michelle into the detention level.")
-    assert provider._referred_lines == ["- Michelle. Place: detention level."]
+    assert provider._referred_lines == ["- Michelle. Place: beside the captives."]
     assert "- detention level. This is a place." not in provider._things_block(narration=True)
 
 

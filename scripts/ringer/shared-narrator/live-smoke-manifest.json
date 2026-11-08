@@ -1,0 +1,53 @@
+{
+  "run_name": "shared-narrator-live-smoke",
+  "workdir": "/home/bcorfman/dev/ringer-work/shared-narrator-live-smoke",
+  "max_parallel": 2,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "live-control-r1",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "max_attempts": 1,
+      "timeout_s": 300,
+      "check_timeout_s": 3000,
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/bench/results/shared-narrator/live/live-control-r1-ready.txt"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/bench/results/shared-narrator/live/live-control-r1-ready.txt"
+      ],
+      "spec": "You are a trivial placeholder worker for a billed live run that Ringer's check performs itself. Boundary: do NOT run any bench command, do NOT call any model or network service, do NOT touch any file except the one you own, never git commit. Your only job: write the single line 'ready live-control-r1' into the file /home/bcorfman/dev/freytag-forge/bench/results/shared-narrator/live/live-control-r1-ready.txt (create it; the directory exists). Nothing else is needed; the check afterwards runs replicate 1 of the CONTROL arm of experiment L, path A (.plans/shared-narrator-instruction-conflicts-prereg.md) and writes its records under /home/bcorfman/dev/freytag-forge/bench/results/shared-narrator/live/control-r1. Do not read or edit anything else.",
+      "check": "cd /home/bcorfman/dev/ringer-work/shared-narrator-control-tree || exit 1\nexport PYTHONPATH=/home/bcorfman/dev/ringer-work/shared-narrator-control-tree:/home/bcorfman/dev/ringer-work/shared-narrator-control-tree/packages/worldkeeper/src TMPDIR=/tmp\n[ ! -e /home/bcorfman/dev/freytag-forge/bench/results/shared-narrator/live/control-r1/summary.json ] || { echo 'output already exists; refusing to re-bill'; exit 1; }\nmkdir -p /home/bcorfman/dev/freytag-forge/bench/results/shared-narrator/live\n.venv/bin/python -m bench run --variation bench/variations/richer-3a-live.json --scene 3A --script richer-3a-detention --replicates 1 --out /home/bcorfman/dev/freytag-forge/bench/results/shared-narrator/live/control-r1 --confirm > /home/bcorfman/dev/freytag-forge/bench/results/shared-narrator/live/control-r1.log 2>&1\nrc=$?\ntail -6 /home/bcorfman/dev/freytag-forge/bench/results/shared-narrator/live/control-r1.log\n[ -s /home/bcorfman/dev/freytag-forge/bench/results/shared-narrator/live/control-r1/summary.json ] && [ -s /home/bcorfman/dev/freytag-forge/bench/results/shared-narrator/live/control-r1/all-turn-records.json ] || { echo \"WHY: bench wrote no records (rc=$rc)\"; exit 1; }\n.venv/bin/python - <<'PY2'\nimport json\ns = json.load(open('/home/bcorfman/dev/freytag-forge/bench/results/shared-narrator/live/control-r1/summary.json'))\nprint({k: s.get(k) for k in ('failed_replicates', 'completed_replicates', 'failure_reason') if k in s})\nprint(s.get('budget'))\nPY2\nexit 0\n",
+      "verified": "the replay wrote every row (errors kept as rows)"
+    },
+    {
+      "key": "live-final-r1",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "max_attempts": 1,
+      "timeout_s": 300,
+      "check_timeout_s": 3000,
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/bench/results/shared-narrator/live/live-final-r1-ready.txt"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/bench/results/shared-narrator/live/live-final-r1-ready.txt"
+      ],
+      "spec": "You are a trivial placeholder worker for a billed live run that Ringer's check performs itself. Boundary: do NOT run any bench command, do NOT call any model or network service, do NOT touch any file except the one you own, never git commit. Your only job: write the single line 'ready live-final-r1' into the file /home/bcorfman/dev/freytag-forge/bench/results/shared-narrator/live/live-final-r1-ready.txt (create it; the directory exists). Nothing else is needed; the check afterwards runs replicate 1 of the FINAL arm of experiment L, path A (.plans/shared-narrator-instruction-conflicts-prereg.md) and writes its records under /home/bcorfman/dev/freytag-forge/bench/results/shared-narrator/live/final-r1. Do not read or edit anything else.",
+      "check": "cd /home/bcorfman/dev/freytag-forge || exit 1\nexport PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/packages/worldkeeper/src TMPDIR=/tmp\n[ ! -e /home/bcorfman/dev/freytag-forge/bench/results/shared-narrator/live/final-r1/summary.json ] || { echo 'output already exists; refusing to re-bill'; exit 1; }\nmkdir -p /home/bcorfman/dev/freytag-forge/bench/results/shared-narrator/live\n.venv/bin/python -m bench run --variation bench/variations/richer-3a-live.json --scene 3A --script richer-3a-detention --replicates 1 --out /home/bcorfman/dev/freytag-forge/bench/results/shared-narrator/live/final-r1 --confirm > /home/bcorfman/dev/freytag-forge/bench/results/shared-narrator/live/final-r1.log 2>&1\nrc=$?\ntail -6 /home/bcorfman/dev/freytag-forge/bench/results/shared-narrator/live/final-r1.log\n[ -s /home/bcorfman/dev/freytag-forge/bench/results/shared-narrator/live/final-r1/summary.json ] && [ -s /home/bcorfman/dev/freytag-forge/bench/results/shared-narrator/live/final-r1/all-turn-records.json ] || { echo \"WHY: bench wrote no records (rc=$rc)\"; exit 1; }\n.venv/bin/python - <<'PY2'\nimport json\ns = json.load(open('/home/bcorfman/dev/freytag-forge/bench/results/shared-narrator/live/final-r1/summary.json'))\nprint({k: s.get(k) for k in ('failed_replicates', 'completed_replicates', 'failure_reason') if k in s})\nprint(s.get('budget'))\nPY2\nexit 0\n",
+      "verified": "the replay wrote every row (errors kept as rows)"
+    }
+  ]
+}

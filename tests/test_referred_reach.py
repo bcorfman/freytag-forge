@@ -47,7 +47,10 @@ def _synthetic_package() -> StoryPackage:
                 "passenger_seat": ItemPlacement(parent="truck"),
                 "laptop": ItemPlacement(parent="passenger_seat"),
             },
-            character_placements={"hero": CharacterPlacement(parent="room_a")},
+            character_placements={
+                "hero": CharacterPlacement(parent="room_a"),
+                "michelle": CharacterPlacement(parent="room_a"),
+            },
         ),
         prose="A room.",
         beats={
@@ -74,7 +77,7 @@ def _synthetic_package() -> StoryPackage:
         story_id="synthetic",
         protagonist_id="hero",
         locations=(Location(id="room_a", name="Room A"), Location(id="room_b", name="Room B")),
-        npcs=(Npc(id="hero", name="Ari"),),
+        npcs=(Npc(id="hero", name="Ari"), Npc(id="michelle", name="Michelle", axes=[{"awake": [], "unconscious": []}])),
         items=(
             Item(id="lamp", name="lamp"),
             Item(id="stone_statue", name="stone statue"),
@@ -107,7 +110,10 @@ def _synthetic_package() -> StoryPackage:
     return StoryPackage(
         story_id="synthetic",
         protagonist_id="hero",
-        characters=(Character(id="hero", name="Ari", bio="A traveler."),),
+        characters=(
+            Character(id="hero", name="Ari", bio="A traveler."),
+            Character(id="michelle", name="Michelle", bio="A medic."),
+        ),
         scenes=(scene,),
         world=world,
         pacing=PacingSource(
@@ -187,3 +193,22 @@ def test_literal_distant_vehicle_stays_in_things(monkeypatch):
     things = provider._things_block(narration=True)
 
     assert "- truck." in things
+
+
+def test_narration_things_lists_present_npc_with_ordinary_state(monkeypatch):
+    provider = _provider(monkeypatch, referred="lamp", command="Wait.")
+
+    things = provider._things_block(narration=True)
+
+    assert "- Michelle. Place: Room A. State: awake. It can be: unconscious." in things
+    assert 'If it changes, give "state"' not in things
+    assert "THINGS:" in things
+
+
+def test_command_named_npc_uses_command_state_form_once(monkeypatch):
+    provider = _provider(monkeypatch, referred="michelle", command="Ask Michelle about the cake.")
+
+    things = provider._things_block(narration=True)
+
+    assert things.count("- Michelle.") == 1
+    assert 'If it changes, give "state": "unconscious".' in things
