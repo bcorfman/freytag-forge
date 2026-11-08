@@ -48,15 +48,19 @@ Charles’s 56-year-old wife and the chief executive of a biotechnology and defe
 
 A senior government official whom Charles has publicly blamed for the catastrophe. He is exhausted, observant, and has kept one piece of emergency authority out of Charles's hands.
 
+### Officer Reyes
+
+A young, polite federal patrol officer who works from a printed list and does not like what the list asks of him.
+
 # Expanded Scene Outline
 
 ## Interactive pacing contract
 
-The story is built for a maximum of 120 accepted player turns. A scene should not advance merely because its next reveal exists. Each scene gives Kristin time to investigate, test a relationship, make a plan, and react when pressure changes the situation. The player may move more quickly by pursuing the central objective, but fast play still has to earn the scene's major change.
+The story is built for a maximum of 122 accepted player turns. A scene should not advance merely because its next reveal exists. Each scene gives Kristin time to investigate, test a relationship, make a plan, and react when pressure changes the situation. The player may move more quickly by pursuing the central objective, but fast play still has to earn the scene's major change.
 
 | Scene | Turn ceiling | Player-facing dramatic rhythm |
 |---|---:|---|
-| 1A | 13 | Search Michelle's house and read what the kitchen shows; form a theory; recover and interpret the card; optionally test the broadcast and hear the neighbor; evade a widening patrol search. |
+| 1A | 15 | Search Michelle's house and read what the kitchen shows; form a theory; recover and interpret the card; optionally test the broadcast and hear the neighbor; evade a widening patrol search. |
 | 1B | 13 | Work the dead drop; decide what Brandon is; test the route; escape a closing park. |
 | 1C | Choice closes at 5; recovery open until 8, then withdrawal | Inspect the terminal; observe the captives; choose copying the numbers or asking Brandon about the route; follow Brandon at greater risk if the window closes. |
 | 2A | 11 | Face the supervisor at the gate; prove the cooling fault is real; get inside cleanly or under watch. |

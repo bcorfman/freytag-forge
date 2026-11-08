@@ -94,7 +94,7 @@ pacing_event_review:
   reason: Makes Charles's emergency deluge visibly worsen during the escape.
 - event_id: home_search_narrows_1a
   scene_id: 1A
-  at_turn: 8
+  at_turn: 11
   effect: {op: assert, fact_id: home_search_window_narrowing, value: true}
   status: approved
   reason: Makes the patrol's widening search visible without forcing Kristin to leave before she has investigated Michelle's house.
@@ -1099,9 +1099,9 @@ storylets:
     - fact_id: michelle_warning_known
       equals: true
     pacing:
-      earliest_turn: 4
-      target_turn: 6
-      latest_turn: 7
+      earliest_turn: 6
+      target_turn: 8
+      latest_turn: 9
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: If Kristin stalls after finding evidence, official scrutiny raises urgency and makes staying costly
     without dictating whether she hides, lies, argues, or leaves.

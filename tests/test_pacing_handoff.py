@@ -196,10 +196,11 @@ def test_patrol_arrival_prompt_carries_one_verbatim_realization_for_one_turn(mon
     engine.turn("Search the kitchen.")
     engine.turn("Check the back door.")
     engine.turn("Inspect the overturned chair.")
-    arrival = engine.turn("Trace the patrol marker.")
+    engine.turn("Trace the patrol marker.")
     engine.turn("Search the front room.")
+    arrival = engine.turn("Check the side gate.")
 
-    assert all(expected not in prompt for prompt in captured[:5])
+    assert all(expected not in prompt for prompt in captured[:6])
     assert tuple(segment.text for segment in arrival.segments).count(expected) == 1
 
 
@@ -207,7 +208,7 @@ def test_patrol_return_realization_follows_departure() -> None:
     state = RuntimeState.bootstrap(PACKAGE)
     engine = RuntimeEngine(state, lambda _input: {"segments": [{"kind": "narration", "text": "Search the kitchen."}]})
 
-    for _ in range(9):
+    for _ in range(13):
         engine.turn("Wait.")
     event = next(event for event in PACKAGE.pacing.events if event.id == "patrol_returns_1a")
     assert state.last_turn_delivery.complication_text == event.realizations[0].text

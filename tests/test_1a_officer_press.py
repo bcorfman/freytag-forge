@@ -89,7 +89,7 @@ def test_witnessed_recovery_then_next_turn_shows_one_officer_press(monkeypatch) 
     assert _has_true(state, "card_challenged")
 
     # The recovery is already committed; place the following player turn at the event's turn.
-    state.turn_index = 5
+    state.turn_index = 7
     result = engine.turn("Answer the officer.")
 
     assert sum(segment.text.count(PRESS_TEXT) for segment in result.segments) == 1
@@ -100,7 +100,7 @@ def test_recovery_before_arrival_reaches_plain_departure_without_press() -> None
     state = _state()
     engine = RuntimeEngine(state, _neutral_provider)
     results = []
-    for turn in range(1, 8):
+    for turn in range(1, 11):
         results.append(engine.turn(COMMAND if turn == 1 else "Wait."))
 
     texts = [segment.text for result in results for segment in result.segments]
@@ -110,7 +110,7 @@ def test_recovery_before_arrival_reaches_plain_departure_without_press() -> None
 
 
 def test_unwitnessed_run_reaches_plain_departure_without_press() -> None:
-    state = _state(turn_index=6, patrol_on_scene=True, patrol_in_house=True)
+    state = _state(turn_index=9, patrol_on_scene=True, patrol_in_house=True)
     engine = RuntimeEngine(state, _neutral_provider)
 
     engine.turn("Wait.")
@@ -121,7 +121,7 @@ def test_unwitnessed_run_reaches_plain_departure_without_press() -> None:
 
 def test_departure_after_demand_acknowledges_the_officer() -> None:
     state = _state(
-        turn_index=6,
+        turn_index=9,
         patrol_on_scene=True,
         patrol_in_house=True,
         card_challenged=True,
@@ -138,7 +138,7 @@ def test_departure_after_demand_acknowledges_the_officer() -> None:
 
 def test_officer_demand_does_not_change_card_custody_or_transition_trigger() -> None:
     state = _state(
-        turn_index=5,
+        turn_index=7,
         patrol_on_scene=True,
         patrol_in_house=True,
         card_challenged=True,

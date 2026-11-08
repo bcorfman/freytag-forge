@@ -67,31 +67,31 @@ def test_scene_1a_patrol_is_a_fact_driven_placed_timeline(monkeypatch) -> None:
     )
     player_text: list[str] = []
 
-    for turn in range(1, 10):
+    for turn in range(1, 14):
         proposal = engine.turn("Wait and observe.")
         player_text.extend(_texts(proposal))
-        if turn < 4:
+        if turn < 6:
             assert not re.search(r"\b(officer|patrol)\b", prompts[turn - 1], re.IGNORECASE)
             assert not any(re.search(r"\b(officer|patrol)\b", text, re.IGNORECASE) for text in _texts(proposal))
 
-        if turn < 7:
+        if turn < 10:
             assert not any(re.search(r"\b(back|return|again)\b", text, re.IGNORECASE) for text in _texts(proposal))
 
-        if turn == 4:
+        if turn == 6:
             assert _texts(proposal).count(ARRIVAL_TEXT) == 1
             assert _has_fact(state, "patrol_on_scene", True)
             assert world_for(PACKAGE, state.facts).parent("patrol_officer") == "outside_house"
-        if turn == 5:
+        if turn == 7:
             assert _texts(proposal).count(ENTERING_TEXT) == 1
             assert _has_fact(state, "patrol_in_house", True)
             assert world_for(PACKAGE, state.facts).parent("patrol_officer") == "kitchen"
-        if turn == 7:
+        if turn == 10:
             assert _texts(proposal).count(LEAVING_TEXT) == 1
             assert _has_fact(state, "patrol_departed", True)
             assert _has_fact(state, "patrol_on_scene", False)
             assert _has_fact(state, "patrol_in_house", False)
             assert world_for(PACKAGE, state.facts).parent("patrol_officer") == "patrol_staging"
-        if turn == 9:
+        if turn == 13:
             assert state.last_turn_delivery.complication_text == RETURNING_TEXT
 
     assert player_text.count(ARRIVAL_TEXT) == 1
@@ -101,7 +101,7 @@ def test_scene_1a_patrol_is_a_fact_driven_placed_timeline(monkeypatch) -> None:
 
 def test_scene_1a_patrol_return_uses_default_without_departure() -> None:
     state = RuntimeState.bootstrap(PACKAGE)
-    state.turn_index = 8
+    state.turn_index = 12
     state.fired_event_ids.update({"patrol_arrives_1a", "patrol_enters_1a", "patrol_leaves_1a"})
     state.facts.assert_fact(Fact(predicate="patrol_return_pressure", subject="story", value="true"))
 
@@ -114,7 +114,7 @@ def test_scene_1a_patrol_return_uses_default_without_departure() -> None:
 def test_scene_1a_patrol_snapshot_restores_facts_and_placement() -> None:
     state = RuntimeState.bootstrap(PACKAGE)
     engine = RuntimeEngine(state, _neutral_provider)
-    for _ in range(5):
+    for _ in range(8):
         engine.turn("Wait and observe.")
 
     snapshot = state.snapshot()

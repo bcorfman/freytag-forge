@@ -46,6 +46,8 @@ def _walk_to_the_neighbor() -> tuple[RuntimeState, RuntimeEngine]:
         "Look at the wall calendar.",
         "Look at the photograph.",
         "Search the drawer.",
+        "Wait and observe.",
+        "Wait and observe.",
         "Go outside.",
     ):
         engine._activate_pacing()

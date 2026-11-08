@@ -30,7 +30,7 @@ from tests.journey_prefix import run as run_with_prefix
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 PLAYED = _legacy_package(PACKAGE)
-AUTHORED_TURN_BUDGET = 120
+AUTHORED_TURN_BUDGET = 122
 
 SIBLINGS: dict[str, list[str]] = {}
 for _item in PACKAGE.knowledge.knowledge:

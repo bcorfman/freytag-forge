@@ -14,7 +14,7 @@ from tests.test_design_review_fixtures import _assert_story_facts, _scene_state
 def _state():
     state = _scene_state("1A")
     _assert_story_facts(state, "memory_card_recovered", "michelle_warning_known")
-    state.turn_index = 4
+    state.turn_index = 7
     RuntimeEngine(
         state, lambda _input: {"segments": [{"kind": "narration", "text": "The room is quiet."}]}
     )._activate_pacing()
