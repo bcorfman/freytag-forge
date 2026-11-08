@@ -9,7 +9,9 @@ D = f"{R}/scripts/ringer/1a-password-officer"
 PY = f"{R}/.venv/bin/python"
 TEST = f"{R}/tests/test_fused_segment_repair.py"
 CF = f"{R}/storygame/runtime/cloudflare.py"
-KEEP = "/tmp/claude-1000/-home-bcorfman-dev-freytag-forge/181d1eb2-ab7c-4a1f-b9cb-3cef730d1076/scratchpad/keep-hashes.json"
+KEEP = (
+    "/tmp/claude-1000/-home-bcorfman-dev-freytag-forge/181d1eb2-ab7c-4a1f-b9cb-3cef730d1076/scratchpad/keep-hashes.json"
+)
 
 spec = f"""You are a code worker for the freytag-forge repository at {R}. Boundary: NO model call, NO network call, never git commit. You may edit ONLY {TEST} and {CF}.
 CONTEXT. {CF} now has a new method _repair_fused_segments (keep it exactly; it is correct) called from _dispatch. Two of the tests in {TEST} are flawed, and the worker that wrote the method also changed the existing helper CloudflareTurnProvider._segment_shape (it changed the sort key of the keys) only to match one test's assumed string; that change is outside scope.

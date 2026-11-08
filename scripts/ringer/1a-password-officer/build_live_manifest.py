@@ -1,0 +1,51 @@
+# ruff: noqa: E501
+"""Ringer task: build the live greeting harness (fused-segment repair ON vs OFF through the real provider and engine). Offline build only; billing happens later."""
+
+import json
+from pathlib import Path
+
+R = "/home/bcorfman/dev/freytag-forge"
+D = f"{R}/scripts/ringer/1a-password-officer"
+PY = f"{R}/.venv/bin/python"
+HARNESS = f"{D}/live_greeting.py"
+
+spec = f"""You are a code worker for the freytag-forge repository at {R}. Boundary: NO model call, NO network call, never git commit. You own ONLY {HARNESS} (create). Do NOT edit {D}/validate_live.py (the independent check; read its failure output and satisfy it) or anything else.
+
+GOAL: a harness that measures, through the REAL provider and engine, whether the fused-segment repair (CloudflareTurnProvider._repair_fused_segments, already in storygame/runtime/cloudflare.py) changes what the player gets when they type 'Greet the officer.' in scene 1A. Two arms: ON (code as is) and OFF (the repair switched off for that provider instance with `provider._repair_fused_segments = lambda response: None`). Only requests that bench.frozen_prompts._is_narration_payload recognises (this includes the provider's recovery request, whose system text is longer) go to the real transport; every other request the engine makes (matcher, capture) is answered with bench.frozen_prompts._CANNED_REPLY exactly as bench.frozen_prompts._capture_wire_payload does. Read bench/frozen_prompts.py (_prefix_states, _offline_capture_provider, _capture_wire_payload, _default_transport, _is_narration_payload, _CANNED_REPLY) and scripts/ringer/1a-password-officer/capture.py first and reuse their machinery: scene 1A, variation bench/variations/1a-password-officer.json loaded with bench.core.load_variation, shipped package, script inputs = the first 8 of OFFICER_INPUTS in capture.py ('Turn on the phone.', 'Unlock the phone.', 'Type in the password.', "Type the password into Michelle's phone.", 'Turn off the phone.', 'Turn on the phone.', 'Turn off the phone.', 'Greet the officer.'), prefix states from fp._prefix_states(variation, [8]) and states[7] is the state before the greeting (deep-copy it for every turn). Each turn: build the provider with fp._offline_capture_provider(copy), set provider._send_http = hook, construct RuntimeEngine(state, provider, capture=WorldCapture(provider, lambda _state, _questions: None)) exactly as _capture_wire_payload does, and call engine.turn('Greet the officer.').
+API (the validator imports and runs it): `run(out, samples, send=None, cap=36)` returns the list of rows, writing the whole rows list as JSON to `out` after every turn. `send(wire_payload) -> bytes` replaces the real transport (default: fp.SCENE = '1A'; load_dotenv from bench.core; fp._default_transport({{'variation': '1a-password-officer'}})). Rules: assert 1 <= samples <= 12; raise FileExistsError if out exists; rows are sample-major with ON then OFF; before each turn stop (leave the rows so far in the file) if real_requests_so_far + 3 > cap, and inside the hook raise RuntimeError('request cap reached') if real_requests_so_far >= cap; every exception from the transport or the turn becomes a row with error=str(error) and the other fields as far as known. Row fields: arm ('ON'|'OFF'), sample (1-based), requests (count of real transport requests in that turn), request_systems (list of the system text of each real request), recovery_used (True if any real request's system text contains 'Your last answer was not valid'), first_reply_raw (the 'narration' string of the first real response, or None), first_reply_parses (True if json.loads of first_reply_raw, after dropping the item_facts key, passes storygame.runtime.contracts.parse_turn_proposal; False otherwise or if no reply), segments (list of the final segment texts of the returned proposal, or None on error), error (str or None), logs (list of the messages of every WARNING record the logger 'storygame.runtime.cloudflare' emitted during that turn; attach and remove a temporary logging.Handler per turn). A real response body is the worker's JSON `{{"narration": "<json string>"}}`; decode it with the same helper the stage replay uses (bench.frozen_prompts._decode_replay_body) to get the string.
+CLI: `live_greeting.py OUT SAMPLES [--confirm] [--cap N]` (cap default 36). Without --confirm print exactly `turns {{2*SAMPLES}} (arms ON and OFF, {{SAMPLES}} samples each); cap {{CAP}} real requests` then `dry run: nothing sent`, exit 0, before building any state or transport. SAMPLES above 12 must exit non-zero before anything is built. Importable without side effects (CLI under __main__).
+HOW TO RUN (from {R}; never bare python): `TMPDIR=/tmp PYTHONPATH={R}:{R}/packages/worldkeeper/src {PY} {D}/validate_live.py` until it prints 'LIVE HARNESS VALIDATION OK'; `{PY} -m ruff format {HARNESS} && {PY} -m ruff check {HARNESS}`."""
+
+check = f"""set -eo pipefail
+cd {R}
+export TMPDIR=/tmp PYTHONPATH={R}:{R}/packages/worldkeeper/src
+{PY} -m ruff check {D}
+{PY} -m ruff format --check {D}
+{PY} {D}/validate_live.py
+git diff --quiet -- storygame tests data bench
+"""
+task = {
+    "key": "build-live-greeting-harness",
+    "task_type": "code-feature",
+    "engine": "codex",
+    "model": "gpt-5.6-luna",
+    "engine_args": ["-c", "model_reasoning_effort=medium"],
+    "max_attempts": 2,
+    "timeout_s": 2400,
+    "check_timeout_s": 900,
+    "ownership": [HARNESS],
+    "expect_files": [HARNESS],
+    "spec": spec,
+    "check": check,
+    "verified": "the independent validator proves arms, order, request counting, cap, error rows and the dry-run guard",
+}
+manifest = {
+    "run_name": "live-greeting-check",
+    "workdir": "/home/bcorfman/dev/ringer-work/live-greeting-check",
+    "max_parallel": 1,
+    "worktrees": False,
+    "repo": R,
+    "tasks": [task],
+}
+Path(f"{D}/live-harness-manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
+print("written")
