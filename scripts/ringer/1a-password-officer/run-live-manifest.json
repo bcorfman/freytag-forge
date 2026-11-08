@@ -1,0 +1,31 @@
+{
+  "run_name": "live-greeting-check-run-live",
+  "workdir": "/home/bcorfman/dev/ringer-work/live-greeting-check-run-live",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "run-live",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "max_attempts": 1,
+      "timeout_s": 300,
+      "check_timeout_s": 3000,
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/bench/results/1a-password-officer/run-live-ready.txt"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/bench/results/1a-password-officer/run-live-ready.txt"
+      ],
+      "spec": "You are a trivial placeholder worker for a billed run that Ringer's check performs itself. Boundary: do NOT run any harness, do NOT call any model or network service, do NOT touch any file except the one you own, never git commit. Your only job: write the single line 'ready run-live' into the file /home/bcorfman/dev/freytag-forge/bench/results/1a-password-officer/run-live-ready.txt (create it; the directory exists). Nothing else is needed; the check afterwards runs 12 sample(s) of the live greeting check (.plans/1a-password-officer-prereg.md) with a hard cap of 32 real requests and writes /home/bcorfman/dev/freytag-forge/bench/results/1a-password-officer/run-live-rows.json. Do not read or edit anything else.",
+      "check": "set -eo pipefail\ncd /home/bcorfman/dev/freytag-forge\nexport PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/packages/worldkeeper/src TMPDIR=/tmp\n[ ! -e /home/bcorfman/dev/freytag-forge/bench/results/1a-password-officer/run-live-rows.json ] || { echo 'rows file already exists; refusing to re-bill'; exit 1; }\n/home/bcorfman/dev/freytag-forge/.venv/bin/python /home/bcorfman/dev/freytag-forge/scripts/ringer/1a-password-officer/live_greeting.py /home/bcorfman/dev/freytag-forge/bench/results/1a-password-officer/run-live-rows.json 12 --confirm --cap 32 > /home/bcorfman/dev/freytag-forge/bench/results/1a-password-officer/run-live.log 2>&1 || { tail -20 /home/bcorfman/dev/freytag-forge/bench/results/1a-password-officer/run-live.log; echo 'live run failed'; exit 1; }\n/home/bcorfman/dev/freytag-forge/.venv/bin/python - <<'PY'\nimport json\nrows = json.load(open('/home/bcorfman/dev/freytag-forge/bench/results/1a-password-officer/run-live-rows.json'))\nreq = sum(r['requests'] for r in rows)\nerr = [(r['arm'], r['sample'], (r['error'] or '')[:80]) for r in rows if r['error']]\nprint('turns', len(rows), 'real requests', req, 'cap', 32, 'errors', len(err), err)\nassert rows and req <= 32\nPY\n",
+      "verified": "the live harness wrote its rows within the request cap (errors kept as rows)"
+    }
+  ]
+}

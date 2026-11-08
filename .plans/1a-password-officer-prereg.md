@@ -147,3 +147,16 @@ Frozen request: the provider's own recovery request (`CloudflareTurnProvider._re
 **Scoring** (blind: arm labels removed, order shuffled, key kept apart; single reader, Claude; rows scored on the composed final text the engine returned; transport/turn errors are lost turns): per row, ANSWERED = the final text contains the officer's own response to the greeting (speech or a direct reply action); UNANSWERED = Kristin greets and the officer never responds, or the turn contains only scene narration; LOST = error row. Also recorded per arm: first-reply parser rejection rate, recovery-request rate, mean real requests per turn, wrong-person/name substitutions.
 
 **Win rule (fixed now).** Reproduction: the OFF arm has at least 4/12 UNANSWERED or LOST. Improvement: ON has at most 1/12 UNANSWERED or LOST and at least 3 fewer than OFF; ON uses fewer real requests per turn than OFF; ON has no wrong-person substitution and no more LOST than OFF. A first-reply parser rejection rate that differs wildly between arms (they send the same prompt) is noted as noise. If OFF does not reach 4/12, report "not reproduced" with no rerun. A generation result on a reconstructed request only; not live qualification.
+
+## Result: live greeting check of the fused-segment repair (run 2026-11-08; smoke 1 sample = 2 real requests, scored run 12 samples per arm = 29 real requests, 31 in all against the cap of 36; 0 transport errors; rows `run-live-rows.json`, blinded sheet `sheet-live.txt`, key `key-live.json`, scores `scores-live.json`; single reader, Claude, scored before unblinding)
+
+| Arm | Turns | Real requests | Mean per turn | First reply parsed | Recovery request used | Turns repaired (log) | Officer never responds (UNANSWERED) | Lost turns | Wrong person |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| ON (repair as merged in #754) | 12 | 12 | 1.00 | 6/12 | 0/12 | 6/12 | **1/12** | 0 | 0 |
+| OFF (repair switched off) | 12 | 17 | 1.42 | 7/12 | 5/12 | 0/12 | **5/12** | 0 | 0 |
+
+**Preregistered rule met.** Reproduction: OFF 5/12 unanswered, at least the 4/12 needed. Improvement: ON 1/12, at most 1/12, and 4 fewer than OFF (at least 3 needed); ON used fewer real requests per turn (1.00 against 1.42); no wrong-person substitution and no extra lost turn in ON.
+
+**What happened inside the arms.** Both arms send the same prompt and saw the same first-reply rejection rate (6/12 and 5/12 rejected). In OFF, all 5 rejected first replies spent a recovery request, and **all 5 recovered greetings left the officer silent** (5 of 5; earlier frozen replay: 11 of 12). In ON, all 6 rejected first replies were repaired in place with no second call, and all 6 repaired turns contain the officer's reply. The one ON miss is a turn whose first reply parsed cleanly and simply never has the officer speak (a different, smaller model behavior: the same pattern is 0 of 7 among OFF's clean first replies). Replies are strongly correlated; 12 samples per arm; one request shape; a generation result, not live qualification.
+
+**Conclusion.** The repair removes the extra model call on about half of greeting turns and restores the officer's answer on those turns; the remaining unanswered greetings in ON come from clean first replies that omit the officer. Not claimed: the rate in real play (reconstructed request), other commands, or other scenes.

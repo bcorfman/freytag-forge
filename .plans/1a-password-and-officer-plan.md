@@ -208,6 +208,14 @@ by dropping a segment. Full suite 4272 passed plus the shard-manifest test fixed
 real model; the repair only restores what the model already wrote, so the recovery path's "officer silent" behavior (1/12) is spared for those 11 of 17.
 Process note: the first implementation attempt also altered `_segment_shape`'s key order to satisfy a flawed test; reverted.
 
+**Fused-segment repair merged and measured live (2026-11-08).** #754 merged (the first CI run had a flaky `tests/test_web_demo.py` failure in shard 0 that
+also reproduced once locally and passed on a rerun of the same commit; root cause not found, see below). Live greeting check through the real provider and
+engine, 12 samples per arm, 31 real requests: with the repair 1/12 greetings left the officer silent and no turn spent a recovery request; without it 5/12 were silent
+(all 5 recovered turns) at 1.42 requests per turn. Preregistered rule met; details at the end of `.plans/1a-password-officer-prereg.md`.
+Open: (1) the shard-0 flake: test_web_demo session creation intermittently returns 503 "CLOUDFLARE_WORKER_URL is not configured" under `-n 4` scheduling; passes alone,
+in single-process order, and on a rerun, so it looks like order-dependent state leaking between tests; not caused by the repair; needs its own investigation;
+(2) the remaining ~8 percent of greetings whose clean first reply omits the officer; (3) the 1A pacing play-through and staged E2E.
+
 Order of work if approved: (1) failing tests for A, (2) A through Ringer behind the flag, (3) free golden comparison on
 recorded requests, (4) B data edit with its test updates, (5) then the billed source screens, with the officer stage first.
 The billed spend in the preregistration (now 117 requests) is still **not approved**.
