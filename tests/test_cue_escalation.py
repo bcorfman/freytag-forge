@@ -75,16 +75,14 @@ def test_escalation_is_recorded_once_at_the_scene_nudge() -> None:
     state = _state()
     engine = RuntimeEngine(state, _provider)
     engine.turn("Search the drawer.")
-    for _ in range(9):
+    for _ in range(13):
         engine.turn("Inspect the workstation.")
 
-    assert state.turn_index == 10
+    assert state.turn_index == 14
     assert state.cue_stages[-1].stage == 2
     assert state.cue_stages[-1].fact_id == FACT_ID
     assert state.staged_cue_fact_id is None
 
-    for _ in range(2):
-        engine.turn("Inspect the workstation.")
     assert [stage.stage for stage in state.cue_stages if stage.fact_id == FACT_ID] == [2]
 
 
@@ -177,13 +175,13 @@ def test_escalation_falls_back_to_stage_one_text_when_unset() -> None:
 
 def test_earned_reveal_before_nudge_never_escalates(monkeypatch) -> None:
     state = _state()
-    provider = _stubbed_cloudflare_provider(monkeypatch, state, *(["The room remains quiet."] * 12))
+    provider = _stubbed_cloudflare_provider(monkeypatch, state, *(["The room remains quiet."] * 30))
     engine = RuntimeEngine(state, provider)
 
     first = engine.turn("Wait here.")
     state.facts.assert_fact(Fact(predicate=FACT_ID, subject="story", value="true"))
     last = first
-    for _ in range(9):
+    for _ in range(13):
         last = engine.turn("Inspect the workstation.")
 
     _assert_observable(
@@ -203,10 +201,10 @@ def test_spent_reveal_never_escalates(monkeypatch) -> None:
     state = _state()
     state.delivered_cue_ids = (FACT_ID,)
     state.cue_stages = (CueStage(fact_id=FACT_ID, stage=1, last_turn=1, visit_entered_at=0),)
-    state.turn_index = 9
+    state.turn_index = 13
     state.facts.assert_fact(Fact(predicate="memory_card_recovered", subject="story", value="true"))
     state.fired_event_ids.update(("SL-1A-B", "SL-1A-D"))
-    provider = _stubbed_cloudflare_provider(monkeypatch, state, *(["The room remains quiet."] * 12))
+    provider = _stubbed_cloudflare_provider(monkeypatch, state, *(["The room remains quiet."] * 30))
     engine = RuntimeEngine(state, provider)
     assert not engine._cue_reveal_available(FACT_ID)
 
@@ -235,7 +233,7 @@ def test_rejected_nudge_restores_state_then_accepted_nudge_records_stage_two(mon
     provider = _stubbed_cloudflare_provider(
         monkeypatch,
         state,
-        *(["The room remains quiet."] * 9),
+        *(["The room remains quiet."] * 13),
         # The engine retries a rejected narration once, so the turn fails only when both replies are rejected.
         "Phase Two is active.",
         "Phase Two is active.",
@@ -243,7 +241,7 @@ def test_rejected_nudge_restores_state_then_accepted_nudge_records_stage_two(mon
     )
     engine = RuntimeEngine(state, provider)
     engine.turn("Search the drawer.")
-    for _ in range(8):
+    for _ in range(12):
         engine.turn("Inspect the workstation.")
     before = state.snapshot()
 
@@ -263,7 +261,7 @@ def test_rejected_nudge_restores_state_then_accepted_nudge_records_stage_two(mon
     _assert_observable(
         state,
         accepted,
-        cue_stages=(CueStage(fact_id=FACT_ID, stage=2, last_turn=10, visit_entered_at=0),),
+        cue_stages=(CueStage(fact_id=FACT_ID, stage=2, last_turn=14, visit_entered_at=0),),
         delivered_cue_ids=(FACT_ID,),
         staged_cue_fact_id=None,
         staged_cue_stage=1,
@@ -274,10 +272,10 @@ def test_rejected_nudge_restores_state_then_accepted_nudge_records_stage_two(mon
 @pytest.mark.nightly
 def test_scene_reentry_clears_cues_and_allows_a_new_escalation(monkeypatch) -> None:
     state = _state()
-    provider = _stubbed_cloudflare_provider(monkeypatch, state, *(["The room remains quiet."] * 24))
+    provider = _stubbed_cloudflare_provider(monkeypatch, state, *(["The room remains quiet."] * 30))
     engine = RuntimeEngine(state, provider)
     engine.turn("Search the drawer.")
-    for _ in range(8):
+    for _ in range(12):
         engine.turn("Inspect the workstation.")
     first_escalation = engine.turn("Inspect the workstation.")
     assert state.cue_stages[-1].stage == 2
@@ -302,13 +300,13 @@ def test_scene_reentry_clears_cues_and_allows_a_new_escalation(monkeypatch) -> N
     assert state.delivered_cue_ids == ()
 
     engine.turn("Search the drawer.")
-    for _ in range(8):
+    for _ in range(12):
         engine.turn("Inspect the workstation.")
     escalation = engine.turn("Inspect the workstation.")
     _assert_observable(
         state,
         escalation,
-        cue_stages=(CueStage(fact_id=FACT_ID, stage=2, last_turn=20, visit_entered_at=10),),
+        cue_stages=(CueStage(fact_id=FACT_ID, stage=2, last_turn=24, visit_entered_at=14),),
         delivered_cue_ids=(FACT_ID,),
         staged_cue_fact_id=None,
         staged_cue_stage=1,
@@ -325,7 +323,7 @@ def test_forced_handoff_still_changes_scene_with_escalation(monkeypatch) -> None
         state._assert_scene_entry_fact("1A")
         engine = RuntimeEngine(state, _provider)
         result = None
-        for _ in range(13):
+        for _ in range(15):
             result = engine.turn("Inspect the workstation.")
         return state, result
 
@@ -353,10 +351,10 @@ def test_forced_handoff_still_changes_scene_with_escalation(monkeypatch) -> None
 
 def test_escalation_is_last_segment_once_and_not_repeated(monkeypatch) -> None:
     state = _state()
-    provider = _stubbed_cloudflare_provider(monkeypatch, state, *(["The room remains quiet."] * 12))
+    provider = _stubbed_cloudflare_provider(monkeypatch, state, *(["The room remains quiet."] * 30))
     engine = RuntimeEngine(state, provider)
     engine.turn("Search the drawer.")
-    for _ in range(8):
+    for _ in range(12):
         engine.turn("Inspect the workstation.")
     nudge = engine.turn("Inspect the workstation.")
     after = engine.turn("Inspect the workstation.")
@@ -368,11 +366,11 @@ def test_escalation_is_last_segment_once_and_not_repeated(monkeypatch) -> None:
     _assert_observable(
         state,
         after,
-        cue_stages=(CueStage(fact_id=FACT_ID, stage=2, last_turn=10, visit_entered_at=0),),
-        delivered_cue_ids=(FACT_ID,),
-        staged_cue_fact_id=None,
+        cue_stages=(),
+        delivered_cue_ids=(),
+        staged_cue_fact_id="brandon_identified",
         staged_cue_stage=1,
-        current_scene_id="1A",
+        current_scene_id="1B",
     )
 
 
@@ -380,7 +378,7 @@ def test_old_save_delivered_cue_without_stage_escalates_at_nudge(monkeypatch) ->
     state = _state()
     state.delivered_cue_ids = (FACT_ID,)
     state.cue_stages = ()
-    provider = _stubbed_cloudflare_provider(monkeypatch, state, *(["The room remains quiet."] * 12))
+    provider = _stubbed_cloudflare_provider(monkeypatch, state, *(["The room remains quiet."] * 30))
     engine = RuntimeEngine(state, provider)
 
     first = engine.turn("Inspect the workstation.")
@@ -389,14 +387,14 @@ def test_old_save_delivered_cue_without_stage_escalates_at_nudge(monkeypatch) ->
     assert state.staged_cue_fact_id is None
     assert state.staged_cue_stage == 1
     last = first
-    for _ in range(9):
+    for _ in range(13):
         last = engine.turn("Inspect the workstation.")
     escalation = last
     expected = next(item.escalation_text for item in state.package.deliveries if item.fact_id == FACT_ID)
     _assert_observable(
         state,
         escalation,
-        cue_stages=(CueStage(fact_id=FACT_ID, stage=2, last_turn=10, visit_entered_at=0),),
+        cue_stages=(CueStage(fact_id=FACT_ID, stage=2, last_turn=14, visit_entered_at=0),),
         delivered_cue_ids=(FACT_ID,),
         staged_cue_fact_id=None,
         staged_cue_stage=1,

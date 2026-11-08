@@ -10,6 +10,8 @@ knowledge or name a hidden location. A bridge may narrate only pressure facts
 that its activation requires. Set `verbatim: true` when the authored text must
 be emitted directly to the player rather than reproduced by the narrator.
 
+Set `trailing: true` on an event whose effects should land after the player's action. The narrator sees the world as it was before the event, then the event's effects apply and its verbatim text is added after the story. Use it for an arrival or departure that the player's own command should still be able to address. The default is false.
+
 An optional `incidents.yaml` file declares scene-local decision windows.
 Each incident has an `id`, `scene_id`, two or more `outcomes`, a missed-window event, and a successor transition.
 Each outcome names an `id`, one storylet realization, at least one advantage fact, and optional cost facts.

@@ -1,0 +1,34 @@
+{
+  "run_name": "officer-reyes-bio",
+  "workdir": "/home/bcorfman/dev/ringer-work/officer-reyes-bio",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "add-officer-reyes-bio",
+      "task_type": "code-feature",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=medium"
+      ],
+      "max_attempts": 2,
+      "timeout_s": 3000,
+      "check_timeout_s": 1800,
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/data/stories/continuity-initiative/plot.md",
+        "/home/bcorfman/dev/freytag-forge/tests/test_officer_reyes_bio.py",
+        "/home/bcorfman/dev/freytag-forge/tests/"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/tests/test_officer_reyes_bio.py",
+        "/home/bcorfman/dev/freytag-forge/data/stories/continuity-initiative/plot.md"
+      ],
+      "spec": "You are a code worker for the freytag-forge repository at /home/bcorfman/dev/freytag-forge. Boundary: NO model call, NO network call, never git commit. You may edit ONLY /home/bcorfman/dev/freytag-forge/data/stories/continuity-initiative/plot.md (one insertion), create /home/bcorfman/dev/freytag-forge/tests/test_officer_reyes_bio.py, and edit existing tests under /home/bcorfman/dev/freytag-forge/tests ONLY to update a pinned set of character names or counts that the new Principal Characters entry changes (never loosen what a test proves), plus /home/bcorfman/dev/freytag-forge/tests/shard_durations.json via `/home/bcorfman/dev/freytag-forge/.venv/bin/python scripts/regen_shard_durations.py --missing-only`. Nothing else: no data file other than plot.md, no engine code.\n\nGOAL (Brandon decided; scene 1A, Officer Reyes is the only scene-1A officer the narrator never learns about because plot.md's Principal Characters has no heading for him; the loader builds the narrator's CHARACTERS list only from those headings, using the matching world.yaml narrator_bio). Add this block to /home/bcorfman/dev/freytag-forge/data/stories/continuity-initiative/plot.md so that it sits immediately before the line '# Expanded Scene Outline', after the existing '### Imprisoned senior official' paragraph, with one blank line before the new heading and one blank line after the paragraph (copy the text exactly):\n### Officer Reyes\n\nA young, polite federal patrol officer who works from a printed list and does not like what the list asks of him.\n\nThe result must equal the pre-change plot.md (/tmp/claude-1000/-home-bcorfman-dev-freytag-forge/181d1eb2-ab7c-4a1f-b9cb-3cef730d1076/scratchpad/plot.before-reyes.md) with exactly that insertion. Do not touch Walt Pruitt, the alias list, or any other file.\nTESTS: create /home/bcorfman/dev/freytag-forge/tests/test_officer_reyes_bio.py modelled on /home/bcorfman/dev/freytag-forge/tests/test_senior_official_bio.py (read it and tests/test_prompt_presence.py first). Assert: the package's character 'patrol_officer' exists and its bio equals the world.yaml narrator_bio of patrol_officer; that narrator_bio is exactly the sentence above and contains neither 'covert' nor any hidden-purpose wording; the list of scenes whose participant_ids contain 'patrol_officer' (compute it from the package and assert the actual list, which must include '1A'); the CHARACTERS prompt in a scene that is not one of those scenes lacks the line '- Officer Reyes is a young, polite federal patrol officer who works from a printed list and does not like what the list asks of him.'; and in scene 1A, after the patrol has entered the kitchen (use the clock in tests/test_1a_pacing_timeline.py: the officer is in the kitchen at the turn-8 request, so drive 7 neutral accepted turns with the stub narrator and read the CHARACTERS block that the turn-8 request carries, as that test and test_prompt_presence do), the CHARACTERS block contains that exact line.\nThen run the full suite and fix any test that pins the old Principal Characters set (for example a test_richer_* or test_prompt_presence assertion over character names); keep going until green.\nHOW TO RUN (from /home/bcorfman/dev/freytag-forge; never bare python, never uv): `TMPDIR=/tmp PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/packages/worldkeeper/src /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q --no-cov -p no:cacheprovider -n 4 2>&1 | tail -30`; `/home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff format /home/bcorfman/dev/freytag-forge/tests/test_officer_reyes_bio.py && /home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff check /home/bcorfman/dev/freytag-forge/tests/test_officer_reyes_bio.py`.",
+      "check": "set -o pipefail\ncd /home/bcorfman/dev/freytag-forge\nexport TMPDIR=/tmp PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/packages/worldkeeper/src\n/home/bcorfman/dev/freytag-forge/.venv/bin/python - <<'PY'\nbase = open('/tmp/claude-1000/-home-bcorfman-dev-freytag-forge/181d1eb2-ab7c-4a1f-b9cb-3cef730d1076/scratchpad/plot.before-reyes.md', encoding='utf-8').read()\nblock = \"### Officer Reyes\\n\\nA young, polite federal patrol officer who works from a printed list and does not like what the list asks of him.\\n\\n\"\nanchor = \"\\n# Expanded Scene Outline\\n\"\nassert base.count(anchor) == 1\nexpected = base.replace(anchor, \"\\n\" + block + \"# Expanded Scene Outline\\n\")\nactual = open('/home/bcorfman/dev/freytag-forge/data/stories/continuity-initiative/plot.md', encoding='utf-8').read()\nassert actual == expected, 'plot.md is not the pre-change file plus exactly the Reyes block'\nprint('plot.md OK')\nPY\n/home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff check tests\n/home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff format --check tests\n/home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest tests/test_officer_reyes_bio.py -q --no-cov -p no:cacheprovider 2>&1 | tail -6\n/home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q --no-cov -p no:cacheprovider -n 4 2>&1 | tail -20\n",
+      "verified": "plot.md is the pre-change file plus exactly the Reyes block; the new bio tests and the full suite pass"
+    }
+  ]
+}

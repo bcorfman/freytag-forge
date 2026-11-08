@@ -44,11 +44,22 @@ def test_complication_text_is_accepted_on_event_firing_turn(event, realization) 
     )
     state.turn_index = state.scene_entered_at_turn + event.at_turn - 1
 
-    engine = RuntimeEngine(
-        state,
-        lambda _input: {"segments": [{"kind": "narration", "text": realization.text}]},
-    )
+    if event.trailing:
+
+        def provider(_input):
+            return {"segments": [{"kind": "narration", "text": "The narrator describes the immediate action."}]}
+    else:
+
+        def provider(_input):
+            return {"segments": [{"kind": "narration", "text": realization.text}]}
+
+    engine = RuntimeEngine(state, provider)
 
     proposal = engine.turn("Wait and watch the room.")
 
-    assert proposal.segments[0].text == realization.text
+    if event.trailing:
+        assert proposal.segments[0].text != realization.text
+        assert sum(segment.text == realization.text for segment in proposal.segments) == 1
+        assert proposal.segments[-1].text == realization.text
+    else:
+        assert proposal.segments[0].text == realization.text

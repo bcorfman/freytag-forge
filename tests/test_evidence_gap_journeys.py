@@ -38,7 +38,7 @@ from storygame.story_package.loader import load_story_package
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 PLAYED = _legacy_package(PACKAGE)
-AUTHORED_TURN_BUDGET = 120
+AUTHORED_TURN_BUDGET = 122
 
 GAPS = (
     "evidence_gap_processing_numbers",

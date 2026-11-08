@@ -185,7 +185,7 @@ def test_missed_pointer() -> None:
     state.package = package
     engine = RuntimeEngine(state, _narration("The drawer remains in Michelle's workstation."))
     engine.turn("Search the drawer.")
-    for _ in range(11):
+    for _ in range(13):
         engine.turn("Inspect the workstation.")
 
     assert state.cue_stages[-1].stage == 2
@@ -207,7 +207,7 @@ def test_more_than_four_eligible() -> None:
 
     state = _scene_state("1A")
     _assert_story_facts(state, "memory_card_recovered", "michelle_warning_known")
-    state.turn_index = 4
+    state.turn_index = 6
     RuntimeEngine(state, _narration("The workstation is quiet."))._activate_pacing()
 
     eligible = tuple(

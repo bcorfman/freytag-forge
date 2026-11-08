@@ -1,0 +1,7 @@
+package.characters: ['kristin', 'michelle', 'brandon', 'charles', 'rebecca', 'senior_official']
+in-scope things for 1A resolver: [('michelle_phone', ('phone', 'phones')), ('kristin_laptop', ('laptop', 'laptops')), ('michelle_drawer', ('drawer', 'drawers')), ('back_door', ('door', 'doors')), ('house_gate', ('gate', 'gates')), ('kristin_truck', ('truck', 'trucks')), ('michelle_workstation', ('workstation', 'workstations')), ('workstation_chair', ('chair', 'chairs')), ('michelle_tea_mug', ('mug', 'mugs', 'tea', 'teas')), ('michelle_reading_glasses', ('glasse', 'glasses')), ('manuscript_pages', ('page', 'pages', 'paper', 'papers')), ('kitchen_calendar', ('calendar', 'calendars')), ('lake_photograph', ('photo', 'photograph', 'photographs', 'photos')), ('back_door_splinters', ('frame', 'frames')), ('back_door_deadbolt', ('deadbolt', 'deadbolts', 'lock', 'locks')), ('truck_radio', ('radio', 'radios')), ('truck_driver_seat', ('seat', 'seats')), ('truck_passenger_seat', ('seat', 'seats')), ('walt_pruitt', ('pruitt', 'pruitts'))]
+'Jenkins' anywhere in assembled turn prompt payload: False
+'Jenkins' in system prompt: False
+type in the password -> passthrough () None
+type in the laptop password -> resolved (('laptop', 'kristin_laptop'),) None
+unlock the laptop -> resolved (('laptop', 'kristin_laptop'),) None

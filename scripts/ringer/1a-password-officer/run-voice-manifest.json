@@ -1,0 +1,31 @@
+{
+  "run_name": "1a-password-officer-run-voice",
+  "workdir": "/home/bcorfman/dev/ringer-work/1a-password-officer-run-voice",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "run-voice",
+      "task_type": "probe",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "max_attempts": 1,
+      "timeout_s": 300,
+      "check_timeout_s": 3000,
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/bench/results/1a-password-officer/run-voice-ready.txt"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/bench/results/1a-password-officer/run-voice-ready.txt"
+      ],
+      "spec": "You are a trivial placeholder worker for a billed replay that Ringer's check performs itself. Boundary: do NOT run any replay, do NOT call any model or network service, do NOT touch any file except the one you own, never git commit. Your only job: write the single line 'ready run-voice' into the file /home/bcorfman/dev/freytag-forge/bench/results/1a-password-officer/run-voice-ready.txt (create it; the directory exists). Nothing else is needed; the check afterwards replays samples 1 to 12 of the 1A voice stage (.plans/1a-password-officer-prereg.md) and writes /home/bcorfman/dev/freytag-forge/bench/results/1a-password-officer/run-voice-rows.json. Do not read or edit anything else.",
+      "check": "set -o pipefail\ncd /home/bcorfman/dev/freytag-forge\nexport PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/packages/worldkeeper/src TMPDIR=/tmp\n[ ! -e /home/bcorfman/dev/freytag-forge/bench/results/1a-password-officer/run-voice-rows.json ] || { echo 'rows file already exists; refusing to re-bill'; exit 1; }\n/home/bcorfman/dev/freytag-forge/.venv/bin/python /home/bcorfman/dev/freytag-forge/scripts/ringer/1a-password-officer/replay.py voice /home/bcorfman/dev/freytag-forge/bench/results/1a-password-officer/run-voice-rows.json 1 12 --confirm > /home/bcorfman/dev/freytag-forge/bench/results/1a-password-officer/run-voice.log 2>&1; code=$?\ntail -5 /home/bcorfman/dev/freytag-forge/bench/results/1a-password-officer/run-voice.log\n[ $code -eq 0 ] || { echo \"replay exited $code\"; exit $code; }\n/home/bcorfman/dev/freytag-forge/.venv/bin/python - <<'PY'\nimport json,sys\nr=json.load(open('/home/bcorfman/dev/freytag-forge/bench/results/1a-password-officer/run-voice-rows.json'))\nerrs=[(x['arm'],x['n'],x['sample'],x['error'][:80]) for x in r if x.get('error')]\nprint('rows',len(r),'errors',len(errs),errs)\nsys.exit(0 if len(r)==48 else 'expected 48 rows, got %d'%len(r))\nPY\n",
+      "verified": "the replay wrote every row (errors kept as rows)"
+    }
+  ]
+}

@@ -737,6 +737,11 @@ class PacingEvent(_Model):
     effects: tuple[FactPredicate, ...] = Field(min_length=1)
     transition_id: str | None = Field(default=None, pattern=_ID)
     realizations: tuple[PacingRealization, ...] = ()
+    trailing: StrictBool = Field(
+        default=False,
+        exclude_if=lambda value: value is False,
+        description="Apply the event after the player's action is narrated.",
+    )
 
 
 class PacingSource(_Model):

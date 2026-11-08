@@ -124,7 +124,7 @@ def test_real_staged_handoff_is_recorded_as_forced() -> None:
     for predicate in ("michelle_lead_actionable", "patrol_return_pressure", "memory_card_recovered"):
         state.facts.assert_fact(Fact(predicate=predicate, subject="story", value="true"))
     state.staged_handoff_fact_ids = ("continuity_initiative_known",)
-    state.turn_index = 8
+    state.turn_index = 13
     engine = RuntimeEngine(state, _provider("The room stays quiet."))
 
     engine.turn("Search the kitchen.")
@@ -216,7 +216,7 @@ def test_authored_transition_on_a_no_reveal_turn_is_earned() -> None:
         "patrol_return_pressure",
     ):
         state.facts.assert_fact(Fact(predicate=predicate, subject="story", value="true"))
-    state.turn_index = 9
+    state.turn_index = 13
     state.scene_entered_at_turn = 0
     window = next(item for item in PACKAGE.pacing.scenes if item.scene_id == "1A")
     assert state.turn_index - state.scene_entered_at_turn < window.handoff_after_turns

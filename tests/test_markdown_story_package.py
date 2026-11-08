@@ -1079,7 +1079,7 @@ def test_loader_rejects_malformed_sources(tmp_path: Path, path: str, old: str, n
 def test_loader_rejects_storylet_window_outside_parent_scene(tmp_path: Path) -> None:
     root = copied_package(tmp_path)
     source = root / "storylets.md"
-    source.write_text(source.read_text().replace("latest: `turn 3`", "latest: `turn 14`", 1))
+    source.write_text(source.read_text().replace("latest: `turn 3`", "latest: `turn 16`", 1))
     with pytest.raises(StoryPackageError, match="escapes its scene pacing window"):
         load_story_package(root)
 

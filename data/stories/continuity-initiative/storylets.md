@@ -537,9 +537,9 @@ Each entry below is authoring data, not a player action menu.
 - Patrol officers do not know or disclose the later JANUS bait revelation.
 
 **Pacing window**
-- earliest: `turn 4`
-- target: `turn 6`
-- latest: `turn 7`
+- earliest: `turn 6`
+- target: `turn 8`
+- latest: `turn 9`
 
 ---
 
