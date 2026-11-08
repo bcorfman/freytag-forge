@@ -6,6 +6,7 @@ import json
 import logging
 import re
 from collections.abc import Callable, Mapping
+from contextlib import suppress
 from dataclasses import dataclass
 from os import getenv
 from threading import local
@@ -1412,6 +1413,14 @@ class CloudflareTurnProvider:
             try:
                 proposal = self._parse_eligible_proposal(response)
             except RuntimeContractError as error:
+                repaired = self._repair_fused_segments(response)
+                if repaired is not None:
+                    try:
+                        proposal = self._parse_eligible_proposal(repaired)
+                    except RuntimeContractError:
+                        pass
+                    else:
+                        return self._accept_proposal(repaired, proposal)
                 salvaged = self._salvage_malformed_segments(response, error)
                 if salvaged is not None:
                     try:
@@ -1774,6 +1783,67 @@ class CloudflareTurnProvider:
             "segments": [segment.model_dump(mode="json") for segment in kept],
             "selected_knowledge_ids": list(proposal.selected_knowledge_ids),
         }
+
+    def _repair_fused_segments(self, response: object) -> dict[str, object] | None:
+        """Split typed narration objects that also contain fused narration text."""
+
+        payload = response
+        if isinstance(payload, dict) and "response" in payload:
+            payload = payload["response"]
+        if isinstance(payload, dict) and "content" in payload:
+            payload = payload["content"]
+        if not isinstance(payload, dict) or not isinstance(payload.get("segments"), list):
+            return None
+
+        repaired_segments: list[object] = []
+        repaired_shapes: list[str] = []
+        for segment in payload["segments"]:
+            if not isinstance(segment, dict):
+                repaired_segments.append(segment)
+                continue
+            kind = segment.get("kind")
+            text = segment.get("text")
+            narration = segment.get("narration")
+            extra_keys = set(segment) - {"kind", "text", "speaker_id", "grounding_ids"}
+            qualifies = (
+                isinstance(kind, str)
+                and kind in {"narration", "dialogue", "action"}
+                and isinstance(text, str)
+                and bool(text.strip())
+                and isinstance(narration, str)
+                and bool(narration.strip())
+                and "narration" in extra_keys
+                and all(
+                    isinstance(key, str) and not any(ch.isalnum() for ch in key) for key in extra_keys - {"narration"}
+                )
+            )
+            if not qualifies:
+                repaired_segments.append(segment)
+                continue
+            first = {key: segment[key] for key in ("kind", "text", "speaker_id", "grounding_ids") if key in segment}
+            repaired_segments.extend((first, {"kind": "narration", "text": narration}))
+            repaired_shapes.append(self._segment_shape(segment))
+
+        if not repaired_shapes:
+            return None
+        selected = payload.get("selected_knowledge_ids", [])
+        if not isinstance(selected, list) or not all(isinstance(item, str) for item in selected):
+            return None
+        valid_segments = []
+        for segment in repaired_segments:
+            with suppress(Exception):  # provider values are untrusted
+                valid_segments.append(NarrationSegment.model_validate(segment))
+        grounded = {item for segment in valid_segments for item in segment.grounding_ids}
+        if any(knowledge_id not in grounded for knowledge_id in selected):
+            return None
+
+        logger.warning(
+            "Narration reply repaired %d fused segment object(s) with shape(s)=%s (worker host=%s)",
+            len(repaired_shapes),
+            ",".join(repaired_shapes),
+            urlsplit(self.worker_url).hostname,
+        )
+        return {**payload, "segments": repaired_segments}
 
     def _salvage_malformed_segments(self, response: object, error: RuntimeContractError) -> dict[str, object] | None:
         """Keep valid segment objects from a proposal with malformed array entries.
