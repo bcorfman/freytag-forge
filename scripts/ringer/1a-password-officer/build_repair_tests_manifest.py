@@ -8,7 +8,7 @@ R = "/home/bcorfman/dev/freytag-forge"
 D = f"{R}/scripts/ringer/1a-password-officer"
 PY = f"{R}/.venv/bin/python"
 TEST = f"{R}/tests/test_fused_segment_repair.py"
-FUSED = r'''{"segments":[{"kind":"narration","text":"\"Officer Reyes, what are you doing here?\"","},{":"kind","narration":"Officer Reyes looks at the splintered back door frame and thrown deadbolt, then back at Kristin.\""}],"selected_knowledge_ids":[],"item_facts":{"Kristin":{"place":"Michelle's kitchen"},"Michelle's kitchen":{"place":"Michelle's kitchen"},"Officer Reyes":{"place":"Michelle's workstation"}}}'''
+FUSED = r"""{"segments":[{"kind":"narration","text":"\"Officer Reyes, what are you doing here?\"","},{":"kind","narration":"Officer Reyes looks at the splintered back door frame and thrown deadbolt, then back at Kristin.\""}],"selected_knowledge_ids":[],"item_facts":{"Kristin":{"place":"Michelle's kitchen"},"Michelle's kitchen":{"place":"Michelle's kitchen"},"Officer Reyes":{"place":"Michelle's workstation"}}}"""
 CONTROLS = [
     "test_valid_reply_is_untouched_control",
     "test_fused_object_with_a_lettered_extra_key_still_goes_to_recovery_control",
@@ -29,14 +29,14 @@ spec = f"""You are a test-writing worker for the freytag-forge repository at {R}
 
 BACKGROUND. Sometimes the hosted model returns a first reply whose segment object is FUSED: valid 'kind' and 'text' for the first line, plus a junk key made only of punctuation (for example "}},{{") and a second line under the key 'narration'. NarrationSegment forbids extra keys, so the object is rejected; no valid segment remains, so salvage returns None and the provider spends a recovery request, which usually leaves the second speaker's line out. A feature is being added, tests first: a typed repair that runs on the FIRST reply only, before salvage. Contract (the tests encode it): for a segment object in payload['segments'] whose 'kind' is one of narration, dialogue, action and whose 'text' is a non-blank string, and whose ONLY other keys are 'narration' (a non-blank string) and any number of junk keys that contain no letter or digit, replace it with two segments: {{kind, text, plus its speaker_id and grounding_ids if it had them}} then {{'kind': 'narration', 'text': <the narration string>}} with no speaker_id and no grounding_ids. Everything else is left as is. The repair is skipped (fail closed, normal salvage and recovery behavior) when the object has any other key, lacks text, has a blank narration string, or when selected_knowledge_ids names an id that is not grounded in a segment that survives (the same condition salvage uses). Other segments in the reply are kept in order. Top-level keys other than segments are preserved. The repaired reply goes through the normal eligibility parse; the recovery request is NOT sent when the repair yields a valid proposal. Only the first reply is repaired; the reply to a recovery request is never repaired. A warning is logged once per repaired reply with the number of repaired objects and the JSON key shapes only (never the model's text).
 WRITE THESE TESTS (exact function names; the check matches on them). Controls must PASS today, features must FAIL today for the right reason (the reply is not repaired, so a recovery request is sent or the segments differ), never because of an import error or a typo.
-Controls: {', '.join(CONTROLS)}.
+Controls: {", ".join(CONTROLS)}.
  - valid_reply_untouched: a normal two-segment reply is accepted with one request and no repair log.
  - lettered_extra_key: the fused object but the junk key is 'extra' (has letters): goes to recovery (2 requests, result is the recovery reply).
  - without_text: a fused-looking object with no 'text' key: goes to recovery.
  - blank_second_text: the 'narration' value is '   ': goes to recovery.
  - ungrounded_selection: the reply has selected_knowledge_ids naming an id with no grounding in a valid segment plus a fused object: goes to recovery (read how salvage decides this and mirror it).
  - recovery_reply_never_repaired: the first reply is unparseable (for example invalid segment shape that cannot be repaired) and the SECOND (recovery) reply is a fused object: it is not repaired (the provider raises or falls to its existing behavior; assert the existing behavior you observe).
-Features: {', '.join(FEATURES)}.
+Features: {", ".join(FEATURES)}.
  - split_into_two: a plain CloudflareTurnProvider test with one fused object: one request only, two segments, texts in order, second segment kind 'narration'.
  - recorded_greeting_reply: the REAL ItemFactsProvider subclass (see how tests build it and stub its transport) receives this exact recorded reply as the first answer: {FUSED!r}; one request; the segments are the quoted line and then the officer sentence; item_facts handling is unchanged (assert the reply still carries what ItemFactsProvider normally consumes, or that no exception is raised and the provider's item_facts state is populated as for a valid reply).
  - valid_neighbours: [valid segment, fused object, valid segment] gives four segments in order.
