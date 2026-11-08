@@ -1,0 +1,20 @@
+Scene 1A clock follow-up
+
+The test_richer_1a_fixes.py helper `_walk_to_the_neighbor` hard-codes five player
+commands and then asserts that the patrol is already in the house. With the new
+authored timeline, arrival is turn 6 and entry is turn 7, so that assertion needs
+two additional neutral turns. Adding commands would exceed the permitted
+existing-test edit scope (only pinned turn or scene-window numbers may change).
+
+The frozen tests/test_trailing_pacing_events.py still asserts the pre-change
+clock (arrival at turn 4, entry at turn 5, departure at turn 7) and that every
+shipped event defaults to trailing=False. Those assertions conflict directly
+with the required authored timeline and cannot be changed under the frozen-file
+boundary.
+
+tests/test_complication_text_safety.py constructs every event at its authored
+turn and expects the provider's narration to contain the event realization.
+That expectation cannot be preserved for the newly trailing patrol arrival:
+the required contract defers its effect and verbatim text until after the
+narrator call. Updating that test would require a behavior/assertion edit,
+which is outside the permitted existing-test changes.

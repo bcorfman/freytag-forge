@@ -38,6 +38,11 @@ live prefix. Keep diagnostic results in the active plan. Artifact inspection
 is read-only, costs nothing and needs no cleanup; a live replay is billed and
 follows [section 4](live-narration-bench.md#4-live-narration-bench-billed).
 
+For pacing/order failures, also inspect facts and placement inside the stubbed
+provider request: before/after `engine.turn()` snapshots do not establish the
+state used to generate narration. Check that every normalized command selects
+its intended stub reply; a default fixture response cannot verify continuity.
+
 **Pass:** the prompt contains only material the scene has made available.
 For an authored-handoff turn, private candidate metadata stays out of the
 narrator request. The selected delivery sentence may be shown as the text the

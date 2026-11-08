@@ -1,0 +1,33 @@
+{
+  "run_name": "1a-password-officer-prepare",
+  "workdir": "/home/bcorfman/dev/ringer-work/1a-password-officer-prepare",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "refreeze-1a-arms",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=medium"
+      ],
+      "max_attempts": 2,
+      "timeout_s": 1800,
+      "check_timeout_s": 600,
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/1a-password-officer/capture.py",
+        "/home/bcorfman/dev/freytag-forge/bench/results/1a-password-officer/"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/1a-password-officer/capture.py",
+        "/home/bcorfman/dev/freytag-forge/bench/results/1a-password-officer/provenance.json"
+      ],
+      "spec": "You are a code worker for the freytag-forge repository at /home/bcorfman/dev/freytag-forge. Boundary: NO model call, NO network call, never git commit. You own ONLY /home/bcorfman/dev/freytag-forge/scripts/ringer/1a-password-officer/capture.py and the files it writes under /home/bcorfman/dev/freytag-forge/bench/results/1a-password-officer/. Do NOT edit /home/bcorfman/dev/freytag-forge/scripts/ringer/1a-password-officer/validate_freeze.py (independent check) or /home/bcorfman/dev/freytag-forge/scripts/ringer/1a-password-officer/replay.py unless the validator proves it needs a change (it should not).\n\nWHY. The scene 1A patrol clock was retimed (arrive 6, enter 7, leave 10; arrive/enter/leave are now trailing pacing events: skipped before the narrator is called, fired after the action). The officer is therefore in the kitchen at the narrator requests of turns 8, 9 and 10. The frozen officer, raw and walt arms must be re-captured from the CURRENT tree.\nCHANGE in /home/bcorfman/dev/freytag-forge/scripts/ringer/1a-password-officer/capture.py (keep everything else): the officer script OFFICER_INPUTS becomes exactly nine canonical commands in this order: 'Turn on the phone.', 'Unlock the phone.', 'Type in the password.', \"Type the password into Michelle's phone.\", 'Turn off the phone.', 'Look at the wall calendar.', 'Look at the photograph.', 'Greet the officer.', 'Ask the officer where Dr. McGehee is.'. Endpoint ids stay OFF6 and OFF7 but now mean command index 8 ('Greet the officer.') and index 9 ('Ask the officer where Dr. McGehee is.'); add a comment saying the ids are historical. RAW_INPUTS becomes the first eight of OFFICER_INPUTS plus 'Officer, do you know where Dr. McGehee is?' as the ninth, endpoint RAW7 = index 9. The password script PASSWORD_INPUTS must stay the first three phone commands ('Turn on the phone.', 'Unlock the phone.', 'Type in the password.'), endpoint PW = 3 (define it as an explicit list, not a slice that would change). The walt script and endpoint are unchanged.\nThen re-run capture, so the frozen files, arm packages and provenance.json are regenerated, and make the validator pass. The validator's NOTE lines print diagnostics; read them. The validator may report NO PROMPT DIFFERENCE for a bio arm; that is a finding, not a failure; do not force a difference.\nHOW TO RUN (from /home/bcorfman/dev/freytag-forge; never bare python): `TMPDIR=/tmp PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/packages/worldkeeper/src /home/bcorfman/dev/freytag-forge/.venv/bin/python /home/bcorfman/dev/freytag-forge/scripts/ringer/1a-password-officer/capture.py`; `/home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff format /home/bcorfman/dev/freytag-forge/scripts/ringer/1a-password-officer/capture.py && /home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff check /home/bcorfman/dev/freytag-forge/scripts/ringer/1a-password-officer`; `TMPDIR=/tmp PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/packages/worldkeeper/src /home/bcorfman/dev/freytag-forge/.venv/bin/python /home/bcorfman/dev/freytag-forge/scripts/ringer/1a-password-officer/validate_freeze.py` until it prints '1A FREEZE VALIDATION OK'.",
+      "check": "set -o pipefail\ncd /home/bcorfman/dev/freytag-forge\nexport TMPDIR=/tmp PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/packages/worldkeeper/src\n/home/bcorfman/dev/freytag-forge/.venv/bin/python /home/bcorfman/dev/freytag-forge/scripts/ringer/1a-password-officer/capture.py > /dev/null\n/home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff check /home/bcorfman/dev/freytag-forge/scripts/ringer/1a-password-officer\n/home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff format --check /home/bcorfman/dev/freytag-forge/scripts/ringer/1a-password-officer\n/home/bcorfman/dev/freytag-forge/.venv/bin/python /home/bcorfman/dev/freytag-forge/scripts/ringer/1a-password-officer/validate_freeze.py\n/home/bcorfman/dev/freytag-forge/.venv/bin/python - <<'PY'\nimport json\nfor stage, arm, n in (('officer','CTRL','OFF6'),('officer','CTRL','OFF7'),('raw','BIO','RAW7')):\n    e = {x['n']: x for x in json.load(open('bench/results/1a-password-officer/frozen-%s-%s.json' % (stage, arm)))['endpoints']}[n]\n    u = e['wire_payload']['user']\n    line = [l for l in u.split(chr(10)) if 'patrol officer' in l]\n    print(stage, arm, n, e['command'], line)\n    assert any('workstation' in l for l in line) or (stage == 'raw' and not line), 'officer should be placed at the workstation at this request'\nPY\n",
+      "verified": "validator passes on arms re-captured against the retimed clock; the officer is placed at the workstation at the officer requests"
+    }
+  ]
+}
