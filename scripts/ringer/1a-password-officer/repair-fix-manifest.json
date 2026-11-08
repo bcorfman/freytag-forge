@@ -1,0 +1,32 @@
+{
+  "run_name": "fused-segment-repair",
+  "workdir": "/home/bcorfman/dev/ringer-work/fused-segment-repair",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "fix-fused-repair-tests",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=medium"
+      ],
+      "max_attempts": 2,
+      "timeout_s": 2400,
+      "check_timeout_s": 1800,
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/tests/test_fused_segment_repair.py",
+        "/home/bcorfman/dev/freytag-forge/storygame/runtime/cloudflare.py"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/tests/test_fused_segment_repair.py"
+      ],
+      "spec": "You are a code worker for the freytag-forge repository at /home/bcorfman/dev/freytag-forge. Boundary: NO model call, NO network call, never git commit. You may edit ONLY /home/bcorfman/dev/freytag-forge/tests/test_fused_segment_repair.py and /home/bcorfman/dev/freytag-forge/storygame/runtime/cloudflare.py.\nCONTEXT. /home/bcorfman/dev/freytag-forge/storygame/runtime/cloudflare.py now has a new method _repair_fused_segments (keep it exactly; it is correct) called from _dispatch. Two of the tests in /home/bcorfman/dev/freytag-forge/tests/test_fused_segment_repair.py are flawed, and the worker that wrote the method also changed the existing helper CloudflareTurnProvider._segment_shape (it changed the sort key of the keys) only to match one test's assumed string; that change is outside scope.\n1. In /home/bcorfman/dev/freytag-forge/storygame/runtime/cloudflare.py restore _segment_shape to exactly its original form: the line `keys = \",\".join(sorted(str(key) for key in value))` (see `git diff -- /home/bcorfman/dev/freytag-forge/storygame/runtime/cloudflare.py`: revert only that hunk). Keep the rest of the diff.\n2. In /home/bcorfman/dev/freytag-forge/tests/test_fused_segment_repair.py rewrite ONLY these two tests, keep their names, leave every other test and helper byte-identical (the check compares their source hashes):\n - test_repair_is_logged_once_with_shapes_only: keep the checks that exactly one warning containing 'repair' is logged, that it contains the count 1, and that neither reply text appears in it; replace the exact-string assertion on the shape with order-independent assertions that each of the key names 'kind', 'text', 'narration' and the junk key '},{' appears in the warning (the original _segment_shape sorts the keys as strings, so the junk key comes last).\n - test_repaired_second_segment_carries_no_grounding_or_speaker: the old fixture used grounding_ids=['known-id'], which the real provider rejects for eligibility whether or not a repair happens, so the test could never pass. Make it two parts: (a) end to end through the provider: a fused object with speaker_id='officer_reyes' only (no grounding_ids; check that a speaker_id passes the provider; if the provider rejects an unknown speaker, drop speaker_id from the end-to-end part and say so in a comment), assert the first repaired segment keeps its speaker_id and the second has neither speaker_id nor grounding_ids; (b) a direct unit assertion on provider._repair_fused_segments(reply) for a fused object carrying speaker_id and grounding_ids=['known-id'] (and selected_knowledge_ids=['known-id']): the first part keeps both keys, the second part has neither.\nHOW TO RUN (from /home/bcorfman/dev/freytag-forge; never bare python, never uv): `TMPDIR=/tmp PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/packages/worldkeeper/src /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest /home/bcorfman/dev/freytag-forge/tests/test_fused_segment_repair.py tests/test_cloudflare_transport.py -q --no-cov -p no:cacheprovider 2>&1 | tail -20`; `/home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff format /home/bcorfman/dev/freytag-forge/tests/test_fused_segment_repair.py /home/bcorfman/dev/freytag-forge/storygame/runtime/cloudflare.py && /home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff check /home/bcorfman/dev/freytag-forge/tests/test_fused_segment_repair.py /home/bcorfman/dev/freytag-forge/storygame/runtime/cloudflare.py`. All tests must pass.",
+      "check": "set -eo pipefail\ncd /home/bcorfman/dev/freytag-forge\nexport TMPDIR=/tmp PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/packages/worldkeeper/src\n/home/bcorfman/dev/freytag-forge/.venv/bin/python - <<'PY'\nimport ast, hashlib, json, sys\nsrc = open('/home/bcorfman/dev/freytag-forge/tests/test_fused_segment_repair.py').read()\ntree = ast.parse(src)\nwant = json.load(open('/tmp/claude-1000/-home-bcorfman-dev-freytag-forge/181d1eb2-ab7c-4a1f-b9cb-3cef730d1076/scratchpad/keep-hashes.json'))\nnow = {n.name: hashlib.sha256(ast.get_source_segment(src, n).encode()).hexdigest() for n in tree.body if isinstance(n, ast.FunctionDef)}\nbad = [k for k, v in {**want['tests'], **want['helpers']}.items() if now.get(k) != v]\nmissing = [k for k in ('test_repaired_second_segment_carries_no_grounding_or_speaker', 'test_repair_is_logged_once_with_shapes_only') if k not in now]\nif bad or missing:\n    print('frozen tests or helpers changed:', bad, 'missing:', missing); sys.exit(1)\nprint('untouched tests and helpers identical')\nPY\ngit diff -U0 -- /home/bcorfman/dev/freytag-forge/storygame/runtime/cloudflare.py | grep -E '^[-+].*keys = ' && { echo '_segment_shape was not restored'; exit 1; } || true\ngit diff --name-only -- storygame data packages bench docs | grep -vx 'storygame/runtime/cloudflare.py' && { echo 'unexpected file changed'; exit 1; } || true\n/home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff check storygame tests\n/home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff format --check storygame tests\n/home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest tests/test_fused_segment_repair.py tests/test_cloudflare_transport.py -q --no-cov -p no:cacheprovider > /tmp/repair-new.txt 2>&1 || { tail -30 /tmp/repair-new.txt; echo 'tests failed'; exit 1; }\ntail -2 /tmp/repair-new.txt\n/home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q --no-cov -p no:cacheprovider -n 4 > /tmp/repair-full.txt 2>&1 || { tail -40 /tmp/repair-full.txt; echo 'full suite failed'; exit 1; }\ntail -2 /tmp/repair-full.txt\n",
+      "verified": "the two flawed tests are fixed, other tests identical, helper restored, full suite green"
+    }
+  ]
+}
