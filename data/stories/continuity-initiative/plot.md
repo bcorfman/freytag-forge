@@ -44,6 +44,10 @@ A 58-year-old former senior government official and the principal architect of t
 
 Charles’s 56-year-old wife and the chief executive of a biotechnology and defense contractor. She oversees the technical operation that made the disappearances possible. Unlike Charles, she is motivated less by ideology than by survival, influence, and the opportunity to control the rebuilding of the country.
 
+### Imprisoned senior official
+
+A senior government official whom Charles has publicly blamed for the catastrophe. He is exhausted, observant, and has kept one piece of emergency authority out of Charles's hands.
+
 # Expanded Scene Outline
 
 ## Interactive pacing contract

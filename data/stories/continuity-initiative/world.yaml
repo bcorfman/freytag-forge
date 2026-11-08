@@ -144,7 +144,7 @@ npcs:
   - senior official
   - imprisoned official
   - government prisoner
-  narrator_bio: A senior government official whom Charles has publicly blamed for the catastrophe. He is exhausted, observant, and has kept one piece of emergency authority out of Charles's hands.
+  narrator_bio: A senior government official whom Charles has publicly blamed for the catastrophe. He is exhausted and observant.
 - id: patrol_officer
   name: Officer Reyes
   aliases:

@@ -392,7 +392,7 @@ def test_3a_opening_keeps_the_recorded_character_names(monkeypatch) -> None:
     prompt = _opening_prompt(monkeypatch)
     characters = prompt.split("CHARACTERS:\n", 1)[1].split("\n\n", 1)[0]
     names = {line[2:].split(" is ", 1)[0] for line in characters.splitlines()}
-    assert names == {"Kristin Schweitzer", "Dr. Michelle McGehee", "Brandon Corfman"}
+    assert names == {"Kristin Schweitzer", "Dr. Michelle McGehee", "Brandon Corfman", "Imprisoned senior official"}
 
 
 def test_the_wrist_tags_and_the_checkpoint_reader_are_declared_plainly_and_placed_in_3a():

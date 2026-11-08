@@ -1,0 +1,34 @@
+{
+  "run_name": "lead-up-contradictions-prepare-1a2",
+  "workdir": "/home/bcorfman/dev/ringer-work/lead-up-contradictions-prepare-1a2",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "prepare-1a2",
+      "task_type": "code-feature",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=medium"
+      ],
+      "max_attempts": 2,
+      "timeout_s": 900,
+      "check_timeout_s": 300,
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/lead-up-contradictions/build_1a2.py",
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/lead-up-contradictions/replay.py",
+        "/home/bcorfman/dev/freytag-forge/bench/results/lead-up-contradictions/frozen-1A2.json"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/scripts/ringer/lead-up-contradictions/build_1a2.py",
+        "/home/bcorfman/dev/freytag-forge/bench/results/lead-up-contradictions/frozen-1A2.json"
+      ],
+      "spec": "You are a code worker for the freytag-forge repository at /home/bcorfman/dev/freytag-forge. Boundary: NO model call, NO network call, never git commit. You own only /home/bcorfman/dev/freytag-forge/scripts/ringer/lead-up-contradictions/build_1a2.py (create), /home/bcorfman/dev/freytag-forge/scripts/ringer/lead-up-contradictions/replay.py (small edit), and /home/bcorfman/dev/freytag-forge/bench/results/lead-up-contradictions/frozen-1A2.json (written by your script). Do not read or edit /home/bcorfman/dev/freytag-forge/scripts/ringer/lead-up-contradictions/validate_1a2.py or /home/bcorfman/dev/freytag-forge/scripts/ringer/lead-up-contradictions/validate_replay.py (independent checks; only run them). Do not edit any other file.\n\nGOAL: add comparison '1A2' = the c6 prompt with the FULL senior-official bio line (control, already frozen in /home/bcorfman/dev/freytag-forge/bench/results/lead-up-contradictions/frozen-1A.json) versus the TRIMMED bio line.\n1. Write /home/bcorfman/dev/freytag-forge/scripts/ringer/lead-up-contradictions/build_1a2.py (header '# ruff: noqa: E501', zero model calls): load frozen-1A.json (envelope with one endpoint n='c6'); deep-copy it into frozen-1A2.json with variation 'lead-up-contradictions-1A2' and 'control' = '1A'; in the endpoint's wire_payload.user replace, on whole lines, EXACTLY this line (assert it occurs once)\n`- Imprisoned senior official is a senior government official whom Charles has publicly blamed for the catastrophe. He is exhausted, observant, and has kept one piece of emergency authority out of Charles's hands.`\nwith EXACTLY this line\n`- Imprisoned senior official is a senior government official whom Charles has publicly blamed for the catastrophe. He is exhausted and observant.`\nEverything else (system, max_tokens, response_format, command, other lines) stays byte-identical. Set control_user_sha256 (sha256 hex of the 1A user text, utf-8) and arm_user_sha256 (of the 1A2 user text) on the endpoint, replacing any inherited values. Print the user char counts of both and the first 12 hex of sha256 of json.dumps(wire_payload, sort_keys=True, ensure_ascii=False) for each.\n2. Edit /home/bcorfman/dev/freytag-forge/scripts/ringer/lead-up-contradictions/replay.py minimally: accept CMP '1A2' (endpoint n='c6'); for '1A2' the control arm is the endpoint from frozen-1A.json labelled arm '1A' (not 'C0') and the comparison arm is frozen-1A2.json labelled '1A2'. Row order stays sample-major, control first. Behaviour for 1A, 1B, 2A must stay byte-for-byte identical (control labelled 'C0' from frozen-C0.json). Keep the guards (<=12 samples, refuse existing OUT, dry-run without --confirm) and the CLI choices must now include 1A2.\nHOW TO RUN (from /home/bcorfman/dev/freytag-forge): `/home/bcorfman/dev/freytag-forge/.venv/bin/python scripts/ringer/lead-up-contradictions/build_1a2.py`, then `/home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff format scripts/ringer/lead-up-contradictions/build_1a2.py scripts/ringer/lead-up-contradictions/replay.py && /home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff check scripts/ringer/lead-up-contradictions/`, then `TMPDIR=/tmp PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/packages/worldkeeper/src /home/bcorfman/dev/freytag-forge/.venv/bin/python scripts/ringer/lead-up-contradictions/validate_1a2.py` and the same for validate_replay.py; fix until both print OK. Never use bare python.",
+      "check": "set -o pipefail\ncd /home/bcorfman/dev/freytag-forge\nexport TMPDIR=/tmp PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/packages/worldkeeper/src\n/home/bcorfman/dev/freytag-forge/.venv/bin/python scripts/ringer/lead-up-contradictions/build_1a2.py > /dev/null\n/home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff check scripts/ringer/lead-up-contradictions/build_1a2.py scripts/ringer/lead-up-contradictions/replay.py\n/home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff format --check scripts/ringer/lead-up-contradictions/build_1a2.py scripts/ringer/lead-up-contradictions/replay.py\n/home/bcorfman/dev/freytag-forge/.venv/bin/python scripts/ringer/lead-up-contradictions/validate_1a2.py\n/home/bcorfman/dev/freytag-forge/.venv/bin/python scripts/ringer/lead-up-contradictions/validate_replay.py\n",
+      "verified": "independent validators prove the 1A2 payload differs from the 1A payload by exactly the bio line and the replay keeps 1A/1B/2A behaviour"
+    }
+  ]
+}
