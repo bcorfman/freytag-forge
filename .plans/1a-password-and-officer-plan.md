@@ -195,6 +195,19 @@ greeting unterminated). So the visible symptom at the greeting is an unanswered 
 No fix applied. Candidates, each needing a preregistered screen: a narrator rule that every greeting or question to a present character gets that
 character's own segment (rules are last in the fix order), or a typed repair of the fused-segment shape in the provider. Details in the prereg.
 
+**Typed repair of fused segments built (2026-11-08, branch `fused-segment-repair`, uncommitted; Brandon chose option 1).**
+`CloudflareTurnProvider._repair_fused_segments` runs on the FIRST reply only, before salvage: a segment object with valid `kind` and non-blank `text`,
+a non-blank `narration` string, and otherwise only punctuation-only junk keys is split into two segments (the second is plain narration with no speaker or
+grounding); anything else is left alone and takes the existing salvage/recovery path; the selected-knowledge guard mirrors salvage; one warning is logged with
+key shapes only. No regex, no prose parsing, no extra model call. Tests first (`tests/test_fused_segment_repair.py`: 6 fail-closed controls green, 5
+feature tests red, then green); two of my own frozen tests were flawed (an ineligible grounding id, an assumed key order) and were corrected with the other
+nine verified byte-identical. Evidence, free: the 17 recorded bad replies through the real `ItemFactsProvider` with a stubbed transport: **without the repair 16
+of 17 send a recovery request; with it 11 are accepted on the first reply** (the officer's line is restored, e.g. "I'm, uh, investigating a report of a
+possible break-in, ma'am."), 5 still recover (3 where the officer's words are already inside the first segment, so there is nothing to split) and 1 is salvaged
+by dropping a segment. Full suite 4272 passed plus the shard-manifest test fixed. Not measured: live effect on the unanswered-greeting rate, which needs the
+real model; the repair only restores what the model already wrote, so the recovery path's "officer silent" behavior (1/12) is spared for those 11 of 17.
+Process note: the first implementation attempt also altered `_segment_shape`'s key order to satisfy a flawed test; reverted.
+
 Order of work if approved: (1) failing tests for A, (2) A through Ringer behind the flag, (3) free golden comparison on
 recorded requests, (4) B data edit with its test updates, (5) then the billed source screens, with the officer stage first.
 The billed spend in the preregistration (now 117 requests) is still **not approved**.

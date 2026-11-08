@@ -1,14 +1,16 @@
 # ruff: noqa: E501
-"""Network-free: feed each recorded greeting reply to the REAL narration provider path (salvage, recovery request) and report what a live turn would do.
+"""Network-free (use --no-repair to switch the fused-segment repair off): feed each recorded greeting reply to the REAL narration provider path (salvage, recovery request) and report what a live turn would do.
 For every recorded row the first transport answer is the recorded reply; any further request (the provider's recovery request) is answered with a clean
 two-segment narration and counted. Run: TMPDIR=/tmp PYTHONPATH=.:packages/worldkeeper/src .venv/bin/python .plans/1a-password-and-officer/replay_provider_recovery.py"""
 
 import collections
 import json
+import sys
 from pathlib import Path
 
 import storygame.runtime.cloudflare as cf
 from storygame.runtime.contracts import RuntimeContractError, parse_turn_proposal
+from storygame.runtime.item_facts import ItemFactsProvider
 from storygame.runtime.state import RuntimeState
 from storygame.story_package.loader import load_story_package
 
@@ -41,7 +43,12 @@ def outcome(raw):
         return _Response({"narration": text})
 
     cf.urlopen = urlopen
-    provider = cf.CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
+    # The production provider for these single-call replies: it allows the item_facts key the recorded replies carry.
+    provider = ItemFactsProvider(
+        worker_url="https://worker.example/turn", token="", state=state, item_facts={}, mode="single_call"
+    )
+    if "--no-repair" in sys.argv:
+        provider._repair_fused_segments = lambda response: None
     try:
         reply = provider("Greet the officer.")
         proposal = parse_turn_proposal(reply)
@@ -55,7 +62,7 @@ def outcome(raw):
 summary = collections.Counter()
 detail = []
 for name in ("run-officer-rows.json", "run-voice-rows.json", "smoke-officer-rows.json", "smoke-voice-rows.json"):
-    for row in json.load(open(RESULTS / name)):
+    for row in json.loads((RESULTS / name).read_text()):
         try:
             data = json.loads(row["narration"])
             data.pop("item_facts", None)
