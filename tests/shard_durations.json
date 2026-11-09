@@ -1,6 +1,7 @@
 {
   "version": 1,
   "files": {
+    "tests/test_1a_arrival_glance.py": 4.66,
     "tests/test_1a_back_door_gap.py": 0.09,
     "tests/test_1a_drawer_close_gap.py": 8.96,
     "tests/test_1a_drawer_words.py": 0.18,
