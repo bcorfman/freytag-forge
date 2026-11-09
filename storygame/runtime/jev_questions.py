@@ -157,8 +157,8 @@ def only_boards_vehicle(ask, command: str, vehicle_name: str) -> bool | None:
     return _answer(ask, {"command": command, "vehicle": vehicle_name}, questions, "only_boards_vehicle")
 
 
-def moves_thing(ask, command: str, thing_name: str) -> bool | None:
-    questions = {
+def _moves_thing_question() -> dict[str, object]:
+    return {
         "moves_thing": {
             "type": "noul",
             "instructions": (
@@ -174,7 +174,38 @@ def moves_thing(ask, command: str, thing_name: str) -> bool | None:
             },
         }
     }
+
+
+def moves_thing(ask, command: str, thing_name: str) -> bool | None:
+    questions = _moves_thing_question()
     return _answer(ask, {"command": command, "thing": thing_name}, questions, "moves_thing")
+
+
+def thing_command_kind(ask, command: str, thing_name: str) -> tuple[bool | None, bool | None]:
+    questions = {
+        **_moves_thing_question(),
+        "picks_up_thing": _noul_question(
+            "Decide whether the command has the player pick up this thing.",
+            "The command says to pick up, take, grab, or lift the thing.",
+            (
+                "The command only looks at, reads, searches, talks about, puts, places, stores, "
+                "or hands over the thing, or does not mention taking it."
+            ),
+        ),
+    }
+    try:
+        answers = ask({"command": command, "thing": thing_name}, questions)
+    except Exception:
+        return None, None
+    if not isinstance(answers, dict):
+        return None, None
+    values = []
+    for key in ("moves_thing", "picks_up_thing"):
+        try:
+            values.append(noul_yes(answers[key]) if key in answers else None)
+        except Exception:
+            values.append(None)
+    return tuple(values)
 
 
 def relocates_thing(ask, command: str, thing_name: str) -> bool | None:

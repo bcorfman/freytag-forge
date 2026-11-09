@@ -20,7 +20,7 @@ from statistics import mean, stdev
 from typing import Any
 
 from bench.jev_use import _ask as ask_jev
-from bench.jev_use import ask_moves_thing, ask_needs_to_stand, ask_same_or_part, ask_uses_thing
+from bench.jev_use import ask_moves_thing, ask_needs_to_stand, ask_same_or_part, ask_thing_command_kind, ask_uses_thing
 from bench.judge_input import judge_turns
 from storygame.runtime.capture import WorldCapture, build_capture_provider
 from storygame.runtime.cloudflare import (
@@ -863,15 +863,19 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
             prior_scene = state.current_scene_id
             match_info = _empty_match_info()
             if not runtime and isinstance(provider, ItemFactsProvider):
+                provider.pickup_ids = frozenset()
                 standing = stand_before_leave(provider._world(), package, typed_input, ask_needs_to_stand)
                 player_input = standing.command
                 standing_steps = standing.steps
                 standing_asked = standing.asked
                 standing_issues = standing.issues
-                taking = take_before_put(provider._world(), package, typed_input, ask_moves_thing)
+                taking = take_before_put(
+                    provider._world(), package, typed_input, ask_moves_thing, kind_of_thing=ask_thing_command_kind
+                )
                 taking_steps = taking.steps
                 taking_asked = taking.asked
                 taking_issues = taking.issues
+                provider.pickup_ids = frozenset(taking.pickups)
                 if not standing_steps:
                     seating = seat_before_use(provider._world(), package, typed_input, ask_uses_thing)
                     player_input = seating.command

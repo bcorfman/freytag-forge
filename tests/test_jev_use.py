@@ -10,6 +10,7 @@ from bench.jev_use import (
     ask_moves_thing,
     ask_needs_to_stand,
     ask_same_or_part,
+    ask_thing_command_kind,
     ask_uses_thing,
     jev_stats,
     reset_jev_stats,
@@ -87,6 +88,36 @@ def test_jev_moves_thing_failures_give_none():
         is None
     )
     assert jev_stats()["failures"] == {"request": 1}
+
+
+def test_jev_thing_command_kind_batches_and_answers():
+    calls = []
+
+    def opener(request, timeout):
+        calls.append((request, timeout))
+        return io.BytesIO(
+            json.dumps(
+                {
+                    "success": True,
+                    "result": {
+                        "state": "Completed",
+                        "result": {
+                            "answers": {
+                                "moves_thing": {"type": "noul", "noul": 0.2},
+                                "picks_up_thing": {"type": "noul", "noul": 0.9},
+                            }
+                        },
+                    },
+                }
+            ).encode()
+        )
+
+    assert ask_thing_command_kind("Pick up the phone.", "phone", environment=ENVIRONMENT, opener=opener) == (
+        False,
+        True,
+    )
+    body = json.loads(calls[0][0].data)
+    assert set(body["input"]["questions"]) == {"moves_thing", "picks_up_thing"}
 
 
 def test_jev_use_request_and_answers():

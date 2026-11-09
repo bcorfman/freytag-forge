@@ -41,6 +41,7 @@ PLAYER_INPUT = (FIXTURE_DIR / "fixture_player_input.txt").read_text(encoding="ut
 @pytest.fixture(autouse=True)
 def no_implicit_taking_network(monkeypatch):
     monkeypatch.setattr(core, "ask_moves_thing", lambda *_args: False)
+    monkeypatch.setattr(core, "ask_thing_command_kind", lambda *_args: (False, False))
 
 
 def test_bench_put_uses_recovered_photograph_without_retaking(monkeypatch):
@@ -79,6 +80,7 @@ def test_bench_put_uses_recovered_photograph_without_retaking(monkeypatch):
     monkeypatch.setattr(core, "provider_for", provider_for_with_item_facts)
     monkeypatch.setattr(core, "package_and_state", package_and_state_with_recovered_clues)
     monkeypatch.setattr(core, "ask_moves_thing", lambda *_args: True)
+    monkeypatch.setattr(core, "ask_thing_command_kind", lambda *_args: (True, False))
     monkeypatch.setattr(CloudflareTurnProvider, "_request", request)
 
     result = core.run_scene(

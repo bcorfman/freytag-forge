@@ -13,6 +13,7 @@ from storygame.runtime.jev_questions import (
     opens_container,
     same_or_part,
     searches_underneath,
+    thing_command_kind,
     uses_thing,
 )
 
@@ -104,6 +105,38 @@ def test_runtime_questions_fail_closed() -> None:
         assert function(lambda *_args: (_ for _ in ()).throw(RuntimeError("offline")), *arguments) is None
         assert function(lambda *_args: {}, *arguments) is None
         assert function(lambda *_args, answer_key=key: {answer_key: {"noul": "yes"}}, *arguments) is None
+
+
+def test_thing_command_kind_batches_both_questions_and_parses_pair() -> None:
+    captured = {}
+
+    def ask(_state, questions):
+        captured.update(questions)
+        return {"moves_thing": {"noul": 0.2}, "picks_up_thing": {"noul": 0.9}}
+
+    assert thing_command_kind(ask, "Pick up the phone.", "phone") == (False, True)
+    assert set(captured) == {"moves_thing", "picks_up_thing"}
+
+
+def test_thing_command_kind_reuses_moves_thing_question() -> None:
+    moves_questions = {}
+    kind_questions = {}
+
+    def capture_for(target):
+        def ask(_state, questions):
+            target.update(questions)
+            return {key: {"noul": 0.0} for key in questions}
+
+        return ask
+
+    moves_thing(capture_for(moves_questions), "Put down the phone.", "phone")
+    thing_command_kind(capture_for(kind_questions), "Put down the phone.", "phone")
+
+    assert kind_questions["moves_thing"] == moves_questions["moves_thing"]
+
+
+def test_thing_command_kind_failure_is_memberwise_none() -> None:
+    assert thing_command_kind(lambda *_: {"moves_thing": {"noul": 0.9}}, "Pick up phone", "phone") == (True, None)
 
 
 def test_boards_vehicle_question_uses_boarding_wording() -> None:

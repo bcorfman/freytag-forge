@@ -19,6 +19,7 @@ from storygame.runtime.jev_questions import (
     relocates_thing,
     same_or_part,
     searches_underneath,
+    thing_command_kind,
     uses_thing,
 )
 from storygame.runtime.observation import ObservationRequest
@@ -178,6 +179,7 @@ class WorldCapture:
         self._turn_origin: tuple[str | None, str] | None = None
 
     def before_turn(self, command: str) -> dict[str, Any]:
+        self.provider.pickup_ids = frozenset()
         self._pending_preview = None
         self._pending_preview_scene_state = False
         self._pending_preview_opening_verdicts = ()
@@ -297,7 +299,13 @@ class WorldCapture:
             seating = SeatingResult(command, (), False, ())
         else:
             standing = stand_before_leave(world, package, command, lambda c, s, r: needs_to_stand(adapter, c, s, r))
-            taking = take_before_put(world, package, command, lambda c, t: moves_thing(adapter, c, t))
+            taking = take_before_put(
+                world,
+                package,
+                command,
+                lambda c, t: moves_thing(adapter, c, t),
+                kind_of_thing=lambda c, t: thing_command_kind(adapter, c, t),
+            )
             reuse_pre_boarding = (
                 pre_boarding is not None
                 and pre_boarding.asked
@@ -324,6 +332,7 @@ class WorldCapture:
         boarding_steps = () if already_aboard_in_observation else boarding.steps
         seating_steps = seating.steps if seating else ()
         provider_steps = (*fixed_steps, *standing.steps, *boarding_steps, *taking.steps, *seating_steps)
+        self.provider.pickup_ids = frozenset(taking.pickups)
         self.provider.prior_steps = provider_steps
         self.provider.prior_notice_steps = () if already_aboard_in_observation else boarding.notice_steps
         self.provider.command_consumed = boarding.command_consumed and not already_aboard_in_observation

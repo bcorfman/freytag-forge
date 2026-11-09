@@ -138,3 +138,81 @@ def test_no_answer_and_article_area_and_authored_text():
     )
     assert result.issues == ("taking question unanswered for 'Transit token'",)
     assert result.steps == ("Kristin picked up her laptop.", "Kristin picked up the handwritten number sequence.")
+
+
+def test_pickup_kind_records_pickup_without_moving_or_step():
+    item = Item("photo", "photograph")
+    world = make_world([item])
+    result = take_before_put(
+        world,
+        package([item]),
+        "Pick up the photograph.",
+        lambda *_args: (_ for _ in ()).throw(AssertionError()),
+        kind_of_thing=lambda *_args: (False, True),
+    )
+
+    assert world.parent("photo") == "park_bench"
+    assert result.steps == ()
+    assert result.pickups == ("photo",)
+    assert result.asked is True
+
+
+def test_pickup_kind_true_moves_and_false_does_not_record():
+    item = Item("photo", "photograph")
+    world = make_world([item])
+    result = take_before_put(
+        world,
+        package([item]),
+        "Put the photograph in my pocket.",
+        lambda *_args: False,
+        kind_of_thing=lambda *_: (True, False),
+    )
+
+    assert world.parent("photo") == "kristin"
+    assert result.steps
+    assert result.pickups == ()
+
+
+def test_pickup_kind_unanswered_keeps_issue_without_recording():
+    item = Item("photo", "photograph")
+    world = make_world([item])
+    result = take_before_put(
+        world,
+        package([item]),
+        "Pick up the photograph.",
+        lambda *_: (None, None),
+        kind_of_thing=lambda *_: (None, None),
+    )
+
+    assert result.pickups == ()
+    assert result.issues == ("taking question unanswered for 'photograph'",)
+
+
+def test_pickup_kind_unanswered_with_negative_pickup_keeps_issue():
+    item = Item("photo", "photograph")
+    world = make_world([item])
+    result = take_before_put(
+        world,
+        package([item]),
+        "Pick up the photograph.",
+        lambda *_: (None, None),
+        kind_of_thing=lambda *_: (None, False),
+    )
+
+    assert result.pickups == ()
+    assert result.issues == ("taking question unanswered for 'photograph'",)
+
+
+def test_pickup_kind_unanswered_with_positive_pickup_records_pickup():
+    item = Item("photo", "photograph")
+    world = make_world([item])
+    result = take_before_put(
+        world,
+        package([item]),
+        "Pick up the photograph.",
+        lambda *_: (None, None),
+        kind_of_thing=lambda *_: (None, True),
+    )
+
+    assert result.pickups == ("photo",)
+    assert result.issues == ()
