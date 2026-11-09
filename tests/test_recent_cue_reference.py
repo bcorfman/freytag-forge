@@ -114,7 +114,7 @@ def test_gap_without_prior_cue_earns_nothing(monkeypatch: pytest.MonkeyPatch, se
 
 
 @pytest.mark.parametrize("semantic", ("0", "1"))
-@pytest.mark.parametrize("command", ("Feel in the gap.", "Search the gap."))
+@pytest.mark.parametrize("command", ("Search the initials beneath.", "Search beneath KMS."))
 def test_staged_cue_referent_follow_up_earns_memory_card(
     monkeypatch: pytest.MonkeyPatch, semantic: str, command: str
 ) -> None:
@@ -139,9 +139,9 @@ def test_recent_cue_owner_is_rendered_in_the_narrator_player_line(monkeypatch: p
     engine = _engine(monkeypatch, state, captured, with_capture=True)
 
     engine.turn("Go in the house.")
-    engine.turn("Feel in the gap.")
+    engine.turn("Search beneath KMS.")
 
-    assert captured[-1]["user"].endswith("- Feel in the gap. (meaning the drawer)")
+    assert captured[-1]["user"].endswith("- Search beneath KMS. (meaning the drawer)")
 
 
 @pytest.mark.parametrize("command", ("Search the kitchen.", "Look around."))

@@ -116,7 +116,8 @@ item_placements:
 setting_facts:
 - Sirens carry from the next street.
 - A dog barks behind the empty house next door.
-entry_text: "Michelle's text came in a little after 4:00am, lost among the emergency alerts while Kristin finished a late-night shift. She missed it by minutes. When she read it, her stomach dropped. Every call back failed. Kristin ran for her truck and drove as hard as the streets allowed, past sirens, ambulances, police cars, and intersections blocked for no reason anyone would explain. Was she hurt? Taken? Gone? Not knowing was the worst of it. She found the back door forced and let herself into the kitchen.\n\n"
+- The rest of the house is quiet. Michelle is not in it.
+entry_text: "Michelle's text came in a little after 4:00am, lost among the emergency alerts while Kristin finished a late-night shift. She missed it by minutes. When she read it, her stomach dropped. Every call back failed. Kristin ran for her truck and drove as hard as the streets allowed, past sirens, ambulances, police cars, and intersections blocked for no reason anyone would explain. Was she hurt? Taken? Gone? Not knowing was the worst of it. She found the back door forced and let herself into the kitchen.\n\nThe kitchen was wrong at a glance. Michelle's chair lay tipped over at her workstation across the room, and her tablet and work bag were nowhere in sight. A mug sat on the workstation beside a stack of manuscript pages. The calendar and the lake photograph hung by the refrigerator, where they always had. Kristin was too frantic to read any of it yet. She called Michelle's name.\n\n"
 transition_ids: [t_1a_1b]
 bridge_text:
   t_1a_1b: >-
@@ -140,7 +141,7 @@ bridge_text:
 
 **Details:** missing tablet and work bag; splintered back door frame and thrown deadbolt; lukewarm mug of tea; folded reading glasses on manuscript pages; wall calendar and lake photograph; KMS initials carved in drawer
 
-Kristin reaches Michelle's neighborhood after navigating traffic jams, emergency vehicles and frightened people on a wide scale. Michelle is missing, but the house does not read as a burglary. It reads as a person's last hour:
+Kristin reaches Michelle's neighborhood after navigating traffic jams, emergency vehicles and frightened people on a wide scale. Kristin takes in the room at a glance on arrival but is too frantic to read it yet. A few turns in, once she steadies herself, she reads the back door properly. Michelle is missing, but the house does not read as a burglary. It reads as a person's last hour:
 
 * Michelle's tablet and work bag are missing and not in their normal spots.
 * The chair at Shelly's workstation has been overturned.
@@ -149,6 +150,8 @@ Kristin reaches Michelle's neighborhood after navigating traffic jams, emergency
 * The wall calendar has Saturday circled in her handwriting: *K — lemon cake.* It is Kristin's birthday.
 * On the refrigerator, held by a pear-shaped magnet, a photograph of the two of them at a lake.
 * The back door shows signs of forced entry, but the splinters around the frame point outward, away from the house. It was broken from inside. The deadbolt is still thrown. The house is otherwise undisturbed, not burglarized.
+
+The rest of the house is quiet and empty; Michelle is not in it.
 
 Kristin knows Michelle would not leave her kitchen like this.
 

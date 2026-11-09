@@ -76,7 +76,7 @@ def _cue_state(monkeypatch: pytest.MonkeyPatch) -> tuple[RuntimeState, RuntimeEn
 
 
 @pytest.mark.parametrize("semantic", ("0", "1"))
-@pytest.mark.parametrize("command", ("Feel in the gap.", "Search the gap."))
+@pytest.mark.parametrize("command", ("Search the initials beneath.", "Search beneath KMS."))
 def test_staged_cue_referent_is_used_by_engine(monkeypatch: pytest.MonkeyPatch, semantic: str, command: str) -> None:
     monkeypatch.setenv("FREYTAG_SEMANTIC_REVEAL", semantic)
     state = _state()

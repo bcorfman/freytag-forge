@@ -38,6 +38,15 @@ pacing_event_review:
     value: true
   status: approved
   reason: Reveals the drawer gap through Reyes's failed attempt without stating that he finds the card.
+- event_id: kristin_steadies_1a
+  scene_id: 1A
+  at_turn: 3
+  effect:
+    op: assert
+    fact_id: michelle_abduction_suspicion
+    value: true
+  status: approved
+  reason: 'Lets Kristin read the forced back door once the first shock passes, without naming who broke in.'
 - event_id: pursuit_1b
   scene_id: 1B
   at_turn: 4

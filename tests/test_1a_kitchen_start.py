@@ -80,7 +80,9 @@ def test_1a_opening_and_turn_prompts_keep_kitchen_grounding_and_hide_card(monkey
 
 
 def test_1a_entry_text_ends_with_kitchen_entry() -> None:
-    assert PACKAGE.scenes[0].metadata.entry_text.rstrip().endswith("let herself into the kitchen.")
+    entry_text = PACKAGE.scenes[0].metadata.entry_text.rstrip()
+    assert "let herself into the kitchen." in entry_text
+    assert entry_text.endswith("She called Michelle's name.")
 
 
 def test_1a_boarding_from_the_kitchen_seats_kristin_and_leaves_truck_outside() -> None:

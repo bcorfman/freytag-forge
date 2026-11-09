@@ -74,7 +74,11 @@ def test_scene_1a_patrol_is_a_fact_driven_placed_timeline(monkeypatch) -> None:
             assert not re.search(r"\b(officer|patrol)\b", prompts[turn - 1], re.IGNORECASE)
             assert not any(re.search(r"\b(officer|patrol)\b", text, re.IGNORECASE) for text in _texts(proposal))
 
-        if turn < 10 and not any("Reyes tugs at the workstation drawer." in text for text in _texts(proposal)):
+        if (
+            turn < 10
+            and turn != 3
+            and not any("Reyes tugs at the workstation drawer." in text for text in _texts(proposal))
+        ):
             assert not any(re.search(r"\b(back|return|again)\b", text, re.IGNORECASE) for text in _texts(proposal))
 
         if turn == 6:

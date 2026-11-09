@@ -71,4 +71,5 @@ def test_1a_other_places_do_not_select_drawer_reveal(player_input: str) -> None:
 def test_1a_handoff_cue_mentions_lower_edge_gap() -> None:
     handoff = next(handoff for handoff in PACKAGE.deliveries if handoff.scene_id == "1A")
 
-    assert "beneath its lower edge" in handoff.cue_text
+    assert handoff.cue_text == "Kristin's initials, KMS, are carved into a drawer of Michelle's workstation."
+    assert "gap" not in handoff.cue_text

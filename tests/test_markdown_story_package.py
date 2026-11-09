@@ -306,6 +306,7 @@ def test_continuity_package_loads_all_scene_headings_and_storylets() -> None:
     assert package.scenes[0].metadata.setting_facts == (
         "Sirens carry from the next street.",
         "A dog barks behind the empty house next door.",
+        "The rest of the house is quiet. Michelle is not in it.",
     )
     pacing_facts = {effect.fact_id for event in package.pacing.events for effect in event.effects}
     mapped_facts = set(package.knowledge_indexes.facts_to_knowledge)
@@ -554,7 +555,8 @@ def test_loader_uses_empty_setting_facts_when_unset(tmp_path: Path) -> None:
     root = copied_package(tmp_path)
     plot = root / "plot.md"
     contents = plot.read_text(encoding="utf-8").replace(
-        "setting_facts:\n- Sirens carry from the next street.\n- A dog barks behind the empty house next door.\n",
+        "setting_facts:\n- Sirens carry from the next street.\n- A dog barks behind the empty house next door.\n"
+        "- The rest of the house is quiet. Michelle is not in it.\n",
         "",
         1,
     )

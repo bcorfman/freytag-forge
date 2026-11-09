@@ -1,5 +1,7 @@
 # Scene 1A: password reference and officer response
 
+Latest (2026-11-08, after #756): **Round 2e** below fixes Brandon's report that Kristin does not perceive the kitchen on arrival (built, full suite green, uncommitted; live screen not run, awaiting his spend cap).
+
 Status (2026-11-08): **officer fixes merged; round-2 Stage A run: passcode statement not adopted (omission not reproduced, invented digits), Stage B redesigned around authored phone messages (Round 2b, awaiting approval)** (#753, #754, #755; `main` at
 `e989fac8`). Billed spend used: 117 source-screen requests, 52 voiceability, 12 recovery, 31 live greeting, 78 round-2 Stage A. What shipped
 and what did not is in the **Outcome** section below. **Round 2** is the current proposal; sections after Round 2 are the historical working record, kept as written
@@ -476,6 +478,99 @@ Audit of a worst-case 1A turn (`deep_turn_budget` prompt): CONSTRAINTS 1359 char
   missing." appears a third time. Removing the repeat touches the approved opening (`7794e4b9`, pinned by `test_1a_kitchen_start.py`),
   so it needs Brandon's decision on which source keeps the facts.
 - Candidate reveals that are offered but not needed cost a block each turn; ambient reveals ride free slots on unrelated commands.
+
+### Round 2e: Kristin should perceive the kitchen on arrival (Brandon, 2026-11-08; built per his decisions below, uncommitted, live screen pending)
+
+Brandon's transcript (HEAD `f4b05a75`): after the entry text and a vague opening line ("Kristin's eyes scan the kitchen, taking in the
+scene before her"), `search the house for michelle` produced an invented living room and then the workstation drawer with its KMS
+initials and gap; `look in the kitchen` produced the mug, glasses and calendar, and only then the back-door clue. Complaint: she starts in
+the kitchen, is looking for her friend, and should have a general awareness of the room from the first line; the workstation should not
+appear before the room has been seen, and the door should not be noticed three turns in. Missing a fine detail while frantic is fine;
+missing the whole room is not.
+
+**Diagnosis (free; stub narrator through the real engine; `.plans/1a-password-and-officer/replay_first_commands.py`, rerunnable).**
+1. **The drawer line is the `continuity_initiative_known` handoff cue (`handoffs.yaml`), not a storylet.** A staged cue is appended
+   after the narrator's prose on the first command that earns nothing else, whatever that command is. It names the workstation, the KMS
+   carving and the gap before any text has introduced the workstation. It also still carries the gap sentences, so **Round 2c left a
+   hole**: the gap was moved to the close step in the storylets, but this cue gives it away on turn 1.
+   `tests/test_1a_drawer_words.py::test_1a_handoff_cue_mentions_lower_edge_gap` pins the old wording.
+2. **The door clue (`SL-1A-A`, `k_sl_1a_a_r1`) is earned only by a command that names the kitchen, back door, forced lock or chair.**
+   First-command results: `Look around.` no door clue, drawer cue; `Examine the room.` same; `Search the house for Michelle.` same;
+   `Call out for Michelle.` same; `Search the kitchen.`, `Look in the kitchen.`, `Inspect the back door.` door clue, no drawer cue. So
+   the most natural opening commands skip the room and get the drawer.
+3. **The opening reply is vague by construction.** The opening prompt lists the kitchen things only as CONSTRAINTS placement lines (no
+   "Show these in your reply"), the SCENE Details are terse noun phrases, and the rules say "the player finds a clue only when their
+   action reaches it", "Show what happens right after the player acts" and "Do not copy sentences from the SCENE section." The model
+   obeys by describing nothing. The authored entry text names only the forced back door.
+4. **"The house" is one room.** `mcgehee_home` has the aliases "the living room, the front room, the hallway" and its only child is the
+   kitchen, so `Search the house for Michelle.` resolves to the house and nothing authored says what the rest of it holds. The narrator
+   filled the gap with couch cushions, bookshelves and a coffee table, which no entity or sentence supports.
+
+**Proposal (story data only; narrator rules untouched, per the fix ranking).**
+- **P1, arrival glance, authored and deterministic (`plot.md` 1A front matter `entry_text`, sent once, no per-turn budget cost).**
+  Append, after "let herself into the kitchen." (draft by Claude from plot 1A.1; Brandon's wording wins): *The kitchen was wrong at a
+  glance. Michelle's chair lay tipped over at her workstation across the room, and her tablet and work bag were nowhere in sight. A mug
+  sat on the workstation beside a stack of manuscript pages. The calendar and the lake photograph hung by the refrigerator, where they
+  always had. Kristin was too frantic to read any of it yet. She called Michelle's name.* It names only what is visible from the doorway
+  and withholds every meaning (outward splinters, warm tea, glasses, circled Saturday, KMS, gap, phone), so the earned reveals keep
+  their jobs. No phone mention (the kitchen-start test forbids it).
+- **P2, the inference stays earned but any orienting command earns it.** Widen `k_sl_1a_a_r1` `action_evidence` so `Look around.`,
+  `Examine the room.` and `Search the house` (not only `kitchen`/`back door`) earn the door clue; trim its delivery so it does not repeat
+  what P1 already showed (chair and bag) and opens on the reasoning ("Kristin makes herself slow down...").
+- **P3, drawer cue after the room is known and without the gap.** `handoffs.yaml` cue becomes only "Kristin's initials, KMS, are carved
+  into a drawer of Michelle's workstation." (the gap stays at the close step, as Round 2c intended). Update the pinned cue test.
+- **P4, say what the rest of the house is.** One `setting_facts` line (always on, about 55 characters): *The rest of the house is quiet.
+  Michelle is not in it.* so `Search the house for Michelle.` has authored truth to use and no reason to invent furniture. This costs
+  bytes in scene 1A (now 5330 / 5556 against pins 5485 / 5597, cap 6400); measure before accepting, and it needs the exact
+  `setting_facts` pins in `tests/test_markdown_story_package.py` updated by review, not regenerated.
+
+**Checked precedents:** opening-frame and layout work at `7794e4b9` and `2f6f5954` (start-area things in THINGS); Round 2c's gap
+decision; the grounding guide's rule that sub-places stay out of the tree unless declared (no new place is proposed); "deterministic
+authored text over generation" for fixed arrival facts. Not covered by a precedent: widening a storylet's `action_evidence` to
+orienting commands (small data edit, but test it against the other 1A storylets so it cannot steal `SL-1A-G` or the card search).
+
+**Tests first (free, through Ringer):** (a) for each of the eight first commands above, the composed first turn never names the
+workstation or drawer before the entry text or an earlier turn did, and never contains the gap sentence; (b) `Look around.`,
+`Examine the room.` and `Search the house for Michelle.` earn the door clue once and not twice; (c) the opening entry text names the
+chair, workstation, bag and calendar and none of the withheld meanings; (d) scene 1A budget under the pins and cap; (e) card search
+and the drawer open-then-close route are unchanged (existing Round 2c tests stay green).
+
+**Billed screen, after approval (nothing run; spend cap to be set by Brandon):** the opening, 12 + 1 smoke per arm, CTRL versus P1 (26
+requests); `Search the house for Michelle.`, same, CTRL versus P4 (26 requests). Score each composed reply: no invented room contents,
+no contradiction of the entry text, no copy of it, no unearned reveal (card, gap, splinter direction, phone contents). Fixed win rule:
+at least 11/12 clean in the candidate arm and no worse than control on every miss class. Then the play-through at the new 15-turn
+clock (Outcome item 1) re-reads these first turns.
+
+**Decisions for Brandon (answered 2026-11-08):** (1) glance in the authored `entry_text`: yes. (2) **P2 changed:** orienting commands do
+NOT earn the deduction; Kristin just sees the room, and reaches the deduction when (a) she calms down after a few turns or (b) she
+deliberately examines the door. (3) P4 line: yes. P3 (drawer hint without the gap) was not put to him separately; it follows his
+Round 2c ruling and is flagged for his review below.
+
+**Build record (2026-11-08, working tree on `main`, uncommitted; built through Ringer, tests first).**
+- **P1:** `entry_text` gains the arrival glance paragraph (chair tipped at the workstation, tablet and bag not in sight, mug and
+  manuscripts, calendar and photograph by the refrigerator, "too frantic to read any of it yet", "She called Michelle's name.").
+  It names nothing that carries a meaning (no splinters, warmth, glasses, Saturday, KMS, gap, drawer, phone, card); the test checks the
+  withheld words. plot.md 1A.1 prose gains the matching sentence.
+- **P2 (changed):** `k_sl_1a_a_r1` and `SL-1A-A` are untouched, so examining the kitchen or back door still earns the deduction. New
+  pacing event `kristin_steadies_1a` (turn 3, trailing, verbatim, only when `michelle_abduction_suspicion` is false) delivers it by
+  the clock; its text drops the chair and bag lines the glance already showed. Mirrored in `pacing_event_review`. Orienting commands
+  (`Look around.`, `Examine the room.`, `Search the house for Michelle.`, `Call out for Michelle.`) earn nothing on turn 1 (control test).
+- **P3:** the `handoffs.yaml` cue is now only "Kristin's initials, KMS, are carved into a drawer of Michelle's workstation." The gap
+  stays at the close step. **Side effect to review:** the recent-cue bridge no longer lets "Search the gap." earn the card straight
+  after the cue; the nine tests that used it now follow the cue with "Search the initials beneath." / "Search beneath KMS.", which
+  still earn the card, so the cue remains a safety net for a player who never opens the drawer. "Search the gap." earns the card only
+  once the gap was found (existing tests).
+- **P4:** `setting_facts` gains "The rest of the house is quiet. Michelle is not in it." plus a matching plot.md 1A.1 sentence.
+- **Tests:** new `tests/test_1a_arrival_glance.py` (11, eight red first, three controls). Old pins updated narrowly: kitchen-start entry
+  ending, `setting_facts` pins, the cue wording, two officer-press tests and the patrol test (turn 3 now carries the deduction text),
+  the eligible count in `test_more_than_four_eligible` (10 to 9, because the turn-3 beat delivers `k_sl_1a_a_r1`), the shard manifest.
+  Budget pins and `deep_turn_budget.json` untouched and passing. Ringer runs: `1a-arrival-glance-tests`, `-data` (failed its own check
+  on one wrong assumption in my test, fixed by hand: the loader does not expose `pacing_event_review`, so the test reads the YAML),
+  `-fix` (PASS). Full suite without coverage: **4338 passed, 33 skipped**; Ruff clean on `tests` and `data`.
+- **Not done:** the billed screens (opening 12 + 1 per arm, CTRL versus glance; `Search the house for Michelle.` CTRL versus the house
+  line; 52 requests), which need Brandon's spend cap. Not yet known live: whether the opening narrator repeats or contradicts the
+  glance, and whether the house line stops invented furniture. The play-through at the 15-turn clock (Outcome item 1) should re-read
+  turns 1 to 3.
 
 ### Build record, 2026-11-08 (all in the working tree on `kristin-knows-phone-passcodes`, uncommitted, not yet staged or E2E-tested)
 
