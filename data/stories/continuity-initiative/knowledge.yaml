@@ -29,10 +29,20 @@ facts:
   purpose: Kristin has timed the emergency broadcast and knows it repeats word for word.
 - id: neighbor_account_heard
   purpose: Kristin has heard what Walt Pruitt saw before dawn.
+- id: michelle_text_read
+  purpose: Kristin has read Michelle's 4:07am text on her phone.
+- id: kristin_calls_read
+  purpose: Kristin has seen her own unanswered calls to Michelle on the phone.
+- id: drawer_opened
+  purpose: Kristin has opened Michelle's workstation drawer.
+- id: reyes_watched_text
+  purpose: Kristin has read the text with the officer near.
 - id: memory_card_recovered
   purpose: Kristin has recovered Michelle’s memory card.
 - id: drawer_gap_pointed_out
   purpose: Kristin has been pointed toward the thin gap beneath Michelle’s workstation drawer.
+- id: drawer_gap_rechecked
+  purpose: Kristin has looked the drawer over again after finding the gap.
 - id: bench_underside_pointed_out
   purpose: Kristin has been pointed toward the shadowed space beneath the park bench.
 - id: park_left_behind_read
@@ -404,7 +414,7 @@ scene_frames:
   pressure: Expose the network and escape
 knowledge:
 - id: k_sl_1a_a_r1
-  statement: 'Kristin traces the forced entry, overturned chair, missing tablet and work bag, and Michelle’s undamaged phone to a removal too deliberate to be looting. The splinters point outward.'
+  statement: 'Kristin traces the forced entry, overturned chair, missing tablet and work bag, and Michelle’s undamaged phone to a removal too deliberate to be looting. The splinters point outward, so it looks staged.'
   reach_entity_ids: [back_door]
   earn_when: searches the kitchen or back door for signs of what happened
   action_evidence:
@@ -437,7 +447,7 @@ knowledge:
   - [chair]
   - [door, forced entry]
   - [outward, from inside]
-  delivery_text: "Michelle's phone is still here, and it is not damaged. Her tablet and work bag are gone. Her chair is tipped over. The back door looks forced, but the splinters around the frame point outward, away from the house, so it was broken from inside. Nothing else was taken. This was not looting. Someone came for Michelle."
+  delivery_text: "Kristin makes herself breathe and look. Michelle's phone is still here, undamaged. Her tablet and work bag are gone, and her chair is tipped over. Then she sees the back door. The splinters around the frame point outward, away from the house. A door forced from outside would splinter inward. Someone broke this one from inside to make it look like a break-in. It looks staged."
 - id: k_sl_1a_g_r1
   statement: "Kristin reads the workstation as Michelle's last hour: a faintly warm mug of tea and her reading glasses folded on red-penned manuscript pages."
   reach_entity_ids: [michelle_workstation]
@@ -553,6 +563,109 @@ knowledge:
   - [Walt, neighbor, Pruitt]
   earn_when: talks to Walt Pruitt or asks the neighbor
   delivery_text: "Walt Pruitt stands at the fence with his hands in his jacket. His wife is one of the missing, and he has not slept. Near 3:40 he saw two vans with no markings he could read, and two men with a clipboard checking the addresses up and down the street. They skipped the house next door. He says he is not sure what he saw, and he asks Kristin not to tell the patrol he talked."
+- id: k_sl_1a_j_r1
+  statement: "Kristin read Michelle's 4:07am text."
+  voiceable: false
+  reach_entity_ids: [michelle_phone]
+  entity_ids: [kristin, michelle_phone]
+  aliases: [Michelle's 4:07am text, phone text read]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [1A]
+  requires:
+  - fact_id: patrol_in_house
+    equals: false
+  establishes:
+  - op: assert
+    fact_id: michelle_text_read
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-1A-J
+    realization_id: SL-1A-J-R1
+  relevance: {entity_ids: [michelle_phone], priority: -1}
+  must_convey:
+  - [passcode]
+  - [phone]
+  - [single text, text]
+  - [Michelle]
+  - [4:07am]
+  - ["Come to the house. Don't call."]
+  action_evidence:
+  - [unlock, enter, type, read, open, check, view, scroll, look at]
+  - [phone, phone's, message, messages, text, texts, thread, passcode, password]
+  earn_when: reads Michelle's text on her phone
+  delivery_text: 'Kristin enters Michelle''s passcode, the one she has known for years, and the phone opens on a single text from Michelle, sent at 4:07am: "Come to the house. Don''t call."'
+- id: k_sl_1a_j_r2
+  statement: "Kristin read the text while watched."
+  voiceable: false
+  reach_entity_ids: [michelle_phone]
+  entity_ids: [kristin, michelle_phone]
+  aliases: [Michelle's 4:07am text with the patrol present, officer watches phone]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [1A]
+  requires:
+  - fact_id: patrol_in_house
+    equals: true
+  establishes:
+  - op: assert
+    fact_id: michelle_text_read
+    value: true
+  - op: assert
+    fact_id: reyes_watched_text
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-1A-J
+    realization_id: SL-1A-J-R2
+  relevance: {entity_ids: [michelle_phone], priority: -1}
+  must_convey:
+  - [passcode]
+  - [phone]
+  - [single text, text]
+  - [Michelle]
+  - [4:07am]
+  - ["Come to the house. Don't call."]
+  - [Officer Reyes, officer]
+  - [printed list]
+  - [watching, eyes stay]
+  - [uneasy]
+  action_evidence:
+  - [unlock, enter, type, read, open, check, view, scroll, look at]
+  - [phone, phone's, message, messages, text, texts, thread, passcode, password]
+  earn_when: reads Michelle's text on her phone while the patrol is present
+  delivery_text: 'Kristin enters Michelle''s passcode, the one she has known for years, and the phone opens on a single text from Michelle, sent at 4:07am: "Come to the house. Don''t call." Officer Reyes lowers his printed list. His eyes stay on the phone in her hand, and when she looks up he glances away a moment too slowly. Kristin turns the screen toward herself, uneasy.'
+- id: k_sl_1a_j_r3
+  statement: "Kristin saw her unanswered calls."
+  voiceable: false
+  reach_entity_ids: [michelle_phone]
+  entity_ids: [kristin, michelle_phone]
+  aliases: [Kristin's unanswered calls, calls to Michelle read]
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [1A]
+  requires:
+  - fact_id: michelle_text_read
+    equals: true
+  establishes:
+  - op: assert
+    fact_id: kristin_calls_read
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-1A-J
+    realization_id: SL-1A-J-R3
+  relevance: {entity_ids: [michelle_phone], priority: -1}
+  must_convey:
+  - [below the text]
+  - [Kristin's own calls, calls]
+  - [Michelle]
+  - [fill the log, log]
+  - [one after another]
+  - [none of them were answered, unanswered]
+  action_evidence:
+  - [check, look at, open, read, view, scroll, see]
+  - [calls, call, call log, call history, missed calls, recent calls]
+  earn_when: checks the call log on Michelle's phone
+  delivery_text: "Below the text, Kristin's own calls to Michelle fill the log, one after another, and none of them were answered."
 - id: k_sl_1a_b_r0
   statement: "Kristin finds Michelle's memory card taped beneath the drawer and pockets it."
   voiceable: false
@@ -653,7 +766,7 @@ knowledge:
   - [Michelle, Michelle's, Dr. McGehee, Michelle McGehee, Shelly]
   delivery_text: 'Kristin''s fingers find something taped beneath the drawer. She peels it loose. It is Michelle''s memory card, and she pockets it. The officer turns at the sound. "What have you got there?" His hand is already out.'
 - id: k_sl_1a_f_r1
-  statement: "Kristin opens the drawer and is pointed toward the thin gap beneath its lower edge."
+  statement: "Kristin opens the drawer."
   voiceable: false
   reach_entity_ids: [michelle_drawer]
   earn_when: pulls or opens the drawer
@@ -673,7 +786,7 @@ knowledge:
     equals: false
   establishes:
   - op: assert
-    fact_id: drawer_gap_pointed_out
+    fact_id: drawer_opened
     value: true
   source:
     kind: storylet_realization
@@ -682,9 +795,9 @@ knowledge:
   relevance:
     entity_ids: [kristin, michelle_drawer]
     priority: 0
-  delivery_text: "The drawer slides out. It holds a stapler, spare batteries, pens, and binder clips. A thin gap beneath its lower edge is wide enough for Kristin's fingers."
+  delivery_text: "The drawer slides out. It holds a stapler, spare batteries, pens, and binder clips."
 - id: k_sl_1a_f_r2
-  statement: "Kristin looks over the drawer and is pointed toward the thin gap beneath its lower edge."
+  statement: "Kristin looks over the drawer."
   voiceable: false
   reach_entity_ids: [michelle_drawer]
   earn_when: examines, inspects, searches or checks the drawer without going underneath it
@@ -701,11 +814,13 @@ knowledge:
   available_in_scenes:
   - 1A
   requires:
+  - fact_id: drawer_gap_pointed_out
+    equals: true
   - fact_id: memory_card_recovered
     equals: false
   establishes:
   - op: assert
-    fact_id: drawer_gap_pointed_out
+    fact_id: drawer_gap_rechecked
     value: true
   source:
     kind: storylet_realization
@@ -715,6 +830,39 @@ knowledge:
     entity_ids: [kristin, michelle_drawer]
     priority: 0
   delivery_text: "The drawer rides high in its frame. A thin gap beneath its lower edge is wide enough for Kristin's fingers."
+- id: k_sl_1a_f_r3
+  statement: "Kristin closes the drawer and finds a gap."
+  voiceable: false
+  reach_entity_ids: [michelle_drawer]
+  earn_when: closes or shuts the drawer
+  action_evidence:
+  - [close, shut, push in, push back, slide in, slide shut, push closed, push it closed, push the drawer closed]
+  - [drawer]
+  entity_ids: [kristin, michelle_drawer]
+  aliases:
+  - drawer gap found by closing
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 1A
+  requires:
+  - fact_id: drawer_opened
+    equals: true
+  - fact_id: memory_card_recovered
+    equals: false
+  establishes:
+  - op: assert
+    fact_id: drawer_gap_pointed_out
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-1A-F
+    realization_id: SL-1A-F-R3
+  relevance:
+    entity_ids: [kristin, michelle_drawer]
+    priority: 0
+  delivery_text: "Kristin slides the drawer shut. It rides high in its frame. A thin gap beneath its lower edge is wide enough for Kristin's fingers."
 - id: k_sl_1a_b_r1
   statement: "Kristin reads Michelle's memory card. Its damaged recording warns her not to trust emergency broadcasts, and the Continuity Initiative files point to a dead drop at a bench in the park."
   earn_when: reads the files on Michelle's recovered memory card
@@ -854,7 +1002,7 @@ knowledge:
   - [files, rest of the files, remaining files, research files, fragments]
   delivery_text: "The rest of the files on Michelle's memory card hold her research. They name the exchange point where she traded information."
 - id: k_sl_1a_c_r1
-  statement: 'The patrol’s interest in Michelle’s research makes Kristin doubt that its welfare check is innocent.'
+  statement: 'The patrol’s interest in her research makes Kristin doubt their "welfare check".'
   entity_ids: []
   aliases:
   - official interest in michelle known

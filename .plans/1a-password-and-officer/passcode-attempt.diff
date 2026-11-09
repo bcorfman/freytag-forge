@@ -1,0 +1,32 @@
+diff --git a/data/stories/continuity-initiative/knowledge.yaml b/data/stories/continuity-initiative/knowledge.yaml
+index 563efda6..31f03dc7 100644
+--- a/data/stories/continuity-initiative/knowledge.yaml
++++ b/data/stories/continuity-initiative/knowledge.yaml
+@@ -3604,6 +3604,14 @@ knowledge:
+   available_in_scenes: [1A]
+   establishes: [{op: assert, fact_id: scene_1a_entry_known, value: true}]
+   source: {kind: scene_entry}
++- id: k_1a_phone_passcode
++  statement: Michelle's phone is locked with a passcode that Kristin knows from years of friendship. Kristin's own phone unlocks when it recognizes her face.
++  entity_ids: [michelle_phone]
++  aliases: [passcode, Michelle's passcode]
++  audience: {kind: public, player_visible: true}
++  available_in_scenes: [1A]
++  establishes: [{op: assert, fact_id: scene_1a_entry_known, value: true}]
++  source: {kind: scene_entry}
+ - id: k_scene_1b_entry
+   statement: The park is an immediate place of pursuit and uncertainty.
+   entity_ids: [kristin, los_angeles_park]
+diff --git a/data/stories/continuity-initiative/plot.md b/data/stories/continuity-initiative/plot.md
+index 7ce8e7e5..130554e7 100644
+--- a/data/stories/continuity-initiative/plot.md
++++ b/data/stories/continuity-initiative/plot.md
+@@ -152,6 +152,8 @@ Kristin reaches Michelle's neighborhood after navigating traffic jams, emergency
+ 
+ Kristin knows Michelle would not leave her kitchen like this.
+ 
++Michelle's phone lies on the kitchen floor, locked with a passcode that Kristin knows from years of friendship. Kristin's own phone unlocks when it recognizes her face.
++
+ Kristin notices the drawer on Michelle's workstation has Kristin's initials 'KMS' newly carved into it, making it worth looking at more closely. Kristin did not carve them. In college they hid notes beneath desk drawers, and Michelle has always known where Kristin would look.
+ 
+ The drawer rides high in its frame. A thin gap beneath its lower edge is wide enough for Kristin's fingers.

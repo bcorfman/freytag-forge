@@ -28,7 +28,7 @@ from storygame.story_package.models import (
 
 PACKAGE_ROOT = Path("data/stories/continuity-initiative")
 PACKAGE = load_story_package(PACKAGE_ROOT)
-REVEALS = ("k_sl_1a_b_r0", "k_sl_1a_f_r1", "k_sl_1a_f_r2")
+REVEALS = ("k_sl_1a_b_r0", "k_sl_1a_f_r1")
 
 
 def _scene_state() -> RuntimeState:

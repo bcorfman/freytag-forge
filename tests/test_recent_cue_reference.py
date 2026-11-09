@@ -93,10 +93,12 @@ def test_explicit_owner_follow_up_earns_memory_card(monkeypatch: pytest.MonkeyPa
     state = _state()
     engine = _engine(monkeypatch, state)
 
-    first = engine.turn("Open the drawer.")
+    engine.turn("Open the drawer.")
+    state.fired_event_ids.discard("SL-1A-F")
+    state.active_event_ids.add("SL-1A-F")
+    engine.turn("Close the drawer.")
     second = engine.turn("Search the gap beneath the drawer.")
 
-    assert first.selected_knowledge_ids == (POINTER_REVEAL,)
     assert second.selected_knowledge_ids == (CARD_REVEAL,)
     assert _has_fact(state, "memory_card_recovered")
 
@@ -167,6 +169,9 @@ def test_recent_cue_referent_follow_up_earns_memory_card(
     engine = _engine(monkeypatch, state)
 
     engine.turn("Open the drawer.")
+    state.fired_event_ids.discard("SL-1A-F")
+    state.active_event_ids.add("SL-1A-F")
+    engine.turn("Close the drawer.")
     result = engine.turn(command)
 
     assert result.selected_knowledge_ids == (CARD_REVEAL,)

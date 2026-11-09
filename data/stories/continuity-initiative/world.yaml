@@ -511,6 +511,10 @@ facts:
 - kitchen_last_hour_read
 - broadcast_loop_confirmed
 - neighbor_account_heard
+- michelle_text_read
+- kristin_calls_read
+- drawer_opened
+- reyes_watched_text
 - facility_proof
 - false_identities_ready
 - id: facility_perimeter_reached
@@ -534,6 +538,7 @@ facts:
   - {move: prisoner_number_record, parent: kristin, text: with Kristin}
   - {reveal: prisoner_number_record}
 - drawer_gap_pointed_out
+- drawer_gap_rechecked
 - bench_underside_pointed_out
 - official_interest_in_michelle_known
 - house_marked_for_return

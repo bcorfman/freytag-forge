@@ -61,6 +61,7 @@ def _real_recovery_state(*, witnessed: bool) -> RuntimeState:
     state = RuntimeState.bootstrap(PACKAGE)
     state.facts.assert_fact(Fact(predicate="patrol_in_house", subject="story", value="true"))
     state.facts.assert_fact(Fact(predicate="memory_card_recovered", subject="story", value="true"))
+    state.facts.assert_fact(Fact(predicate="drawer_opened", subject="story", value="true"))
     if witnessed:
         state.facts.assert_fact(Fact(predicate="card_challenged", subject="story", value="true"))
         state.facts.assert_fact(Fact(predicate="kristin_marked_by_patrol", subject="story", value="true"))
@@ -73,6 +74,8 @@ def _real_gap_and_patrol_state() -> RuntimeState:
     state = RuntimeState.bootstrap(PACKAGE)
     state.active_event_ids.update({"SL-1A-E", "SL-1A-F"})
     state.facts.assert_fact(Fact(predicate="drawer_gap_pointed_out", subject="story", value="true"))
+    state.facts.assert_fact(Fact(predicate="drawer_gap_rechecked", subject="story", value="true"))
+    state.facts.assert_fact(Fact(predicate="drawer_opened", subject="story", value="true"))
     state.fired_event_ids.add("SL-1A-F")
     state.facts.assert_fact(Fact(predicate="patrol_in_house", subject="story", value="true"))
     apply_world_effects(PACKAGE, state.facts)
@@ -194,9 +197,13 @@ def test_real_package_has_exactly_the_non_voiceable_knowledge_items() -> None:
     non_voiceable = [item for item in PACKAGE.knowledge.knowledge if item.voiceable is False]
 
     assert [item.id for item in non_voiceable] == [
+        "k_sl_1a_j_r1",
+        "k_sl_1a_j_r2",
+        "k_sl_1a_j_r3",
         "k_sl_1a_b_r0",
         "k_sl_1a_f_r1",
         "k_sl_1a_f_r2",
+        "k_sl_1a_f_r3",
         "k_sl_1b_d_r1",
         "k_sl_1b_e_r1",
         "k_sl_1b_a_r2",

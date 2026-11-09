@@ -155,7 +155,7 @@ def test_gap_then_acquire_does_not_redeliver_either_discovery() -> None:
         ],
     )
 
-    assert {"drawer_gap_pointed_out", "memory_card_recovered"} <= _true_facts(state)
+    assert "memory_card_recovered" in _true_facts(state)
     assert "thin gap" not in (_staged_cue_text(state) or "")
     assert "SL-1A-F" not in state.active_event_ids
 

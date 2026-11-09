@@ -58,6 +58,8 @@ def _fact_is_true(state, predicate: str) -> bool:
 
 def _state_after_gap_deliveries(delivery_count: int):
     state = _gap_state()
+    state.facts.assert_fact(Fact(predicate=CARD_FACT, subject="story", value="false"))
+    state.facts.assert_fact(Fact(predicate="drawer_gap_rechecked", subject="story", value="true"))
     for _ in range(delivery_count):
         state.facts.assert_fact(Fact(predicate=GAP_FACT, subject="story", value="true"))
         state.fired_event_ids.add(GAP_STORYLET)
@@ -74,6 +76,7 @@ def _card_find_state():
 @pytest.mark.parametrize("command", BARE_DRAWER_COMMANDS)
 def test_bare_drawer_commands_pick_the_gap_nudge(command: str) -> None:
     state = _gap_state()
+    state.facts.assert_fact(Fact(predicate=GAP_FACT, subject="story", value="true"))
 
     assert not _fact_is_true(state, CARD_FACT)
     handoff = _handoff(state, command)
@@ -129,7 +132,7 @@ def test_inside_forms_never_pick_the_card_find(command: str) -> None:
     handoff = _handoff(state, command)
     picked_id = handoff.candidate.id if handoff is not None else None
 
-    assert picked_id in {NUDGE, None}, {command: picked_id}
+    assert picked_id is None, {command: picked_id}
     assert picked_id != CARD_FIND
     assert picked_id != CARD_FIND_PATROL
 
