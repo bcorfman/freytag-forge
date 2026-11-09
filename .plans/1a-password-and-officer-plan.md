@@ -1,17 +1,517 @@
 # Scene 1A: password reference and officer response
 
-Status: **proposal for Brandon's review**, 2026-11-08. Investigation complete;
-no story or engine changes applied, no billed probes run. Inspected HEAD:
-`25f9b75efb7cb3dda30acafa47cb600442573a5a`. Existing untracked input artifacts
-were preserved. Edit this plan in place on subsequent rounds.
+Status (2026-11-08): **officer fixes merged; round-2 Stage A run: passcode statement not adopted (omission not reproduced, invented digits), Stage B redesigned around authored phone messages (Round 2b, awaiting approval)** (#753, #754, #755; `main` at
+`e989fac8`). Billed spend used: 117 source-screen requests, 52 voiceability, 12 recovery, 31 live greeting, 78 round-2 Stage A. What shipped
+and what did not is in the **Outcome** section below. **Round 2** is the current proposal; sections after Round 2 are the historical working record, kept as written
+(some say "not applied" or "awaiting approval", which was true when written and is superseded here). Original
+inspected HEAD: `25f9b75efb7cb3dda30acafa47cb600442573a5a`.
+
+## Outcome (merged 2026-11-08)
+
+**Shipped**
+- **#753:** `trailing: true` pacing events (`PacingEvent.trailing`, `RuntimeEngine._activate_pacing`, doc paragraph); the 1A
+  clock retimed (arrive 6, enter 7, leave 10, narrows 11, returns 13; scene window min 13, nudge 14, handoff 15; SL-1A-C
+  6/8/9; story cap 122); the `### Officer Reyes` principal-character block in `plot.md` (the fix for the wrong-name
+  officer greeting: control 8/12 targeted misses, with the bio 0/12); the probe scripts, preregistration and records.
+- **#754:** `CloudflareTurnProvider._repair_fused_segments`, a typed repair of fused narration segments. Live: officer silent
+  1/12 greetings with the repair versus 5/12 without; no recovery call spent with it, 1.42 requests per turn without.
+- **#755:** autouse `os.environ` restore fixture plus a pytester regression (fixes the shard-0 flake); the live greeting
+  harness and its result. Full suite 4274 passed.
+
+**Investigated, not adopted**
+- Remembered-device engine (proposal 4): the wrong-device miss did not reproduce (laptop chosen 0/36), so it is parked.
+- Walt bio: identity was already right; it swaps one failure for another. The `officer` alias: byte-identical prompt once the
+  officer is present. `voiceable: false` on `k_sl_1a_g_r2`: the officer never voiced it (0/24), so nothing to fix.
+
+**Open (item 3 now has a revised proposal; implementation remains pending)**
+1. Live play-through at the new 15-turn pacing (fast, canonical, slow scripts; earned transition in at least 80 percent of
+   runs). The earliest exit is turn 13; that floor is the thing to watch. Staged E2E after deploy.
+2. About 8 percent of greetings still leave the officer silent: the model's clean first reply omits him. 5 of 17 recorded
+   bad replies are not repairable because the officer's words are inside the first segment.
+3. `Type in the password.` is often not performed (typed in 4/12 control; 0/12 with laptop lines removed;
+   12/12 with the phone-context line). **Round-2 correction:** Michelle's phone uses a passcode Kristin knows;
+   Kristin's own phone unlocks by face and has no passcode; Kristin's laptop has **no password**. Successful
+   authentication is allowed; unsolicited file/contact browsing remains a miss. The exact source proposal,
+   scoping gap, protected test contracts and revised probes are in **Round 2** below. Investigation and plan
+   revision are complete; no candidate source/engine edits or billed probes have been applied this round.
+4. ~~GitGuardian flagged the word "password" in `validate_freeze.py` on #753 as a false positive.~~ Closed (Brandon,
+   2026-11-08).
+
+## Round 2: device access and completing the requested action (2026-11-08)
+
+**Status: investigation and revised proposal complete; source edits and probes not run.**
+This is round 2 of `chatgpt-1a-password-and-officer-prompt.md` (the requested
+“phase 2”). Only Outcome item 3 is reopened. HEAD inspected: `e989fac8`.
+The existing dirty plan and prompt edits were retained. This section supersedes
+older password assumptions and proposed scoring below; the old experiment is
+preserved as a historical record, not retrospectively declared a win.
+
+### Findings and decisions
+
+- The whole current story package contains neither `password` nor `passcode`.
+  `world.yaml` declares `michelle_phone` with only its name. `kristin_laptop`
+  has a closed/open axis, seated-use behavior and pickup/notice text; no access
+  secret. Opening a laptop lid is not authenticating to it.
+- Kristin's own phone is not declared. Naming it in a statement alone would
+  introduce a second actionable phone without grounding it. Declare it and
+  place it with Kristin; use a distinct owned name, never a shared `phone`
+  alias intended to force a particular resolution.
+- The original transcript says “a password prompt appears,” followed by “the
+  laptop screen flickers to life” and an unsolicited file search. These are
+  generated details, not authored access policy. The old frozen probes found
+  zero laptop/drawer/file-search misses in 36 samples. They did find action
+  omission: typing in CTRL 4/12, SUB 0/12, ADD 12/12. ADD's six successful
+  authentications are **not automatically defects under the new canon**.
+  Contacts or files displayed or searched still need separate review.
+- Correct canon: Michelle's phone uses a **passcode**, which Kristin knows;
+  Kristin's own phone unlocks by recognizing her face and has no passcode;
+  Kristin's laptop has **no password**. Do not reserve “password” for the laptop
+  or invent digits, a guessing puzzle, or an additional credential.
+- A static sentence should describe the access method, not say the phone “is
+  locked” forever. If the lock's changing state is tracked, declare a
+  locked/unlocked axis; accepted proposals update facts through the existing
+  world path. A successful unlock does not earn memory-card knowledge.
+
+Checked precedents: the approved kitchen opening at `7794e4b9`; the current
+world-model checklist and historical W1–W14 at `5ea0119955c62b84699a8dc7878a4af770b55a7e`
+(especially W3 conditional lock state, W4 placement, W7 one-way effects, W9
+referenceable objects and its contents amendment, W10 worldkeeper boundary);
+the lead-up plan/prereg's 3A bio correction at `f7cbf7b3` (11/12 hostile to
+0/12), and its rejected 2A replacement-chatter and S4 action-suppression arms;
+this plan's source screens and the merged officer work. The 3A fix supports
+supplying missing material; it does not justify putting device knowledge in
+Kristin's every-turn biography. The existing start-place and command-scoped
+state decisions remain in force. No officer change is proposed.
+
+### Why the reverted approaches do not supply a scoped solution
+
+1. A `narrator_bio` addition is global characterization, not device context.
+   It expands unrelated prompts and hit the reported budget ratchet. Do not
+   raise the ratchet to accommodate it.
+2. `setting_facts` is always-on scene material. It changes the approved opening,
+   conflicts with the no-phone-in-SCENE assertion, and changes exact setting
+   pins. Those failures are not permission to rewrite the opening.
+3. `entity_ids` associates knowledge with entities; it does **not** filter
+   committed in-scene statements by the current command. `_committed_for`
+   selects established in-scene knowledge regardless of those IDs.
+   `_section_user_prompt` renders those statements into SCENE.
+
+**Free verification this round:** loaded two temporary copies of the actual
+package, adding a public `scene_entry` statement established by
+`scene_1a_entry_known`, once with `[kristin, michelle_phone]`, once with
+`[michelle_phone]`. Bootstrapped the real state, projected `Look around.`, and
+rendered the provider's sections. The statement appeared in **SCENE in both
+copies**. No model/network call; temporary copies removed automatically.
+This checks projection and rendering, not a complete engine turn or the
+historical failing run. The reported CHARACTERS placement is not reproduced
+by this check. The saved reverted diff already has `[michelle_phone]`; that
+is evidence of proposed text, not evidence someone previously tested it.
+
+A reveal handoff is supported, but these facts are already known to Kristin;
+making her discover them would change the requested fiction. Placement text
+is also unsuitable: it disappears after pickup and would conflate access
+policy with location. Facets are documented as cosmetic. None of these
+existing mechanisms supplies command-scoped background knowledge while
+preserving the approved opening. Do the source screen below first; a small
+opt-in projection extension is conditional on its result, not a presumed fix.
+
+### Exact source proposal for review
+
+**Story text:** in `plot.md`, scene 1A.2, immediately before “Kristin finds
+Michelle's memory card taped beneath the drawer,” insert:
+
+> Michelle's phone uses a passcode. Kristin knows it because Michelle is her best friend.
+> Kristin's own phone unlocks when it recognizes her face. It has no passcode.
+> Kristin's laptop needs no password.
+
+Keep this out of 1A.1's opening Details, `setting_facts`, `entry_text` and the
+character biographies. This is canonical prose, not sufficient on its own to
+reach the default narrator. The data below supplies its runtime projection.
+No existing location sentence is changed.
+
+**Story data:** proposed `world.yaml` diff:
+
+```diff
+ - id: michelle_phone
+   name: Michelle's phone
++  axes:
++  - {locked: [], unlocked: []}
++- id: kristin_phone
++  name: Kristin's phone
++  disclosure: public
++  owner: kristin
+ - id: kristin_laptop
+```
+
+The new axis's initial locked pole must be confirmed in the bootstrap check;
+never substitute an `openable` container for a phone. Do not give the laptop
+an authentication axis. In `plot.md` 1A front matter, add `kristin_phone` to
+`item_ids` immediately after `michelle_phone`, and add this placement:
+
+```yaml
+  kristin_phone: {parent: kristin}
+```
+
+This proposes that Kristin starts carrying her own phone. No pocket object,
+new room, phone contents, or new story reveal is introduced. A carried phone
+continues with her through the world tree, not repeated scene relocations.
+The extra physical phone may legitimately change inventory/observation and
+matcher payloads; review those separately from the access statements.
+
+**Knowledge data:** insert these three records immediately after
+`k_scene_1a_entry` in `knowledge.yaml`. **`prompt_entity_ids` is a proposed new
+field, not supported syntax today. Do not apply this block before the
+conditional schema/projection work below.** The rest uses existing fields.
+
+```yaml
+- id: k_1a_michelle_phone_access
+  statement: Michelle's phone uses a passcode. Kristin knows it because Michelle is her best friend.
+  entity_ids: [michelle_phone]
+  prompt_entity_ids: [michelle_phone]
+  aliases: [Michelle's phone passcode]
+  leak_terms: []
+  voiceable: false
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [1A]
+  establishes: [{op: assert, fact_id: scene_1a_entry_known, value: true}]
+  source: {kind: scene_entry}
+- id: k_1a_kristin_phone_access
+  statement: Kristin's own phone unlocks when it recognizes her face. It has no passcode.
+  entity_ids: [kristin_phone]
+  prompt_entity_ids: [kristin_phone]
+  aliases: [Kristin's phone access]
+  leak_terms: []
+  voiceable: false
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [1A]
+  establishes: [{op: assert, fact_id: scene_1a_entry_known, value: true}]
+  source: {kind: scene_entry}
+- id: k_1a_laptop_access
+  statement: Kristin's laptop needs no password.
+  entity_ids: [kristin_laptop]
+  prompt_entity_ids: [kristin_laptop]
+  aliases: [Kristin's laptop access]
+  leak_terms: []
+  voiceable: false
+  audience: {kind: public, player_visible: true}
+  available_in_scenes: [1A]
+  establishes: [{op: assert, fact_id: scene_1a_entry_known, value: true}]
+  source: {kind: scene_entry}
+```
+
+No protagonist association is needed to state what she knows. `voiceable:
+false` prevents this private-use context becoming an NPC's stock speech;
+it is not offered as a fix for the already-rejected officer voiceability arm.
+`leak_terms: []` avoids treating ordinary access vocabulary as a protected
+plot revelation. The scene-entry fact establishes background truth, not a
+claim that an unlock action has occurred. Availability above is deliberately
+1A; persistence/projection in later scenes needs a separate reviewed extension
+rather than silently changing scene-entry recall semantics.
+
+**Conditional engine work, through Ringer, tests first:** only after the
+source-screen win, add optional validated `prompt_entity_ids` to knowledge
+(default empty, omitted from serialization when empty). It selects whether
+an already-established statement is *shown*, never whether it is true or
+available for safety validation. Match against the current command's resolved
+references, not all visible items or the automatically included protagonist.
+Reuse the existing name/match pipeline; no passcode keyword table, guessed
+last device, transcript storage, or widening aliases. Unresolved input retains
+the current clarification path. The full committed grounding basis stays
+available; apply the display filter consistently to opening, normal turns,
+and recovery. Do not make known facts into unearned candidates.
+
+Package-aware projection belongs in `storygame`. Any added logic that only
+reads reach, containment or state belongs in `World`, with tests in
+`packages/worldkeeper`. Existing world operations should suffice. Include a
+synthetic second-story check proving the field has no device/story branch.
+
+### Tests and pins
+
+- Keep `tests/test_1a_kitchen_start.py`'s no-phone-in-SCENE, hidden-card and
+  approved-opening assertions. Keep both exact `setting_facts` assertions in
+  `tests/test_markdown_story_package.py`; proposed settings are unchanged.
+- Keep `tests/test_audit_budget.py::test_real_package_ratchet` and its current
+  limits. Scope first; do not regenerate larger budget pins to make it pass.
+  The new carried phone or lock axis may still cost bytes: measure before
+  implementation is accepted. A budget failure requires revising the proposal,
+  not asserting that scoping guarantees a pass.
+- Preserve all unrelated baseline prompts. In `test_place_scoped_feed.py`,
+  review any changed 1A baseline line individually. A newly declared carried
+  phone or selected lock state can justify a narrow THINGS/inventory pin
+  change; unsolicited access statements on `Look around.` cannot. Keep the
+  byte comparison, never weaken it to substring checks. Update the kitchen
+  test's phone-line allowlist only if a reviewed physical-entity line is
+  actually emitted; never whitelist access prose in the opening.
+- Add focused checks for correct owned-phone resolution and genuine bare-phone
+  ambiguity; access material absent on opening/unrelated commands and present
+  only for the resolved device; pickup does not erase access knowledge;
+  unlock/relock/save/load/rollback preserve the declared axis; unlocking does
+  not reveal card contents. The new phone requires reviewing existing item
+  lists/fingerprints and observation expectations, not blanket regeneration.
+- Use the existing runbook's focused package, projection, reference, world,
+  prompt and safety checks; quick suite plus Ruff through Ringer, full suite
+  before merge. No full or focused pytest suite was run for this plan-only
+  revision. No test is claimed green for the proposed edits.
+
+### Revised probe design and scoring (freeze before billing)
+
+Historical PW scores stay intact in the old preregistration. Add a separately
+labelled round-2 registration before execution; never rewrite the old win
+rule or count these unrun cells as results.
+
+**Stage A, source screen:** 12 scored samples plus 1 unscored smoke per cell,
+interleaved arms, no retries/replacements; errors retained. Freeze actual
+current provider payloads and hashes. Use a fixed, documented phone-held,
+locked state; do not let a newly successful `Unlock Michelle's phone.` prefix
+leave the next typing test already unlocked. Recorded-prefix replay and this
+controlled endpoint are different evidence and must be labelled separately.
+
+| Endpoint | Arms | Expected relevant action |
+| --- | --- | --- |
+| `Type in the password.` (historical wording) | CTRL unchanged / ACCESS adds only the exact Michelle access statement | Enter the known passcode on Michelle's phone, or ask a specific device clarification when reference is unresolved |
+| `Type in the passcode.` | CTRL / ACCESS, same state | Same; score the input wording separately |
+| `Type the passcode into Michelle's phone.` | CTRL / ACCESS | Enter it on that phone; a device clarification here is unnecessary |
+
+Six cells = **78 narration requests**, including smoke. ACCESS is explicitly
+an experimental prompt insertion, not evidence that the proposed field ships
+or that live matching selected the phone. Keep the laptop lines; subtraction
+already worsened action completion. Keep the shipped officer fixes in every
+arm. No new narrator rule or recency mechanism is included.
+
+**Scoring each composed narration:** record target, actual entry of the
+passcode, successful unlock, clarification, and each failure separately.
+Typing the known passcode and unlocking are correct. No numeric code needs
+to be invented or spoken. Merely picking up/examining the phone, saying she
+“tries” without entering anything, or describing a prompt is action omission.
+A clear device question is safe handling of unresolved reference but **not**
+a completed typing action; do not inflate the completion rate with it.
+Wrong device, refusal because Kristin supposedly does not know the code,
+new guessed digits/credential hunt, unsolicited contacts/files/search/calls,
+and protected information are misses. Showing an ordinary unlocked screen
+is allowed; opening an app or browsing content unasked is not. Apply the real
+contract parser and retain malformed, empty and transport-error rows.
+
+**Win rule, fixed before requests:** at each endpoint, control must have at
+least 4/12 action omissions to claim reproduction. ACCESS must enter the
+passcode correctly in at least 11/12, with at most 1/12 omission and at least
+three fewer omissions than control. Candidate wrong-device, unsolicited
+follow-on action, hidden leak, invented credential, malformed/empty and
+transport failures must each be zero and no worse than control. Report each
+endpoint separately; no pooling to hide a failed cell. A cell below the
+reproduction bar is “not reproduced,” not a win. A failure stops adoption
+for that claim; no rerun until green. These are small correlated samples,
+not estimates of live-play reliability.
+
+**Stage B, after a source win and implementation:** freeze the real matcher
+and provider path, then preregister 12 samples per arm plus one smoke for
+four safeguards: `Unlock Michelle's phone.`, `Unlock my phone.`, `Open my
+laptop.`, and `Look at the wall calendar.` (104 initial narration requests
+for control/candidate). Explicitly record and cap all real matcher/capture,
+repair and recovery requests in that registration before billing; 104 is
+not an all-call spend cap. Require correct requested action at least 11/12
+and zero wrong credentials/devices, unrequested browsing, leaks or lost
+turns. Freeze later laptop access at a reachable state; an out-of-reach
+laptop must not magically move or unlock in the kitchen. Recheck both bare
+PW commands through the real reference path, including the intervening
+`Inspect the drawer.` case and both phones present. Genuine ambiguity must
+clarify instead of guessing. Reuse 12-per-cell comparisons and the Stage A
+completion rule where typing is actually requested; budget these cells
+explicitly before running them.
+
+Finally rerun the same canonical phone sequence in three live scene
+replicates, scoring composed narration plus persisted state. Correct unlock
+must remain correct on the next turn, and the memory-card reveal must stay
+unearned. This is separate live qualification, not implied by Stage A.
+
+### Stage A freeze status (2026-11-08, free, no billed request)
+
+Frozen offline in `bench/results/1a-passcode-round2/` (6 cells: CTRL/ACCESS × PW1–PW3; scripts `capture_passcode.py`,
+`replay_passcode.py`, `validate_passcode.py`; variation `bench/variations/1a-passcode-round2.json`). A computer crash
+mid-run left the ACCESS package copy truncated (five zero-byte files); a rerun regenerated it. Two defects found and fixed by
+hand (small, free scripts, outside Ringer; flagged here): (1) `capture_passcode.py` rewrote the PW2/PW3 control commands to
+`Type in the password.`, so CTRL did not test the same command as ACCESS; removed. (2) `validate_passcode.py` flagged the word
+"passcode" inside the PW2/PW3 command itself; it now ignores the command line. Validator: **OK**. ACCESS differs from CTRL only
+by the one statement line (+90 chars, in **SCENE**; system prompt identical). Replay dry run: `requests 78`, nothing sent.
+
+Phone state (Brandon: "the phone should be shown as held", 2026-11-08). The stub-reply prefix cannot move the phone, so the first
+freeze showed no phone line at all. `capture_passcode.py` now applies `World.move("michelle_phone", "kristin")` after the
+prefix and answers the offline matcher with `refers: ["Michelle's phone"]`. All six cells now carry `- Michelle's phone. Held by:
+Kristin.` in THINGS and the engine adds `Show these in your reply: Michelle's phone.` to CONSTRAINTS (so every arm, PW1/PW2
+included, tells the narrator to mention the phone). Assumptions to carry into the results: the matcher choosing the phone for
+`Type in the password.` is assumed, not measured (Stage B tests the real matcher); no lock axis exists, so "locked" is carried
+only by the ACCESS statement; the laptop's placement line is not in the narrator prompt in any cell. Validator still OK: ACCESS
+differs from CTRL only by the statement line.
+
+### Stage A results (2026-11-08, billed: 78 requests approved and spent; 6 smoke + 72 scored; 0 transport errors, 0 malformed)
+
+Rows: `bench/results/1a-passcode-round2/run-passcode-rows.json` (smoke: `smoke-passcode-rows.json`), logs beside them. Phone held
+(frozen state above), 12 scored samples per cell, interleaved, no retries. Counts below are a keyword pass checked against a
+full read of all 72 composed narrations.
+
+| Endpoint | Arm | Entered the code | Action omitted | Invented digits | Unrequested browsing (messages/calls) |
+| --- | --- | --- | --- | --- | --- |
+| PW1 `Type in the password.` | CTRL | 12/12 | 0/12 | 5/12 (1 says it fails) | ~8/12 |
+| PW1 | ACCESS | 12/12 | 0/12 | **12/12** (`1-2-3-4`) | ~2/12 |
+| PW2 `Type in the passcode.` | CTRL | 12/12 | 0/12 | 0/12 | ~10/12 |
+| PW2 | ACCESS | 12/12 | 0/12 | **12/12** | ~6/12 (+3 home-screen only) |
+| PW3 `Type the passcode into Michelle's phone.` | CTRL | 12/12 | 0/12 | 0/12 | ~10/12 |
+| PW3 | ACCESS | 12/12 | 0/12 | **11/12** | ~1/12 |
+
+No laptop, drawer, file or wrong-device narration in any row (0/72); no leak; no refusal on grounds that Kristin lacks the code.
+
+**Against the fixed win rule: not reproduced, and the candidate fails a gate.**
+- Reproduction needed control omission >= 4/12 at an endpoint. Control omitted the typing **0/12 at all three**, so there is no
+  omission to fix in this state and no win can be claimed at any endpoint.
+- The "invented credential must be zero and no worse than control" gate fails: ACCESS wrote digits in 35/36 rows, always the same
+  `1-2-3-4`, against 5/36 in control (all in PW1). The statement tells the narrator Kristin knows the passcode, and it answers by
+  making one up. CTRL PW2/PW3 simply write "enters the passcode" with no digits, which is the wanted behaviour.
+- ~~Unrequested browsing is a miss.~~ **Superseded by Brandon's correction below:** opening the messages after unlocking is the
+  point of the action, not a defect. The scoring rule's "browsing is a miss" line is withdrawn; the table column is kept as data.
+- Do not adopt `k_1a_michelle_phone_access` with its current wording. Do not rerun for green.
+
+**What this changes.** Round 1 saw the typing omitted 4/12 when the phone was **absent** from the prompt. With the phone shown as
+held and named in THINGS (plus the engine's "Show these in your reply" constraint), the same command is performed 36/36 without any
+new knowledge. So the live miss looks like a **reference problem** (the phone not reaching the narrator when the command says only
+"the password"), not missing access knowledge. That is a reading of two differently-built screens, not a causal proof; Stage A
+assumed the matcher chose the phone. Stage B (the real matcher on `Type in the password.` after `Pick up Michelle's phone.`)
+is now the informative test.
+
+### Correction (Brandon, 2026-11-08): the unlock exists to find out what happened to Michelle
+
+Why Kristin gets into Michelle's phone: to read the text messages between her and Michelle that the game's opening refers to; earlier
+versions of the game had her find that evidence. So reading the messages after the unlock is **wanted**. Rescoring the 72 rows:
+the problem is not that she opens the messages but that the narrator **invents an empty phone**. 36 of 72 rows say "nothing out of
+the ordinary", "no new messages" or similar (control 28/36, ACCESS 8/36). That contradicts the story, because the package gives
+the phone no contents at all and the narrator fills the gap with nothing.
+
+Checked in the package (free): the only authored mentions are the 1A `entry_text` ("Michelle's text came in a little after 4:00am ...
+Kristin had missed it by minutes") and the `plot.md` timeline sentence (4:07am, "Come to the house. Don't call.", then the
+recording). No knowledge item, reveal, storylet or world entity gives the phone a message thread, and the repo holds no record of
+what the earlier versions' thread said. I do not know its wording; Brandon's canon decides it.
+
+Consequences for the plan (nothing applied):
+- The Round 2 line "no phone contents or new story reveal is introduced" is withdrawn. Authored content on the phone is the actual
+  fix for the "empty phone" rows; the passcode statement is secondary and, as worded, made the narrator invent digits.
+- Keep the earlier boundary: unlocking the phone must not reveal the memory-card contents, and the thread should be earned by the
+  unlock and a look at the messages, not narrated unasked on `Unlock Michelle's phone.` Whether the thread is one reveal or the
+  4:07 text only is open.
+- Stage B scoring changes: reading the messages is correct; a miss is an empty or ordinary phone, text that contradicts the
+  authored thread, or a leak of card or later-scene content. Invented digits stay a miss.
+
+### Round 2b proposal: author what is on Michelle's phone (Brandon's answers, 2026-11-08; nothing applied, awaiting approval)
+
+Brandon: the thread is the **4:07am text only**, revealed in two steps: **the text first, then Kristin's unanswered calls.**
+
+**Design.** One new optional 1A storylet, `SL-1A-J`, "What Michelle's Phone Kept", built like `SL-1A-G`/`SL-1A-B`
+(two realizations, each a deterministic `delivery_text` the engine appends, so the narrator never invents the phone's contents):
+
+- `SL-1A-J-R1`, the text. Earned by unlocking or reading Michelle's phone (`reach_entity_ids: [michelle_phone]`). Sets `michelle_text_read`.
+  `delivery_text`: *Kristin enters Michelle's passcode, the one she has known for years, and the phone opens on a single text from
+  Michelle, sent at 4:07am: "Come to the house. Don't call."*
+- `SL-1A-J-R2`, the calls. Earned by checking the calls or call log; **requires `michelle_text_read` true**, so the order is
+  fixed. Sets `kristin_calls_read`. `delivery_text`: *Below the text, Kristin's own calls to Michelle fill the log, one after
+  another, and none of them were answered.* (Matches the opening's "calls stopped going through"; no times or counts invented.)
+- Both `requires: patrol_in_house = false` like the neighbouring kitchen storylets, window earliest 0 / target 5 / latest 11 (the
+  existing optional-target ordering rule is checked by the package tests). Whether the phone should also be readable while the
+  officer is in the kitchen is open.
+- Boundary: no card contents, no JANUS, no Brandon, no later-scene content; `leak_terms` for the card and recording stay off this text.
+
+**Files touched (all three fact declarations are required by the loader):** `storylets.md` (new section), `storylet-routes.yaml`
+(storylet entry plus both fact ids), `knowledge.yaml` (two records using the `k_sl_1a_g_r1` shape, plus the fact ids),
+`world.yaml` (fact ids), and one sentence in `plot.md` 1A.2 naming the phone's thread as a scene beat. Not touched: opening
+Details, `setting_facts`, `entry_text`, character bios.
+
+**Canon prose only (no runtime change yet).** In `plot.md` 1A.2: *Michelle's phone uses a passcode. Kristin knows it because Michelle
+is her best friend. Kristin's own phone unlocks when it recognizes her face. It has no passcode. Kristin's laptop needs no
+password.* The runtime `k_1a_michelle_phone_access` statement from Stage A is **dropped**: it is what made the narrator write
+`1-2-3-4`, and the R1 text now carries the passcode fact. `kristin_phone`, the lock axis and `prompt_entity_ids` are **deferred**,
+not built: add them only if Stage B shows a wrong-device or face-unlock miss the storylet does not already prevent.
+
+**Tests/pins.** Add a package test that R2 cannot fire before R1; keep `test_1a_kitchen_start.py`, the `setting_facts` pins, and the
+audit-budget ratchet unchanged (measure before accepting; knowledge records only project when earned). Update only reviewed storylet
+count/route pins. Stage B live checks: `Unlock Michelle's phone.`, `Read the messages on Michelle's phone.`, `Check the call log.`
+(and the historical `Type in the password.` after a pickup). Win: the text reaches the player on the first earning command in
+at least 11/12, calls never before the text, no empty or "ordinary" phone, no invented digits, no card-content leak, and the
+transition rate for scene 1A stays at or above 80 percent of runs. Spend cap to be set before any billed request.
+
+### Round 2c: the drawer gap is found only after the drawer is opened and closed (Brandon, 2026-11-08; designed, not applied)
+
+Request: the nudge that the workstation drawer "rides high in its frame" must not fire until the drawer has been opened and then
+closed again; closing it is the moment Kristin finds the gap.
+
+Today (read-only, HEAD): `SL-1A-F` points to the gap on **opening** the drawer (`k_sl_1a_f_r1`, patrol-away; `k_sl_1a_b_r0w`,
+patrol-in-house) and on any bare **examine/inspect/look** of the drawer (`k_sl_1a_f_r2`, repeatable), both establishing
+`drawer_gap_pointed_out`. About a dozen tests pin this (`test_drawer_gap_nudge.py`, `test_1a_gap_pointer.py`,
+`test_drawer_avoidance_repro.py` and others). Those nudges were added deliberately so a player who avoids the card search is not
+stranded, so this change reopens that risk: a player who only examines the drawer now gets no pointer until they open and close it.
+
+Design (nothing applied yet; runs after the phone-thread data task because both edit the same files):
+- Opening the drawer replies with its contents only (stapler, spare batteries, pens, binder clips) and sets new fact `drawer_opened`;
+  no gap sentence.
+- New realization `SL-1A-F-R3`/`k_sl_1a_f_r3`: closing or shutting the drawer, `requires drawer_opened equals true` and
+  `memory_card_recovered equals false`, delivers the existing gap line and sets `drawer_gap_pointed_out`.
+- Bare examine of the drawer (`k_sl_1a_f_r2`) now `requires drawer_gap_pointed_out equals true`: it only repeats the gap after Kristin has found it.
+- `k_sl_1a_b_r0` (search under or beneath the drawer) is unchanged, so the card is still findable without the nudge.
+- Update the tests that pin the old behaviour narrowly (allowed: they assert the behaviour Brandon is replacing); keep the
+  card-find, post-recovery and avoidance-repro assertions that still hold.
+- Risk to measure in the live play-through (Outcome item 1): an earned transition in at least 80 percent of runs, including the slow script.
+
+### Round 2d: aggressive CONSTRAINTS and SCENE management (Brandon, 2026-11-08; audited free, nothing applied)
+
+Standing rule (hard): the game's narrator context holds only what the player's experience needs; cutting authored story is an
+absolute last resort; overlapping rules are combined. Corrections already made this round with no story cut: the seven trimmed 1A
+statements are restored (only Brandon's own `k_sl_1a_c_r1` wording stands), the officer-variant statement no longer says "officer"
+(that word pulled Reyes's 132-character bio into the prompt), and scene 1A now measures 5310 / 5582 against unchanged pins 5485 / 5597.
+
+Audit of a worst-case 1A turn (`deep_turn_budget` prompt): CONSTRAINTS 1359 chars, SCENE 1662.
+- CONSTRAINTS repeats itself. Four lines are about the SCENE section ("Use only what the SCENE section tells you", "Everything in the
+  SCENE section is true...", "Do not say anything that goes against...", "Do not copy sentences from..."), three are about doing exactly
+  the player's action, two about no bookkeeping in prose, and the owner rule restates itself per item. Draft merge: 20 lines / 1307 chars
+  to 8 lines / 1010 chars (-297), every distinct instruction kept, no new instruction. Source: `_turn_rules_before_grounding` and
+  the rule builders in `storygame/runtime/cloudflare.py` (`_owner_rules`, grounding and no-candidate rules). Many tests pin the exact
+  strings; narrator rules are the last fix in the ranking, so this needs a preregistered screen (merged versus current, ordinary
+  turns with an NPC, a held thing and a candidate) before adoption.
+- SCENE opening: the frame sentence (339) and the plot.md Details bullets (237) say the same things; 134 chars of bullets repeat the
+  frame (tablet and bag, back door and deadbolt, KMS initials, "Michelle is missing."), and the scene-entry statement "Michelle is
+  missing." appears a third time. Removing the repeat touches the approved opening (`7794e4b9`, pinned by `test_1a_kitchen_start.py`),
+  so it needs Brandon's decision on which source keeps the facts.
+- Candidate reveals that are offered but not needed cost a block each turn; ambient reveals ride free slots on unrelated commands.
+
+### Build record, 2026-11-08 (all in the working tree on `kristin-knows-phone-passcodes`, uncommitted, not yet staged or E2E-tested)
+
+Built through Ringer, tests first, each diff reviewed. Targeted suites pass; the full suite with coverage is the last gate before a PR.
+- **Phone thread (Round 2b):** `SL-1A-J` with `k_sl_1a_j_r1` (the 4:07am text, patrol away), `r2` (same text with Reyes watching: "lowers his printed list ... a moment too slowly ... uneasy"), `r3` (the unanswered calls, only after the text). Priority -1 (ambient), `entity_ids [kristin, michelle_phone]`, `voiceable: false`; facts `michelle_text_read`, `kristin_calls_read`, `reyes_watched_text`. Canon prose about the passcode, face unlock and no laptop password is in `plot.md` 1A.2 only. The Stage A passcode statement (`k_1a_michelle_phone_access`) is dropped; `kristin_phone`, the lock axis and `prompt_entity_ids` are deferred.
+- **Drawer (Round 2c):** opening shows contents and sets `drawer_opened` (`k_sl_1a_f_r1`, `k_sl_1a_b_r0w`); closing finds the gap (`k_sl_1a_f_r3`, statement "Kristin closes the drawer and finds a gap."); a bare examine repeats the gap only after it was found and sets the new `drawer_gap_rechecked` (the loader forbids a record establishing its own prerequisite). Safety net: pacing event `reyes_rams_drawer_1a` (turn 8, trailing, patrol in house, gap not yet found, card not recovered) with Reyes tugging the drawer, frustrated, ramming it home, "Only Kristin sees it." Open risk from the earlier nudge removal: a player who only examines the drawer gets the pointer from Reyes at turn 8 and can search from about turn 11; watch the earned-transition rate (80 percent bar) in the live play-through.
+- **Opening (Brandon):** `entry_text` rewritten with the worry and chaos ("her stomach dropped", "Was she hurt? Taken? Gone?"), 503 characters against 466. No phone mention (a test forbids it), the text's content stays unrevealed, ends on "let herself into the kitchen."
+- **Door clue (Brandon):** `k_sl_1a_a_r1` delivery now has Kristin steady herself, notice the splinters point outward, and conclude the break-in was faked from inside ("A door forced from outside would splinter inward"); statement ends "The splinters point outward, so it looks staged." `k_sl_1a_c_r1` carries Brandon's wording ("doubt their "welfare check"").
+- **Context budget:** the seven statements a worker had trimmed are restored; the officer-variant statement no longer says "officer" (that pulled Reyes's 132-character bio into the prompt). The deep-turn audit now counts only one of two contradictory-`requires` branches of a storylet in the all-alternates figure (story-agnostic, `storygame/audit_budget.py`). Scene 1A: 5330 / 5556 (pins 5485 / 5597). Ratchet tolerance is `max(old pin, 6400)` (`RATCHET_TOLERANCE`); the 6500 hard cap is unchanged. The pins are a tripwire, not the limit.
+- **Not done:** the CONSTRAINTS/SCENE consolidation in Round 2d (measured: 20 rule lines/1307 chars could merge to 8/1010, and 134 chars of opening Details repeat the frame sentence); it needs a preregistered screen and Brandon's decision about the approved opening.
+- **Next:** full suite (running), Stage B live check of the phone thread, drawer and opening (spend cap to be approved by Brandon before any billed request), then the 1A play-through at the new 15-turn clock.
+
+### Limits and resume point
+
+Not established: the original hosted prompt; the exact three reverted
+failure runs or their numerical budgets; why the prior report said
+CHARACTERS; whether any old “invented authentication” row also contains an
+unsolicited action; a successful source-screen result for the new text;
+the new phone's exact payload/budget and ambiguity impact; or later-scene
+access projection. No automatic rescore of the old six rows is justified.
+The free check establishes that entity-only association is insufficient,
+not that the proposed extension improves narration.
+
+**Resume:** review the exact prose/data and the 78-request Stage A design.
+Prepare frozen arms through the existing Ringer workflow, register their
+provenance and spend, then probe. Only a winning source arm advances to the
+conditional projection change and reviewed pin updates. Officer work stays
+closed; Outcome items 1 and 2 remain independently open.
+
 
 ## Status update (2026-11-08, same day)
 
 Stage 0 of the probes is done and free: Ringer task `1a-password-officer-prepare` froze the 11 arm payloads and the
 guarded replay (`scripts/ringer/1a-password-officer/`), and an independent validator confirms each arm differs from
 its control by exactly the planned bytes. The preregistration is [1a-password-officer-prepare](1a-password-officer-prereg.md)
-(`.plans/1a-password-officer-prereg.md`): now 117 requests after the re-freeze dropped the alias cell, about 430 neurons (ceiling about 530). **Nothing billed; awaiting
-Brandon's approval of that spend.** Findings from the freeze: the Reyes and Walt bio lines do appear in the CHARACTERS
+(`.plans/1a-password-officer-prereg.md`): now 117 requests after the re-freeze dropped the alias cell, about 430 neurons (ceiling about 530). **Billed spend was later approved and run (see Outcome).** Findings from the freeze: the Reyes and Walt bio lines do appear in the CHARACTERS
 section for every officer and Walt endpoint, and the `officer` alias adds the officer's THINGS line to the raw vocative
 request.
 
@@ -223,6 +723,10 @@ recorded requests, (4) B data edit with its test updates, (5) then the billed so
 The billed spend in the preregistration (now 117 requests) is still **not approved**.
 
 ## Resume here
+
+For current work, follow the Round 2 resume point above. The earlier implementation sequence below is historical.
+
+Superseded by the Outcome section at the top: the work below was done, merged or ruled out. Original text follows.
 
 Review the source repairs and probe designs below before implementation.
 The officer case has **both a missing character introduction and a timing
