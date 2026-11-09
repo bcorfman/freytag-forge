@@ -1,0 +1,23 @@
+{
+  "name": "1a-phone-pickup",
+  "story_package": "data/stories/continuity-initiative",
+  "fixed_turns": 2,
+  "runtime": true,
+  "continuity_judge": false,
+  "fact_tracking_judge": false,
+  "item_facts": {
+    "mode": "single_call",
+    "seed_from_package": true
+  },
+  "scripts": {
+    "1A": [
+      {
+        "name": "pickup-then-examine",
+        "inputs": [
+          "Pick up the phone.",
+          "Examine the phone."
+        ]
+      }
+    ]
+  }
+}

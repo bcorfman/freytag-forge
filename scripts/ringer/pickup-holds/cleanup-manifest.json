@@ -1,0 +1,36 @@
+{
+ "run_name": "pickup-holds-over-echo",
+ "workdir": "/home/bcorfman/dev/ringer-work/pickup-holds-over-echo",
+ "max_parallel": 1,
+ "worktrees": false,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "pickup-holds-cleanup",
+   "task_type": "code-fix",
+   "engine": "codex",
+   "model": "gpt-5.6-luna",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=medium"
+   ],
+   "max_attempts": 2,
+   "timeout_s": 1200,
+   "check_timeout_s": 900,
+   "ownership": [
+    "/home/bcorfman/dev/freytag-forge/storygame/runtime/capture.py",
+    "/home/bcorfman/dev/freytag-forge/storygame/runtime/taking.py",
+    "/home/bcorfman/dev/freytag-forge/storygame/runtime/jev_questions.py",
+    "/home/bcorfman/dev/freytag-forge/tests/test_observation_resume.py",
+    "/home/bcorfman/dev/freytag-forge/tests/test_taking.py",
+    "/home/bcorfman/dev/freytag-forge/tests/test_jev_questions.py"
+   ],
+   "expect_files": [
+    "/home/bcorfman/dev/freytag-forge/tests/test_observation_resume.py"
+   ],
+   "spec": "You are a code worker on the freytag-forge repository at /home/bcorfman/dev/freytag-forge. Boundary: NO model call, NO network call, never git commit, never git add. Edit ONLY these files: storygame/runtime/capture.py, storygame/runtime/taking.py, storygame/runtime/jev_questions.py, tests/test_observation_resume.py, tests/test_taking.py, tests/test_jev_questions.py. Do not touch any other file; the working tree already holds an uncommitted, reviewed change (pickup detection: thing_command_kind in jev_questions.py, TakingResult.pickups and the kind_of_thing keyword in taking.py, pickup_ids in item_facts.py and capture.py). Keep all of it; make only the three cleanups below. Write or adjust tests first, see them fail, then change the source.\n\n1. capture.py, WorldCapture.before_turn: it now wraps take_before_put in try/except TypeError and falls back to the old call shape when the message mentions 'kind_of_thing'. Remove that try/except entirely and call take_before_put once with kind_of_thing=lambda c, t: thing_command_kind(adapter, c, t) as before. The only reason for the fallback is the stub checked_take_before_put(world, package, command, moves_thing) in tests/test_observation_resume.py (around line 333), which has the old four-argument signature. Update that stub to accept and forward keyword arguments (def checked_take_before_put(world, package, command, moves_thing, **kwargs) and pass **kwargs on to original_take_before_put). No other test should need changing; if one does, update it the same narrow way and say so.\n2. taking.py, take_before_put: with kind_of_thing given, treat the unanswered case as: moves is None AND picks_up is not True -> append the existing issue \"taking question unanswered for '<name>'\" and continue. So (None, False) and (None, None) give the issue; (None, True) records the pickup with no issue and no move; (False, True) records the pickup; (False, False) is silently ignored; (True, anything) moves and adds the step as today. The old path (kind_of_thing None) must stay exactly as it is. Add tests to tests/test_taking.py for (None, False) -> issue and (None, True) -> pickup recorded, no issue.\n3. jev_questions.py: thing_command_kind currently repeats the whole 'moves_thing' question dict that moves_thing() builds. Extract one private helper (for example _moves_thing_question()) that returns that dict, and use it in both places. Add a test in tests/test_jev_questions.py asserting the 'moves_thing' question sent by thing_command_kind is identical to the one sent by moves_thing for the same command and thing.\n\nHOW TO RUN. The sandbox cannot run uv. Use the main virtualenv from your working directory: PYTHONPATH=$PWD:$PWD/packages/worldkeeper/src TMPDIR=/tmp /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest -q -p no:cacheprovider <files>, and ruff as /home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff check/format <files>. Run the files you own, then the related suites: tests/test_taking.py tests/test_jev_questions.py tests/test_jev_use.py tests/test_held_by_echo.py tests/test_bench.py tests/test_runtime_capture.py tests/test_already_aboard_engine_reply.py tests/test_observation_resume.py tests/test_bench_item_facts.py tests/test_3c_item_facts_capture.py tests/test_3c_world_capture_wiring.py tests/test_item_facts_null_place.py tests/test_observation_held_relations.py tests/test_runtime_jev.py tests/test_jev_batching.py tests/test_place_scoped_feed.py. Output contract: only the six files above changed by you, all named suites green, ruff clean. In your final message list what you changed and any test you had to alter besides the stub.",
+   "check": "set -o pipefail\ncd /home/bcorfman/dev/freytag-forge\nexport TMPDIR=/tmp PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/packages/worldkeeper/src\nPY=/home/bcorfman/dev/freytag-forge/.venv/bin/python\n$PY -m ruff format --check storygame/runtime/capture.py storygame/runtime/taking.py storygame/runtime/jev_questions.py tests/test_observation_resume.py tests/test_taking.py tests/test_jev_questions.py bench/core.py bench/jev_use.py storygame/runtime/item_facts.py tests/test_held_by_echo.py tests/test_jev_use.py tests/test_bench.py tests/test_runtime_capture.py\n$PY -m ruff check storygame/runtime/capture.py storygame/runtime/taking.py storygame/runtime/jev_questions.py tests/test_observation_resume.py tests/test_taking.py tests/test_jev_questions.py bench/core.py bench/jev_use.py storygame/runtime/item_facts.py tests/test_held_by_echo.py tests/test_jev_use.py tests/test_bench.py tests/test_runtime_capture.py\nif grep -n 'except TypeError' storygame/runtime/capture.py; then echo 'TypeError fallback still in capture.py'; exit 1; fi\ngrep -q 'kind_of_thing' storygame/runtime/capture.py || { echo 'capture no longer passes kind_of_thing'; exit 1; }\ngrep -q 'pickup_ids' storygame/runtime/item_facts.py || { echo 'pickup_ids lost'; exit 1; }\n$PY -m pytest -q -p no:cacheprovider tests/test_taking.py tests/test_jev_questions.py tests/test_jev_use.py tests/test_held_by_echo.py tests/test_bench.py tests/test_runtime_capture.py tests/test_already_aboard_engine_reply.py tests/test_observation_resume.py tests/test_bench_item_facts.py tests/test_3c_item_facts_capture.py tests/test_3c_world_capture_wiring.py tests/test_item_facts_null_place.py tests/test_observation_held_relations.py tests/test_runtime_jev.py tests/test_jev_batching.py tests/test_place_scoped_feed.py 2>&1 | tail -25\n",
+   "verified": "the TypeError fallback is gone and its old-signature stub is updated, unanswered pickups give the issue, the moves_thing question is defined once, and the related suites and ruff pass"
+  }
+ ]
+}

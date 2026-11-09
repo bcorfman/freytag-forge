@@ -81,10 +81,18 @@ def test_pickup_reaches_next_prompt(monkeypatch: pytest.MonkeyPatch) -> None:
         {"refers": ["Michelle's phone"], "same_as": {}},
         _turn("Kristin checks her pocket."),
     )
-    engine = RuntimeEngine(state, provider, capture=_capture(state, provider))
+
+    def ask(_state, questions):
+        if set(questions) == {"moves_thing", "picks_up_thing"}:
+            return {"moves_thing": {"noul": 0.1}, "picks_up_thing": {"noul": 0.9}}
+        return {next(iter(questions)): True}
+
+    engine = RuntimeEngine(state, provider, capture=WorldCapture(provider, ask))
 
     engine.turn("Pick up Michelle's phone.")
+    assert provider.pickup_ids == frozenset({"michelle_phone"})
     engine.turn("Check that I still have Michelle's phone.")
+    assert provider.pickup_ids == frozenset()
 
     assert "Michelle's phone" in provider._things_block(narration=True)
     assert "Held by: Kristin" in provider._things_block(narration=True)

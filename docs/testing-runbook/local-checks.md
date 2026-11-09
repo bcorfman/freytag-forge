@@ -13,11 +13,10 @@ If the manifest is missing test files, refresh it with `uv run python scripts/re
 PR CI skips tests marked `nightly`; the nightly workflow runs them.
 
 ```bash
-TMPDIR=/tmp uv run pytest -q                                  # full suite without coverage
-TMPDIR=/tmp uv run pytest -q --cov                           # full suite + 90% coverage gate
+TMPDIR=/tmp uv run pytest -q -n auto                          # full suite without coverage, one worker per core
 TMPDIR=/tmp uv run pytest -q --run-nightly  # full suite including nightly end-to-end tests
 TMPDIR=/tmp uv run pytest -q --no-cov -m authoring_quality    # package authoring checks
-TMPDIR=/tmp uv run pytest -q --cov --cov-report= --cov-fail-under=0 -n 4 --shard-index N --shard-count 6  # one CI coverage shard; files are assigned by tests/shard_durations.json
+TMPDIR=/tmp uv run pytest -q --no-cov -n 4 --shard-index N --shard-count 6  # one CI shard; files are assigned by tests/shard_durations.json
 uv run coverage combine coverage-data && uv run coverage report  # nightly gate (coverage-nightly.yml)
 uv run ruff check . && uv run ruff format --check .
 # Repair lint/format debt when needed: uv run ruff check --fix . && uv run ruff format .
@@ -25,8 +24,7 @@ uv run ruff check . && uv run ruff format --check .
 cd frontend && npm test && npm run build
 ```
 
-**Pass:** all tests pass; the `--cov` run reaches at least 90% coverage; Ruff
-reports no remaining issues; `npm test` passes and Vite writes `frontend/dist/`.
+**Pass:** all tests pass; Ruff reports no remaining issues; `npm test` passes and Vite writes `frontend/dist/`.
 
 **Cleanup:** None. `frontend/dist/` is generated; delete it freely.
 

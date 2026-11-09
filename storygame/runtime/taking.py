@@ -14,6 +14,7 @@ class TakingResult:
     steps: tuple[str, ...]
     asked: bool
     issues: tuple[str, ...]
+    pickups: tuple[str, ...] = ()
 
 
 def _with_article(name: str) -> str:
@@ -24,7 +25,14 @@ def _with_article(name: str) -> str:
     return f"the {name}"
 
 
-def take_before_put(world, package, player_input: str, moves_thing: Callable[[str, str], bool | None]) -> TakingResult:
+def take_before_put(
+    world,
+    package,
+    player_input: str,
+    moves_thing: Callable[[str, str], bool | None],
+    *,
+    kind_of_thing: Callable[[str, str], tuple[bool | None, bool | None]] | None = None,
+) -> TakingResult:
     protagonist = package.protagonist_id
     items = {item.id: item for item in package.world.items}
     item_ids = tuple(item.id for item in package.world.items)
@@ -34,16 +42,25 @@ def take_before_put(world, package, player_input: str, moves_thing: Callable[[st
     asked = False
     issues: list[str] = []
     steps: list[str] = []
+    pickups: list[str] = []
     for item_id in sorted(candidates):
         if not _command_names_thing(player_input, world.names(item_id)):
             continue
         name = world.name(item_id)
-        answer = moves_thing(player_input, name)
+        moves, picks_up = (
+            kind_of_thing(player_input, name) if kind_of_thing else (moves_thing(player_input, name), None)
+        )
         asked = True
-        if answer is None:
+        if kind_of_thing is not None:
+            if moves is None and picks_up is not True:
+                issues.append(f"taking question unanswered for '{name}'")
+                continue
+        elif moves is None and picks_up is None:
             issues.append(f"taking question unanswered for '{name}'")
             continue
-        if not answer:
+        if not moves:
+            if picks_up:
+                pickups.append(item_id)
             continue
         parent = world.parent(item_id)
         result = world.move(item_id, protagonist)
@@ -60,4 +77,4 @@ def take_before_put(world, package, player_input: str, moves_thing: Callable[[st
             steps.append(sentence + ".")
 
     command = " ".join((*steps, player_input)) if steps else player_input
-    return TakingResult(command, tuple(steps), asked, tuple(issues))
+    return TakingResult(command, tuple(steps), asked, tuple(issues), tuple(pickups))

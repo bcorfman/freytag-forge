@@ -207,6 +207,12 @@ def ask_moves_thing(command: str, thing_name: str, *, environment=None, opener=N
     return jev_questions.moves_thing(_ask(environment=environment, opener=opener), command, thing_name)
 
 
+def ask_thing_command_kind(command: str, thing_name: str, *, environment=None, opener=None):
+    environment = os.environ if environment is None else environment
+    opener = urllib.request.urlopen if opener is None else opener
+    return jev_questions.thing_command_kind(_ask(environment=environment, opener=opener), command, thing_name)
+
+
 def ask_needs_to_stand(command: str, seat_name: str, within_reach, *, environment=None, opener=None) -> bool | None:
     environment = os.environ if environment is None else environment
     opener = urllib.request.urlopen if opener is None else opener

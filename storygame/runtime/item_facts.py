@@ -309,6 +309,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         self._match_offered_names = set()
         self._schema_cache = {}
         self.prior_steps: tuple[str, ...] = ()
+        self.pickup_ids: frozenset[str] = frozenset()
         self.prior_notice_steps: tuple[str, ...] = ()
         self.command_consumed = False
         self.observation_request: ObservationRequest | None = None
@@ -1541,7 +1542,14 @@ class ItemFactsProvider(CloudflareTurnProvider):
                     and isinstance(current_parent_name, str)
                     and holder_name.casefold() == current_parent_name.casefold()
                 )
-                if holder_name and place_matches_current_parent and not holder_matches_current_parent:
+                protagonist_id = self.state.package.world.protagonist_id
+                pickup_overrides_echo = entry_id in self.pickup_ids and holder_id == protagonist_id
+                if (
+                    holder_name
+                    and place_matches_current_parent
+                    and not holder_matches_current_parent
+                    and not pickup_overrides_echo
+                ):
                     value["place"] = world.name(current_parent)
                     value.pop("held_by")
                     continue

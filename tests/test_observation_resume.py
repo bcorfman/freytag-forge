@@ -330,13 +330,13 @@ def test_referent_match_finishes_before_implicit_taking(monkeypatch: pytest.Monk
     monkeypatch.setattr(world_type, "move", checked_world_move)
     original_take_before_put = capture_module.take_before_put
 
-    def checked_take_before_put(world, package, command, moves_thing):
+    def checked_take_before_put(world, package, command, moves_thing, **kwargs):
         if not prepare_completed.is_set():
             calls[0].release.set()
             calls[0].thread.join()
             raise AssertionError("implicit taking began before referent matching completed")
         take_started.set()
-        return original_take_before_put(world, package, command, moves_thing)
+        return original_take_before_put(world, package, command, moves_thing, **kwargs)
 
     monkeypatch.setattr(capture_module, "take_before_put", checked_take_before_put)
     capture = WorldCapture(provider, ask)

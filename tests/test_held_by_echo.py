@@ -77,6 +77,28 @@ def test_held_by_with_different_place_still_moves_to_that_place(monkeypatch: pyt
     assert facts["lamp"]["place"] == "the yard"
 
 
+def test_flagged_protagonist_pickup_overrides_place_echo(monkeypatch: pytest.MonkeyPatch) -> None:
+    provider = _provider(monkeypatch)
+    provider.pickup_ids = frozenset({"lamp"})
+
+    facts, issues = provider.apply_item_facts({"lamp": {"place": "room", "held_by": "Ari", "owner": "Ari"}})
+
+    assert issues == []
+    assert provider._world().parent("lamp") == "hero"
+    assert facts["lamp"]["place"] == "Ari"
+
+
+def test_flagged_other_holder_still_loses_to_place_echo(monkeypatch: pytest.MonkeyPatch) -> None:
+    provider = _provider(monkeypatch)
+    provider.pickup_ids = frozenset({"lamp"})
+
+    facts, issues = provider.apply_item_facts({"lamp": {"place": "room", "held_by": "Mira"}})
+
+    assert issues == []
+    assert provider._world().parent("lamp") == "room"
+    assert facts["lamp"]["place"] == "the room"
+
+
 def test_unchanged_place_echo_drops_unknown_holder(monkeypatch: pytest.MonkeyPatch) -> None:
     provider = _provider(monkeypatch)
 

@@ -18,8 +18,8 @@ variations).
 
 - Run from the repository root. Pytest needs `TMPDIR=/tmp` (WSL); use
   `uv run python`, never bare `python`.
-- Coverage is off unless `--cov` is given. Focused pytest runs need no extra
-  flag; use the full suite with `--cov` as the coverage check of record.
+- Coverage is off unless `--cov` is given, and only the nightly job gives it.
+  Focused and full pytest runs need no extra flag.
 - Never pin collection counts in tests or in this file.
 - Hosted checks run against staging only, never a local API. Staging deploys
   only from `main`.
