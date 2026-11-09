@@ -116,7 +116,7 @@ item_placements:
 setting_facts:
 - Sirens carry from the next street.
 - A dog barks behind the empty house next door.
-entry_text: "Michelle's text came in a little after 4:00am, while Kristin was finishing a late-night shift. It came in during all the other emergency alerts, and Kristin had missed it by minutes. Trying to call Michelle back was hopeless - calls stopped going through. Kristin jumped in her truck to drive to Michelle's house, but police cars, ambulances, and blocked intersections turned the drive into an ordeal. She found the back door forced and let herself into the kitchen.\n\n"
+entry_text: "Michelle's text came in a little after 4:00am, lost among the emergency alerts while Kristin finished a late-night shift. She missed it by minutes. When she read it, her stomach dropped. Every call back failed. Kristin ran for her truck and drove as hard as the streets allowed, past sirens, ambulances, police cars, and intersections blocked for no reason anyone would explain. Was she hurt? Taken? Gone? Not knowing was the worst of it. She found the back door forced and let herself into the kitchen.\n\n"
 transition_ids: [t_1a_1b]
 bridge_text:
   t_1a_1b: >-
@@ -154,13 +154,17 @@ Kristin knows Michelle would not leave her kitchen like this.
 
 Kristin notices the drawer on Michelle's workstation has Kristin's initials 'KMS' newly carved into it, making it worth looking at more closely. Kristin did not carve them. In college they hid notes beneath desk drawers, and Michelle has always known where Kristin would look.
 
-The drawer rides high in its frame. A thin gap beneath its lower edge is wide enough for Kristin's fingers.
+When Kristin opens the drawer, it slides out to reveal a stapler, spare batteries, pens, and binder clips. When she closes it again, it rides high in its frame, leaving a thin gap beneath its lower edge wide enough for Kristin's fingers.
 
 ### Scene 1A.2 — Michelle’s Last Investigation
 
 **Details:** Michelle's memory card; Kristin's laptop in her truck; Continuity Initiative files; population stabilization centers; Michelle’s research notes
 
-Kristin finds Michelle's memory card taped beneath the drawer. She takes the card out to her truck and opens it on her laptop.
+Michelle's phone uses a passcode. Kristin knows it because Michelle is her best friend. Kristin's own phone unlocks when it recognizes her face. It has no passcode. Kristin's laptop needs no password.
+
+On Michelle's phone, Kristin finds the 4:07am text and then her own unanswered calls. If Officer Reyes is in the kitchen, his watching makes her uneasy.
+
+Kristin searches beneath the drawer and finds Michelle's memory card taped there. She takes the card out to her truck and opens it on her laptop.
 
 The card contains fragments of Michelle’s research into a federal emergency program called the **Continuity Initiative**. Michelle titled the folders after their old dorm, so only Kristin would read them as a message.
 

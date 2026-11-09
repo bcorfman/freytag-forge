@@ -288,13 +288,15 @@ def test_reach_scoped_committed_statements_follow_the_protagonist(monkeypatch: p
     inside = _state_at("mcgehee_home")
     outside = _state_at("outside_house")
     for state in (inside, outside):
-        state.facts.assert_fact(Fact(predicate="memory_card_recovered", subject="story", value="true"))
+        state.facts.assert_fact(Fact(predicate="memory_card_recovered", subject="story", value="false"))
         state.facts.assert_fact(Fact(predicate="drawer_gap_pointed_out", subject="story", value="true"))
+        state.facts.assert_fact(Fact(predicate="drawer_gap_rechecked", subject="story", value="true"))
+        state.facts.assert_fact(Fact(predicate="drawer_opened", subject="story", value="true"))
         apply_world_effects(PACKAGE, state.facts)
     inside_user = _turn_prompt(monkeypatch, inside)["user"]
     outside_user = _turn_prompt(monkeypatch, outside)["user"]
-    assert "Kristin opens the drawer and is pointed toward the thin gap" in inside_user
-    assert "Kristin looks over the drawer and is pointed toward the thin gap beneath its lower edge." in inside_user
+    assert "Kristin looks over the drawer." in inside_user
+    assert "Kristin opens the drawer." in inside_user
     assert "thin gap" not in outside_user
 
 

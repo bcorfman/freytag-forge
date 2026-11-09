@@ -194,6 +194,47 @@ Each entry below is authoring data, not a player action menu.
 - target: `turn 5`
 - latest: `turn 10`
 
+### SL-1A-J — What Michelle's Phone Kept
+
+**Source beats:** [1A.2 — Michelle’s Last Investigation](plot.md#scene-1a2--michelles-last-investigation)
+
+**Allowed scene:** `1A`
+
+**Available when**
+- No additional condition beyond being in scene 1A.
+
+**Participants / items**
+- Kristin Schweitzer
+- Michelle's phone
+- Officer Reyes, if the patrol is in the house
+
+**Dramatic purpose**
+- Let Michelle's phone preserve a private warning and Kristin's unanswered attempts to reach her, while an officer's watching makes the discovery uneasy.
+
+**Possible realizations**
+- Kristin enters Michelle's passcode and reads the 4:07am text while the patrol is not in the house.
+- Kristin enters Michelle's passcode and reads the 4:07am text while Officer Reyes watches from the kitchen.
+- Kristin scrolls below the text and sees her own unanswered calls to Michelle.
+
+**Effects**
+- Sets `michelle_text_read` when Kristin reads the text.
+- Sets `kristin_calls_read` when Kristin sees her unanswered calls.
+- Preserves the existing abduction suspicion without revealing what happened to Michelle.
+
+**Completion**
+- Kristin has seen her own unanswered calls to Michelle on the phone.
+
+**Abort**
+- Kristin leaves scene 1A.
+
+**Protected boundary**
+- Does not reveal who took Michelle, JANUS, Brandon’s role, the detention network, or the true mechanics of the disappearances.
+
+**Pacing window**
+- earliest: `turn 0`
+- target: `turn 5`
+- latest: `turn 11`
+
 ### SL-2C-F — The Camera Lets Go
 
 **Source beats:** [2C.2 — The Purge Order](plot.md#scene-2c2--the-purge-order)
@@ -351,7 +392,7 @@ Each entry below is authoring data, not a player action menu.
 
 ---
 
-### SL-1A-F — The Drawer Points to the Gap
+### SL-1A-F — Opening and Closing the Drawer
 
 **Source beats:** [1A.1 — Michelle Is Gone](plot.md#scene-1a1--michelle-is-gone)
 
@@ -366,15 +407,17 @@ Each entry below is authoring data, not a player action menu.
 - Hidden memory card
 
 **Dramatic purpose**
-- Give opening the drawer or examining the initials a short authored reply.
-- Point Kristin back toward the thin gap without recovering the memory card.
+- Let opening the drawer show its contents without revealing the gap.
+- Let closing the opened drawer point Kristin toward the thin gap without recovering the memory card.
 
 **Possible realizations**
-- Kristin pulls or opens the drawer and notices the thin gap beneath its lower edge.
-- Kristin examines the carved initials and notices the thin gap beneath the drawer.
+- Kristin pulls or opens the drawer and sees a stapler, spare batteries, pens, and binder clips.
+- Kristin examines the carved initials after the gap has been found and repeats what she sees beneath the drawer.
+- Kristin closes the opened drawer and finds the thin gap beneath its lower edge.
 
 **Effects**
-- Sets `drawer_gap_pointed_out`.
+- Opening the drawer sets `drawer_opened`.
+- Closing the opened drawer sets `drawer_gap_pointed_out`.
 - Does not recover the memory card.
 
 **Completion**

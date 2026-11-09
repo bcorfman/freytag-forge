@@ -39,7 +39,7 @@ def _real_capture(
     return provider, record, calls
 
 
-def test_search_drawer_opens_it_and_keeps_gap_nudge(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_search_drawer_opens_it_and_waits_for_the_close(monkeypatch: pytest.MonkeyPatch) -> None:
     command = "Search the drawer."
     state = _gap_state()
     provider, record, calls = _real_capture(
@@ -58,8 +58,7 @@ def test_search_drawer_opens_it_and_keeps_gap_nudge(monkeypatch: pytest.MonkeyPa
     assert context is not None
     assert set(("binder clips", "pens", "spare batteries", "stapler")) <= set(context.required)
     handoff = _handoff(state, command)
-    assert handoff is not None
-    assert handoff.candidate.id == NUDGE
+    assert handoff is None
 
 
 def test_search_under_drawer_stays_closed_and_finds_card(monkeypatch: pytest.MonkeyPatch) -> None:

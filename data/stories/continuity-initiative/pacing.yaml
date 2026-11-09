@@ -37,6 +37,23 @@ events:
   realizations:
   - verbatim: true
     text: "The officer plants himself between her and the front door and holds out a gloved hand. \"Whatever you just took from that desk. Let's see it, ma'am. Right now.\""
+- id: reyes_rams_drawer_1a
+  scene_id: 1A
+  trailing: true
+  at_turn: 8
+  when:
+  - fact_id: patrol_in_house
+    equals: true
+  - fact_id: drawer_gap_pointed_out
+    equals: false
+  - fact_id: memory_card_recovered
+    equals: false
+  effects:
+  - fact_id: drawer_gap_pointed_out
+    equals: true
+  realizations:
+  - verbatim: true
+    text: "Reyes tugs at the workstation drawer. It sticks. Frustrated, he rams it back into place with the heel of his hand, and it sits high in its frame. A thin gap shows beneath its lower edge, wide enough for Kristin's fingers. Reyes never looks down. Only Kristin sees it."
 - id: patrol_leaves_1a
   scene_id: 1A
   trailing: true

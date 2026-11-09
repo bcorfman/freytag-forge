@@ -111,6 +111,7 @@ def test_recovery_before_arrival_reaches_plain_departure_without_press() -> None
 
 def test_unwitnessed_run_reaches_plain_departure_without_press() -> None:
     state = _state(turn_index=9, patrol_on_scene=True, patrol_in_house=True)
+    state.facts.assert_fact(Fact(predicate="drawer_gap_pointed_out", subject="story", value="true"))
     engine = RuntimeEngine(state, _neutral_provider)
 
     engine.turn("Wait.")
@@ -128,6 +129,7 @@ def test_departure_after_demand_acknowledges_the_officer() -> None:
         officer_demanded_card=True,
     )
     state.fired_event_ids.add("officer_presses_1a")
+    state.facts.assert_fact(Fact(predicate="drawer_gap_pointed_out", subject="story", value="true"))
 
     result = RuntimeEngine(state, _neutral_provider).turn("Wait.")
     texts = [segment.text for segment in result.segments]

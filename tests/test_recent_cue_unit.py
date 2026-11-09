@@ -69,6 +69,9 @@ def _cue_state(monkeypatch: pytest.MonkeyPatch) -> tuple[RuntimeState, RuntimeEn
     state = _state()
     engine, provider = _engine(monkeypatch, state)
     engine.turn("Open the drawer.")
+    state.fired_event_ids.discard("SL-1A-F")
+    state.active_event_ids.add("SL-1A-F")
+    engine.turn("Close the drawer.")
     return state, engine, provider
 
 
@@ -149,7 +152,7 @@ def test_rejected_turn_does_not_expire_cue(monkeypatch: pytest.MonkeyPatch) -> N
             )
         }
     )
-    responses = iter([_normal_response(None), rejected, rejected, _normal_response(None)])
+    responses = iter([_normal_response(None), _normal_response(None), rejected, rejected, _normal_response(None)])
 
     def next_response(_request: object, **_kwargs: object) -> _Response:
         return next(responses)
@@ -158,6 +161,9 @@ def test_rejected_turn_does_not_expire_cue(monkeypatch: pytest.MonkeyPatch) -> N
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
     engine = RuntimeEngine(state, provider)
     engine.turn("Open the drawer.")
+    state.fired_event_ids.discard("SL-1A-F")
+    state.active_event_ids.add("SL-1A-F")
+    engine.turn("Close the drawer.")
     record_count = len(state.turn_records)
 
     with pytest.raises(ProposalValidationError):

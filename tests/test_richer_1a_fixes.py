@@ -86,8 +86,11 @@ def test_the_kitchen_storylet_has_two_separate_reveals():
 def test_a_calendar_command_offers_only_the_walls_reveal():
     state = RuntimeState.bootstrap(PACKAGE)
     engine = RuntimeEngine(state, lambda _command: {"segments": [{"kind": "narration", "text": "Kristin looks."}]})
-    ids = _candidate_ids(state, engine, "Look at the wall calendar.")
-    assert "k_sl_1a_g_r2" in ids and "k_sl_1a_g_r1" not in ids
+    engine._activate_pacing()
+    ranked = [
+        candidate.id for candidate in engine.projector.project(state, "player", "Look at the wall calendar.").candidates
+    ]
+    assert ranked[0] == "k_sl_1a_g_r2"  # the command's own evidence ranks first; free slots may hold ambient reveals
 
 
 def test_the_neighbor_does_not_depend_on_the_patrol_being_away():

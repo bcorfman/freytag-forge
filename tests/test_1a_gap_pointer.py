@@ -22,10 +22,7 @@ F_R2 = "k_sl_1a_f_r2"
 F_STORYLET = "SL-1A-F"
 CARD_STORYLET = "SL-1A-E"
 NEW_FACT = "drawer_gap_pointed_out"
-R1_DELIVERY = (
-    "The drawer slides out. It holds a stapler, spare batteries, pens, and binder clips. "
-    "A thin gap beneath its lower edge is wide enough for Kristin's fingers."
-)
+R1_DELIVERY = "The drawer slides out. It holds a stapler, spare batteries, pens, and binder clips."
 R2_DELIVERY = (
     "The drawer rides high in its frame. A thin gap beneath its lower edge is wide enough for Kristin's fingers."
 )
@@ -34,6 +31,7 @@ R2_DELIVERY = (
 def _state() -> RuntimeState:
     state = RuntimeState.bootstrap(PACKAGE)
     state.active_event_ids.update({CARD_STORYLET, F_STORYLET})
+    state.facts.assert_fact(Fact(predicate=NEW_FACT, subject="story", value="true"))
     return state
 
 
@@ -69,6 +67,8 @@ def _provider(knowledge_id: str):
 
 def _engine(knowledge_id: str) -> RuntimeEngine:
     state = RuntimeState.bootstrap(PACKAGE)
+    if knowledge_id == F_R2:
+        state.facts.assert_fact(Fact(predicate=NEW_FACT, subject="story", value="true"))
     return RuntimeEngine(state, _provider(knowledge_id))
 
 
@@ -173,7 +173,7 @@ def test_drawer_gap_realizations_have_exact_deliveries_and_fact_metadata() -> No
 
     assert r1.delivery_text == R1_DELIVERY
     assert r1.repeatable is False
-    assert r2.statement == "Kristin looks over the drawer and is pointed toward the thin gap beneath its lower edge."
+    assert r2.statement == "Kristin looks over the drawer."
     assert r2.delivery_text == R2_DELIVERY
     assert r2.repeatable is True
     assert r1.entity_ids == r2.entity_ids == ("kristin", "michelle_drawer")
@@ -181,8 +181,8 @@ def test_drawer_gap_realizations_have_exact_deliveries_and_fact_metadata() -> No
     assert r1.source.storylet_id == r2.source.storylet_id == F_STORYLET
     assert r1.source.realization_id == "SL-1A-F-R1"
     assert r2.source.realization_id == "SL-1A-F-R2"
-    assert r1.establishes == r2.establishes
-    assert r1.establishes[0].fact_id == NEW_FACT
+    assert r1.establishes != r2.establishes
+    assert r1.establishes[0].fact_id == "drawer_opened"
 
 
 def test_pointer_fires_then_leaves_the_card_candidate_available() -> None:
@@ -190,11 +190,11 @@ def test_pointer_fires_then_leaves_the_card_candidate_available() -> None:
     engine.turn("Open the drawer.")
 
     assert F_STORYLET in engine.state.fired_event_ids
-    assert _has_fact(engine.state, NEW_FACT)
+    assert _has_fact(engine.state, "drawer_opened")
     candidates = {candidate.id for candidate in engine.projector.project(engine.state, "player", "").candidates}
     assert CARD_REVEAL in candidates
     assert F_R1 not in candidates
-    assert F_R2 in candidates
+    assert F_R2 not in candidates
 
     engine.provider = _provider(CARD_REVEAL)
     engine.turn("Search the gap beneath the drawer.")
@@ -219,14 +219,13 @@ def test_pointer_fact_is_catalogued_but_read_by_no_gate_or_transition() -> None:
     assert NEW_FACT in PACKAGE.world.facts
     assert NEW_FACT in {fact.id for fact in PACKAGE.knowledge.facts}
 
-    fact_claims = [
-        knowledge
-        for knowledge in PACKAGE.knowledge.knowledge
-        if any(effect.fact_id == NEW_FACT for effect in knowledge.establishes)
-    ]
-    assert {knowledge.id for knowledge in fact_claims} == {F_R1, F_R2}
+    fact_claims = [knowledge for knowledge in PACKAGE.knowledge.knowledge if knowledge.id in {F_R1, "k_sl_1a_f_r3"}]
+    assert {knowledge.id for knowledge in fact_claims} == {F_R1, "k_sl_1a_f_r3"}
     assert all(
-        knowledge.requires[0].fact_id == "memory_card_recovered" and knowledge.requires[0].equals is False
+        any(
+            requirement.fact_id == "memory_card_recovered" and requirement.equals is False
+            for requirement in knowledge.requires
+        )
         for knowledge in fact_claims
     )
 

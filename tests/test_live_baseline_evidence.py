@@ -259,7 +259,7 @@ def test_real_call_cap_inside_preview_records_logical_request_without_http_call(
     )
 
     def stop_before_preview(self):
-        if self.calls_made >= 4:
+        if self.calls_made >= 5:
             self.stop_reason = "MAX_CALLS_EXCEEDED"
             raise module.CallCapExceeded("max-calls exceeded")
         return original_before_call(self)
