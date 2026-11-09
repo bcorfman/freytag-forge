@@ -13,6 +13,9 @@ from storygame.story_package.loader import load_story_package
 LIGHTHOUSE = Path("tests/fixtures/stories/lighthouse-keeper")
 REAL_PACKAGE = Path("data/stories/continuity-initiative")
 FIXTURE = Path("tests/fixtures/deep_turn_budget.json")
+# The pins are a regression tripwire, not the limit: a scene may grow to this size before the ratchet fails.
+# Brandon: no warning until 6400. The real hard cap (6500, checked below) is unchanged.
+RATCHET_TOLERANCE = 6400
 KNOWN_OVER_BUDGET = frozenset({"3A", "3B", "3C"})  # O8 in .plans/richer-3a-open-issues-plan.md.
 
 
@@ -130,7 +133,8 @@ def test_real_package_ratchet() -> None:
         for key in ("narration_chars", "narration_chars_all_alternates"):
             old_pin = expected[key]
             new_value = actual[scene_id][key]
-            assert new_value <= old_pin, f"{scene_id}: old pin {old_pin}, new value {new_value}"
+            ceiling = max(old_pin, RATCHET_TOLERANCE)
+            assert new_value <= ceiling, f"{scene_id}: ceiling {ceiling} (old pin {old_pin}), new value {new_value}"
 
     assert all(row["entry_narration_chars"] <= row["narration_chars"] for row in rows), "entry turn exceeds deep turn"
 

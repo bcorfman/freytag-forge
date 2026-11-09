@@ -2,6 +2,7 @@
   "version": 1,
   "files": {
     "tests/test_1a_back_door_gap.py": 0.09,
+    "tests/test_1a_drawer_close_gap.py": 8.96,
     "tests/test_1a_drawer_words.py": 0.18,
     "tests/test_1a_gap_pointer.py": 0.84,
     "tests/test_1a_kitchen_start.py": 0.18,
@@ -9,6 +10,7 @@
     "tests/test_1a_officer_press.py": 0.68,
     "tests/test_1a_pacing_timeline.py": 3.33,
     "tests/test_1a_patrol.py": 1.24,
+    "tests/test_1a_phone_thread.py": 0.48,
     "tests/test_1a_research_files_eligibility.py": 0.32,
     "tests/test_1a_spine_prompts.py": 0.01,
     "tests/test_1a_witnessed_recovery.py": 0.94,
@@ -64,6 +66,7 @@
     "tests/test_already_aboard_engine_reply.py": 0.77,
     "tests/test_attempt_bundle.py": 0.99,
     "tests/test_audit_budget.py": 13.72,
+    "tests/test_audit_budget_branches.py": 13.33,
     "tests/test_audit_unbound_item.py": 1.67,
     "tests/test_bench.py": 5.07,
     "tests/test_bench_item_facts.py": 17.81,

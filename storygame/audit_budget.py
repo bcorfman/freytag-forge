@@ -46,6 +46,8 @@ def _story_fact(state: RuntimeState, fact_id: str, value: object) -> None:
 def _selected_entries(
     package: StoryPackage, scene_id: str, *, one_per_storylet: bool
 ) -> tuple[KnowledgeDefinition, ...]:
+    """Select scene knowledge, counting only one contradictory branch per storylet."""
+
     selected: list[KnowledgeDefinition] = []
     seen_storylets: set[str] = set()
     for entry in package.knowledge.knowledge:
@@ -54,6 +56,18 @@ def _selected_entries(
         storylet_id = entry.source.storylet_id
         if one_per_storylet and storylet_id is not None and storylet_id in seen_storylets:
             continue
+        if not one_per_storylet and storylet_id is not None:
+            prior_entries = (item for item in selected if item.source.storylet_id == storylet_id)
+            if any(
+                prior_predicate.fact_id == predicate.fact_id
+                and prior_predicate.equals is not None
+                and predicate.equals is not None
+                and prior_predicate.equals != predicate.equals
+                for prior_entry in prior_entries
+                for prior_predicate in prior_entry.requires
+                for predicate in entry.requires
+            ):
+                continue
         selected.append(entry)
         if storylet_id is not None:
             seen_storylets.add(storylet_id)

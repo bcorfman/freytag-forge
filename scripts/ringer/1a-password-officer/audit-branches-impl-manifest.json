@@ -1,0 +1,31 @@
+{
+  "run_name": "1a-audit-branches-impl",
+  "workdir": "/home/bcorfman/dev/ringer-work/1a-audit-branches-impl",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "count-exclusive-branches-once",
+      "task_type": "code-feature",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=medium"
+      ],
+      "max_attempts": 2,
+      "timeout_s": 1200,
+      "check_timeout_s": 900,
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/storygame/audit_budget.py"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/storygame/audit_budget.py"
+      ],
+      "spec": "You are a code worker for the freytag-forge repository at /home/bcorfman/dev/freytag-forge. Boundary: NO model call, NO network call, never git commit. You own ONLY /home/bcorfman/dev/freytag-forge/storygame/audit_budget.py. Do not edit any test, fixture (tests/fixtures/deep_turn_budget.json), data file or other source file, and do not run `python -m storygame.audit_budget --write`.\n\nRULE (approved by Brandon, option 3). storygame/audit_budget.py measures a pessimistic 'deep turn' prompt. Its `narration_chars_all_alternates` figure (built by `_state_for(..., one_per_storylet=False)` via `_selected_entries`) currently establishes EVERY knowledge entry of every storylet. Some entries of one storylet are exclusive branches that are not realistically earned together: two entries of the SAME storylet (same source.storylet_id) whose `requires` contain a predicate on the same fact_id with different non-null `equals` values (for example patrol_in_house equals false versus equals true) are alternative branches of one situation. New behaviour: in the all-alternates state, keep the first such entry in package order and skip any later entry of that storylet that is exclusive with an already-kept entry of the same storylet. Everything else stays as is: entries without contradictory requires are all still counted; the one-per-storylet figure (narration_chars) is unchanged; the pins in tests/fixtures/deep_turn_budget.json are NOT regenerated or edited (the ratchet stays at its current values; the new measurement is simply <= the old). Story-agnostic: no scene, fact or storylet ids in the code. In the real package the only effect today should be that the scene 1A all-alternates prompt no longer contains the statement of knowledge record k_sl_1a_j_r2 (its requires patrol_in_house true contradicts k_sl_1a_j_r1 requires patrol_in_house false, same storylet SL-1A-J).\n\nMake the tests in /home/bcorfman/dev/freytag-forge/tests/test_audit_budget_branches.py pass by changing `_selected_entries` in /home/bcorfman/dev/freytag-forge/storygame/audit_budget.py (and its docstring, plus the module docstring if it describes the figure). Contradiction test: two requires predicates conflict when they name the same fact_id and both `equals` values are not None and differ. Keep the change small and story-agnostic.\nHOW TO RUN (from /home/bcorfman/dev/freytag-forge; never bare python, never uv): `export TMPDIR=/tmp PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/packages/worldkeeper/src /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest /home/bcorfman/dev/freytag-forge/tests/test_audit_budget_branches.py tests/test_audit_budget.py -q -p no:cacheprovider 2>&1 | tail -20`; then `/home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff format /home/bcorfman/dev/freytag-forge/storygame/audit_budget.py && /home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff check /home/bcorfman/dev/freytag-forge/storygame/audit_budget.py`. Report the new scene 1A figures from `/home/bcorfman/dev/freytag-forge/.venv/bin/python -m storygame.audit_budget 2>&1 | grep -E '^ +1A'` (read only; do not write the fixture).",
+      "check": "set -o pipefail\ncd /home/bcorfman/dev/freytag-forge\nexport TMPDIR=/tmp PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/packages/worldkeeper/src\n/home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff check /home/bcorfman/dev/freytag-forge/storygame/audit_budget.py\n/home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff format --check /home/bcorfman/dev/freytag-forge/storygame/audit_budget.py\n/home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest /home/bcorfman/dev/freytag-forge/tests/test_audit_budget_branches.py tests/test_audit_budget.py -q -p no:cacheprovider 2>&1 | tail -15\ngit diff --quiet -- tests/fixtures/deep_turn_budget.json\n/home/bcorfman/dev/freytag-forge/.venv/bin/python -m storygame.audit_budget 2>&1 | grep -E '^ +[0-9][A-C]'\n",
+      "verified": "the audit counts exclusive branches once; pins untouched"
+    }
+  ]
+}
