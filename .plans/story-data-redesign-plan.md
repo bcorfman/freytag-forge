@@ -480,6 +480,24 @@ Do not invent a speedup percentage before these measurements.
 
 ### Phase 1 — Schema and compiler contract
 
+Validation layers (added 2026-11-09 at Brandon's request; the intended end state is
+"validate the story against rules, like RelaxNG against XML"). Every check belongs
+to exactly one layer, has a stable name, and reports source file, record and field:
+
+| Layer | Question | Analogy | Severity | Status |
+| --- | --- | --- | --- | --- |
+| 1. Shape | Right fields, types, enums, required values? | RelaxNG / XSD types | **Error**: build fails | Largely exists in the typed models (`storygame/story_package/models.py`); coverage not yet audited |
+| 2. Integrity | Unique IDs, no dangling references, no cycles, one owner per fact and passage, claims authorized by their source effects | XSD key/keyref | **Error**: build fails | Partly exists; Phase 1 adds the missing checks and the ownership rule |
+| 3. Story rules | Custody, co-location, no strand, effects read by nothing | Schematron assertions | **Flag**: reported for review, never blocks a build | Slice 2 ports the Reyes checks |
+| 4. Narrative judgment | Is a response plausible, a consequence missing, a repair sound? | None | **Advisory**: LLM review plus author decision | Deferred blind run (see above) |
+
+Rules: layers 1 and 2 are pure functions of the authored data and must be
+deterministic. Layer 3 rules may run the real engine (simulation), must stay
+deterministic, carry a name and a quoted evidence trail, and each needs a test that
+a seeded defect trips it and a clean story does not. A layer 3 flag the author has
+reviewed can be marked "accepted" in the review overlay (slice 3) so it stops
+repeating, without deleting the rule. Layer 4 never produces pass/fail.
+
 - [ ] Specify typed records, stable IDs, reference resolution, source maps,
   disclosure boundaries, and versioning. Document migration mappings.
 - [ ] Specify causal-review records and provenance for canon, inferred concerns,
