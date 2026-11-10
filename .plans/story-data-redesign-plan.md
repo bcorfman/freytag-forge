@@ -1,6 +1,6 @@
 # Story authoring, test contracts, and compiled runtime data
 
-Status (2026-11-09): **Phase 0 measured; review-tooling slice 1 built and committed;
+Status (2026-11-10): **Phase 0 measured; review-tooling slices 1 and 2 built;
 the model decision is the one open blocker for the migration.** No story data, test
 or deployment has changed. This plan is separate from ongoing story edits and does
 not supersede their plans.
@@ -22,7 +22,7 @@ Companion documents (evidence lives there, not here):
 Two tracks. Track A does not wait for Track B.
 
 **Track A, review tooling on today's story package: unblocked.**
-Next is slice 2 (gap checks as named rules). See section 6.
+Next is slice 4 (impact report, producer/consumer rules). See section 6.
 
 **Track B, the migration: blocked on decision D1** (section 4). The unblocking
 step is not more analysis. It is a hand-written draft of scene 1A in the proposed
@@ -35,9 +35,14 @@ Housekeeping, in order:
    uncommitted 1A story edits (arrival glance, departure hold) that belong to
    [the 1A plan](1a-password-and-officer-plan.md); keep them out of this branch's
    commits.
-2. Slice 1 known thin spots, not yet fixed: a transition anchor shows no situation
-   prose; the "engine checks" table says nothing about custody beyond "does not
-   check who holds anything".
+2. Slice 2 is committed on this branch (see section 6). Known limits: custody and
+   co-location flags depend on the anchor's baseline state, so a transition
+   anchor cannot run the hypothetical holder (the trace says "not tested here").
+   Custody tests that pin today's behavior
+   (`test_transition_rejects_lead_and_patrol_without_card_custody`,
+   `test_officer_demand_does_not_change_card_custody_or_transition_trigger`)
+   will flip when the Reyes custody repair lands; that repair is a separate story
+   change.
 
 Code changes go through Ringer. Update this plan after each slice or phase item.
 
@@ -198,11 +203,26 @@ working after the migration.
   its output is safe as a blind packet. Reyes output equals the prototype's
   sections 1–3. Ringer reported FAIL only because the manifest's scope filter
   misspelled an unrelated file; the corrected check passed by hand.
-- [ ] **Slice 2, gap rules (layer 3).** A registry of named checks parameterized
-  by anchor: custody, co-location, no strand, ported from the Reyes prototype
-  without hardcoded IDs. Custody and co-location are `World` methods. Fix the two
-  slice 1 thin spots here. When done, point the story-gap guide at the new command
-  instead of `.plans/story-data-phase0/render_trace.py`.
+- [x] **Slice 2, gap rules (layer 3).** Built 2026-11-10 through Ringer.
+  `storygame/story_package/gap_rules.py` (registry `RULES`: `custody`,
+  `co_location`, `no_strand`, `single_reveal_strand`; `custody_checks()`),
+  `scripts/gap_rules.py <anchor> [--rule NAME]`, `tests/test_gap_rules.py`.
+  The module carries no story names (a test and the Ringer check enforce it).
+  World-only logic is in worldkeeper: `World.holds`, `World.characters_together`,
+  `World.apart`. Every cited `file:line` is a defining line of the named record
+  or is omitted. On `officer_presses_1a` it flags custody (two claims),
+  co-location (the laptop) and no-strand (two claims), the three Reyes findings.
+  Slice 1 thin spots fixed: all anchor kinds show the authored scene situation and
+  pressure; the engine-checks table reports a computed custody result
+  (`checked`, `unchecked` or `untested`) instead of a fixed sentence. Test
+  cleanup: the hand-rolled `test_no_single_reveal_can_strand_a_scene_exit` and
+  its helper in `tests/test_canon_journey.py` were replaced by the
+  `single_reveal_strand` rule after the old test body and the rule flagged the
+  same realization on a seeded defect. Reviewed, not asserted by the workers:
+  two defects found and fixed after the first pass (citations to non-defining
+  lines; a trace that said "no held item" when custody was untested). Not done:
+  other older tests that may overlap (1A tests, `*_repro.py`) have not been
+  opened; sweep after slice 4 using the consolidation plan's mutation evidence.
 - [ ] **Slice 4, impact report.** Forward and reverse dependencies for a fact or
   passage: producers, consumers, claims, tests that name it. Adds the two
   producer/consumer rules to the registry (a condition with no producer; an effect
@@ -369,3 +389,6 @@ fixed menu of player actions or a branch per possible action.
   Not verified: nothing in Phases 1–4 has been built or measured.
 - 2026-11-09. Brandon accepted all four recommendations: D2, D3, D4 and the
   editing-draft step. D1 stays open until he has tried the 1A draft.
+- 2026-11-10. Slice 2 built (section 6). Story-gap guide now points at
+  `scripts/gap_rules.py`. The blind run is still deferred, so the rules remain
+  shaped by the Reyes case alone.

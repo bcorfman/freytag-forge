@@ -1,0 +1,32 @@
+{
+  "run_name": "story-data-gap-rules",
+  "workdir": "/home/bcorfman/dev/ringer-work/story-data-gap-rules",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "world-holds",
+      "task_type": "code-feature",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=medium"
+      ],
+      "max_attempts": 2,
+      "timeout_s": 1200,
+      "check_timeout_s": 600,
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/packages/worldkeeper/src/worldkeeper/model.py",
+        "/home/bcorfman/dev/freytag-forge/packages/worldkeeper/tests/test_holds.py"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/packages/worldkeeper/tests/test_holds.py"
+      ],
+      "spec": "You are an implementation worker for the freytag-forge repository at /home/bcorfman/dev/freytag-forge. Boundary: NO model call, NO network call, never git commit. You own ONLY these two files: /home/bcorfman/dev/freytag-forge/packages/worldkeeper/src/worldkeeper/model.py (edit: add one method) and /home/bcorfman/dev/freytag-forge/packages/worldkeeper/tests/test_holds.py (create). Touch nothing else.\n\nGOAL. Add a world-state-only method to class World in /home/bcorfman/dev/freytag-forge/packages/worldkeeper/src/worldkeeper/model.py, placed right after the existing method `holder` (which returns the containing character, if held):\n\n    def holds(self, holder_id, entity_id):\n        \"\"\"Return whether a character holds an entity, directly or nested in what it holds.\"\"\"\n\nIt returns True exactly when `self.holder(entity_id) == holder_id` and holder_id is not None; it returns False for an unplaced entity, an entity in an area with no character above it, and an entity held by a different character. It must not raise for an unknown entity id if `holder` does not raise for it (mirror `holder`). Do not change any other method.\n\nTESTS. Create /home/bcorfman/dev/freytag-forge/packages/worldkeeper/tests/test_holds.py (pytest, module-level functions, compact). Copy the schema/world setup style from /home/bcorfman/dev/freytag-forge/packages/worldkeeper/tests/test_people_alongside.py (WorldSchema.from_data, World(schema, MemoryBackend()), world.seed(), world.move(...)). Entities needed: an area, two characters, an item (kind \"item\"), a container (kind \"container\") holding an item. Cases: item moved to character A -> holds(A, item) True and holds(B, item) False; item in the area -> False for both; item inside a container that is moved to A -> holds(A, item) True; after moving the item to B -> holds(A, item) False and holds(B, item) True; holder_id None -> False. Check the kinds your setup uses exist in the schema (see how the other tests or model.py declare the item and container kinds; use whatever kinds `is_item` accepts).\n\nHOW TO RUN (from /home/bcorfman/dev/freytag-forge; never bare python, never uv; never --cov): `export TMPDIR=/tmp PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/packages/worldkeeper/src && /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest /home/bcorfman/dev/freytag-forge/packages/worldkeeper/tests/test_holds.py -q --no-cov -p no:cacheprovider 2>&1 | tail -30`. Format and lint: `/home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff format /home/bcorfman/dev/freytag-forge/packages/worldkeeper/src/worldkeeper/model.py /home/bcorfman/dev/freytag-forge/packages/worldkeeper/tests/test_holds.py && /home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff check /home/bcorfman/dev/freytag-forge/packages/worldkeeper/src/worldkeeper/model.py /home/bcorfman/dev/freytag-forge/packages/worldkeeper/tests/test_holds.py`. Also run the existing worldkeeper tests to prove nothing else changed: `/home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest /home/bcorfman/dev/freytag-forge/packages/worldkeeper/tests -q --no-cov -p no:cacheprovider 2>&1 | tail -5`.",
+      "check": "set -o pipefail\ncd /home/bcorfman/dev/freytag-forge\nexport TMPDIR=/tmp PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/packages/worldkeeper/src\nPY=/home/bcorfman/dev/freytag-forge/.venv/bin/python\n$PY -m ruff check /home/bcorfman/dev/freytag-forge/packages/worldkeeper/src/worldkeeper/model.py /home/bcorfman/dev/freytag-forge/packages/worldkeeper/tests/test_holds.py\n$PY -m ruff format --check /home/bcorfman/dev/freytag-forge/packages/worldkeeper/src/worldkeeper/model.py /home/bcorfman/dev/freytag-forge/packages/worldkeeper/tests/test_holds.py\ngrep -n \"def holds\" /home/bcorfman/dev/freytag-forge/packages/worldkeeper/src/worldkeeper/model.py\n$PY -m pytest /home/bcorfman/dev/freytag-forge/packages/worldkeeper/tests/test_holds.py -q --no-cov -p no:cacheprovider 2>&1 | tail -15\n$PY -m pytest /home/bcorfman/dev/freytag-forge/packages/worldkeeper/tests -q --no-cov -p no:cacheprovider 2>&1 | tail -5\n# only the two owned files may differ from the base for these paths\ngit diff --stat -- packages/worldkeeper\n",
+      "verified": "the new World.holds method exists, its tests pass, lint is clean, and all existing worldkeeper tests still pass"
+    }
+  ]
+}

@@ -25,14 +25,20 @@ is never hand-written opinion, and it disappears when the source is fixed.
 
 ## Tool and status
 
-The prototype is `.plans/story-data-phase0/render_trace.py`. It builds a situation
-trace from the story files and prints the computed gaps. Run it from the repo root:
+Print a situation trace, then run the three checks (plus the single-reveal strand
+check) on the same anchor. Run from the repo root:
 
 ```
-PYTHONPATH=.:packages/worldkeeper/src .venv/bin/python \
-  .plans/story-data-phase0/render_trace.py . > .plans/story-data-phase0/situation-trace-reyes-card.md
+PYTHONPATH=.:packages/worldkeeper/src .venv/bin/python scripts/situation_trace.py <anchor>
+PYTHONPATH=.:packages/worldkeeper/src .venv/bin/python scripts/gap_rules.py <anchor> [--rule NAME]
 ```
 
-Its probes cover only the Reyes/card situation. The author set the three checks
-after the first drafts missed them, so the method is unproven: run it blind on a
-second situation where the author knows the gaps before relying on it.
+An anchor is a pacing event, an incident or a transition id. The trace is data
+only. The rules print flags with evidence; flags are never errors and never
+block a build. Custody and co-location depend on the anchor's starting state, so
+the trace says when custody was not tested.
+
+The author set the checks after the first drafts missed them, so the method is
+unproven: run it blind on a second situation where the author knows the gaps
+before relying on it. The old prototype `.plans/story-data-phase0/render_trace.py`
+is kept as evidence only.

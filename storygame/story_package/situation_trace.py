@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 from pathlib import Path
 
+from storygame.story_package.gap_rules import custody_checks
 from storygame.story_package.loader import load_story_package
 from storygame.story_package.models import (
     FactPredicate,
@@ -98,6 +99,13 @@ def _append_fact_consumers(
         lines.append("- nothing")
 
 
+def _append_scene_frame(lines: list[str], package: StoryPackage, scene_id: str) -> None:
+    frame = next(frame for frame in package.knowledge.scene_frames if frame.scene_id == scene_id)
+    if frame.situation:
+        lines.append(f"- Situation in scene {scene_id}: {frame.situation}")
+    lines.append(f"- Pressure in scene {scene_id}: {frame.pressure}")
+
+
 def _append_transition(lines: list[str], package: StoryPackage, transition: Transition) -> None:
     purposes = _fact_purposes(package)
     lines.extend(
@@ -116,7 +124,9 @@ def _append_transition(lines: list[str], package: StoryPackage, transition: Tran
         lines.append(f"It also lists `{dependency}` as a required dependency.")
 
 
-def _append_claim_checks(lines: list[str], package: StoryPackage, transitions: Iterable[Transition]) -> None:
+def _append_claim_checks(
+    lines: list[str], package: StoryPackage, anchor: str, transitions: Iterable[Transition]
+) -> None:
     trigger_values = {
         (trigger.fact_id, trigger.equals) for transition in transitions for trigger in transition.triggers
     }
@@ -142,7 +152,27 @@ def _append_claim_checks(lines: list[str], package: StoryPackage, transitions: I
         near = ", ".join(f"`{entity_id}`" for entity_id in claim.reach_entity_ids) or "names no thing"
         lines.append(f"| `{claim.id}` | {requirements} | {near} |")
     lines.append("")
-    lines.append("It does not check who holds anything.")
+    checks = custody_checks(package, anchor)
+    if checks:
+        for check in checks:
+            if check.status == "checked":
+                lines.append(
+                    f"Claim `{check.claim_id}`: the engine checks whether `{check.character_id}` holds "
+                    f"`{check.item_id}` (tested by moving it)."
+                )
+            elif check.status == "unchecked":
+                lines.append(
+                    f"Claim `{check.claim_id}`: the engine does not check whether `{check.character_id}` holds "
+                    f"`{check.item_id}` (tested by moving it)."
+                )
+            else:
+                lines.append(
+                    f"Claim `{check.claim_id}` names `{check.item_id}`; whether the engine checks who holds it "
+                    "was not tested here, because no other character is with the protagonist in this anchor's "
+                    "starting state."
+                )
+    else:
+        lines.append("No held item is named by these claims.")
 
 
 def _transitions_for_scene(package: StoryPackage, scene_id: str) -> list[Transition]:
@@ -182,6 +212,7 @@ def _render_pacing_event(lines: list[str], package: StoryPackage, event: PacingE
             f"- Pacing event `{event.id}` fires at turn {event.at_turn} when: {_condition_text(event.when)}.",
         ]
     )
+    _append_scene_frame(lines, package, event.scene_id)
     for condition in event.when:
         lines.append(
             f"  - `{condition.fact_id}` ({purposes.get(condition.fact_id, '?')}) comes from: "
@@ -232,6 +263,7 @@ def _render_incident(lines: list[str], package: StoryPackage, incident: Incident
             f"- Incident `{incident.id}` occurs in scene `{incident.scene_id}`.",
         ]
     )
+    _append_scene_frame(lines, package, incident.scene_id)
     for outcome in incident.outcomes:
         lines.append("")
         _append_incident_outcome(lines, package, outcome)
@@ -272,11 +304,10 @@ def _render_transition(lines: list[str], package: StoryPackage, transition: Tran
             "",
             f"- Transition `{transition.id}` goes from scene `{transition.source_scene_id}` to scene "
             f"`{transition.target_scene_id}` at priority {transition.priority}.",
-            "",
-            "## 2. Where the situation leads",
-            "",
         ]
     )
+    _append_scene_frame(lines, package, transition.source_scene_id)
+    lines.extend(["", "## 2. Where the situation leads", ""])
     for trigger in transition.triggers:
         _append_fact_consumers(lines, package, trigger.fact_id, exclude=transition.id)
     lines.extend(["", "## 3. What the next scene needs", ""])
@@ -310,5 +341,5 @@ def render_situation_trace(root: Path, anchor: str) -> str:
         transitions = _render_incident(lines, package, item)
     else:
         transitions = _render_transition(lines, package, item)
-    _append_claim_checks(lines, package, transitions)
+    _append_claim_checks(lines, package, anchor, transitions)
     return "\n".join(lines) + "\n"
