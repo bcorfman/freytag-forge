@@ -31,6 +31,10 @@
 
 - Diagnose scene misses with the proven workflow in [the scene-fixing guide](docs/scene-fixing-guide.md).
 
+## Story Gaps
+
+- Find and judge story gaps with [the story-gap guide](docs/story-gap-guide.md).
+
 ## Design Boundaries
 
 - Follow the [contributor guide](docs/contributor-guide.md) for runtime boundaries, safety rules, and implementation practices.
