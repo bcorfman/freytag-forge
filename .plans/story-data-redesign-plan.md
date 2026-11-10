@@ -33,8 +33,59 @@ Decided 2026-11-09: pilot scene 1A (starts after the arrival-glance edits are
 committed); budgets accepted as listed in the Phase 0 report; blind review by both a
 fresh Claude subagent and ChatGPT Desktop on the same packets.
 
-Next: Brandon reviews the reading view; the held-out and control cases are chosen;
-build neutral packets and run both reviewers; then replace the conditional sketch
+Reading view approved 2026-11-09 (Brandon, after the revisions made with the
+drafter): the situation-centered trace is acceptable for the pilot. It is still a
+generated view, not an authoring format.
+
+Cases chosen 2026-11-09 (Brandon accepted the drafter's suggestions): Reyes/card
+(known), held-out **1B.4 park ambush** (fallback 2A.4 if the author has no known gap
+in 1B.4), control **`i_2a_real_leak`**. The held-out answer key must be written by
+the author and kept out of the packets and out of the drafter's context. The trace
+renderer is Reyes-specific (hardcoded trigger and simulation), so packets for the
+other two cases need a generalized renderer first.
+
+Build go-ahead (Brandon, 2026-11-09): "I like the gaps that it finds now. I'll amend
+it later if I find more weaknesses. Proceed past this point to build the features
+into the project." Drafter's reading: the Reyes gap findings are accepted as enough
+evidence for requirement 5; the held-out/control blind run and the 1B.4 answer key
+are **deferred, not cancelled** (they stay open as a later quality check), and
+Phase 1 starts with the situation-trace view. Not yet decided by Brandon: the
+storage model and the compiled authoring schema; the chosen direction stays the
+initial recommendation (declarative scene/reveal authoring, typed graph semantics,
+compiled runtime views).
+
+Build slices (code via Ringer, Luna):
+1. **Situation trace, general (built 2026-11-09, uncommitted).** Ringer reported FAIL
+   only because the manifest's own scope filter misspelled an unrelated modified file
+   (`1a-password-officer-plan.md`); the corrected check passes by hand: 14 tests,
+   ruff, no story names in the module, Reyes sections 1-3 equal the prototype. Known
+   thin spots: a transition anchor shows no situation prose; the "engine checks"
+   table says nothing about custody beyond "does not check who holds anything". `storygame/story_package/situation_trace.py`,
+   `scripts/situation_trace.py <anchor>`, tests. Anchors: pacing event, incident,
+   transition. Data-driven sections 1-3 only; no responses or gaps (blind-safe).
+   Manifest: `scripts/ringer/story-data/situation-trace-slice1-manifest.json`.
+   Check proves sections 1-3 equal the prototype's output for the Reyes anchor.
+2. Gap checks as a registry of named, tested checks (custody, co-location, no strand),
+   parameterized by anchor; port the three Reyes gaps without hardcoded ids.
+3. Review-record overlay (canon / inferred / question / proposal) with checked
+   evidence references, never compiled into runtime facts.
+4. Impact report (forward/reverse dependencies for a fact or passage).
+Then Phase 1 schema and compiler contract.
+
+Packet design (2026-11-09, proposed, awaiting Brandon's OK): the three cases are
+anchored differently (Reyes = pacing event `officer_presses_1a`; 1B.4 = scene
+beats, with `pursuit_1b`/`park_lockdown_1b` pressures and exit `t_1b_1c`;
+`i_2a_real_leak` = an incident with two outcomes, recovery storylet and successor
+`t_2a_2b`). So the generalized renderer takes an anchor (event, incident, or scene
+exit) and emits only the data-driven sections: the situation and its prose, where it
+leads, what the exit needs with producers, and the story-says versus engine-checks
+table. A blind packet **omits** the plausible-responses table and the gaps section.
+Responses are what the reviewer must propose, and a drafter-written list would make
+the run non-blind (as Reyes section 4 already is). Code changes go through Ringer.
+Blocked on Brandon: the 1B.4 answer key, written without sharing it with the
+drafter (or "no known gap", which switches the held-out case to 2A.4).
+
+Next: build neutral packets and run both reviewers; then replace the conditional sketch
 with the chosen model. What to do about Reyes and a surrendered card is a separate
 story repair and is not part of the migration. Measure physical storage
 only after that. No graph library,
@@ -380,13 +431,13 @@ existing consolidation plan, including its regression/mutant safeguards.
   dependency; record alternatives, edit walkthroughs, tests, and limitations in
   [the comparison](story-data-comparison.md).
 - [x] Extend to a later incident/cost/recovery slice (2C, in the Phase 0 evidence).
-- [ ] Validate a readable authoring prototype with the author. Author verdict,
-  2026-11-09: the first generated view (organized by storylet) is **not
+- [x] Validate a readable authoring prototype with the author. Author verdict,
+  2026-11-09: the first generated view (organized by storylet) was **not
   acceptable**; neither the author nor the drafter could naturally trace story gaps
   in it. It lists what a reveal contains but not what follows from a situation or
   what the next scene needs. Replacement under way: a situation-centered trace
-  (see "Reading-view requirement" in section 2). Still not an authoring format;
-  needs the author's re-review.
+  (see "Reading-view requirement" in section 2). Re-review done 2026-11-09:
+  Brandon accepts the revised situation trace. Still not an authoring format.
 - [ ] Extend the conceptual comparison to requirement 5 using the Reyes/card
   situation: represent goals, response consequences, continuation requirements,
   and unknowns; demonstrate an evidence-linked LLM gap report and repair options.
@@ -406,6 +457,8 @@ existing consolidation plan, including its regression/mutant safeguards.
   cached load ≤ 2 ms, per-turn knowledge projection ≤ 10 ms, package memory
   ≤ 5 MiB, nothing slower than today. They guard against regression; they are
   not targets.
+- [x] Choose held-out and control cases (2026-11-09: 1B.4 held-out, `i_2a_real_leak`
+  control; answer key for 1B.4 pending from the author).
 - [ ] Choose reviewers for the requirement 5 blind run. Decided 2026-11-09
   (Brandon): run both a fresh-context Claude subagent and ChatGPT Desktop on the
   same neutral packets, then compare. Packets are not built yet; the held-out and
