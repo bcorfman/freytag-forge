@@ -1,586 +1,371 @@
 # Story authoring, test contracts, and compiled runtime data
 
-Status: proposed, updated 2026-11-09. Initial concrete comparison, second (2C
-incident) slice, Phase 0 baseline measurements, and the non-blind requirement 5
-(Reyes/card) analysis completed; the blind LLM review, author review and
-model decision are open. Implementation, test changes, and deployment have not started. This plan is separate
-from ongoing story edits and does not supersede their active plans.
+Status (2026-11-09): **Phase 0 measured; review-tooling slice 1 built and committed;
+the model decision is the one open blocker for the migration.** No story data, test
+or deployment has changed. This plan is separate from ongoing story edits and does
+not supersede their plans.
+
+Companion documents (evidence lives there, not here):
+
+- [story-data-phase0.md](story-data-phase0.md): baselines, measured edits,
+  duplication counts, ownership map, 2C slice.
+- [story-data-comparison.md](story-data-comparison.md): four models on one real
+  slice, edit walkthroughs, ranking, the Reyes/card analysis.
+- [story-data-design-reference.md](story-data-design-reference.md): the reasoning
+  behind the rules below (comparison framework, full requirement 5 text,
+  reading-view requirement, the conditional sketch, test design table).
+- [docs/story-gap-guide.md](../docs/story-gap-guide.md): what counts as a gap and
+  the three checks.
 
 ## Resume here
 
-The [concrete comparison](story-data-comparison.md) traces quiet/witnessed memory-card
-recovery through its 1B pursuit consequence, models four alternatives, and walks
-through identical edits. The initial recommendation is **readable declarative
-scene/reveal authoring with typed graph semantics and compiled runtime views**.
-This is supported by the inspected slice, not yet validated for the whole story.
+Two tracks. Track A does not wait for Track B.
 
-Phase 0 evidence is in [story-data-phase0.md](story-data-phase0.md): load, turn and
-suite baselines, three measured edits, whole-story duplication counts, ownership map,
-2C slice, and a generated reading view. Key result: load 0.36 s and per-turn
-projection 3–6 ms, so speed is not the case for change; ownership and coupling are.
+**Track A, review tooling on today's story package: unblocked.**
+Next is slice 2 (gap checks as named rules). See section 6.
 
-Requirement 5 adds a causal narrative review gate: use the Reyes/card demand to
-demonstrate LLM-assisted discovery of missing responses and consequences, not just
-reference tracing. The comparison now has a [Reyes/card section](story-data-comparison.md#6-requirement-5-slice-reyes-demands-the-recovered-card)
-(2026-11-09): sourced canon, a read-only probe, five gaps, and what each model must
-hold. It is **not** the blind discovery demonstration (the drafter has seen the
-answer). Notable result: after the card is handed to Reyes, the card-reading claim
-and the `t_1a_1b` dependency check are unchanged, because `required_dependencies`
-means not destroyed/incapacitated, not held. Relation kinds (hold, know, reach,
-exist) must be typed in any chosen model.
+**Track B, the migration: blocked on decision D1** (section 4). The unblocking
+step is not more analysis. It is a hand-written draft of scene 1A in the proposed
+format that Brandon tries four edits on (Phase 0, last open item).
 
-Decided 2026-11-09: pilot scene 1A (starts after the arrival-glance edits are
-committed); budgets accepted as listed in the Phase 0 report; blind review by both a
-fresh Claude subagent and ChatGPT Desktop on the same packets.
+Housekeeping, in order:
 
-Reading view approved 2026-11-09 (Brandon, after the revisions made with the
-drafter): the situation-centered trace is acceptable for the pilot. It is still a
-generated view, not an authoring format.
+1. Branch `story-data-situation-trace` carries slice 1 (`74ad8245`) and this plan,
+   with a PR open against `main`. The working tree also holds unrelated,
+   uncommitted 1A story edits (arrival glance, departure hold) that belong to
+   [the 1A plan](1a-password-and-officer-plan.md); keep them out of this branch's
+   commits.
+2. Slice 1 known thin spots, not yet fixed: a transition anchor shows no situation
+   prose; the "engine checks" table says nothing about custody beyond "does not
+   check who holds anything".
 
-Cases chosen 2026-11-09 (Brandon accepted the drafter's suggestions): Reyes/card
-(known), held-out **1B.4 park ambush** (fallback 2A.4 if the author has no known gap
-in 1B.4), control **`i_2a_real_leak`**. The held-out answer key must be written by
-the author and kept out of the packets and out of the drafter's context. The trace
-renderer is Reyes-specific (hardcoded trigger and simulation), so packets for the
-other two cases need a generalized renderer first.
+Code changes go through Ringer. Update this plan after each slice or phase item.
 
-Build go-ahead (Brandon, 2026-11-09): "I like the gaps that it finds now. I'll amend
-it later if I find more weaknesses. Proceed past this point to build the features
-into the project." Drafter's reading: the Reyes gap findings are accepted as enough
-evidence for requirement 5; the held-out/control blind run and the 1B.4 answer key
-are **deferred, not cancelled** (they stay open as a later quality check), and
-Phase 1 starts with the situation-trace view. Not yet decided by Brandon: the
-storage model and the compiled authoring schema; the chosen direction stays the
-initial recommendation (declarative scene/reveal authoring, typed graph semantics,
-compiled runtime views).
+## 1. Requirements
 
-Build slices (code via Ringer, Luna):
-1. **Situation trace, general (built 2026-11-09, uncommitted).** Ringer reported FAIL
-   only because the manifest's own scope filter misspelled an unrelated modified file
-   (`1a-password-officer-plan.md`); the corrected check passes by hand: 14 tests,
-   ruff, no story names in the module, Reyes sections 1-3 equal the prototype. Known
-   thin spots: a transition anchor shows no situation prose; the "engine checks"
-   table says nothing about custody beyond "does not check who holds anything". `storygame/story_package/situation_trace.py`,
-   `scripts/situation_trace.py <anchor>`, tests. Anchors: pacing event, incident,
-   transition. Data-driven sections 1-3 only; no responses or gaps (blind-safe).
-   Manifest: `scripts/ringer/story-data/situation-trace-slice1-manifest.json`.
-   Check proves sections 1-3 equal the prototype's output for the Reyes anchor.
-2. Gap checks as a registry of named, tested checks (custody, co-location, no strand),
-   parameterized by anchor; port the three Reyes gaps without hardcoded ids.
-3. Review-record overlay (canon / inferred / question / proposal) with checked
-   evidence references, never compiled into runtime facts.
-4. Impact report (forward/reverse dependencies for a fact or passage).
-Then Phase 1 schema and compiler contract.
+1. **Local changes.** An ordinary story change is one cohesive authoring operation,
+   with no manual synchronizing of several representations. Locality does not
+   require one file per scene.
+2. **One owner.** Every fact definition, authored passage and executable effect has
+   one canonical owner. Tests stop copying passages and patching source strings,
+   without weakening independent behavioral expectations.
+3. **Measured efficiency.** Build, load, memory and per-turn budgets are measured,
+   not assumed.
+4. **Readable and editable by the author.** Narrative order, prose beside
+   behavior, and forward/backward dependency navigation. Raw nodes, tables or IDs
+   are not an authoring interface.
+5. **Gap finding and repair.** The representation helps the author and a competent
+   LLM find missing causal links, credible responses and consequences, in plain
+   language with traceable evidence, keeping canon apart from inference, questions
+   and proposals.
 
-Packet design (2026-11-09, proposed, awaiting Brandon's OK): the three cases are
-anchored differently (Reyes = pacing event `officer_presses_1a`; 1B.4 = scene
-beats, with `pursuit_1b`/`park_lockdown_1b` pressures and exit `t_1b_1c`;
-`i_2a_real_leak` = an incident with two outcomes, recovery storylet and successor
-`t_2a_2b`). So the generalized renderer takes an anchor (event, incident, or scene
-exit) and emits only the data-driven sections: the situation and its prose, where it
-leads, what the exit needs with producers, and the story-says versus engine-checks
-table. A blind packet **omits** the plausible-responses table and the gaps section.
-Responses are what the reviewer must propose, and a drafter-written list would make
-the run non-blind (as Reyes section 4 already is). Code changes go through Ringer.
-Blocked on Brandon: the 1B.4 answer key, written without sharing it with the
-drafter (or "no known gap", which switches the held-out case to 2A.4).
+## 2. What the evidence says
 
-Next: build neutral packets and run both reviewers; then replace the conditional sketch
-with the chosen model. What to do about Reyes and a surrendered card is a separate
-story repair and is not part of the migration. Measure physical storage
-only after that. No graph library,
-relational backend, or custom graph implementation is selected. See the comparison
-for evidence, limitations, and revised rankings; the generic comparison below
-remains the framework for the broader pilot.
+Measured in Phase 0 on `2bb01bbc` unless noted. These facts shape the order of work.
 
-## 1. Requirements and diagnosis
+- **Speed is not the case for change.** Uncached load 0.36 s (YAML parsing is about
+  0.05 s of it; the rest is validation), cached 0.68 ms, per-turn projection
+  3–6 ms, package 2.6 MiB. The case is ownership and coupling.
+- **Facts have three owners.** 121 facts are defined in both routes and knowledge,
+  all 176 are listed again in the world file, and 24 of the 121 have already
+  drifted.
+- **Most claim effects restate route effects.** 87 of 99 are identical, 12 are a
+  strict subset. So the rule is "derive by default, allow a declared subset", not
+  "always equal". Incidents restate costs their variant already asserts.
+- **Tests are coupled to wording and layout.** 67 authored sentences are copied
+  into 36 test files; 43 test files use `.replace(` on source; 72 name story files.
+  A prose-only edit fails a test; a rename fails four.
+- **The loader misses a dead consumer.** Removing the effect that marks Kr leaves
+  the marked pursuit passage with no producer, and the package still loads.
+- **Raw-file readers exist outside the loader.** Three browser E2E helpers, two
+  scripts and 72 tests parse the source files directly. An adapter to
+  `StoryPackage` alone does not carry them.
+- **A reading view organized by reveal failed the author; one organized by
+  situation passed.** The situation trace is accepted as a reading view. No
+  *editing* format has been put in front of the author yet.
+- **Relation kinds were conflated.** After the card is handed to Reyes, the
+  card-reading claim and the `t_1a_1b` dependency check are unchanged, because
+  `required_dependencies` means "not destroyed or incapacitated", not "held".
+- **The gap method is proven on one case only.** The three checks were set by the
+  author after early drafts missed them; a blind run on a second case is deferred.
 
-1. Make story changes local: an ordinary change should be expressible through
-   one cohesive authoring operation, without manually synchronizing several
-   representations. Do not assume that locality requires one file per scene.
-2. Give every fact definition, authored passage, and executable effect one
-   canonical owner. Remove copied passages and formatting-dependent mutations
-   from tests without weakening independent behavioral expectations.
-3. Make loading and runtime access efficient, with measured budgets for build
-   time, cold/warm load, memory, artifact size, and per-turn queries.
-4. Keep the story easy for an author to follow and edit. Preserve readable
-   narrative order, colocate prose with behavior, and provide understandable
-   forward/backward dependency navigation. Raw nodes, tables, or IDs are not
-   sufficient authoring interfaces.
-5. Make the representation support a competent LLM in finding and helping repair
-   story gaps: missing causal links, credible responses, consequences, and reasons
-   to continue. Present findings and proposed repairs in plain language with
-   traceable evidence and downstream effects, so the author is not left to
-   discover the gaps alone. Distinguish established canon from inference,
-   unresolved questions, and proposed additions.
+## 3. Direction
 
-Evidence from the current repository:
+Recommended, **not yet decided** (D1): the author edits readable declarative
+scene/reveal blocks; their meaning is a typed graph (facts, claims, passages,
+effects, typed relations); a compiler derives the repeated wiring and builds the
+existing immutable `StoryPackage`. Reading views and impact reports are generated.
+No graph library, database or custom graph engine is selected, and physical
+storage is not part of D1. It is examined in Phase 4 only if profiling shows a
+bottleneck.
 
-- `data/stories/continuity-initiative/` has nine source files: plot, world,
-  knowledge, pacing, storylets, routes, handoffs, incidents, and connections.
-- `docs/markdown-story-authoring/package-and-story-structure.md` explicitly
-  requires the knowledge fact catalog to match the world fact catalog. Storylet
-  prose and executable realizations also live in different files.
-- `storygame/story_package/models.py:StoryPackage` already provides a typed,
-  immutable package and `knowledge_indexes`. The redesign should build on this
-  boundary rather than replace the engine wholesale.
-- `storygame/story_package/loader.py:load_story_package` already caches frozen
-  packages by root and fingerprint. Repeated YAML parsing is not an established
-  explanation for every slow test or turn; profile before optimizing it.
-- `tests/test_1a_arrival_glance.py` contains full opening, glance, and delivery
-  passages. `tests/test_delivery_variants.py`, `tests/test_trailing_pacing_events.py`,
-  and `tests/test_world_placements.py` include source-string replacements.
-  Such tests couple unrelated runtime checks to prose or serialization layout.
-- The existing [test consolidation plan](test-suite-consolidation-plan.md) and
-  [ledger](test-suite-consolidation-ledger.md) already track test overlap and
-  regression protection. Coordinate with that work; repeated setup alone does
-  not establish that a test is disposable.
+Strongest rejected alternative: plain scene aggregates with shared references
+(lower overhead, close to the recommendation if the compiler's derivations stay
+small).
 
-These are inspected examples, not a complete duplication audit or a performance
-measurement. The main design problem appears to be ownership and coupling;
-changing the storage engine alone would leave that problem intact.
+What would reverse it: the 1A pilot (Phase 2) still fans out on ordinary edits, or
+Brandon finds the draft format harder to edit than today's files. The fallback is
+to keep the nine files and add only the derivations and checks (single fact owner,
+derived claim effects, derived incident costs, producer/consumer rule), which
+deliver most of requirement 2 without a new authoring surface.
 
-## 2. Conceptual comparison — decision still open
+## 4. Decisions
 
-Separate the semantic model (what constitutes a story), the authoring interface
-(how someone changes it), and the physical representation (how it is stored and
-queried). Choosing a graph does not imply running a server; choosing documents
-does not require scattered files; choosing relations does not require authors
-to edit tables. An immutable runtime projection can serve any of these models.
+Made (Brandon, 2026-11-09 unless noted):
 
-The following tradeoffs are project-specific design hypotheses, not measured
-performance rankings or product recommendations.
+| Decision | Result |
+| --- | --- |
+| Pilot scene | 1A, starting once its in-flight story edits are committed |
+| Budgets | Cold load ≤ 0.5 s, cached ≤ 2 ms, per-turn projection ≤ 10 ms, package ≤ 5 MiB, nothing slower than today. Regression guards, not targets |
+| Reading view | Situation-centered trace accepted for the pilot. A generated view, not an authoring format |
+| Requirement 5 cases | Reyes/card (known); held-out 1B.4 park ambush (fallback 2A.4); control `i_2a_real_leak` |
+| Blind reviewers | Fresh-context Claude subagent and ChatGPT Desktop on the same packets |
+| Build go-ahead | "I like the gaps that it finds now. I'll amend it later if I find more weaknesses. Proceed past this point to build the features into the project." Drafter's reading: Reyes findings are enough for requirement 5 for now; the blind run is deferred, not cancelled |
+| Fixtures | From the continuity-initiative story only for now; schema and compiler stay story-agnostic |
+| Validation | Layered, "like RelaxNG against XML" (section 5) |
+| D2, review overlay scope | Store only **accepted flags** (rule, anchor, evidence digest, author's reason): a reviewed flag stops repeating and returns if its evidence changes. LLM findings and proposals stay generated reports, never stored records. Built when the first flag needs silencing. Reason: the hand-written overlay was removed as "not helpful; it held opinion, not evidence", and a gap is computed and disappears when the source is fixed |
+| D3, CI gating | Unaccepted layer 3 flags never block a build |
+| D4, when compilation runs | Load time, with the existing fingerprint cache, unless the measured cold load misses 0.5 s |
+| Editing draft before D1 | Approved: 1A is drafted by hand in the proposed format and Brandon tries four edits before deciding the model |
 
-| Conceptual model | Ease of changing this story | Repetition and test implications | Efficiency and main tradeoff |
+Open, for Brandon:
+
+- **D1 (blocks Track B). Model and authoring format.** Decided on a concrete draft,
+  not on the abstract comparison: scene 1A written by hand in the proposed format,
+  no compiler (Phase 0, last item; Brandon approved this step 2026-11-09).
+  Recommendation above.
+
+## 5. Rules that hold throughout
+
+Ownership and safety:
+
+- Facts remain the sole mutable truth. Authored relationships are immutable and
+  are not a second live world store. Nothing grants player knowledge because it is
+  reachable in the authoring graph.
+- Stable IDs are independent of headings, wording and file paths. Existing IDs are
+  preserved where possible.
+- Safe framing, protected claims, delivery text and dramatic guidance stay
+  distinct fields. Deduplication never broadens narrator access.
+- Review material (flags, accepted flags, LLM reports) never reaches
+  `StoryPackage`, narrator inputs or runtime facts.
+- A requirement states which relation it asserts: **hold, know, reach or exist**.
+- World-state-only logic is a `World` method in `packages/worldkeeper`;
+  `storygame` adapts and calls it. Schema, compiler and checks carry no story names.
+- Generated views are disposable and never edited. Every view names the one
+  editable source.
+- The migration preserves behavior. Story repairs (including what happens when Kr
+  surrenders the card to Reyes) are separate reviewed changes.
+- Frozen evidence (`bench/frozen/`, test fixture snapshots, Ringer history) is not
+  rewritten.
+
+Tests (full table in the design reference, section 3):
+
+- Never derive an expected effect from the declaration under test.
+- Behavior tests address records by stable ID and field; they do not copy prose or
+  patch source strings. Exact-passage tests resolve the canonical passage by
+  identity. Wording is asserted only where the wording itself is the requirement.
+- Player actions are not generated from the matcher vocabulary they test.
+- Do not delete tests to reduce counts, and add only complete, useful ones.
+  Coordinate with the [test consolidation plan](test-suite-consolidation-plan.md).
+
+Validation layers. Every check has one layer, a stable name, and a diagnostic
+giving source file, record and field:
+
+| Layer | Question | Analogy | Severity |
 | --- | --- | --- | --- |
-| Knowledge graph: entities, claims, events, passages, and explicit typed relationships | A shared concept is edited once; dependencies and cross-scene consequences can be traversed. A scene is a view of connected records, so cohesive editing needs an aggregate view or operation. | Shared identities replace repeated definitions. Relationship constraints can replace hand-maintained cross-reference checks. Independent behavioral tests are still needed. | Natural candidate for dependency traversal and reverse impact queries. Scene assembly, edge metadata, and indexes have costs; a graph is not automatically faster for whole-scene reads. |
-| Document/aggregate model: a scene contains its local narrative and mechanics | Strong locality for changes contained in a scene, and readable prose beside its rules. Shared entities and cross-scene concepts need references and explicit ownership. | Eliminates subsystem-file duplication locally; embedding shared concepts in multiple scenes would recreate update problems. Tests should address records rather than text layout. | Potentially simple whole-scene reads. Cross-scene dependencies require indexing or reference traversal; large aggregates can make small updates awkward. |
-| Normalized relational model: typed records connected through keys and relation tables | Makes canonical ownership and integrity explicit. Scene editing needs an assembled view or transaction across records; raw tables would be a poor authoring experience. | Normalization addresses repeated definitions; referential constraints catch structural mistakes. Neither proves narrative intent nor removes copied test expectations automatically. | Suitable candidate for filtered sets and joins. Variable-depth dependencies and relationship-rich records may require more involved queries. Performance depends on access paths, not the label “relational.” |
-| Declarative story language/compiler: explicit constructs for scenes, reveals, conditions, effects, and text | Can express a narrative change as one domain-level declaration, deriving companion representations. Must remain readable and avoid becoming a general programming language. | Removes repetition caused by separately authoring consequences that can be derived. Adds language/compiler tests but can reduce repetitive per-story structural checks. | Can compile to compact runtime indexes. Compiler maintenance, diagnostics, and rule semantics are additional complexity. A language can use graph, document, or relational semantics underneath. |
-| Hybrid: one canonical semantic model with generated authoring/runtime views | Could combine coherent scene editing with shared graph identities and bounded runtime reads. | Works only if every editable value has one owner and view edits have an unambiguous write-back operation. | Additional projections may improve reads but add build/invalidation complexity. Multiple independently editable stores would recreate the original problem. |
+| 1. Shape | Right fields, types, enums, required values? | RelaxNG / XSD types | Error: build fails |
+| 2. Integrity | Unique IDs, no dangling references, no cycles, one owner per fact and passage, claims authorized by their source effects, no duplicate YAML keys | XSD key/keyref | Error: build fails |
+| 3. Story rules | Custody, co-location, no strand, a condition with no producer, an effect read by nothing | Schematron | Flag: reported, never blocks |
+| 4. Narrative judgment | Is a response plausible, a consequence missing, a repair sound? | None | Advisory: LLM review, author decides |
 
-### What a knowledge graph would mean here
+Layers 1 and 2 are pure functions of the authored data. Layer 3 may run the real
+engine but stays deterministic, quotes its evidence by file and line, and each rule
+has one seeded-defect test that trips it and one clean-story test that does not.
+Layer 4 never produces pass/fail.
 
-Model a passage, a claim, the event that delivers it, and the fact it establishes
-as distinct identified concepts, connected by typed relationships. This makes
-questions such as “what can reveal this fact?”, “what depends on this reveal?”,
-and “where is this passage used?” part of the model rather than scattered text
-searches. This is a substantive advantage for the project's continuity problem,
-not merely a possible performance optimization.
+## 6. Work
 
-Relationship context must be explicit: prerequisites, audience, scene scope,
-ordering, and provenance cannot disappear into generic edges. Conditional or
-multi-part relationships may need their own event/claim records. RDF-style
-statements and property-graph-style relationships are alternative graph shapes;
-neither should be dismissed as inherently untyped. Schema constraints and
-validation remain required whichever shape is selected. RDF's abstract graph
-model is specified in [W3C RDF Concepts](https://www.w3.org/TR/rdf11-concepts/).
+### Track A: review tooling on today's package (unblocked)
 
-A graph alone also does not express the difference between an authored possible
-reveal and a reveal actually earned in a session. Keep authored relationships
-immutable and gate disclosure against committed session facts. Do not introduce
-inference that grants player knowledge merely because it is reachable in the
-authoring graph.
+These read the current `StoryPackage`, so they need no model decision and keep
+working after the migration.
 
-### Where other concepts may fit better
+- [x] **Slice 1, situation trace.** Commit `74ad8245`.
+  `storygame/story_package/situation_trace.py`, `scripts/situation_trace.py <anchor>`,
+  `tests/test_situation_trace.py`. Anchors: pacing event, incident, transition.
+  Data-driven sections only (situation and prose, where it leads, what the exit
+  needs with producers, story-says versus engine-checks); no responses or gaps, so
+  its output is safe as a blind packet. Reyes output equals the prototype's
+  sections 1–3. Ringer reported FAIL only because the manifest's scope filter
+  misspelled an unrelated file; the corrected check passed by hand.
+- [ ] **Slice 2, gap rules (layer 3).** A registry of named checks parameterized
+  by anchor: custody, co-location, no strand, ported from the Reyes prototype
+  without hardcoded IDs. Custody and co-location are `World` methods. Fix the two
+  slice 1 thin spots here. When done, point the story-gap guide at the new command
+  instead of `.plans/story-data-phase0/render_trace.py`.
+- [ ] **Slice 4, impact report.** Forward and reverse dependencies for a fact or
+  passage: producers, consumers, claims, tests that name it. Adds the two
+  producer/consumer rules to the registry (a condition with no producer; an effect
+  read by nothing). The seeded defect is the measured one: remove the mark effect
+  and the marked pursuit must be flagged.
+- [ ] **Slice 3, accepted flags.** Scope per decision D2. Last, and only when needed.
+- [ ] **Deferred blind run (quality check on the method).** Brandon writes the
+  1B.4 answer key and keeps it out of the packets and out of the drafter's context
+  ("no known gap" switches the held-out case to 2A.4). Packets are slice 1 output
+  for the three anchors; both reviewers run on the same packets; Brandon scores
+  supported findings, misses, false alarms and clarity. Until it runs, the rule set
+  is shaped by the Reyes case alone: a recorded risk.
 
-If most edits and reads are scene-local, aggregates may offer simpler authoring
-than graph-first records. Embedding versus referencing is the key document-model
-choice: references preserve shared identity when embedding would duplicate it.
-See the primary documentation on [document relationships](https://www.mongodb.com/docs/manual/applications/data-models-relationships/).
-This is a conceptual reference, not a recommendation to adopt that product.
+### Track B: migration
 
-If repetition comes mainly from separately spelling out facts, effects, claims,
-and delivery wiring that follow fixed rules, a declarative language may remove
-more maintenance than any storage change. Derivations must be explicit and
-validated; do not infer canonical facts from prose. If stable structured records
-and integrity dominate, a normalized relational model remains a serious option,
-without presuming it wins because SQLite is already present in the stack.
+#### Phase 0: decide (one item left)
 
-An event log principally addresses change history and replay, not cohesive
-current-story authoring; it could supplement any candidate. A containment tree
-fits world placement but cannot alone represent the story's many-to-many claim
-and dependency relationships. Embedding/vector retrieval does not provide exact
-reference integrity and is not a substitute for canonical story structure.
+Done: comparison on a real reveal and cross-scene dependency; 2C incident slice;
+baselines and budgets; three measured edits; ownership map; pilot scene; reading
+view accepted; requirement 5 shown on Reyes (non-blind) and accepted for now.
 
-### Decision exercise before implementation
+- [ ] **Editing draft and D1.** Write 1A by hand in the proposed format, in
+  `.plans/`, with no compiler: scene entry and beats, one reveal with quiet and
+  witnessed variants, its claims and delivery text, a pacing event, the officer
+  pressure, the exit and its cross-scene dependency. Brandon tries four edits on
+  it: reword a passage; change what a variant commits; change a shared search
+  description; follow one consequence into 1B and back. Record where he hesitated.
+  He then decides D1, and the conditional sketch in the design reference is
+  replaced by the chosen format.
 
-Represent the same slice under graph, aggregate, and relational models; sketch
-whether domain-language constructs remove additional repetition in each. Include
-both a scene-local change and a shared concept used across several scenes so the
-exercise does not favor scene documents by construction. Do not build three full
-systems or compare libraries.
+Why this was added: the earlier "readable authoring prototype" item was closed on
+a reading view. Requirement 4 also asks that the author can *edit* it, and that
+has not been tested.
 
-For each representation, walk through:
+Exit: D1 recorded with the strongest rejected alternative and its reversal
+evidence.
 
-1. Revise one reused passage without altering its identity or disclosure scope.
-2. Change a reveal prerequisite/effect and identify every affected consumer.
-3. Move a reveal between scenes while preserving its cross-scene dependencies.
-4. Assemble only the current audience's eligible scene material.
-5. Reject dangling references, incompatible effects, and dependency cycles.
-6. Update a behavior test without copying prose or deriving its expected result
-   from the same production declaration it is checking.
-7. Give an LLM the represented situation and relevant surrounding story; assess
-   whether it identifies causal gaps and proposes understandable repairs without
-   being handed the expected diagnosis or inventing canon.
+#### Phase 1: schema and compiler contract
 
-Record authoritative values edited, manual synchronization steps, author-visible
-complexity, independent assertions retained, and query/index operations required.
-Discuss memory and load implications separately from authoring convenience.
-Choose based on the user's five requirements, documenting the strongest rejected
-alternative and the evidence that would reverse the decision. No candidate gets
-an automatic advantage from matching the current implementation.
+Starts after D1. Order matters: contract, then tests, then code.
 
-### Causal narrative review and assisted repair (requirement 5)
+1. **Snapshot.** Name the commit that migration mappings are written against,
+   after the in-flight 1A edits are committed (`2bb01bbc` is already behind).
+2. **Schema.** Typed records, stable IDs, reference resolution, source maps,
+   disclosure boundaries, versioning. Typed relation kinds (hold, know, reach,
+   exist, and their negations). Commit-only variants (the 2C finding). Derivation
+   rules, each explicit: one fact owner; claim effects default to the source's
+   effects with a declared subset allowed; incident costs and advantages derived
+   from the named variant.
+3. **ID policy for saves.** Which IDs are preserved and which may change. (The
+   save-compatibility decision itself is Phase 3.)
+4. **Layer 1 audit.** List what `storygame/story_package/models.py` already
+   enforces and what the schema adds; record it here.
+5. **Coexistence.** Legacy nine-file loading and compiled loading as explicit
+   package modes with a per-scene ownership manifest that rejects two owners, and
+   no silent precedence. State how the raw-file readers (section 2) keep working
+   while both exist.
+6. **Fixtures and tests first.** Small typed fixtures and patch helpers that
+   address records by ID and field, drawn from continuity-initiative and together
+   covering claims, protected material and audience scoping, pacing, an incident
+   with outcomes, and a cross-scene dependency. Schema and validator tests before
+   the implementation.
+7. **Compiler and adapter** to `StoryPackage`. Layer 2 checks. Deterministic
+   output with schema/compiler version and source digest; cache invalidation over
+   all compiler inputs; fail closed on mismatch at load. Compilation runs at load
+   time (D4); record the measured cold load that confirms or reverses it.
+8. **Safety tests.** Deduplication does not broaden narrator access; review
+   material cannot reach the package or narrator inputs (a test that fails if it
+   does).
+9. **Generated story view** from compiled records: narrative order, continuation
+   requirements shown as promise versus check.
 
-The model must support reasoning about why events follow from one another, not
-only which records reference a fact. Evaluate explicit representations of:
+Exit (all required):
 
-- Situations and pressures, including demands or threats that call for a response.
-- Character goals, motivations, knowledge, capabilities, and constraints, with
-  source evidence and any uncertainty visible.
-- Plausible response families and conditional consequences, including custody,
-  information gained or lost, costs, escalation, and deliberate failure outcomes.
-- Continuation requirements: what a character must know, want, possess, or be able
-  to do for a subsequent scene to make sense.
-- Unresolved causal links and author questions as explicit review records, rather
-  than silently filling them with generated story facts.
+1. A small story built from the fixtures compiles to a `StoryPackage`; safety
+   tests pass.
+2. Layers 1 and 2 fail the build on seeded defects; layer 3 flags and does not
+   block.
+3. Migration mappings from the named snapshot are written and reviewed.
+4. Compile and load numbers are measured against the budgets; a miss is recorded
+   and explained.
+5. Brandon traces the Reyes gap in the generated view unaided.
 
-These are authoring/review concepts. They must not introduce a second mutable
-runtime truth, a fixed action menu, or an exhaustive list of allowed player
-commands. Nor should every possible action need a separately authored branch.
-Use general constraints and consequences where they suffice. A graph can expose
-these relationships, but graph structure alone does not detect narrative gaps;
-compare how each candidate supports this review and readable explanation.
+#### Phase 2: 1A pilot
 
-**Required review case: Reyes demands the recovered memory card.** The author
-has identified two questions that reference validation and existing passing tests
-do not answer: what credible options does Kristin have under an armed officer's
-demand, and what motivates/enables her to go to the park if she surrenders the
-card? Review surrender, resistance/flight, and other plausible responses against
-the actual authored situation. Being tased or shot is an author-raised plausible
-risk, not an established outcome to insert automatically. Likewise, inspect what
-Kristin has already learned before concluding that losing custody necessarily
-removes the park lead. Distinguish possession, retained knowledge, motivation,
-and physical ability to leave; a transition predicate alone proves none of these.
+- [ ] Convert 1A mechanically. **Parity gate:** the compiled 1A portion of the
+  package equals the legacy-loaded one, shown as a semantic diff of IDs,
+  predicates, effects, passages, placements and disclosure scopes; deterministic
+  runtime traces match the baseline. Only reviewed representation differences are
+  allowed. Because parity is at the `StoryPackage` boundary, tests that go through
+  the loader keep protecting behavior unchanged.
+- [ ] Replace copied prose and source patching in the 1A pilot tests (section 5
+  test rules).
+- [ ] Repeat the three Phase 0 edits and compare:
 
-The reviewer should retrieve the relevant canon, alternative producers, and later
-dependencies, then report each gap with:
+  | Edit | Phase 0 | Target |
+  | --- | --- | --- |
+  | A. Reword a passage | 1 source line, 1 test fails on a copied string | 1 edit, no test fails |
+  | B. Change a variant's effect | 2 files plus stale prose; 1 behavioral test fails | 1 declaration; only the behavioral guard fails; the dead consumer is flagged |
+  | C. Rename a shared fact | 5 story files, 3 test files, 4 failures | 1 declaration plus real consumers, each listed by the compiler |
 
-1. The situation and source evidence, including what is absent or uncertain.
-2. A plausible response and the missing or contradictory consequence.
-3. The downstream scene, goal, knowledge, or possession requirement affected.
-4. Alternative repair proposals, each explaining its narrative tradeoff and
-   identifying the declarations and tests that would change.
-5. A concrete proposed change for author review, clearly separate from canon.
+- [ ] Re-measure load, memory and per-turn numbers against the budgets.
+- [ ] Brandon makes one real 1A edit in the new format and reports on it.
 
-An accepted repair updates the canonical authoring source and regenerates its
-views. Re-run structural validation and relevant behavior checks, then review
-the causal chain again. LLM suggestions do not become canon or runtime facts
-without author acceptance. The representation migration itself preserves current
-behavior; story repairs are separately reviewed changes, not hidden migration
-side effects. Intentional ambiguity and intentional failure are valid author
-decisions, not gaps that the tool must force onto a successful route.
+Exit, and the go/no-go for Phase 3: targets met, no safety regression, no
+unexplained performance regression, and Brandon prefers editing the new format. If
+edits still fan out, revise the schema once and re-run; if they still do, take the
+fallback in section 3.
 
-**Reading-view requirement (author finding, 2026-11-09).** Requirement 5 applies to
-the author's own view, not only to an LLM's. The first prototype was organized by
-reveal, so following "what happens after this?" and "what does the next scene
-need?" meant opening other records and guessing. A view that serves requirement 5
-must let the author, without looking up IDs:
+#### Phase 3: full story and consumers
 
-1. Start from a **situation** (e.g. Reyes's demand) and see its triggers, what
-   produces each, and what it leads to. A situation whose outputs feed only
-   wording, with no effect on custody, knowledge, or exits, shows as a dead end.
-2. See the **continuation** the next scene requires, each requirement with its
-   producers, and what the engine actually checks for it beside what the story
-   text promises (e.g. text says "the card she is already carrying"; the engine
-   checks a fact). Possession, knowledge, reach, and existence are shown as
-   different things.
-3. See the **plausible responses** with their effect today, simulated where the
-   engine can and marked "no authored mechanics" where it cannot. Responses are
-   tagged inference, not canon.
-4. See **review records** (canon, inferred concern, author question, proposal)
-   in a separate overlay whose evidence references are checked to exist and which
-   is never compiled into runtime facts.
-
-Computed flags in this view are structural. They point the author at a place to
-look; they do not judge whether a response is plausible. The same view is the
-evidence packet for the LLM reviewers, minus any diagnosis.
-
-Acceptance for the pilot: demonstrate detection on the Reyes/card case and an
-independent held-out case, with a well-grounded continuation as a control. Assess
-supported findings, missed gaps, false alarms, clarity, and the author's ability
-to choose a repair. Do not hardcode this example as a production rule or count
-an expected diagnosis copied into the reviewer prompt as successful discovery.
-LLM review is fallible assistance; deterministic checks establish structural
-consistency, not narrative completeness.
-
-### Conditional implementation sketch
-
-The scene-document layout and compiler outline below describe one candidate,
-not the selected architecture. If graph-first or relational semantics win, replace
-this sketch before Phase 1. Preserve the safety and test-independence requirements
-across all candidates; do not mandate a custom graph implementation.
-
-### Authoring layout
-
-Document-candidate layout, subject to the conceptual decision:
-
-```text
-story.yaml          # identity, schema version, scene order, shared declarations
-scenes/1A.yaml      # this scene's prose and executable declarations together
-scenes/1B.yaml
-...
-```
-
-Use YAML block scalars for Markdown prose. Keep scene entry, beats, local
-placements, storylets/realizations, claims, pacing, incidents, and outgoing
-handoffs together in their owning scene. Shared entities and genuinely shared
-facts belong in the root catalog. A record may reference another scene's stable
-ID without duplicating its definition. Large shared catalogs may be split later
-only when authoring experience warrants it.
-
-- Stable IDs are independent of headings, names, passage wording, and file paths.
-  Preserve existing IDs where possible; new IDs must not derive from prose slugs.
-- Define a fact's identity, type, and purpose once. Predicates and effects refer
-  to that identity; they do not redeclare its description.
-- Define an executable effect bundle once on its owning event/realization.
-  Claim authorization references that owner. Preserve explicit validation of
-  which effects authorize each claim; do not equate all event effects with all
-  claim knowledge.
-- Store a passage beside its semantic owner. Reference it by ID only when the
-  exact same passage is intentionally reused. Do not replace all prose with a
-  disconnected global string catalog or merge passages just because their bytes
-  happen to match.
-- Safe framing, protected claims, delivery text, and dramatic guidance remain
-  distinct fields with explicit audience/disclosure rules. Deduplication must
-  never broaden narrator access to protected material.
-- Generate the readable plot/story handbook and reference reports from these
-  records. Generated views are disposable and never edited as a second source.
-- Reject duplicate YAML keys, IDs, dangling references, invalid types, and
-  ambiguous ownership. Diagnostics identify source file, record, and field.
-
-### Compilation and runtime access
-
-Compile authoring records into a normalized intermediate representation, validate
-it, then construct the immutable runtime package. Initially adapt into the
-existing `StoryPackage` contract to constrain migration scope.
-
-Build only useful indexes: records by stable ID, records by scene, claims by
-source/fact/audience, and forward/reverse dependency adjacency. Reuse existing
-knowledge indexes where they already cover a need. Runtime selection should
-start from the active scene and eligible scope, rather than scan the whole story.
-An index improves lookup, but does not make graph traversal or eligibility
-evaluation constant time; measure actual access patterns.
-
-Keep source locations in a compiler side table for diagnostics. Produce a
-deterministic artifact with schema/compiler version, source digest, and content
-identity. Cache invalidation includes all compiler inputs. Verify artifact
-integrity and compatibility at load; fail closed on mismatches.
-
-The dependency graph supports impact reports: a changed passage points to its
-consumers; a changed fact points to predicates, effects, claims, and test cases.
-Use these reports to assist edits and focused checks, not as proof that unrelated
-tests can safely be omitted from required verification.
-
-Facts remain the sole mutable authority. Package graph edges describe authored
-relationships; they are not another live world store. World-state-only traversal
-and mutation remain `World` methods in `packages/worldkeeper`. The hosted adapter
-stays thin; Python/FastAPI, React, and Cloudflare boundaries remain intact.
-
-## 3. Test redesign
-
-Separate engine mechanics, story semantics, passage transport, and editorial
-wording. They need different sources of expected results.
-
-| Test purpose | Fixture/input | Independent assertion |
-| --- | --- | --- |
-| Generic runtime or loader behavior | Small typed synthetic story builder | Explicit fact changes, errors, rollback, disclosure, ordering |
-| Real story contract | Stable scene/event/claim IDs | Authored intent expressed as expected facts, access, prerequisites, and prohibited outcomes |
-| Exact passage delivery | Resolve the canonical passage for test input/transport expectation | Correct event, recipient, turn, multiplicity, and eligibility; explicit expected identity |
-| Editorial requirement | Narrow approved wording fixture or semantic rubric | Only intentional wording requirements, owned once |
-| End-to-end journey | Shared scenario setup plus varied natural player actions | Independently specified outcomes, safety boundaries, and observable behavior |
-
-Never generate expected effects from the same declarations being tested: a wrong
-effect would then change both actual and expected values and pass. Canonical
-passage lookup proves faithful transport, not literary correctness. Keep a small
-independently maintained editorial contract where wording itself matters.
-
-Build reusable typed fixtures and patch helpers that address records by ID and
-field. Serialize through the authoring boundary when testing parsing/loading;
-use direct typed builders for runtime mechanics. Keep intentionally malformed
-raw-source fixtures for syntax/error tests. Remove prose `.replace(...)` setup
-from ordinary behavior tests.
-
-Share journey setup and stable case IDs across Python and browser harnesses via
-a small language-neutral test-case manifest where useful. Keep this manifest
-separate from production story authority. Retain paraphrases, negation cases,
-ambiguous actions, and adversarial inputs; do not generate every player action
-from the matcher aliases it is supposed to test. Follow the
-[player-input guide](../docs/player-input-guide.md).
-
-Do not rewrite historical captures to resemble new behavior. Classify active
-regressions, frozen evidence, and obsolete experiment scaffolding using the
-existing consolidation plan, including its regression/mutant safeguards.
-
-## 4. Delivery phases
-
-### Phase 0 — Conceptual decision, baseline, and ownership map
-
-- [x] Complete an initial conceptual exercise on a real reveal and cross-scene
-  dependency; record alternatives, edit walkthroughs, tests, and limitations in
-  [the comparison](story-data-comparison.md).
-- [x] Extend to a later incident/cost/recovery slice (2C, in the Phase 0 evidence).
-- [x] Validate a readable authoring prototype with the author. Author verdict,
-  2026-11-09: the first generated view (organized by storylet) was **not
-  acceptable**; neither the author nor the drafter could naturally trace story gaps
-  in it. It lists what a reveal contains but not what follows from a situation or
-  what the next scene needs. Replacement under way: a situation-centered trace
-  (see "Reading-view requirement" in section 2). Re-review done 2026-11-09:
-  Brandon accepts the revised situation trace. Still not an authoring format.
-- [ ] Extend the conceptual comparison to requirement 5 using the Reyes/card
-  situation: represent goals, response consequences, continuation requirements,
-  and unknowns; demonstrate an evidence-linked LLM gap report and repair options.
-  Done 2026-11-09: representation of the situation under all four models, canon
-  evidence table, deterministic probe, non-blind gap list. Open: blind LLM review
-  of the Reyes case, a held-out case and a control (cases not chosen), and the
-  author's assessment.
-- [ ] Replace the conditional implementation sketch with the selected model;
-  choose storage and implementation mechanisms only afterward.
-- [x] Record baseline commit and working-tree state; isolate this work from
-  ongoing story changes before conversion (detached worktree at `2bb01bbc`).
-- [x] Choose one representative scene after concurrent edits settle. Include
-  claims, delivery variants, pacing, and a cross-scene dependency in the pilot.
-  Decided 2026-11-09 (Brandon): **1A**. Conversion starts after the seven
-  uncommitted arrival-glance edits are committed.
-- [x] Agree performance budgets. Decided 2026-11-09 (Brandon): cold load ≤ 0.5 s,
-  cached load ≤ 2 ms, per-turn knowledge projection ≤ 10 ms, package memory
-  ≤ 5 MiB, nothing slower than today. They guard against regression; they are
-  not targets.
-- [x] Choose held-out and control cases (2026-11-09: 1B.4 held-out, `i_2a_real_leak`
-  control; answer key for 1B.4 pending from the author).
-- [ ] Choose reviewers for the requirement 5 blind run. Decided 2026-11-09
-  (Brandon): run both a fresh-context Claude subagent and ChatGPT Desktop on the
-  same neutral packets, then compare. Packets are not built yet; the held-out and
-  control cases are not chosen.
-- [x] Map each concept to all authored definitions, generated views, tests,
-  probes, Ringer manifests, and browser consumers. Distinguish deliberate
-  repetition from competing definitions.
-- [x] Measure three representative edits: prose-only, reveal/effect, and
-  cross-scene dependency (rename proxy). Files touched, copies, and failing tests
-  recorded; elapsed authoring time not measured (needs the author).
-- [x] Profile cold/warm package loading, relevant query/turn preparation,
-  package memory, and representative tests. Record environment, repeated-run
-  variance, and coverage mode; separate model/network latency.
-
-Exit: a justified conceptual-model decision, ownership table, baseline evidence,
-agreed performance budgets, an author-reviewed reading/editing prototype, and
-evidence that the representation supports causal gap discovery and repair review.
-Do not invent a speedup percentage before these measurements.
-
-### Phase 1 — Schema and compiler contract
-
-Validation layers (added 2026-11-09 at Brandon's request; the intended end state is
-"validate the story against rules, like RelaxNG against XML"). Every check belongs
-to exactly one layer, has a stable name, and reports source file, record and field:
-
-| Layer | Question | Analogy | Severity | Status |
-| --- | --- | --- | --- | --- |
-| 1. Shape | Right fields, types, enums, required values? | RelaxNG / XSD types | **Error**: build fails | Largely exists in the typed models (`storygame/story_package/models.py`); coverage not yet audited |
-| 2. Integrity | Unique IDs, no dangling references, no cycles, one owner per fact and passage, claims authorized by their source effects | XSD key/keyref | **Error**: build fails | Partly exists; Phase 1 adds the missing checks and the ownership rule |
-| 3. Story rules | Custody, co-location, no strand, effects read by nothing | Schematron assertions | **Flag**: reported for review, never blocks a build | Slice 2 ports the Reyes checks |
-| 4. Narrative judgment | Is a response plausible, a consequence missing, a repair sound? | None | **Advisory**: LLM review plus author decision | Deferred blind run (see above) |
-
-Rules: layers 1 and 2 are pure functions of the authored data and must be
-deterministic. Layer 3 rules may run the real engine (simulation), must stay
-deterministic, carry a name and a quoted evidence trail, and each needs a test that
-a seeded defect trips it and a clean story does not. A layer 3 flag the author has
-reviewed can be marked "accepted" in the review overlay (slice 3) so it stops
-repeating, without deleting the rule. Layer 4 never produces pass/fail.
-
-- [ ] Specify typed records, stable IDs, reference resolution, source maps,
-  disclosure boundaries, and versioning. Document migration mappings.
-- [ ] Specify causal-review records and provenance for canon, inferred concerns,
-  open questions, and repair proposals. Define how accepted proposals update the
-  sole authoring source without leaking review material into narrator inputs.
-- [ ] Implement minimal cross-genre fixtures and schema/validator tests first.
-- [ ] Implement the normalized representation and adapter to `StoryPackage`.
-- [ ] Add deterministic build and duplicate/dangling-reference rejection.
-- [ ] Produce a readable generated story view and dependency/impact report,
-  including the situation trace, continuation requirements with promise-versus-check
-  display, and review overlay described under "Reading-view requirement".
-
-Exit: a small authored story compiles with current safety boundaries intact.
-
-### Phase 2 — One-scene migration and test pilot
-
-- [ ] Convert the selected scene mechanically; produce an old-to-new semantic
-  diff of IDs, predicates, effects, passages, placements, and disclosure scopes.
-- [ ] Keep legacy and new loading as explicit package modes during migration;
-  no silent precedence between competing definitions. A temporary hybrid pilot
-  needs an explicit ownership manifest rejecting duplicate owners.
-- [ ] Replace copied setup/prose in the pilot tests using the test design above.
-- [ ] Compare package semantics and deterministic runtime traces against the
-  baseline; allow only reviewed representation differences.
-- [ ] Repeat the representative edits and measurements from Phase 0.
-- [ ] Evaluate causal review on the required example, a held-out gap, and an
-  adequate-continuation control; have the author assess explanation and repair
-  quality. Keep any accepted narrative repair separate from migration parity.
-
-Exit: ordinary pilot prose changes require one canonical passage edit and no
-unrelated mechanics-test changes; deliberate editorial checks remain explicit.
-No safety regression and no unexplained performance regression within the
-agreed measurement tolerance. Revise the schema if local editing still fans out.
-
-### Phase 3 — Full story and consumer migration
-
-- [ ] Convert remaining scenes and shared definitions incrementally, preserving
-  references and current behavior. Include another genre as a portability gate.
-- [ ] Migrate active tests, E2E setup, probes, and Ringer manifests to stable
-  record operations and shared fixture contracts.
-- [ ] Retire redundant legacy authoring sources after parity; retain exports
-  only as generated views. Remove obsolete dual-loader paths at cutover.
-- [ ] Update authoring documentation and PRD to the adopted format.
-- [ ] Decide save compatibility explicitly: preserve identity only if semantic
-  equivalence is established; otherwise version/reject or provide a tested
+- [ ] Convert remaining scenes and shared definitions incrementally, parity gate
+  per scene.
+- [ ] Migrate the raw-file readers: `frontend/e2e/authored-spans.js`,
+  `knowledge-available.js`, `roleplay-judge.test.js`,
+  `scripts/disclosure_matrix.py`, `scripts/generate_spine_expected_reveals.py`,
+  and the tests that name story files.
+- [ ] Migrate active tests, E2E setup, probes and Ringer manifests to stable
+  record operations.
+- [ ] Another genre as a portability gate.
+- [ ] Save compatibility decided explicitly: preserve identity only where semantic
+  equivalence is established; otherwise version, reject or provide a tested
   migration. Never silently reinterpret a saved session.
+- [ ] Retire the legacy sources and the dual-loader path at cutover; keep exports
+  only as generated views. Update the authoring documentation and PRD.
 
-### Phase 4 — Measured optimization and release
+#### Phase 4: measured optimization and release
 
 - [ ] Profile the migrated implementation; add indexes only for demonstrated
-  expensive access patterns.
-- [ ] Evaluate physical representations appropriate to the selected conceptual
-  model if evidence identifies a storage/load bottleneck. Do not privilege a
-  relational artifact or custom indexes by default. Record the evidence.
-- [ ] Run required verification from the [testing runbook](../docs/testing-runbook.md),
-  including targeted regression coverage, cross-genre safety, persistence,
-  full-suite checks, Ruff, and the project coverage requirements.
-- [ ] Follow the [promotion guide](../docs/railway-production-promotion.md) for
-  staging and SHA-bound hosted/E2E verification before production promotion.
-- [ ] Record evidence, commit, remaining risks, and resume instructions in this
-  plan after each completed phase. Update existing runbook entries if commands
-  or verification boundaries change.
+  costs. Examine physical storage only if evidence shows a bottleneck.
+- [ ] Verification per the [testing runbook](../docs/testing-runbook.md); staging
+  and SHA-bound hosted E2E per the
+  [promotion guide](../docs/railway-production-promotion.md).
 
-## 5. Acceptance and scope limits
+Independent of all phases: validation is about 0.34 s of the 0.36 s load, mostly
+recompiled patterns in `_delivery_internal_token`. Compiling them once is a small
+fix that can ship on its own at any time.
 
-Success means fewer independently maintained definitions and fewer files changed
-per ordinary story edit, with measured runtime efficiency and unchanged safety.
-There must be one authored definition per fact and reusable passage, stable IDs
-through prose renames, deterministic compilation, actionable reference errors,
-and independently meaningful regression assertions.
-The author must also be able to follow and edit the narrative, understand an
-LLM's evidence-linked gap findings, and assess proposed repairs and their later
-consequences. The author must be able to trace a gap such as the Reyes demand
-through the generated view unaided, which the first prototype did not allow. Passing schema and runtime tests alone does not satisfy this gate.
+## 7. Acceptance and scope limits
 
-Do not remove tests merely to reduce counts, select libraries before the
-conceptual decision, add a visual editor in this migration, or change narrative
-behavior while proving representation parity. Any future editor must edit the
-chosen canonical model rather than establish a competing authority.
+Success: one authored definition per fact and reusable passage; fewer files
+changed per ordinary edit (the Phase 2 table); stable IDs through prose renames;
+deterministic compilation; actionable reference errors; independent regression
+assertions; measured runtime within budget; unchanged safety. The author can
+follow and edit the narrative, trace a gap such as the Reyes demand through the
+generated view unaided, understand an evidence-linked finding, and judge a
+proposed repair. Passing schema and runtime tests alone does not meet this.
 
-Planning verification: inspected repository documentation, package models and
-loader, representative story sources and tests, and existing consolidation plans.
-The initial concrete comparison ran 75 existing focused tests, all passing in
-8.16s; details and snapshot identity are in the linked report. No implementation
-or alternative-model benchmark ran. Performance benefits remain hypotheses until
-the phase gates above are measured.
+Out of scope: removing tests to reduce counts; choosing libraries or storage
+before D1 and profiling; a visual editor; narrative changes during parity work; a
+fixed menu of player actions or a branch per possible action.
+
+## 8. Record
+
+- 2026-11-09. Phase 0 measured on a detached worktree at `2bb01bbc`
+  ([evidence](story-data-phase0.md)). Comparison ran 75 focused tests, all passing.
+- 2026-11-09. Slice 1 committed as `74ad8245`; `tests/test_situation_trace.py`
+  passes (re-run during this revision).
+- 2026-11-09. Plan restructured: two tracks, decisions table, design discussion
+  moved to the reference file. Substantive changes from the previous version:
+  D1 now needs an editing draft; physical storage removed from the blocker; slice 3
+  narrowed pending D2; producer rule added to layer 3; raw-file readers named in
+  Phases 1 and 3; Phase 2 given measured targets and a go/no-go with a fallback.
+  Not verified: nothing in Phases 1–4 has been built or measured.
+- 2026-11-09. Brandon accepted all four recommendations: D2, D3, D4 and the
+  editing-draft step. D1 stays open until he has tried the 1A draft.
