@@ -334,6 +334,7 @@
     "tests/test_shadow_sample3_postchange_harness.py": 0.05,
     "tests/test_shard_balance.py": 0.09,
     "tests/test_sibling_reachability.py": 0.11,
+    "tests/test_situation_trace.py": 5.47,
     "tests/test_slice_probe.py": 2.24,
     "tests/test_speaker_lines.py": 0.4,
     "tests/test_speaker_presence.py": 0.17,
