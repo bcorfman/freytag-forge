@@ -1,0 +1,35 @@
+{
+  "run_name": "story-data-impact-report",
+  "workdir": "/home/bcorfman/dev/ringer-work/story-data-impact-report",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "script-default-root-fix",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=medium"
+      ],
+      "max_attempts": 2,
+      "timeout_s": 900,
+      "check_timeout_s": 600,
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/scripts/gap_rules.py",
+        "/home/bcorfman/dev/freytag-forge/scripts/situation_trace.py",
+        "/home/bcorfman/dev/freytag-forge/tests/test_story_review_scripts.py"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/scripts/gap_rules.py",
+        "/home/bcorfman/dev/freytag-forge/scripts/situation_trace.py",
+        "/home/bcorfman/dev/freytag-forge/tests/test_story_review_scripts.py"
+      ],
+      "spec": "You are an implementation worker for the freytag-forge repository at /home/bcorfman/dev/freytag-forge. Boundary: NO model call, NO network call, never git commit, never uv or bare python, never --cov. You own ONLY /home/bcorfman/dev/freytag-forge/scripts/gap_rules.py, /home/bcorfman/dev/freytag-forge/scripts/situation_trace.py and /home/bcorfman/dev/freytag-forge/tests/test_story_review_scripts.py (new). Touch nothing else.\n\nPROBLEM. CI failed because /home/bcorfman/dev/freytag-forge/scripts/gap_rules.py and /home/bcorfman/dev/freytag-forge/scripts/situation_trace.py default their `--root` to an absolute path on one developer's machine (`/home/bcorfman/dev/freytag-forge/data/stories/...`). /home/bcorfman/dev/freytag-forge/scripts/gap_rules.py even builds the story folder name from character codes. On the CI runner that path does not exist, so `main([...])` returns 2 and `tests/test_gap_rules.py::test_script_main_returns_zero_with_flags_and_two_for_unknown_anchor` fails.\n\nFIX. Make both scripts derive the default root from the script's own location, exactly as /home/bcorfman/dev/freytag-forge/scripts/impact_report.py does: `_STORIES = Path(__file__).resolve().parents[1] / \"data\" / \"stories\"` and `DEFAULT_ROOT = next(path for path in sorted(_STORIES.iterdir()) if path.is_dir())`. Remove the character-code name construction and any story name from /home/bcorfman/dev/freytag-forge/scripts/gap_rules.py and /home/bcorfman/dev/freytag-forge/scripts/situation_trace.py. Change nothing else in them (argument parsing, exit codes and output stay exactly as they are).\n\nGUARD TEST in /home/bcorfman/dev/freytag-forge/tests/test_story_review_scripts.py: for each of scripts/gap_rules.py, scripts/situation_trace.py, scripts/impact_report.py and scripts/branch_report.py, import the module by path (importlib.util.spec_from_file_location, so no packaging is needed), assert its `DEFAULT_ROOT` is an existing directory that lies under the repository root computed from the test file's own location (`Path(__file__).resolve().parents[1]`), and assert the script's source text contains no `/home/` substring. A fifth assertion: running each script's `main` with an unknown anchor and its default root returns 2 (not an exception). Keep it hermetic and fast. Existing tests /home/bcorfman/dev/freytag-forge/tests/test_gap_rules.py and /home/bcorfman/dev/freytag-forge/tests/test_situation_trace.py must still pass.\n\nHOW TO RUN (from /home/bcorfman/dev/freytag-forge): `export TMPDIR=/tmp PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/packages/worldkeeper/src && /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest /home/bcorfman/dev/freytag-forge/tests/test_story_review_scripts.py /home/bcorfman/dev/freytag-forge/tests/test_gap_rules.py /home/bcorfman/dev/freytag-forge/tests/test_situation_trace.py -q --no-cov -p no:cacheprovider 2>&1 | tail -15`. Format and lint: `/home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff format /home/bcorfman/dev/freytag-forge/scripts/gap_rules.py /home/bcorfman/dev/freytag-forge/scripts/situation_trace.py /home/bcorfman/dev/freytag-forge/tests/test_story_review_scripts.py && /home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff check /home/bcorfman/dev/freytag-forge/scripts/gap_rules.py /home/bcorfman/dev/freytag-forge/scripts/situation_trace.py /home/bcorfman/dev/freytag-forge/tests/test_story_review_scripts.py` (if ruff format cannot write because the filesystem is read-only, run `ruff format --check` and say so).",
+      "check": "set -o pipefail\ncd /home/bcorfman/dev/freytag-forge\nexport TMPDIR=/tmp PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/packages/worldkeeper/src\nPY=/home/bcorfman/dev/freytag-forge/.venv/bin/python\n$PY -m ruff check /home/bcorfman/dev/freytag-forge/scripts/gap_rules.py /home/bcorfman/dev/freytag-forge/scripts/situation_trace.py /home/bcorfman/dev/freytag-forge/tests/test_story_review_scripts.py\n$PY -m ruff format --check /home/bcorfman/dev/freytag-forge/scripts/gap_rules.py /home/bcorfman/dev/freytag-forge/scripts/situation_trace.py /home/bcorfman/dev/freytag-forge/tests/test_story_review_scripts.py\nif grep -n '/home/' /home/bcorfman/dev/freytag-forge/scripts/gap_rules.py /home/bcorfman/dev/freytag-forge/scripts/situation_trace.py; then echo 'ABSOLUTE PATH STILL PRESENT'; exit 1; fi\n$PY -m pytest /home/bcorfman/dev/freytag-forge/tests/test_story_review_scripts.py /home/bcorfman/dev/freytag-forge/tests/test_gap_rules.py /home/bcorfman/dev/freytag-forge/tests/test_situation_trace.py -q --no-cov -p no:cacheprovider 2>&1 | tail -12\n# prove the fix works from a different checkout location\nTMP=$(mktemp -d)\nmkdir -p $TMP/scripts $TMP/data\ncp /home/bcorfman/dev/freytag-forge/scripts/*.py $TMP/scripts/\ncp -r /home/bcorfman/dev/freytag-forge/data/stories $TMP/data/stories\nln -s /home/bcorfman/dev/freytag-forge/storygame $TMP/storygame\nln -s /home/bcorfman/dev/freytag-forge/packages $TMP/packages\ncd $TMP\nfor s in gap_rules situation_trace; do\n  PYTHONPATH=$TMP:$TMP/packages/worldkeeper/src $PY scripts/$s.py officer_presses_1a > $TMP/out.txt || { cat $TMP/out.txt; exit 1; }; head -3 $TMP/out.txt\ndone\nPYTHONPATH=$TMP:$TMP/packages/worldkeeper/src $PY scripts/gap_rules.py no_such_anchor; test $? -eq 2 || { echo \"expected exit 2\"; exit 1; }\n",
+      "verified": "both scripts find the story from their own location (proved from a copy in another directory), and a guard test keeps any review script from hard-coding an absolute path"
+    }
+  ]
+}

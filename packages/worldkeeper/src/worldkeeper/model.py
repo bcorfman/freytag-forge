@@ -733,6 +733,10 @@ class World(IncidentalWorldMixin):
         """Return the containing character, if held."""
         return next((ancestor for ancestor in self.chain(entity_id) if self._is_a(ancestor, "character")), None)
 
+    def holds(self, holder_id, entity_id):
+        """Return whether a character holds an entity, directly or nested in what it holds."""
+        return holder_id is not None and self.holder(entity_id) == holder_id
+
     def together(self, first_id, second_id):
         """Return whether two entities are in the same area or nested areas."""
         first_area, second_area = self.area(first_id), self.area(second_id)
@@ -740,6 +744,24 @@ class World(IncidentalWorldMixin):
             return False
         return (
             first_area == second_area or first_area in self.chain(second_area) or second_area in self.chain(first_area)
+        )
+
+    def characters_together(self, entity_id):
+        """Return the sorted ids of other characters in the same or nested areas as an entity."""
+        return tuple(
+            sorted(
+                candidate
+                for candidate in self.entity_ids()
+                if candidate != entity_id and self.is_a(candidate, "character") and self.together(entity_id, candidate)
+            )
+        )
+
+    def apart(self, first_id, second_id):
+        """Return whether both entities are placed in areas and are not together."""
+        return (
+            self.area(first_id) is not None
+            and self.area(second_id) is not None
+            and not self.together(first_id, second_id)
         )
 
     def contents(self, entity_id):

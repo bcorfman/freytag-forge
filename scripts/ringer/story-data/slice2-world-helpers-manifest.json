@@ -1,0 +1,32 @@
+{
+  "run_name": "story-data-gap-rules",
+  "workdir": "/home/bcorfman/dev/ringer-work/story-data-gap-rules",
+  "max_parallel": 1,
+  "worktrees": false,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "world-coherence-helpers",
+      "task_type": "code-feature",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=medium"
+      ],
+      "max_attempts": 2,
+      "timeout_s": 1800,
+      "check_timeout_s": 900,
+      "ownership": [
+        "/home/bcorfman/dev/freytag-forge/packages/worldkeeper/src/worldkeeper/model.py",
+        "/home/bcorfman/dev/freytag-forge/packages/worldkeeper/tests/test_coherence_helpers.py"
+      ],
+      "expect_files": [
+        "/home/bcorfman/dev/freytag-forge/packages/worldkeeper/tests/test_coherence_helpers.py"
+      ],
+      "spec": "You are an implementation worker for the freytag-forge repository at /home/bcorfman/dev/freytag-forge. Boundary: NO model call, NO network call, never git commit, never uv or bare python. You own ONLY /home/bcorfman/dev/freytag-forge/packages/worldkeeper/src/worldkeeper/model.py (edit: add two methods to class World) and /home/bcorfman/dev/freytag-forge/packages/worldkeeper/tests/test_coherence_helpers.py (create). Touch nothing else.\n\nAdd these world-state-only methods to class World in /home/bcorfman/dev/freytag-forge/packages/worldkeeper/src/worldkeeper/model.py, directly after the existing `together` method (read `area`, `holder`, `holds` and `together` first and follow their style: short, no new dependencies):\n\n    def characters_together(self, entity_id):\n        \"\"\"Return the sorted ids of other characters in the same or nested areas as an entity.\"\"\"\n  Every entity id from self.entity_ids() that is not entity_id, for which self.is_a(candidate, \"character\") and self.together(entity_id, candidate) are true, sorted by id, as a tuple.\n\n    def apart(self, first_id, second_id):\n        \"\"\"Return whether both entities are placed in areas and are not together.\"\"\"\n  True exactly when self.area(first_id) is not None and self.area(second_id) is not None and not self.together(first_id, second_id).\n\nTESTS in /home/bcorfman/dev/freytag-forge/packages/worldkeeper/tests/test_coherence_helpers.py (pytest, compact, module-level functions; copy the WorldSchema.from_data / World(schema, MemoryBackend()) / world.seed() / world.move(...) setup style from /home/bcorfman/dev/freytag-forge/packages/worldkeeper/tests/test_holds.py). Cover: characters_together returns sorted other characters in the same area and in a nested area, excludes the entity itself, excludes a character in a separate area and an unplaced one, and returns () when alone; apart is True for two placed entities in separate areas, False in the same area, False in nested areas, False when either is unplaced, and True for an item in another area than a character.\n\nHOW TO RUN (from /home/bcorfman/dev/freytag-forge; never --cov): `export TMPDIR=/tmp PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/packages/worldkeeper/src && /home/bcorfman/dev/freytag-forge/.venv/bin/python -m pytest /home/bcorfman/dev/freytag-forge/packages/worldkeeper/tests/test_coherence_helpers.py /home/bcorfman/dev/freytag-forge/packages/worldkeeper/tests -q --no-cov -p no:cacheprovider 2>&1 | tail -15`. Format and lint: `/home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff format /home/bcorfman/dev/freytag-forge/packages/worldkeeper/src/worldkeeper/model.py /home/bcorfman/dev/freytag-forge/packages/worldkeeper/tests/test_coherence_helpers.py && /home/bcorfman/dev/freytag-forge/.venv/bin/python -m ruff check /home/bcorfman/dev/freytag-forge/packages/worldkeeper/src/worldkeeper/model.py /home/bcorfman/dev/freytag-forge/packages/worldkeeper/tests/test_coherence_helpers.py`.",
+      "check": "set -o pipefail\ncd /home/bcorfman/dev/freytag-forge\nexport TMPDIR=/tmp PYTHONPATH=/home/bcorfman/dev/freytag-forge:/home/bcorfman/dev/freytag-forge/packages/worldkeeper/src\nPY=/home/bcorfman/dev/freytag-forge/.venv/bin/python\n$PY -m ruff check /home/bcorfman/dev/freytag-forge/packages/worldkeeper/src/worldkeeper/model.py /home/bcorfman/dev/freytag-forge/packages/worldkeeper/tests/test_coherence_helpers.py\n$PY -m ruff format --check /home/bcorfman/dev/freytag-forge/packages/worldkeeper/src/worldkeeper/model.py /home/bcorfman/dev/freytag-forge/packages/worldkeeper/tests/test_coherence_helpers.py\ngrep -n \"def characters_together\\|def apart\" /home/bcorfman/dev/freytag-forge/packages/worldkeeper/src/worldkeeper/model.py\n$PY -m pytest /home/bcorfman/dev/freytag-forge/packages/worldkeeper/tests/test_coherence_helpers.py /home/bcorfman/dev/freytag-forge/packages/worldkeeper/tests -q --no-cov -p no:cacheprovider 2>&1 | tail -6\n",
+      "verified": "World.characters_together and World.apart exist, their tests pass, and all worldkeeper tests still pass"
+    }
+  ]
+}
