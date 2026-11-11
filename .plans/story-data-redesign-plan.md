@@ -22,7 +22,8 @@ Companion documents (evidence lives there, not here):
 Two tracks. Track A does not wait for Track B.
 
 **Track A, review tooling on today's story package: unblocked.**
-Next is slice 4 (impact report, producer/consumer rules). See section 6.
+Slices 1, 2 and 4 are built; slice 3 is dropped. Next: decide what to do about the
+noisy `unread_effect` rule (section 6, slice 4), then the deferred blind run.
 
 **Track B, the migration: blocked on decision D1** (section 4). The unblocking
 step is not more analysis. It is a hand-written draft of scene 1A in the proposed
@@ -128,8 +129,8 @@ Made (Brandon, 2026-11-09 unless noted):
 | Build go-ahead | "I like the gaps that it finds now. I'll amend it later if I find more weaknesses. Proceed past this point to build the features into the project." Drafter's reading: Reyes findings are enough for requirement 5 for now; the blind run is deferred, not cancelled |
 | Fixtures | From the continuity-initiative story only for now; schema and compiler stay story-agnostic |
 | Validation | Layered, "like RelaxNG against XML" (section 5) |
-| D2, review overlay scope | Store only **accepted flags** (rule, anchor, evidence digest, author's reason): a reviewed flag stops repeating and returns if its evidence changes. LLM findings and proposals stay generated reports, never stored records. Built when the first flag needs silencing. Reason: the hand-written overlay was removed as "not helpful; it held opinion, not evidence", and a gap is computed and disappears when the source is fixed |
-| D3, CI gating | Unaccepted layer 3 flags never block a build |
+| D2, review overlay scope (amended 2026-11-10) | **No stored accepted-flags store.** Rule results are computed on every run and never saved, so they cannot go stale or drift from the code. LLM findings and proposals stay generated reports, never stored records. If a rule ever needs silencing, the exemption is declared on the authored record it concerns, with a reason, and the rule reads it from there (a small schema addition made when the first case arrives; custody is the likely first). Reason: Brandon dislikes flags that sit one step removed from the code and go stale. The first D2 (a store keyed by evidence digest) narrowed staleness but did not remove it, and the earlier hand-written overlay was already removed as "not helpful; it held opinion, not evidence" |
+| D3, CI gating | Layer 3 rule results never block a build |
 | D4, when compilation runs | Load time, with the existing fingerprint cache, unless the measured cold load misses 0.5 s |
 | Editing draft before D1 | Approved: 1A is drafted by hand in the proposed format and Brandon tries four edits before deciding the model |
 
@@ -151,7 +152,7 @@ Ownership and safety:
   preserved where possible.
 - Safe framing, protected claims, delivery text and dramatic guidance stay
   distinct fields. Deduplication never broadens narrator access.
-- Review material (flags, accepted flags, LLM reports) never reaches
+- Review material (rule results, LLM reports) never reaches
   `StoryPackage`, narrator inputs or runtime facts.
 - A requirement states which relation it asserts: **hold, know, reach or exist**.
 - World-state-only logic is a `World` method in `packages/worldkeeper`;
@@ -223,12 +224,63 @@ working after the migration.
   lines; a trace that said "no held item" when custody was untested). Not done:
   other older tests that may overlap (1A tests, `*_repro.py`) have not been
   opened; sweep after slice 4 using the consolidation plan's mutation evidence.
-- [ ] **Slice 4, impact report.** Forward and reverse dependencies for a fact or
-  passage: producers, consumers, claims, tests that name it. Adds the two
-  producer/consumer rules to the registry (a condition with no producer; an effect
-  read by nothing). The seeded defect is the measured one: remove the mark effect
-  and the marked pursuit must be flagged.
-- [ ] **Slice 3, accepted flags.** Scope per decision D2. Last, and only when needed.
+- [x] **Slice 4, impact report and producer/consumer rules.** Built 2026-11-10
+  through Ringer; not yet committed. `storygame/story_package/dependencies.py`
+  (shared `producers()` and `consumers()`, used by the trace, the report and the
+  rules), `storygame/story_package/impact_report.py`,
+  `scripts/impact_report.py <fact|claim|event|transition|storylet>`,
+  `tests/test_impact_report.py`; rules `no_producer` and `unread_effect` added
+  to `gap_rules.py`. The measured case holds: removing every effect that sets
+  the mark still loads, and `no_producer` reports it on `pursuit_1b`. Two review
+  rounds were needed. The first pass gave about 10 `no_producer` and 40
+  `unread_effect` false results because (a) a condition that needs a fact to be
+  false was treated as unproduced and (b) the consumer lookup missed storylet
+  completion/abort, route-event activation and ending conditions. Both are
+  fixed, and a completeness test walks the model fields so a new reading site
+  cannot be silently missed. Impact report test matches are textual (the id as
+  a token in `tests/*.py`), not proof of coverage.
+  **Open question for Brandon:** on the real package `no_producer` gives no
+  results, but `unread_effect` gives 68 results over about 28 facts, mostly
+  pressure-state facts set by pacing events (for example `pursuit_closing_in`)
+  that only record that the event happened. The worker called them true gaps;
+  that is not established. Whether a recorded-but-unread fact is a gap is an
+  authoring decision, and I did not check whether the narrator reads them from
+  the fact store. Until decided the rule is noisy on this story.
+- [x] **Slice 5, branch report (built 2026-11-10, not committed; added 2026-11-10 after Brandon's review of
+  `unread_effect`).** The slice 2 and 4 rules look at one fact at a time. They
+  cannot say what a scene's branches do to the story. Brandon's requirement: for
+  the branches of a scene (an incident's outcomes, its recovery and its
+  missed-window path), analyze (1) the branch within its scene: what it does,
+  whether it leaves an authored way out, whether what it sets and what it costs
+  make sense, and (2) how it influences the next scene (when there is one):
+  which next-scene entry variants, claims, gates and transitions react to it,
+  what carries on only in some branches, and which declared costs or advantages
+  nothing enforces. Layer 3 part (computed, cites file and line): the branch
+  table above. Layer 4 part (judgment, never pass/fail): the report quotes the
+  branch's text beside the next scene's entry text so a reader can check common
+  sense, for example a branch that seals a place followed by an entry that calls
+  it open. Module `storygame/story_package/branch_report.py`, script
+  `scripts/branch_report.py <incident>`, tests `tests/test_branch_report.py`.
+  **Brandon's rule (2026-11-10): if the state of the next scene does not follow
+  from where the branch leaves off, something is broken.** So the core check is
+  handoff continuity, computed with the real engine: take the world after the
+  branch, apply the next scene's entry placements (`apply_scene_placements`),
+  and list everything the entry moves (protagonist, characters, items,
+  companions) and every fact the branch set that the next scene never reflects.
+  An unexplained move is a result.
+  Built through Ringer in one pass (`branch_report.py`, `scripts/branch_report.py
+  <incident>`, `tests/test_branch_report.py`, `Consumer.scene_id`, a guide
+  section). On 2C it finds the two unread declared costs and that the transmit
+  branch leaves no trace in 3A, and no unexplained world move. Known defects in
+  the first output, to fix next: the same bridge text repeats on every line;
+  scene setup (things that appear with no earlier place) is listed as moves
+  beside real carried-over moves; and "later scenes read it through nothing"
+  ignores reads by the exit transition. First case: 2C, where the rescue branch reaches 3A and the
+  transmit branch's declared cost reaches nothing.
+- [x] **Slice 3, accepted flags: dropped (2026-11-10, amended D2).** No separate
+  store is built. If a rule needs silencing, add a reasoned exemption field on the
+  authored record and have the rule read it; do that only when a real case
+  arrives. Until then nothing is stored and nothing can go stale.
 - [ ] **Deferred blind run (quality check on the method).** Brandon writes the
   1B.4 answer key and keeps it out of the packets and out of the drafter's context
   ("no known gap" switches the held-out case to 2A.4). Packets are slice 1 output
@@ -392,3 +444,9 @@ fixed menu of player actions or a branch per possible action.
 - 2026-11-10. Slice 2 built (section 6). Story-gap guide now points at
   `scripts/gap_rules.py`. The blind run is still deferred, so the rules remain
   shaped by the Reyes case alone.
+- 2026-11-10. Brandon amended D2: slice 3 (accepted-flags store) is dropped in
+  favor of exemptions declared on the authored record, built only when a rule
+  needs one. Open, not yet done: rename "flag" to "rule result" in the plan, the
+  guide, the module and the output (a follow-up pass, not part of slice 4).
+- 2026-11-10. Slice 4 built (section 6). `unread_effect` is noisy on the real
+  package (68 results); decision pending.

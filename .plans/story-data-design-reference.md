@@ -169,6 +169,8 @@ must let the author, without looking up IDs:
 4. See **review records** (canon, inferred concern, author question, proposal)
    in a separate overlay whose evidence references are checked to exist and which
    is never compiled into runtime facts.
+   *Amended 2026-11-10 (D2): no stored review store. Rule results are computed
+   each run; an exemption, if ever needed, is declared on the authored record.*
 
 Computed flags in this view are structural. They point the author at a place to
 look; they do not judge whether a response is plausible. The same view is the

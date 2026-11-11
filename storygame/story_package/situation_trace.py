@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 from pathlib import Path
 
+from storygame.story_package.dependencies import consumers, producers
 from storygame.story_package.gap_rules import custody_checks
 from storygame.story_package.loader import load_story_package
 from storygame.story_package.models import (
@@ -33,68 +34,18 @@ def _fact_purposes(package: StoryPackage) -> dict[str, str]:
     return {fact.id: fact.purpose for fact in package.knowledge.facts}
 
 
-def _operation_value(operation: object) -> object:
-    value = getattr(operation, "value", None)
-    return True if value is None else value
-
-
 def _claim_source(claim: KnowledgeDefinition) -> str:
     source = claim.source
     return source.realization_id or source.storylet_id or source.kind
-
-
-def _producers(package: StoryPackage, fact_id: str, value: object = True) -> list[str]:
-    producers: list[str] = []
-    for event in package.pacing.events:
-        if any(effect.fact_id == fact_id and effect.equals == value for effect in event.effects):
-            producers.append(f"pacing event {event.id} (turn {event.at_turn})")
-    for claim in package.knowledge.knowledge:
-        if any(effect.fact_id == fact_id and effect.value == value for effect in claim.establishes):
-            producers.append(f"claim {claim.id} from {_claim_source(claim)}")
-    for delivery in package.deliveries:
-        if any(cost.fact_id == fact_id and _operation_value(cost) == value for cost in delivery.costs):
-            producers.append(f"fallback handoff for {delivery.fact_id} (scene {delivery.scene_id})")
-    return producers
-
-
-def _consumers(
-    package: StoryPackage, fact_id: str, *, exclude_transition_id: str | None = None
-) -> list[tuple[str, str]]:
-    consumers: list[tuple[str, str]] = []
-    for event in package.pacing.events:
-        if any(condition.fact_id == fact_id for condition in event.when):
-            consumers.append(("gate", f"pacing event {event.id} waits on it"))
-        for realization in event.realizations:
-            if any(condition.fact_id == fact_id for condition in realization.when):
-                consumers.append(
-                    ("wording", f"pacing event {event.id} (scene {event.scene_id}) picks a line of wording by it")
-                )
-    for transition in package.pacing.transitions:
-        if transition.id != exclude_transition_id and any(
-            trigger.fact_id == fact_id for trigger in transition.triggers
-        ):
-            consumers.append(("gate", f"transition {transition.id} requires it"))
-    for storylet in package.storylet_routes.storylets:
-        if any(condition.fact_id == fact_id for condition in storylet.activation_conditions):
-            consumers.append(("gate", f"storylet {storylet.id} activation depends on it"))
-    for claim in package.knowledge.knowledge:
-        if any(requirement.fact_id == fact_id for requirement in claim.requires):
-            consumers.append(("gate", f"claim {claim.id} requires it"))
-    for guard in package.world.disclosure_guards:
-        if guard.unlock_fact == fact_id:
-            consumers.append(("world", f"guard {guard.id} unlocks on it"))
-    if package.world.fact_effects.get(fact_id):
-        consumers.append(("world", "world effect runs when it is asserted"))
-    return consumers
 
 
 def _append_fact_consumers(
     lines: list[str], package: StoryPackage, fact_id: str, *, exclude: str | None = None
 ) -> None:
     lines.append(f"`{fact_id}` is read by:")
-    consumers = _consumers(package, fact_id, exclude_transition_id=exclude)
-    if consumers:
-        lines.extend(f"- {text} [{kind}]" for kind, text in consumers)
+    fact_consumers = consumers(package, fact_id, exclude_transition_id=exclude)
+    if fact_consumers:
+        lines.extend(f"- {consumer.text} [{consumer.kind}]" for consumer in fact_consumers)
     else:
         lines.append("- nothing")
 
@@ -117,8 +68,8 @@ def _append_transition(lines: list[str], package: StoryPackage, transition: Tran
         ]
     )
     for trigger in transition.triggers:
-        producers = "; ".join(_producers(package, trigger.fact_id, trigger.equals))
-        lines.append(f"| `{trigger.fact_id}` | {purposes.get(trigger.fact_id, '?')} | {producers} |")
+        produced_by = "; ".join(item.text for item in producers(package, trigger.fact_id, trigger.equals))
+        lines.append(f"| `{trigger.fact_id}` | {purposes.get(trigger.fact_id, '?')} | {produced_by} |")
     lines.append("")
     for dependency in transition.required_dependencies:
         lines.append(f"It also lists `{dependency}` as a required dependency.")
@@ -216,7 +167,7 @@ def _render_pacing_event(lines: list[str], package: StoryPackage, event: PacingE
     for condition in event.when:
         lines.append(
             f"  - `{condition.fact_id}` ({purposes.get(condition.fact_id, '?')}) comes from: "
-            + "; ".join(_producers(package, condition.fact_id, condition.equals))
+            + "; ".join(item.text for item in producers(package, condition.fact_id, condition.equals))
         )
     lines.append(f"- It sets: {_condition_text(event.effects)}.")
     if event.realizations:
@@ -226,12 +177,12 @@ def _render_pacing_event(lines: list[str], package: StoryPackage, event: PacingE
     lines.extend(["", "## 2. Where the situation leads", ""])
     dead_end = True
     for effect in event.effects:
-        consumers = _consumers(package, effect.fact_id)
+        fact_consumers = consumers(package, effect.fact_id)
         lines.append(f"`{effect.fact_id}` is read by:")
-        if consumers:
-            for kind, text in consumers:
-                lines.append(f"- {text} [{kind}]")
-                dead_end &= kind == "wording"
+        if fact_consumers:
+            for consumer in fact_consumers:
+                lines.append(f"- {consumer.text} [{consumer.kind}]")
+                dead_end &= consumer.kind == "wording"
         else:
             lines.append("- nothing")
     lines.extend(

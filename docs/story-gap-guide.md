@@ -31,7 +31,13 @@ check) on the same anchor. Run from the repo root:
 ```
 PYTHONPATH=.:packages/worldkeeper/src .venv/bin/python scripts/situation_trace.py <anchor>
 PYTHONPATH=.:packages/worldkeeper/src .venv/bin/python scripts/gap_rules.py <anchor> [--rule NAME]
+PYTHONPATH=.:packages/worldkeeper/src .venv/bin/python scripts/impact_report.py <fact|claim|event|transition|storylet>
 ```
+
+The impact report lists what sets a fact, what reads it and the related claims.
+The rules `no_producer` (a condition nothing can satisfy) and `unread_effect` (a
+fact set and never read) use the same lookup. `unread_effect` is noisy on facts
+that only record that an event happened, so read its results as information.
 
 An anchor is a pacing event, an incident or a transition id. The trace is data
 only. The rules print flags with evidence; flags are never errors and never
@@ -42,3 +48,10 @@ The author set the checks after the first drafts missed them, so the method is
 unproven: run it blind on a second situation where the author knows the gaps
 before relying on it. The old prototype `.plans/story-data-phase0/render_trace.py`
 is kept as evidence only.
+
+### Branch report
+
+Run `scripts/branch_report.py <incident>` for an incident report. It shows what
+each branch does, whether it has a way out, how its world state is handed to the
+next scene, and the authored text a reader should use to judge continuity. It
+reports results only and never blocks a build.

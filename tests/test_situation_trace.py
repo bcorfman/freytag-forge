@@ -6,12 +6,19 @@ from pathlib import Path
 import pytest
 import yaml
 
-from storygame.story_package import situation_trace
+from storygame.story_package import dependencies, situation_trace
 from storygame.story_package.gap_rules import CustodyCheck, custody_checks
 from storygame.story_package.loader import load_story_package
 from storygame.story_package.situation_trace import render_situation_trace
 
 ROOT = Path("data/stories/continuity-initiative")
+
+
+def test_trace_uses_shared_dependency_lookup() -> None:
+    assert situation_trace.producers is dependencies.producers
+    assert situation_trace.consumers is dependencies.consumers
+    assert not hasattr(situation_trace, "_producers")
+    assert not hasattr(situation_trace, "_consumers")
 
 
 @pytest.mark.parametrize("anchor", ("officer_presses_1a", "i_2a_real_leak", "t_1b_1c"))
