@@ -3,6 +3,7 @@
   "files": {
     "tests/test_1a_arrival_glance.py": 4.66,
     "tests/test_1a_back_door_gap.py": 0.09,
+    "tests/test_1a_departure_hold.py": 1.55,
     "tests/test_1a_drawer_close_gap.py": 8.96,
     "tests/test_1a_drawer_words.py": 0.18,
     "tests/test_1a_gap_pointer.py": 0.84,

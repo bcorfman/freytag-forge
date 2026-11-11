@@ -196,8 +196,8 @@ def test_michelle_glimpse_contract_is_uncertain_and_preserves_its_metadata():
     )
     assert (entry.relevance.entity_ids, entry.relevance.priority) == ((), 0)
 
-    assert len(entries) == 121
-    assert len({item_id for item_id in entries}) == 121
+    assert len(entries) == 122
+    assert len({item_id for item_id in entries}) == 122
     uncertain_text = f"{entry.statement} {entry.delivery_text}".casefold()
     assert not any(
         term in uncertain_text

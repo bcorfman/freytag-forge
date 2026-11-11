@@ -204,6 +204,7 @@ def test_real_package_has_exactly_the_non_voiceable_knowledge_items() -> None:
         "k_sl_1a_f_r1",
         "k_sl_1a_f_r2",
         "k_sl_1a_f_r3",
+        "k_sl_1a_k_r1",
         "k_sl_1b_d_r1",
         "k_sl_1b_e_r1",
         "k_sl_1b_a_r2",

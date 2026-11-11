@@ -229,6 +229,8 @@ facts:
 - id: patrol_return_pressure
   purpose: Observable signs indicate the federal patrol is likely to return or intensify
     scrutiny at Michelle's house.
+- id: departure_held
+  purpose: Kristin tried to drive to the park before the street was clear and held back.
 - id: patrol_on_scene
   purpose: A federal emergency patrol has arrived at Michelle's house.
 - id: patrol_in_house
@@ -447,7 +449,7 @@ knowledge:
   - [chair]
   - [door, forced entry]
   - [outward, from inside]
-  delivery_text: "Kristin makes herself breathe and look. Michelle's phone is still here, undamaged. Her tablet and work bag are gone, and her chair is tipped over. Then she sees the back door. The splinters around the frame point outward, away from the house. A door forced from outside would splinter inward. Someone broke this one from inside to make it look like a break-in. It looks staged."
+  delivery_text: "Kristin makes herself breathe and look. Michelle's phone is still here - damaged a bit but still working. Her tablet and work bag are gone, and her chair is tipped over. Then she sees the back door. The splinters around the frame point outward, away from the house. A door forced from outside would splinter inward. Someone broke this one from inside to make it look like a break-in. It looks staged."
 - id: k_sl_1a_g_r1
   statement: "Kristin reads the workstation as Michelle's last hour: a faintly warm mug of tea and her reading glasses folded on red-penned manuscript pages."
   reach_entity_ids: [michelle_workstation]
@@ -1085,6 +1087,48 @@ knowledge:
   - [watch, check, inspect, examine, look at]
   - [gate, front gate, reflective tape]
   delivery_text: "After the patrol leaves, Kristin finds a strip of reflective tape on the front gate. The officers marked the house. They plan to come back."
+- id: k_sl_1a_k_r1
+  statement: "Kristin tries to drive to the park before the street is clear and holds back."
+  voiceable: false
+  reach_entity_ids: [kristin_truck]
+  earn_when: tries to drive or head to the park before the street is clear
+  action_evidence:
+  - [drive, head, ride, go, leave, pull out, pull away, set off, take the truck, get to]
+  - [park, bench]
+  repeatable: true
+  entity_ids: [kristin, kristin_truck, park_bench]
+  aliases:
+  - departure held
+  audience:
+    kind: public
+    player_visible: true
+  available_in_scenes:
+  - 1A
+  requires:
+  - fact_id: michelle_lead_actionable
+    equals: true
+  establishes:
+  - op: assert
+    fact_id: departure_held
+    value: true
+  source:
+    kind: storylet_realization
+    storylet_id: SL-1A-K
+    realization_id: SL-1A-K-R1
+  relevance:
+    entity_ids: [kristin, kristin_truck, park_bench]
+    priority: 0
+  must_convey:
+  - [pull away, drive]
+  - [park]
+  - [bench]
+  - [waits, wait]
+  delivery_text: "Kristin does not pull away yet. If anyone is watching the street, driving to the park now would lead them straight to the bench. She waits to see what the street does."
+  delivery_variants:
+  - requires: [patrol_on_scene]
+    text: "Kristin does not pull away yet. The patrol is still at the house, and the truck would be the first thing they follow. If she drives to the park now, she leads them straight to the bench. She waits to see what the patrol does."
+  - requires: [patrol_departed]
+    text: "Kristin does not pull away yet. The patrol has only just left, and it could be waiting around the corner. If she drives to the park now, she may lead it straight to the bench. She waits to see what the street does."
 - id: k_sl_1b_d_r1
   statement: Kristin finds Michelle's transit token, handwritten number sequence and photograph under the park bench and keeps them with her.
   voiceable: false

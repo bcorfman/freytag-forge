@@ -1241,3 +1241,14 @@ Unresolved: original hosted request/state, actual password knowledge, live
 causal attribution of Mrs. Jenkins, frequency of either miss, the schema
 needed for generated reference evidence, and whether capture/prompt changes
 fit current latency/budget. Do not close these based on stub replay success.
+
+## Departure hold (2026-11-10)
+
+Bug: before the 13-turn floor, "Drive to the park." in 1A got no answer (the engine moves to 1B by itself at
+min_turns 13 with `michelle_lead_actionable`, `memory_card_recovered`, `patrol_return_pressure`).
+Fix (Brandon chose option 1): optional storylet SL-1A-K and repeatable authored reveal `k_sl_1a_k_r1`
+(reach: truck; requires the lead; sets `departure_held`), three wordings by patrol state. Floor and
+transition untouched. Tests: `tests/test_1a_departure_hold.py`; full suite 4364 passed.
+Open: no billed live probe yet (does the narrator's lead-up fight the authored line?); "drive to the park" from
+inside the kitchen still goes to the narrator; the replay of the recording on an unrelated command (turns 8 and 10
+of Brandon's transcript) is undiagnosed.

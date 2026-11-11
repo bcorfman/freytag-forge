@@ -13,7 +13,7 @@ ENV = f"export TMPDIR=/tmp PYTHONPATH={R}:{R}/packages/worldkeeper/src"
 
 OLD_ENTRY_END = "She found the back door forced and let herself into the kitchen."
 GLANCE = "The kitchen was wrong at a glance. Michelle's chair lay tipped over at her workstation across the room, and her tablet and work bag were nowhere in sight. A mug sat on the workstation beside a stack of manuscript pages. The calendar and the lake photograph hung by the refrigerator, where they always had. Kristin was too frantic to read any of it yet. She called Michelle's name."
-STEADY_TEXT = "Kristin makes herself stop and look properly. Michelle's phone is still here, undamaged. Then she sees the back door. The splinters around the frame point outward, away from the house. A door forced from outside would splinter inward. Someone broke this one from inside to make it look like a break-in. It looks staged."
+STEADY_TEXT = "Kristin makes herself stop and look properly. Michelle's phone is still here - damaged a bit but still working. Then she sees the back door. The splinters around the frame point outward, away from the house. A door forced from outside would splinter inward. Someone broke this one from inside to make it look like a break-in. It looks staged."
 CUE = "Kristin's initials, KMS, are carved into a drawer of Michelle's workstation."
 HOUSE = "The rest of the house is quiet. Michelle is not in it."
 

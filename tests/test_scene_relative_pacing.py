@@ -139,7 +139,7 @@ def test_scene_windows_and_storylet_targets_leave_room_for_every_beat() -> None:
         storylets = [storylet for storylet in PACKAGE.storylet_routes.storylets if storylet.scene_id == scene_id]
         targets = [storylet.target_turn for storylet in storylets]
         expected_targets = {
-            "1A": [2, 3, 3, 4, 5, 5, 5, 6, 8, 8],
+            "1A": [2, 3, 3, 4, 5, 5, 5, 6, 8, 8, 10],
             "1B": [2, 2, 3, 3, 4, 6, 6, 10],
             "1C": [2, 2, 2, 2, 2, 3, 6],
             "2A": [1, 2, 2, 2, 2, 3, 6],
