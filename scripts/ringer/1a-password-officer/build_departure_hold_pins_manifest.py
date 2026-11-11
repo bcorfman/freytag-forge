@@ -9,7 +9,17 @@ D = f"{R}/scripts/ringer/1a-password-officer"
 PY = f"{R}/.venv/bin/python"
 ENV = f"export TMPDIR=/tmp PYTHONPATH={R}:{R}/packages/worldkeeper/src"
 T = f"{R}/tests"
-FILES = [f"{T}/{n}" for n in ("test_scene_relative_pacing.py", "test_drawer_avoidance_repro.py", "test_drawer_gap_nudge.py", "test_richer_1c.py", "test_design_review_fixtures.py", "shard_durations.json")]
+FILES = [
+    f"{T}/{n}"
+    for n in (
+        "test_scene_relative_pacing.py",
+        "test_drawer_avoidance_repro.py",
+        "test_drawer_gap_nudge.py",
+        "test_richer_1c.py",
+        "test_design_review_fixtures.py",
+        "shard_durations.json",
+    )
+]
 RUN = "tests/test_scene_relative_pacing.py tests/test_drawer_avoidance_repro.py tests/test_drawer_gap_nudge.py tests/test_richer_1c.py tests/test_design_review_fixtures.py tests/test_regen_shard_durations.py tests/test_1a_departure_hold.py tests/test_markdown_story_package.py"
 
 spec = f"""You are a test-repair worker for the freytag-forge repository at {R}. Boundary: NO model call, NO network call, never git commit, do NOT edit story data ({R}/data), engine code (storygame/) or any file other than the ones you own: {", ".join(FILES)}.
