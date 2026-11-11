@@ -1,7 +1,8 @@
 # Story authoring, test contracts, and compiled runtime data
 
-Status (2026-11-10): **Phase 0 measured; review-tooling slices 1 and 2 built;
-the model decision is the one open blocker for the migration.** No story data, test
+Status (2026-11-10): **Phase 0 measured; review-tooling slices 1, 2, 4 and 5
+built (slice 3 dropped); the model decision is the one open blocker for the
+migration.** No story data, test
 or deployment has changed. This plan is separate from ongoing story edits and does
 not supersede their plans.
 
@@ -22,24 +23,49 @@ Companion documents (evidence lives there, not here):
 Two tracks. Track A does not wait for Track B.
 
 **Track A, review tooling on today's story package: unblocked.**
-Slices 1, 2 and 4 are built; slice 3 is dropped. Next: decide what to do about the
-noisy `unread_effect` rule (section 6, slice 4), then the deferred blind run.
+Slices 1, 2, 4 and 5 are built; slice 3 is dropped. Slices 4 and 5 are in PR #761
+(branch `story-data-gap-rules`, not merged when this was written). Open items, in
+the order to take them:
+
+1. **`unread_effect` is noisy** (68 results over 20 facts on the real package).
+   Brandon has not chosen. Recommended narrowing: report first the facts that an
+   incident outcome lists under `costs` or `advantages`, because the scene view
+   of 2C showed those are the useful results and the pressure-state facts are
+   noise. The alternatives are to keep it as information or to drop it. Not
+   checked yet: whether the narrator reads the whole fact store (several engine
+   modules read `facts.asserted` broadly). The full list of results is pinned in
+   `test_real_dependency_results_match_the_audit_inventory`
+   (`tests/test_gap_rules.py`); a per-fact snapshot was made on 2026-11-10 but
+   not committed because it goes stale.
+2. **Run the branch report on the other incidents** (`scripts/branch_report.py
+   <incident>`; incidents are in `incidents.yaml`). It has only been run on 2C. Read each
+   report against Brandon's rule: if the next scene's state does not follow from
+   where the branch leaves off, something is broken.
+3. **2C is a story fix, not a tool fix** (Brandon's call): the transmit branch
+   leaves no trace in 3A, and both declared costs (`detention_sectors_sealed`,
+   `evidence_not_transmitted`) are set and never read. 3A's default entry says "a
+   partly unsecured detention sector" after the transmit branch seals them.
+4. **Rename "flag" to "rule result"** in the plan, the guide, `gap_rules.py` and
+   its output (the branch report already says "result").
+5. **The deferred blind run** on 1B.4 (or 2A.4), with Brandon writing the answer
+   key.
 
 **Track B, the migration: blocked on decision D1** (section 4). The unblocking
 step is not more analysis. It is a hand-written draft of scene 1A in the proposed
 format that Brandon tries four edits on (Phase 0, last open item).
 
-Housekeeping, in order:
+Housekeeping:
 
-1. Branch `story-data-situation-trace` carries slice 1 (`74ad8245`) and this plan,
-   with a PR open against `main`. The working tree also holds unrelated,
-   uncommitted 1A story edits (arrival glance, departure hold) that belong to
-   [the 1A plan](1a-password-and-officer-plan.md); keep them out of this branch's
-   commits.
-2. Slice 2 is committed on this branch (see section 6). Known limits: custody and
-   co-location flags depend on the anchor's baseline state, so a transition
-   anchor cannot run the hypothetical holder (the trace says "not tested here").
-   Custody tests that pin today's behavior
+1. PRs #759 and #760 (slice 1 and this plan) are merged. Slice 2 (`f403c4ae`),
+   slice 4 and slice 5 are in PR #761. The 1A departure hold and the phone
+   wording are committed separately on branch `1a-departure-hold` (commits
+   `a5515298`, `0a350fe8`, not pushed when this was written); they belong to
+   [the 1A plan](1a-password-and-officer-plan.md). The working tree also holds one
+   unrelated line in `docs/testing-runbook/local-checks.md`.
+2. Known limits of slice 2: custody and co-location results depend on the
+   anchor's baseline state, so a transition anchor cannot run the hypothetical
+   holder (the trace says "not tested here"). Custody tests that pin today's
+   behavior
    (`test_transition_rejects_lead_and_patrol_without_card_custody`,
    `test_officer_demand_does_not_change_card_custody_or_transition_trigger`)
    will flip when the Reyes custody repair lands; that repair is a separate story
@@ -225,7 +251,7 @@ working after the migration.
   other older tests that may overlap (1A tests, `*_repro.py`) have not been
   opened; sweep after slice 4 using the consolidation plan's mutation evidence.
 - [x] **Slice 4, impact report and producer/consumer rules.** Built 2026-11-10
-  through Ringer; not yet committed. `storygame/story_package/dependencies.py`
+  through Ringer; in PR #761. `storygame/story_package/dependencies.py`
   (shared `producers()` and `consumers()`, used by the trace, the report and the
   rules), `storygame/story_package/impact_report.py`,
   `scripts/impact_report.py <fact|claim|event|transition|storylet>`,
@@ -240,14 +266,14 @@ working after the migration.
   cannot be silently missed. Impact report test matches are textual (the id as
   a token in `tests/*.py`), not proof of coverage.
   **Open question for Brandon:** on the real package `no_producer` gives no
-  results, but `unread_effect` gives 68 results over about 28 facts, mostly
+  results, but `unread_effect` gives 68 results over 20 facts, mostly
   pressure-state facts set by pacing events (for example `pursuit_closing_in`)
   that only record that the event happened. The worker called them true gaps;
   that is not established. Whether a recorded-but-unread fact is a gap is an
   authoring decision, and I did not check whether the narrator reads them from
   the fact store. Until decided the rule is noisy on this story.
-- [x] **Slice 5, branch report (built 2026-11-10, not committed; added 2026-11-10 after Brandon's review of
-  `unread_effect`).** The slice 2 and 4 rules look at one fact at a time. They
+- [x] **Slice 5, branch report (built 2026-11-10, in PR #761; added after
+  Brandon's review of `unread_effect`).** The slice 2 and 4 rules look at one fact at a time. They
   cannot say what a scene's branches do to the story. Brandon's requirement: for
   the branches of a scene (an incident's outcomes, its recovery and its
   missed-window path), analyze (1) the branch within its scene: what it does,
@@ -271,12 +297,14 @@ working after the migration.
   Built through Ringer in one pass (`branch_report.py`, `scripts/branch_report.py
   <incident>`, `tests/test_branch_report.py`, `Consumer.scene_id`, a guide
   section). On 2C it finds the two unread declared costs and that the transmit
-  branch leaves no trace in 3A, and no unexplained world move. Known defects in
-  the first output, to fix next: the same bridge text repeats on every line;
-  scene setup (things that appear with no earlier place) is listed as moves
-  beside real carried-over moves; and "later scenes read it through nothing"
-  ignores reads by the exit transition. First case: 2C, where the rescue branch reaches 3A and the
-  transmit branch's declared cost reaches nothing.
+  branch leaves no trace in 3A, and no unexplained world move. Two follow-up
+  Ringer tasks fixed the first output: the bridge text now prints once per
+  handoff, scene setup is listed apart from carried-over state, and reads by the
+  incident scene's own exit transition count as "read" but not as a trace in a
+  later scene. Limits: run on one incident (2C) only; the check that the next
+  scene's text agrees with the branch's text is left to the reader (the report
+  quotes both side by side). The rescue branch reaches 3A through one entry
+  variant; the other three paths leave 3A identical.
 - [x] **Slice 3, accepted flags: dropped (2026-11-10, amended D2).** No separate
   store is built. If a rule needs silencing, add a reasoned exemption field on the
   authored record and have the rule read it; do that only when a real case
@@ -450,3 +478,7 @@ fixed menu of player actions or a branch per possible action.
   guide, the module and the output (a follow-up pass, not part of slice 4).
 - 2026-11-10. Slice 4 built (section 6). `unread_effect` is noisy on the real
   package (68 results); decision pending.
+- 2026-11-10. Slice 5 built (section 6): the branch report, after Brandon asked
+  for branch analysis and his rule that a next scene's state must follow from
+  where the branch leaves off. Slices 4 and 5 are in PR #761. Next steps are in
+  "Resume here".
