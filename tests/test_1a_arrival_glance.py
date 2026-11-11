@@ -27,7 +27,7 @@ GLANCE = (
     "She called Michelle's name."
 )
 STEADY = (
-    "Kristin makes herself stop and look properly. Michelle's phone is still here, undamaged. Then she sees the back door. "  # noqa: E501
+    "Kristin makes herself stop and look properly. Michelle's phone is still here - damaged a bit but still working. Then she sees the back door. "  # noqa: E501
     "The splinters around the frame point outward, away from the house. A door forced from outside would splinter inward. "  # noqa: E501
     "Someone broke this one from inside to make it look like a break-in. It looks staged."
 )

@@ -449,7 +449,7 @@ knowledge:
   - [chair]
   - [door, forced entry]
   - [outward, from inside]
-  delivery_text: "Kristin makes herself breathe and look. Michelle's phone is still here, undamaged. Her tablet and work bag are gone, and her chair is tipped over. Then she sees the back door. The splinters around the frame point outward, away from the house. A door forced from outside would splinter inward. Someone broke this one from inside to make it look like a break-in. It looks staged."
+  delivery_text: "Kristin makes herself breathe and look. Michelle's phone is still here - damaged a bit but still working. Her tablet and work bag are gone, and her chair is tipped over. Then she sees the back door. The splinters around the frame point outward, away from the house. A door forced from outside would splinter inward. Someone broke this one from inside to make it look like a break-in. It looks staged."
 - id: k_sl_1a_g_r1
   statement: "Kristin reads the workstation as Michelle's last hour: a faintly warm mug of tea and her reading glasses folded on red-penned manuscript pages."
   reach_entity_ids: [michelle_workstation]
