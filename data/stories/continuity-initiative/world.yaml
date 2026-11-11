@@ -542,6 +542,7 @@ facts:
 - bench_underside_pointed_out
 - official_interest_in_michelle_known
 - house_marked_for_return
+- departure_held
 - id: bench_clues_recovered
   on_assert:
   - {move: transit_card, parent: kristin, text: with Kristin}

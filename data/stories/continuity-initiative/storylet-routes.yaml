@@ -611,6 +611,11 @@ new_fact_ids:
   used_by_storylets:
   - SL-1A-C
   used_by_transitions: []
+- id: departure_held
+  definition: Kristin tried to drive to the park before the street was clear and held back.
+  used_by_storylets:
+  - SL-1A-K
+  used_by_transitions: []
 - id: pursuit_closing_in
   definition: The pursuit team is visibly closing in on Kristin and Brandon in the park.
   used_by_storylets: []
@@ -1256,6 +1261,40 @@ storylets:
     - scene_id_not: 1A
   non_coercion_note: Offer as a consequence/opportunity inferred from free-text play. Do not present these realizations
     as choices, commands, or required actions; equivalent player-authored approaches may validate the same operations.
+- id: SL-1A-K
+  scene_id: 1A
+  title: The Street Is Not Clear
+  activation:
+    scene_id: 1A
+    conditions:
+    - fact_id: michelle_lead_actionable
+      equals: true
+    pacing:
+      earliest_turn: 4
+      target_turn: 10
+      latest_turn: 12
+      pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
+  pressure_role: If Kristin tries to leave for the park before the street is clear, the story holds her for a moment without ending the scene.
+  realization_options:
+  - id: SL-1A-K-R1
+    dramatic_intent: Kristin tries to drive to the park before the street is clear and holds back.
+    operations:
+    - op: assert
+      fact_id: departure_held
+      value: true
+    eligible_storylet_event_id: null
+    helps_transition_triggers: []
+    protected_knowledge_boundaries:
+    - janus_selection_system
+    - brandon_history
+    - janus_phase_two
+  completion_or_abort:
+    complete_when:
+    - all_facts_true:
+      - departure_held
+    abort_when:
+    - scene_id_not: 1A
+  non_coercion_note: Offer as a consequence of free-text play. Do not present this realization as a choice, command, or required action; equivalent player-authored approaches may validate the same operation.
 - id: SL-1A-D
   scene_id: 1A
   title: The Rest of Michelle's Files

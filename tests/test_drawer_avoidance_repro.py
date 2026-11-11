@@ -86,6 +86,7 @@ def test_static_drawer_dependencies_have_no_later_scene_dependents() -> None:
         "k_sl_1a_f_r2",
         "k_sl_1a_f_r3",
         "k_sl_1a_h_r1",
+        "k_sl_1a_k_r1",
     }
     assert drawer_only_facts == {
         "continuity_initiative_known",
@@ -98,6 +99,7 @@ def test_static_drawer_dependencies_have_no_later_scene_dependents() -> None:
         "broadcast_loop_confirmed",
         "drawer_opened",
         "drawer_gap_rechecked",
+        "departure_held",
     }
     assert "michelle_abduction_suspicion" not in drawer_only_facts
 

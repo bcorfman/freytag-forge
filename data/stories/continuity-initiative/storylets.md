@@ -586,6 +586,45 @@ Each entry below is authoring data, not a player action menu.
 
 ---
 
+### SL-1A-K — The Street Is Not Clear
+
+**Source beats:** [1A.4 — The First Threat](plot.md#scene-1a4--the-first-threat)
+
+**Allowed scene:** `1A`
+
+**Available when**
+- Michelle's lead is actionable.
+
+**Participants / items**
+- Kristin Schweitzer
+- Kristin's truck
+- Park bench
+
+**Dramatic purpose**
+- When Kristin tries to drive to the park before the street is clear, answer in the fiction and hold her for a moment instead of ignoring the command.
+
+**Possible realizations**
+- Kristin tries to leave for the park, but holds back when the street is not clear.
+
+**Effects**
+- Sets `departure_held`.
+- Does not change pacing, transition, or the scene floor.
+
+**Completion**
+- Kristin has held back from driving to the park while the street is not clear.
+
+**Abort**
+- Kristin leaves scene 1A.
+
+**Protected boundary**
+- Does not reveal JANUS, Brandon, detention, or dead-drop contents.
+- Does not set `memory_card_recovered`, `michelle_lead_actionable`, `patrol_return_pressure`, `patrol_departed`, or any transition trigger.
+
+**Pacing window**
+- earliest: `turn 4`
+- target: `turn 10`
+- latest: `turn 12`
+
 ## Storylets for [Scene 1B — The Lead in the Park](plot.md#scene-1b--the-lead-in-the-park)
 
 ### SL-1B-D — Beneath the Park Bench
