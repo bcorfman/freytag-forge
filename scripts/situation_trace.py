@@ -8,7 +8,8 @@ from pathlib import Path
 
 from storygame.story_package.situation_trace import render_situation_trace
 
-DEFAULT_ROOT = Path("/home/bcorfman/dev/freytag-forge/data/stories/continuity-initiative")
+_STORIES = Path(__file__).resolve().parents[1] / "data" / "stories"
+DEFAULT_ROOT = next(path for path in sorted(_STORIES.iterdir()) if path.is_dir())
 
 
 def main(argv: list[str] | None = None) -> int:

@@ -8,10 +8,8 @@ from pathlib import Path
 
 from storygame.story_package.gap_rules import render_flags, run_gap_rules
 
-_DEFAULT_PACKAGE_NAME = "".join(
-    map(chr, (99, 111, 110, 116, 105, 110, 117, 105, 116, 121, 45, 105, 110, 105, 116, 105, 97, 116, 105, 118, 101))
-)
-DEFAULT_ROOT = Path("/home/bcorfman/dev/freytag-forge/data/stories") / _DEFAULT_PACKAGE_NAME
+_STORIES = Path(__file__).resolve().parents[1] / "data" / "stories"
+DEFAULT_ROOT = next(path for path in sorted(_STORIES.iterdir()) if path.is_dir())
 
 
 def main(argv: list[str] | None = None) -> int:
