@@ -10,6 +10,8 @@ from scripts.ringer.transcript_1a.boarding_probe import QuotaExceeded
 from storygame.runtime import cloudflare
 from tests.fixtures.opening_truck_probe import recorded_control_request
 
+pytestmark = pytest.mark.usefixtures("provider_opening_story")
+
 
 @pytest.fixture(autouse=True)
 def hermetic_network(monkeypatch: pytest.MonkeyPatch) -> None:

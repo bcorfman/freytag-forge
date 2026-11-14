@@ -64,6 +64,9 @@ def _variant_package(tmp_path: Path, event_id: str, trailing: str) -> object:
     else:
         pacing = pacing.replace(flagged, f"{anchor}\n  trailing: {trailing}")
     pacing_path.write_text(pacing)
+    # These tests watch the world the opening request sees, so scene 1A must ask the provider.
+    plot_path = package_dir / "plot.md"
+    plot_path.write_text(plot_path.read_text().replace("scripted_opening: true\n", "", 1))
     return load_story_package(package_dir)
 
 

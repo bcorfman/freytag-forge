@@ -119,17 +119,10 @@ def test_hosted_adapter_reports_identity_and_serves_a_story_session(monkeypatch,
     }
     opening = session.json()["opening"]
     entry_text = PACKAGE.scenes[0].metadata.entry_text
-    # The browser renders opening["text"] as one block, so the authored paragraph break must
-    # carry through without a space indenting the continuation that follows it.
-    assert opening["text"] == f"{entry_text.rstrip()}\n\nKristin steps into a house that has already been searched."
+    # Scene 1A opens on its scripted text alone, so the provider adds no continuation.
+    assert opening["text"] == entry_text.rstrip()
     assert opening["segments"] == [
         {"kind": "narration", "text": entry_text, "speaker_id": None, "grounding_ids": []},
-        {
-            "kind": "narration",
-            "text": "Kristin steps into a house that has already been searched.",
-            "speaker_id": None,
-            "grounding_ids": [],
-        },
     ]
     assert opening["scene_id"] == "1A"
     assert turn.json()["segments"][0]["text"] == "The lead sharpens."
@@ -291,7 +284,9 @@ def test_provider_authored_operations_are_rejected_before_session_mutation(tmp_p
     assert warning.json()["detail"] == "I don't understand. Can you try something else?"
 
 
-def test_session_opening_rejection_returns_409_and_does_not_save_session(monkeypatch, tmp_path) -> None:
+def test_session_opening_rejection_returns_409_and_does_not_save_session(
+    monkeypatch, tmp_path, provider_opening_story
+) -> None:
     saves: list[str] = []
     original_save = RuntimeStateSqliteStore.save
 

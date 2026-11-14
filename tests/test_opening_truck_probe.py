@@ -12,6 +12,8 @@ from scripts.ringer.opening_truck import probe
 from storygame.runtime.jev import JevClient
 from tests.fixtures.opening_truck_probe import recorded_control_request
 
+pytestmark = pytest.mark.usefixtures("provider_opening_story")
+
 
 class _Response:
     status = 200

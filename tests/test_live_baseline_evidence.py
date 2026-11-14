@@ -222,7 +222,7 @@ def test_call_cap_fixture_distinguishes_logical_verifier_request_from_http_call(
 
 
 def test_real_call_cap_inside_preview_records_logical_request_without_http_call(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, provider_opening_story
 ) -> None:
     from storygame.runtime.capture import WorldCapture
     from storygame.runtime.observation import ObservationContext, ObservationRequest

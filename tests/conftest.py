@@ -548,3 +548,44 @@ def _restore_environment() -> Any:
         if name not in snapshot:
             del os.environ[name]
     os.environ.update(snapshot)
+
+
+@pytest.fixture
+def provider_opening_story(tmp_path_factory: pytest.TempPathFactory, monkeypatch: pytest.MonkeyPatch) -> Path:
+    """Load continuity-initiative with scene 1A's scripted-opening flag removed.
+
+    Scene 1A opens on its scripted text alone. Tests that exercise the provider's
+    opening continuation still need a story whose first scene asks the provider,
+    so this serves a copy without the flag wherever the real story would load.
+    """
+
+    import shutil
+    import sys
+
+    from storygame.story_package import loader
+
+    source = Path("data/stories/continuity-initiative").resolve()
+    root = tmp_path_factory.mktemp("provider-opening") / source.name
+    shutil.copytree(source, root)
+    plot = root / "plot.md"
+    text = plot.read_text(encoding="utf-8")
+    assert text.count("scripted_opening: true\n") == 1
+    plot.write_text(text.replace("scripted_opening: true\n", ""), encoding="utf-8")
+    real_load = loader.load_story_package
+
+    def load(path: Path | str, *args: Any, **kwargs: Any) -> Any:
+        return real_load(root if Path(path).resolve() == source else path, *args, **kwargs)
+
+    for module in list(sys.modules.values()):
+        if getattr(module, "load_story_package", None) is real_load:
+            monkeypatch.setattr(module, "load_story_package", load)
+    return root
+
+
+@pytest.fixture
+def provider_opening_package(provider_opening_story: Path) -> Any:
+    """The provider-opening copy of continuity-initiative, loaded."""
+
+    from storygame.story_package.loader import load_story_package
+
+    return load_story_package(provider_opening_story)

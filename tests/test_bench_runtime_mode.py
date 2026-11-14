@@ -119,7 +119,9 @@ def test_runtime_mode_exit_turn_narration_leaves_out_bridge_and_entry(
     assert authored_texts["entry"] not in turn["narration"]
 
 
-def test_runtime_mode_records_narration_prompt(monkeypatch: pytest.MonkeyPatch, fake_jev: list[dict]) -> None:
+def test_runtime_mode_records_narration_prompt(
+    monkeypatch: pytest.MonkeyPatch, fake_jev: list[dict], provider_opening_story
+) -> None:
     calls: list[dict] = []
 
     def scripted_reply(self, payload):

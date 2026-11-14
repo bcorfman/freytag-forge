@@ -9,6 +9,8 @@ from scripts.ringer.opening_truck import probe4
 from scripts.ringer.transcript_1a.boarding_probe import QuotaExceeded
 from storygame.runtime import cloudflare
 
+pytestmark = pytest.mark.usefixtures("provider_opening_story")
+
 COMMANDS = ("head out to the truck", "go to the truck")
 ACTION = "- Kristin takes in what she can see and reach from the driver's seat."
 

@@ -111,12 +111,12 @@ def test_declared_pressure_event_advances_facts_without_parsing_waiting() -> Non
     assert Fact(predicate="story_elapsed_seconds", subject="story", value=str(turn_count * 60)) in state.facts.asserted
 
 
-def test_scene_opening_starts_with_authored_entry_text_and_commits_no_canon() -> None:
+def test_scene_opening_starts_with_authored_entry_text_and_commits_no_canon(provider_opening_package) -> None:
     """The runtime must never author scene prose of its own."""
 
-    state = RuntimeState.bootstrap(PACKAGE)
+    state = RuntimeState.bootstrap(provider_opening_package)
     before = state.snapshot()
-    entry_text = PACKAGE.scenes[0].metadata.entry_text
+    entry_text = provider_opening_package.scenes[0].metadata.entry_text
     requests: list[str] = []
 
     def provider(player_input: str) -> object:
@@ -134,8 +134,8 @@ def test_scene_opening_starts_with_authored_entry_text_and_commits_no_canon() ->
     assert state.snapshot() == before
 
 
-def test_scene_opening_prefers_a_provider_that_narrates_scene_entry_itself() -> None:
-    state = RuntimeState.bootstrap(PACKAGE)
+def test_scene_opening_prefers_a_provider_that_narrates_scene_entry_itself(provider_opening_package) -> None:
+    state = RuntimeState.bootstrap(provider_opening_package)
 
     class _OpeningProvider:
         def opening(self) -> object:
@@ -146,13 +146,13 @@ def test_scene_opening_prefers_a_provider_that_narrates_scene_entry_itself() -> 
 
     opening = RuntimeEngine(state, _OpeningProvider()).opening()
 
-    entry_text = PACKAGE.scenes[0].metadata.entry_text
+    entry_text = provider_opening_package.scenes[0].metadata.entry_text
     assert opening.narration == f"{entry_text.rstrip()}\n\nThe kitchen light is still on."
     assert opening.selected_knowledge_ids == ()
 
 
-def test_scene_opening_rejects_protected_future_term_without_mutating_state() -> None:
-    state = RuntimeState.bootstrap(PACKAGE)
+def test_scene_opening_rejects_protected_future_term_without_mutating_state(provider_opening_package) -> None:
+    state = RuntimeState.bootstrap(provider_opening_package)
     before = state.snapshot()
 
     class _LeakingOpeningProvider:

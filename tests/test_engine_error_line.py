@@ -150,7 +150,7 @@ def test_rejected_debug_line_exposes_raw_detail_and_attempt_bundle(monkeypatch, 
     assert response.json()["attempt_bundle"] is not None
 
 
-def test_rejected_opening_keeps_session_creation_error_line_unchanged(tmp_path: Path) -> None:
+def test_rejected_opening_keeps_session_creation_error_line_unchanged(tmp_path: Path, provider_opening_story) -> None:
     class _LeakingOpeningProvider(_Provider):
         def opening(self) -> dict[str, object]:
             return {
