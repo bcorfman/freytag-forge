@@ -323,7 +323,7 @@ redesign plan owns the open item.
 | Compilation, indexes, source maps, deterministic artifact, fail closed | Not part of the format | Phase 1 item 7 |
 | Test redesign (section 3 above) | Not part of the format; the plan owns it | Phase 1 item 6, Phase 2, Phase 3 |
 
-Two risks the draft itself introduces:
+Two risks the draft itself introduces (both decided by Brandon on 2026-11-13; see Phase 1 item 10 in the plan: `examples` become accept/reject lists in a separate fixture, and a variant override of `leak_terms` or `boundaries` can only add entries):
 
 - **`examples` beside the matcher.** Hand-written expected results live in the same
   file as the declaration they check, so one edit can change both and let a wrong
