@@ -347,12 +347,13 @@ Starts after D1. Order matters: contract, then tests, then code.
 
 1. **Snapshot.** Name the commit that migration mappings are written against,
    after the in-flight 1A edits are committed (`2bb01bbc` is already behind).
-   **Snapshot candidate, 2026-11-13: the tip of branch `scripted-opening-1a`** (a commit cannot name its own hash; record the merged hash here after merge)
-   (not pushed or merged when this was written). It commits the in-flight 1A work
-   that had blocked the snapshot: a `scripted_opening` scene field (`plot.md`
-   scene 1A, `models.py`, `engine.py`) and 12 test files, 126 tests passing.
-   Confirm the snapshot after the branch merges (merge commits keep this hash
-   reachable).
+   **Snapshot, settled 2026-11-13: `20892032`** (merge of PR #763 into `main`;
+   the feature commit is `8f2ad1e3`). It commits the in-flight 1A work that had
+   blocked the snapshot: a `scripted_opening` scene field (`plot.md` scene 1A,
+   `models.py`, `engine.py`) and 12 test files, 126 tests passing, CI green. Later
+   `main` commits (`a627db84`, PR #764) change only `.plans/`; a diff of `data/`,
+   `storygame/`, `tests/`, `packages/` and `scripts/` from `20892032` to that
+   commit was empty when checked.
 2. **Schema.** Typed records, stable IDs, reference resolution, source maps,
    disclosure boundaries, versioning. Typed relation kinds (hold, know, reach,
    exist, and their negations). Commit-only variants (the 2C finding). Derivation
