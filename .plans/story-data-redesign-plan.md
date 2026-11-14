@@ -403,25 +403,95 @@ Starts after D1. Order matters: contract, then tests, then code.
    material cannot reach the package or narrator inputs (a test that fails if it
    does).
 9. **Generated story view** from compiled records: narrative order, continuation
-   requirements shown as promise versus check.
+   requirements shown as promise versus check, and each exit trigger fact's
+   `purpose` beside the exit (the motivation evidence; decided under item 10).
 10. **Close the D1 coverage gaps** (found 2026-11-13 by reading the 1A draft
     against the design reference; full table in
     [design reference, section 4](story-data-design-reference.md)). Decide or
     build each before the exit below:
-    - *Format:* where genuinely shared facts live (the draft says one scene file;
-      the sketch has a root catalog); typed relations beyond the exit's `needs`
+    - *Shared facts:* **decided 2026-11-13 (Brandon): option A.** A fact is
+      declared in the scene that first sets it in story order; a fact nothing sets
+      lives in the first scene that reads it; other scenes use it by ID. Measured
+      on the current package (177 facts, scene-tagged records only): 144 set and
+      read in one scene, 17 set in one and read in another, 3 set in two scenes,
+      13 with no setter found (not examined; a story question). Checks that make
+      a reveal move safe: (1) layer 2, error: a fact's declaring scene must equal
+      its first setting scene, and the error prints the block to move; (2) layer 3,
+      result: a fact read in a scene earlier than any scene that sets it; (3)
+      layer 2: scene-scoped references (turn window inside the new scene's pacing
+      window, `helps_exit` naming an exit of the reveal's own scene, reach items
+      present in the new scene; the last two not yet verified against the
+      loader). No `home:` exemption until a real case needs one. Design only, not
+      prototyped.
+    - *Typed relations:* **decided 2026-11-13 (Brandon): option B.** One shared
+      shape `{item, relation: exists|held|reach, holder?, not?}` used in an exit's
+      `needs` and in a new reveal-level `needs`. The existing `reach` list keeps
+      its name (the name already says the relation). Know stays as fact
+      conditions and audience; no new syntax. A `held` need is a promise to the
+      checker, not a runtime gate (the engine only enforces "not unavailable"
+      today, `validation.py:438-456`). Migration is mechanical: the four exits
+      with `required_dependencies` today (`memory_card`; `transit_card` and
+      `brandon`; `brandon`; `brandon`) become `exists`. Changing the 1A exit to
+      `held` is a story change for the Reyes repair, separate from migration. The
+      custody rule keeps inferring; a difference between a stated need and the
+      inference becomes a result. Not built or tested.
+    - *Drafts beyond 1A:* **decided 2026-11-13 (Brandon): option B.** A second
+      hand-written slice, 2C to 3A, covering the incident (commit-only variants
+      for the two outcomes with no claim; costs and advantages derived from the
+      named variant), the handoffs into 3A, and 3A's entry claims. Short sketches,
+      not full conversions, for the root catalog: entities (25 places, 9 NPCs, 2
+      groups, 72 items; no setter, so they do not follow the facts rule), the 2
+      connections, the 1 disclosure guard and 3 protected-knowledge entries, and
+      the ending. Handoffs (48) go on the fact's declaration as an optional
+      `delivery`; incidents (5) and entry claims (10) go in their scene file.
+      Brandon then tries two edits on the slice, as he did for 1A. The draft must
+      not repair the 2C finding (transmit branch leaves no trace in 3A; both
+      declared costs unread): migration preserves behavior, so the draft shows
+      the gap in the generated view and the fix stays a separate story change.
+      Counts are from the loaded package. The ending's home (root or last scene)
+      is left to the draft. **Not yet written.** Original wording: typed
+      relations beyond the exit's `needs`
       (hold, know, reach, exist, negations); drafts for what 1A did not cover
       (entities, connections, entry claims, handoffs, incidents, disclosure
       guards, ending).
     - *Layer 2 checks the format must make possible:* dangling references, cycles,
-      one owner per fact and passage, claims authorized by their source. Add a
-      rule that a variant's override of `leak_terms` or `boundaries` can only add
-      entries.
-    - *`examples`:* decide whether they stay in the authoring file or move to a
-      separate fixture addressed by record ID, so the expected result is not
-      written beside the declaration it checks.
-    - *Requirement 5:* confirm whether any authored field beyond `situation`,
-      `pressure` and exit `needs` is needed; exit 5 below is the test.
+      one owner per fact and passage, claims authorized by their source.
+      **Decided 2026-11-13 (Brandon):** a variant's override of `leak_terms` or
+      `boundaries` can only add entries, never remove or replace them. This is a
+      layer 2 check (build fails). Example: a variant of `drawer_search` that
+      replaces its nine leak terms with two is rejected.
+    - *`examples`:* **decided 2026-11-13 (Brandon): accept and reject lists in a
+      separate fixture, addressed by record ID, not in the authoring file.** The
+      authoring file keeps the word groups (`action_evidence`). The fixture holds,
+      per search, the commands that must match and the commands that must not:
+      `drawer_search: {accept: [Search under the KMS drawer, Look under a drawer],
+      reject: [Look at the drawer, Look under the desk]}`. The checker runs the
+      real matcher on every line. For a failing accept line it names the failing
+      group and the smallest word to add, and lists what that edit would newly
+      accept. If the edit would flip a reject line, it says so. This replaces the
+      draft's `examples` field, so the expected result is never written beside
+      the declaration it checks. The checker is advisory help for the author; a
+      failing accept or reject line is a test failure. Limits: the "newly
+      accepts" list covers only commands the checker generates (verbs of the
+      class crossed with the group's words), not all free text. One related
+      matcher change is deferred: a marker such as `=search` meaning "this word
+      only, no synonym class", needed to accept "search the drawer" without
+      "look at the drawer". It is a generic engine change with its own tests,
+      outside Phase 1. The model path's `ActionContract` already has `positive`
+      and `near_miss` command lists; whether the fixture lists should feed it
+      too is not checked (no story YAML sets it today, as far as I found).
+    - *Requirement 5:* **decided 2026-11-13 (Brandon): option A.** No authored
+      field beyond `situation`, `pressure` and the typed exit `needs`. Possession
+      is covered by the typed `held` need, retained knowledge by the producers of
+      facts already set, physical ability partly by the co-location and no-strand
+      rules. Motivation is not derivable; the evidence for it is each exit
+      trigger fact's authored `purpose`, shown beside the exit (the current
+      situation trace already does this, `situation_trace.py:72`; item 9 must
+      keep it). Not decided: whether purposes are enough for a reviewer to catch
+      a motivation gap. That is the open risk. Test it in the deferred blind run
+      by comparing reviewers with and without a sentence such as `why_go`; an
+      optional field can be added later without breaking anything. Exit 5 below
+      is the other test.
 
 Exit (all required):
 
@@ -540,4 +610,5 @@ fixed menu of player actions or a branch per possible action.
 - 2026-11-11. PRs #761 and #762 merged. 1A editing draft written in `.plans/story-data-1a-draft.md` (hand-written, no compiler, nothing reads it). Next step is Brandon's four edits, then D1.
 - 2026-11-12. Brandon tried the four edits on revision 1 of the 1A draft (copy and hesitation table in `story-data-1a-draft-edited.md`). Revision 2 of the draft fixes what he hit (shared passage parts, matcher rules and examples, edit 2 rewritten as a story decision, 1B excerpt added, `hands_to_1B` removed). He then said "go ahead with D1": recommendation adopted, Track B unblocked. Not done: he has not re-run the edits on revision 2; the design reference still holds the conditional sketch.
 - 2026-11-13. Coverage check of the chosen format against the design reference. The draft covers passage ownership, field separation, fact purpose, claim effect defaults and stable IDs; it only partly covers typed relations and relationship context; it does not cover a root catalog (and differs from the sketch on shared facts), entities, incidents, handoffs and other undrafted parts, or walks 3–6. Compiler, runtime and test redesign are not the format's job and were already in Phase 1 items 6–7 and Phases 2–3. Two risks recorded in the design reference section 4: `examples` written beside the matcher, and search-block overrides that can shrink `leak_terms`. Added Phase 1 item 10 and two Phase 2 items.
+- 2026-11-13. Item 10 decisions made by Brandon: matcher examples become accept/reject lists in a separate fixture; a variant override may only add `leak_terms`/`boundaries` entries. Item 10 is fully decided as of this entry: shared facts live where first set (A), typed relations use one shared shape (B), a second slice 2C to 3A is drafted by hand (B, not yet written), and no new authored field for requirement 5 (A, plus exit trigger purposes in the view). The probe behind the accept/reject design ran the draft's word groups through `_matches_all`, not the legacy story file.
 - 2026-11-13. Resumed Phase 1. Item 4 (layer 1 audit) written from reading `models.py` and `loader.py`; item 1 (snapshot) found blocked by uncommitted `scripted_opening` work on `main`. No code or story data changed.
