@@ -248,6 +248,12 @@ class RuntimeEngine(CanonicalEventMixin):
         scene = next(
             item for item in self.state.package.scenes if item.metadata.scene_id == self.state.current_scene_id
         )
+        entries = tuple(
+            NarrationSegment(kind="narration", text=text)
+            for text in scene_entry_texts(scene.metadata, self._true_facts(self.state.facts))
+        )
+        if scene.metadata.scripted_opening:
+            return ResolvedTurnProposal(segments=entries)
         request = getattr(self.provider, "opening", None)
         for attempt in range(OPENING_ATTEMPTS):
             proposal = parse_turn_proposal(request() if callable(request) else self.provider(SCENE_ENTRY_REQUEST))
@@ -273,10 +279,6 @@ class RuntimeEngine(CanonicalEventMixin):
                     raise
                 continue
             break
-        entries = tuple(
-            NarrationSegment(kind="narration", text=text)
-            for text in scene_entry_texts(scene.metadata, self._true_facts(self.state.facts))
-        )
         return ResolvedTurnProposal(segments=(*entries, *proposal.segments))
 
     def turn(

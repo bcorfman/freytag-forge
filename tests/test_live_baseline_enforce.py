@@ -386,7 +386,9 @@ def test_live_call_timing_records_a_raised_call(monkeypatch: pytest.MonkeyPatch)
     ]
 
 
-def test_enforce_call_timings_are_cleared_between_turns(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_enforce_call_timings_are_cleared_between_turns(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, provider_opening_story
+) -> None:
     module = _module()
     turns, call_groups = _run_live(monkeypatch, module, tmp_path / "live", turns=3)
 

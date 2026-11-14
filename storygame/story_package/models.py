@@ -627,6 +627,7 @@ class SceneMetadata(_Model):
     item_ids: tuple[str, ...] = ()
     entry_text: str = Field(min_length=1)
     entry_variants: tuple[EntryTextVariant, ...] = ()
+    scripted_opening: bool = False
     transition_ids: tuple[str, ...] = ()
     bridge_text: Mapping[str, str] = {}
     item_placements: Mapping[str, str | ItemPlacement] = {}

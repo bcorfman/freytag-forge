@@ -186,10 +186,12 @@ consistency, not narrative completeness.
 
 ### Conditional implementation sketch
 
-The scene-document layout and compiler outline below describe one candidate,
-not the selected architecture. If graph-first or relational semantics win, replace
-this sketch before Phase 1. Preserve the safety and test-independence requirements
-across all candidates; do not mandate a custom graph implementation.
+**Update 2026-11-13:** D1 chose this candidate (scene documents, typed graph as
+meaning, compiler to `StoryPackage`). The sketch is the baseline, not the final
+format: [story-data-1a-draft.md](story-data-1a-draft.md) revision 2 is the format
+being tried, and section 4 below lists where it differs from this sketch and what
+it does not yet cover. Preserve the safety and test-independence requirements; do
+not mandate a custom graph implementation.
 
 ### Authoring layout
 
@@ -292,3 +294,45 @@ Do not rewrite historical captures to resemble new behavior. Classify active
 regressions, frozen evidence, and obsolete experiment scaffolding using the
 existing consolidation plan, including its regression/mutant safeguards.
 
+## 4. Coverage of the chosen format against this reference (2026-11-13)
+
+Made by reading the 1A draft (revision 2) against sections 2 and 3 above, after D1.
+The draft is one scene slice with no compiler, so "covered" means "the draft's
+fields can express it", not "something enforces it". Phase column = where the
+redesign plan owns the open item.
+
+| Reference requirement | Status in the draft | Phase |
+| --- | --- | --- |
+| Authoring interface separate from storage | Covered: D1 chose model and format, storage deferred | Phase 4 |
+| Passage beside its owner, reused by explicit ID only | Covered: `parts` | Phase 1 schema |
+| Safe framing, protected claims, delivery text, guidance distinct | Covered: `leak_terms`, `boundaries`, `text`, `intent` stay separate | Phase 1 |
+| Fact identity and purpose declared once | Covered for purpose (legacy `FactDefinition` is `id` + `purpose` only) | Phase 1 |
+| Claim authorization references its source effects, not "all event effects" | Covered: `commits` default plus explicit `commits_subset` | Phase 1 layer 2 |
+| Stable IDs independent of prose | Covered: legacy IDs kept; generated ones come from reveal id and variant key | Phase 1 ID policy |
+| Generated views, never edited | Shown by hand only (the dependency block) | Phase 1 item 9 |
+| Typed relations (hold, know, reach, exist) | Partly: only the exit's `needs` is typed; `reach` is a plain list; no negations | Phase 1 schema |
+| Relationship context (prerequisite, audience, scene scope, ordering, provenance) | Partly: fields exist (`available_while`, `audience`, `window`, bracketed legacy IDs); nothing enforces them | Phase 1 layers 1–2 |
+| Rejecting dangling references, bad effects, cycles, duplicate owners | Not defined by the format; the draft only says "the compiler checks" | Phase 1 layer 2 |
+| Root file (`story.yaml`: identity, version, scene order, shared facts) | **Differs:** draft has none and says a fact is declared in exactly one scene file; the sketch puts genuinely shared facts in a root catalog | Phase 1 schema (decide) |
+| Entities (places, characters, items), connections, entry claims, handoffs, incidents, disclosure guards, ending, `plot.md` and `storylets.md` prose | Not drafted | Phase 1 fixtures (must cover claims, protected material, pacing, an incident, a cross-scene dependency) |
+| Requirement 5 content (goals, motivations, response families, continuation requirements, review records) | No authored fields beyond `situation` and `pressure` text and exit `needs`. Track A derives it from the package. Open: whether any authored field is needed | Phase 1 exit 5 (Brandon traces the Reyes gap in the generated view) |
+| Reading view (situation-centered) | Generated view exists (slice 1) on the legacy package; not shown from this format | Phase 1 item 9 |
+| Decision-exercise walks 1–2 (reword a passage; change an effect and find consumers) | Tried by hand (edits 1, 2, 4) | Phase 2 re-run |
+| Walks 3–6 (move a reveal between scenes; audience-scoped assembly; reject bad references and cycles; update a behavior test independently) | Not exercised | Phase 2 |
+| Walk 7 (LLM finds causal gaps) | Not part of the format; Track A rules and the deferred blind run | Track A |
+| Compilation, indexes, source maps, deterministic artifact, fail closed | Not part of the format | Phase 1 item 7 |
+| Test redesign (section 3 above) | Not part of the format; the plan owns it | Phase 1 item 6, Phase 2, Phase 3 |
+
+Two risks the draft itself introduces:
+
+- **`examples` beside the matcher.** Hand-written expected results live in the same
+  file as the declaration they check, so one edit can change both and let a wrong
+  match pass. Section 3 says expected values should not come from the declaration
+  under test. Options: keep `examples` in a separate test fixture addressed by
+  record ID, or keep them in the file but treat them as a layer 3 hint, never as
+  the independent assertion.
+- **Search-block overrides can narrow protection.** A variant may replace a field
+  of the named search block. If it replaces `leak_terms` with a shorter list, the
+  narrator is allowed more than before and nothing flags it. Rule to add: an
+  override of `leak_terms` or `boundaries` may only add entries, enforced as a
+  layer 2 check.

@@ -1,8 +1,8 @@
 # Story authoring, test contracts, and compiled runtime data
 
-Status (2026-11-10): **Phase 0 measured; review-tooling slices 1, 2, 4 and 5
-built (slice 3 dropped); the model decision is the one open blocker for the
-migration.** No story data, test
+Status (2026-11-13): **Phase 0 measured; review-tooling slices 1, 2, 4 and 5
+built (slice 3 dropped); D1 decided 2026-11-12, so Phase 1 (schema and compiler
+contract) is next.** No story data, test
 or deployment has changed. This plan is separate from ongoing story edits and does
 not supersede their plans.
 
@@ -50,9 +50,11 @@ the order to take them:
 5. **The deferred blind run** on 1B.4 (or 2A.4), with Brandon writing the answer
    key.
 
-**Track B, the migration: blocked on decision D1** (section 4). The unblocking
-step is not more analysis. It is a hand-written draft of scene 1A in the proposed
-format that Brandon tries four edits on (Phase 0, last open item).
+**Track B, the migration: unblocked by D1** (decided 2026-11-12, section 4). Next:
+Phase 1 (schema and compiler contract). The 1A draft ([story-data-1a-draft.md](story-data-1a-draft.md),
+revision 2) is the starting point for the schema, not a finished one. What it
+leaves out is listed in Phase 1 item 10 and in the
+[design reference, section 4](story-data-design-reference.md).
 
 Housekeeping:
 
@@ -123,7 +125,7 @@ Measured in Phase 0 on `2bb01bbc` unless noted. These facts shape the order of w
 
 ## 3. Direction
 
-Recommended, **not yet decided** (D1): the author edits readable declarative
+**Decided (D1, Brandon, 2026-11-12):** the author edits readable declarative
 scene/reveal blocks; their meaning is a typed graph (facts, claims, passages,
 effects, typed relations); a compiler derives the repeated wiring and builds the
 existing immutable `StoryPackage`. Reading views and impact reports are generated.
@@ -156,16 +158,13 @@ Made (Brandon, 2026-11-09 unless noted):
 | Fixtures | From the continuity-initiative story only for now; schema and compiler stay story-agnostic |
 | Validation | Layered, "like RelaxNG against XML" (section 5) |
 | D2, review overlay scope (amended 2026-11-10) | **No stored accepted-flags store.** Rule results are computed on every run and never saved, so they cannot go stale or drift from the code. LLM findings and proposals stay generated reports, never stored records. If a rule ever needs silencing, the exemption is declared on the authored record it concerns, with a reason, and the rule reads it from there (a small schema addition made when the first case arrives; custody is the likely first). Reason: Brandon dislikes flags that sit one step removed from the code and go stale. The first D2 (a store keyed by evidence digest) narrowed staleness but did not remove it, and the earlier hand-written overlay was already removed as "not helpful; it held opinion, not evidence" |
+| **D1, model and authoring format** (2026-11-12) | **Recommendation adopted:** readable declarative scene/reveal blocks, a typed graph as their meaning, a compiler that derives the repeated wiring and builds the existing `StoryPackage`. Decided on revision 1 of the 1A draft plus the fixes in revision 2; Brandon has not re-run the four edits on revision 2. Revision 1 evidence (his table): one reworded fact meant three fields plus a sibling copy; the matcher lists could not be edited from the schema alone; the edit-2 task hid a story decision; `hands_to_1B` showed no effect. Revision 2 changes address each. **Strongest rejected alternative:** plain scene aggregates with shared references. **Reversal evidence, still live:** the Phase 2 pilot still fans out on ordinary edits, or Brandon finds the format harder to edit than today's files; fallback is the nine files plus only the derivations and checks (section 3). `parts` and `examples` in the draft are proposals for the Phase 1 schema, not adopted by D1 |
 | D3, CI gating | Layer 3 rule results never block a build |
 | D4, when compilation runs | Load time, with the existing fingerprint cache, unless the measured cold load misses 0.5 s |
 | Editing draft before D1 | Approved: 1A is drafted by hand in the proposed format and Brandon tries four edits before deciding the model |
 
-Open, for Brandon:
-
-- **D1 (blocks Track B). Model and authoring format.** Decided on a concrete draft,
-  not on the abstract comparison: scene 1A written by hand in the proposed format,
-  no compiler (Phase 0, last item; Brandon approved this step 2026-11-09).
-  Recommendation above.
+Open, for Brandon: nothing from this section. D1 was decided 2026-11-12 (table
+above).
 
 ## 5. Rules that hold throughout
 
@@ -324,12 +323,14 @@ Done: comparison on a real reveal and cross-scene dependency; 2C incident slice;
 baselines and budgets; three measured edits; ownership map; pilot scene; reading
 view accepted; requirement 5 shown on Reyes (non-blind) and accepted for now.
 
-- [ ] **Editing draft and D1.** Write 1A by hand in the proposed format, in
+- [x] **Editing draft and D1.** Done 2026-11-12 (D1 row in section 4). Still to do: replace the conditional sketch in the design reference with the chosen format. Draft written 2026-11-11: [story-data-1a-draft.md](story-data-1a-draft.md) (tried by Brandon 2026-11-12, copy with his edits and hesitation table in [story-data-1a-draft-edited.md](story-data-1a-draft-edited.md); findings: one fact reworded in three fields of one variant, matcher word lists not editable from the schema alone, the edit-2 task wording was unclear, `hands_to_1B` shows no visible effect; revision 2 of the draft (`story-data-1a-draft.md`) fixes those four and awaits another try; a field-by-field schema section was added after he said the sample alone does not tell him what can go where). Original step: write 1A by hand in the proposed format, in
   `.plans/`, with no compiler: scene entry and beats, one reveal with quiet and
   witnessed variants, its claims and delivery text, a pacing event, the officer
   pressure, the exit and its cross-scene dependency. Brandon tries four edits on
   it: reword a passage; change what a variant commits; change a shared search
-  description; follow one consequence into 1B and back. Record where he hesitated.
+  description; follow one consequence into 1B and back. The full task sheet (what
+  to change, what to watch for, legacy counts, answers to check afterwards) is the
+  "Four edits to try" section of the draft. Record where he hesitated.
   He then decides D1, and the conditional sketch in the design reference is
   replaced by the chosen format.
 
@@ -346,6 +347,12 @@ Starts after D1. Order matters: contract, then tests, then code.
 
 1. **Snapshot.** Name the commit that migration mappings are written against,
    after the in-flight 1A edits are committed (`2bb01bbc` is already behind).
+   **Snapshot candidate, 2026-11-13: the tip of branch `scripted-opening-1a`** (a commit cannot name its own hash; record the merged hash here after merge)
+   (not pushed or merged when this was written). It commits the in-flight 1A work
+   that had blocked the snapshot: a `scripted_opening` scene field (`plot.md`
+   scene 1A, `models.py`, `engine.py`) and 12 test files, 126 tests passing.
+   Confirm the snapshot after the branch merges (merge commits keep this hash
+   reachable).
 2. **Schema.** Typed records, stable IDs, reference resolution, source maps,
    disclosure boundaries, versioning. Typed relation kinds (hold, know, reach,
    exist, and their negations). Commit-only variants (the 2C finding). Derivation
@@ -356,6 +363,29 @@ Starts after D1. Order matters: contract, then tests, then code.
    save-compatibility decision itself is Phase 3.)
 4. **Layer 1 audit.** List what `storygame/story_package/models.py` already
    enforces and what the schema adds; record it here.
+   **Audit, 2026-11-13 (read from code, not run):**
+   - *Shape (layer 1)* is in `models.py`: every model is `_Model` with
+     `extra="forbid", frozen=True`; typed fields, ID patterns, `min_length`, and
+     about 30 field/model validators (axes, placements, effects, delivery text,
+     guards, pacing, storylet routes).
+   - *Integrity (layer 2)* is not in `models.py`. It is about 200
+     `StoryPackageError` raises in `loader.py`: unique IDs, unknown scene, fact,
+     entity, transition, realization, knowledge and incident references, one
+     delivery per fact, knowledge effects equal to their realization, canonical
+     event or entry fact, ownership ambiguity, prerequisite/reveal cycle, scene
+     transition cycle, ambiguous transition priority. All run on the built
+     `StoryPackage` (`_load_story_package_uncached`, about lines 1693–1704), so a
+     compiler that builds the same `StoryPackage` gets them without rewriting.
+   - *Source-format checks* (markdown headings, frontmatter, beat Details lines,
+     SL-* sections, YAML shape: about lines 74–345 and 1297–1630) are specific to
+     today's nine files. The new schema has to supply its own equivalents.
+   - *Not enforced today*, which the schema must add: duplicate YAML keys
+     (`yaml.safe_load` overwrites silently); one owner per fact across files (121
+     facts are defined twice and nothing objects); claim effects authorized by or
+     derived from the source effects (only equality with the realization is
+     checked); a variant's `leak_terms`/`boundaries` override may only add
+     entries (item 10). Dead consumers are layer 3, already covered by
+     `no_producer`.
 5. **Coexistence.** Legacy nine-file loading and compiled loading as explicit
    package modes with a per-scene ownership manifest that rejects two owners, and
    no silent precedence. State how the raw-file readers (section 2) keep working
@@ -374,6 +404,24 @@ Starts after D1. Order matters: contract, then tests, then code.
    does).
 9. **Generated story view** from compiled records: narrative order, continuation
    requirements shown as promise versus check.
+10. **Close the D1 coverage gaps** (found 2026-11-13 by reading the 1A draft
+    against the design reference; full table in
+    [design reference, section 4](story-data-design-reference.md)). Decide or
+    build each before the exit below:
+    - *Format:* where genuinely shared facts live (the draft says one scene file;
+      the sketch has a root catalog); typed relations beyond the exit's `needs`
+      (hold, know, reach, exist, negations); drafts for what 1A did not cover
+      (entities, connections, entry claims, handoffs, incidents, disclosure
+      guards, ending).
+    - *Layer 2 checks the format must make possible:* dangling references, cycles,
+      one owner per fact and passage, claims authorized by their source. Add a
+      rule that a variant's override of `leak_terms` or `boundaries` can only add
+      entries.
+    - *`examples`:* decide whether they stay in the authoring file or move to a
+      separate fixture addressed by record ID, so the expected result is not
+      written beside the declaration it checks.
+    - *Requirement 5:* confirm whether any authored field beyond `situation`,
+      `pressure` and exit `needs` is needed; exit 5 below is the test.
 
 Exit (all required):
 
@@ -405,6 +453,13 @@ Exit (all required):
   | C. Rename a shared fact | 5 story files, 3 test files, 4 failures | 1 declaration plus real consumers, each listed by the compiler |
 
 - [ ] Re-measure load, memory and per-turn numbers against the budgets.
+- [ ] Run the design reference's decision-exercise walks 3–6 on the pilot, which
+  the hand draft could not show: move a reveal between scenes with its
+  cross-scene dependencies; assemble only the current audience's eligible
+  material; reject dangling references, incompatible effects and cycles; update a
+  behavior test without copying prose.
+- [ ] Re-run the four edits from the 1A draft's task sheet on the compiled format
+  (Brandon has only tried revision 1 by hand).
 - [ ] Brandon makes one real 1A edit in the new format and reports on it.
 
 Exit, and the go/no-go for Phase 3: targets met, no safety regression, no
@@ -482,3 +537,7 @@ fixed menu of player actions or a branch per possible action.
   for branch analysis and his rule that a next scene's state must follow from
   where the branch leaves off. Slices 4 and 5 are in PR #761. Next steps are in
   "Resume here".
+- 2026-11-11. PRs #761 and #762 merged. 1A editing draft written in `.plans/story-data-1a-draft.md` (hand-written, no compiler, nothing reads it). Next step is Brandon's four edits, then D1.
+- 2026-11-12. Brandon tried the four edits on revision 1 of the 1A draft (copy and hesitation table in `story-data-1a-draft-edited.md`). Revision 2 of the draft fixes what he hit (shared passage parts, matcher rules and examples, edit 2 rewritten as a story decision, 1B excerpt added, `hands_to_1B` removed). He then said "go ahead with D1": recommendation adopted, Track B unblocked. Not done: he has not re-run the edits on revision 2; the design reference still holds the conditional sketch.
+- 2026-11-13. Coverage check of the chosen format against the design reference. The draft covers passage ownership, field separation, fact purpose, claim effect defaults and stable IDs; it only partly covers typed relations and relationship context; it does not cover a root catalog (and differs from the sketch on shared facts), entities, incidents, handoffs and other undrafted parts, or walks 3–6. Compiler, runtime and test redesign are not the format's job and were already in Phase 1 items 6–7 and Phases 2–3. Two risks recorded in the design reference section 4: `examples` written beside the matcher, and search-block overrides that can shrink `leak_terms`. Added Phase 1 item 10 and two Phase 2 items.
+- 2026-11-13. Resumed Phase 1. Item 4 (layer 1 audit) written from reading `models.py` and `loader.py`; item 1 (snapshot) found blocked by uncommitted `scripted_opening` work on `main`. No code or story data changed.

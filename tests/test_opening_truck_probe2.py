@@ -9,6 +9,8 @@ import pytest
 import scripts.ringer.opening_truck.probe2 as probe2
 from tests.fixtures.opening_truck_probe import recorded_control_request
 
+pytestmark = pytest.mark.usefixtures("provider_opening_story")
+
 
 @pytest.fixture(autouse=True)
 def no_real_network(monkeypatch: pytest.MonkeyPatch) -> None:

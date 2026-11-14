@@ -86,6 +86,7 @@ The story is built for a maximum of 122 accepted player turns. A scene should no
 ---
 scene_id: 1A
 location_id: mcgehee_home
+scripted_opening: true
 freytag_phase: exposition
 objective: Find evidence of Michelle's disappearance
 participant_ids: [kristin, michelle, patrol_officer, walt_pruitt]
