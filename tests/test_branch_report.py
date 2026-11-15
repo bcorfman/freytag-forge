@@ -54,7 +54,7 @@ def _replace_scene_block(root: Path, scene_id: str, replacement) -> None:
     )
 
 
-def _remove_rescue_variant(root: Path) -> None:
+def _remove_entry_variants(root: Path) -> None:
     def edit(block: str) -> str:
         marker = "entry_variants:\n- requires: [committed_to_rescue]\n"
         start = block.index(marker)
@@ -81,7 +81,7 @@ def test_declared_costs_distinguish_unset_and_unread(tmp_path: Path) -> None:
     def seed(data: dict) -> None:
         _outcome(data, "committed_to_transmit")["costs"] = [
             "evidence_ready_to_transmit",
-            "detention_sectors_sealed",
+            "rebecca_offer_active",
         ]
 
     _edit_yaml(package_root, "incidents.yaml", seed)
@@ -101,11 +101,11 @@ def test_declared_costs_distinguish_unset_and_unread(tmp_path: Path) -> None:
     )
     assert "declares cost `evidence_ready_to_transmit`" in report
     assert "but the realization does not set it" in report
-    assert "declares cost `detention_sectors_sealed`" in report
+    assert "declares cost `rebecca_offer_active`" in report
     assert "but nothing later reads it, so the cost has no effect" in report
 
     def clean(data: dict) -> None:
-        _outcome(data, "committed_to_transmit")["costs"] = ["detention_sectors_sealed"]
+        _outcome(data, "committed_to_transmit")["costs"] = ["rebecca_offer_active"]
 
     _edit_yaml(package_root, "incidents.yaml", clean)
     clean_report = render_branch_report(package_root, "i_2c_rebecca_corridor")
@@ -122,7 +122,7 @@ def test_entry_variant_applies_only_to_branch_that_sets_advantage(tmp_path: Path
     assert "requires ('committed_to_rescue',)" in rescue_applicable
     assert "requires ('committed_to_rescue',)" not in transmit_applicable
 
-    _remove_rescue_variant(package_root)
+    _remove_entry_variants(package_root)
     clean_report = render_branch_report(package_root, "i_2c_rebecca_corridor")
     assert "requires ('committed_to_rescue',)" not in clean_report
 
@@ -175,10 +175,9 @@ def test_exit_transition_consumes_branch_fact() -> None:
 def test_real_incident_no_trace_line_names_only_later_scene_branches() -> None:
     report = render_branch_report(ROOT, "i_2c_rebecca_corridor")
     line = next(line for line in report.splitlines() if line.startswith("Branches that leave no trace"))
-    assert line == (
-        "Branches that leave no trace in any later scene: `committed_to_transmit`, `SL-2C-E`, `purge_window_2c`."
-    )
+    assert line == "Branches that leave no trace in any later scene: `SL-2C-E`, `purge_window_2c`."
     assert "`committed_to_rescue`" not in line
+    assert "`committed_to_transmit`" not in line
 
 
 def test_exit_transition_only_reader_does_not_leave_later_trace(tmp_path: Path) -> None:
@@ -189,6 +188,7 @@ def test_exit_transition_only_reader_does_not_leave_later_trace(tmp_path: Path) 
         transition["triggers"] = [{"fact_id": "committed_to_transmit", "equals": True}]
 
     _edit_yaml(package_root, "pacing.yaml", seed)
+    _remove_entry_variants(package_root)
     report = render_branch_report(package_root, "i_2c_rebecca_corridor")
     line = next(line for line in report.splitlines() if line.startswith("Branches that leave no trace"))
     assert "`committed_to_transmit`" in line
@@ -248,9 +248,13 @@ def test_real_incident_renders_expected_costs_and_variant() -> None:
     package = load_story_package(ROOT)
     incident = next(item for item in package.incidents if item.scene_id == "2C")
     report = render_branch_report(ROOT, incident.id)
-    assert "declares cost `detention_sectors_sealed`" in report
-    assert "declares cost `evidence_not_transmitted`" in report
+    assert "nothing later reads it, so the cost has no effect" not in report
+    assert "`detention_sectors_sealed` ('" in report
+    assert "read by scene 3A picks entry wording by it (scene 3A)" in report
+    assert "`evidence_not_transmitted` ('" in report
+    assert "read by scene 3B picks entry wording by it (scene 3B)" in report
     assert "requires ('committed_to_rescue',)" in report
+    assert "requires ('detention_sectors_sealed',)" in report
 
 
 def test_pacing_event_and_unknown_id_raise_value_error() -> None:

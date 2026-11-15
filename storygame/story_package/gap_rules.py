@@ -545,23 +545,6 @@ def _scoped_reads(package: StoryPackage, anchor: str, exits: list[Transition]) -
     return reads
 
 
-def _scoped_sets(package: StoryPackage, anchor: str, exits: list[Transition]) -> list[tuple[str, str, str]]:
-    sets: list[tuple[str, str, str]] = []
-    for kind, item in _anchor_matches(package, anchor):
-        if kind == "pacing event":
-            sets.extend((kind, item.id, effect.fact_id) for effect in item.effects)
-        elif kind == "incident":
-            sets.extend(
-                ("incident outcome", outcome.id, fact_id)
-                for outcome in item.outcomes
-                for fact_id in (*outcome.advantages, *outcome.costs)
-            )
-    for transition in exits:
-        for claim in _transition_claims(package, transition):
-            sets.extend(("claim", claim.id, effect.fact_id) for effect in claim.establishes if effect.op == "assert")
-    return sets
-
-
 def _no_producer_flags(package: StoryPackage, root: Path, anchor: str, exits: list[Transition]) -> list[Flag]:
     start = RuntimeState.bootstrap(package)
     scoped: dict[tuple[str, object], list[tuple[str, str]]] = {}
@@ -598,37 +581,8 @@ def _no_producer_flags(package: StoryPackage, root: Path, anchor: str, exits: li
     return flags
 
 
-def _unread_effect_flags(package: StoryPackage, root: Path, anchor: str, exits: list[Transition]) -> list[Flag]:
-    scoped: dict[str, list[tuple[str, str]]] = {}
-    for kind, record_id, fact_id in _scoped_sets(package, anchor, exits):
-        scoped.setdefault(fact_id, []).append((kind, record_id))
-
-    flags: list[Flag] = []
-    for fact_id, setters in scoped.items():
-        if consumers(package, fact_id):
-            continue
-        evidence = tuple(
-            _located(root, f"{kind} {record_id} sets {fact_id}.", record_id) for kind, record_id in setters
-        ) + ("Read by: nothing",)
-        kind, record_id = setters[0]
-        flags.append(
-            Flag(
-                rule="unread_effect",
-                anchor=anchor,
-                subject=fact_id,
-                summary=f"{kind} {record_id} sets {fact_id} but nothing reads it.",
-                evidence=evidence,
-            )
-        )
-    return flags
-
-
 def _run_no_producer(package: StoryPackage, root: Path, anchor: str, exits: list[Transition]) -> list[Flag]:
     return _no_producer_flags(package, root, anchor, exits)
-
-
-def _run_unread_effect(package: StoryPackage, root: Path, anchor: str, exits: list[Transition]) -> list[Flag]:
-    return _unread_effect_flags(package, root, anchor, exits)
 
 
 RULES: dict[str, Callable] = {
@@ -637,7 +591,6 @@ RULES: dict[str, Callable] = {
     "no_strand": _run_no_strand,
     "single_reveal_strand": _run_single_reveal_strand,
     "no_producer": _run_no_producer,
-    "unread_effect": _run_unread_effect,
 }
 
 

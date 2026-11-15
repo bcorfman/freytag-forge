@@ -32,25 +32,6 @@ def _claim(data: dict, claim_id: str) -> dict:
     return next(item for item in data["knowledge"] if item["id"] == claim_id)
 
 
-def _add_world_fact(data: dict, fact_id: str) -> None:
-    data["facts"].append(fact_id)
-
-
-def _add_knowledge_fact(data: dict, fact_id: str) -> None:
-    data["facts"].append({"id": fact_id, "purpose": "A synthetic gap-rule test fact."})
-
-
-def _add_route_fact(data: dict, fact_id: str) -> None:
-    data["new_fact_ids"].append(
-        {
-            "id": fact_id,
-            "definition": "A synthetic gap-rule test fact.",
-            "used_by_storylets": [],
-            "used_by_transitions": [],
-        }
-    )
-
-
 def _remove_asserted_fact(data: object, fact_id: str) -> None:
     if isinstance(data, dict):
         for key, value in data.items():
@@ -218,111 +199,20 @@ def test_no_producer_seeded_defect_loads_and_clean_variant(tmp_path: Path) -> No
     assert any(flag.subject == "kristin_marked_by_patrol" for flag in flags)
 
 
-def test_unread_effect_seeded_defect_and_clean_variant(tmp_path: Path) -> None:
-    package_root = _copy_package(tmp_path)
-    fact_id = "gap_rule_unread_fact"
-
-    _edit_yaml(package_root, "world.yaml", lambda data: _add_world_fact(data, fact_id))
-    _edit_yaml(package_root, "knowledge.yaml", lambda data: _add_knowledge_fact(data, fact_id))
-    _edit_yaml(package_root, "storylet-routes.yaml", lambda data: _add_route_fact(data, fact_id))
-
-    def add_effect(data: dict) -> None:
-        event = next(item for item in data["events"] if item["id"] == "pursuit_1b")
-        event["effects"].append({"fact_id": fact_id, "equals": True})
-
-    def remove_effect(data: dict) -> None:
-        event = next(item for item in data["events"] if item["id"] == "pursuit_1b")
-        event["effects"] = [item for item in event["effects"] if item["fact_id"] != fact_id]
-
-    _edit_yaml(package_root, "pacing.yaml", add_effect)
-    assert load_story_package(package_root)
-    flags = run_gap_rules(package_root, "pursuit_1b", ["unread_effect"])
-    assert any(flag.subject == fact_id for flag in flags)
-
-    _edit_yaml(package_root, "pacing.yaml", remove_effect)
-    flags = run_gap_rules(package_root, "pursuit_1b", ["unread_effect"])
-    assert not any(flag.subject == fact_id for flag in flags)
-
-
-def test_real_dependency_results_match_the_audit_inventory() -> None:
+def test_real_package_has_no_producer_results_for_every_anchor() -> None:
     package = load_story_package(ROOT)
     anchors = [event.id for event in package.pacing.events]
     anchors += [incident.id for incident in package.incidents]
     anchors += [transition.id for transition in package.pacing.transitions]
 
-    expected_by_anchor = {
-        "audit_nudge_2b": ("janus_known", "kristin_was_bait", "michelle_selected_for_resistance_influence"),
-        "audit_recovery_2b": ("janus_known", "kristin_was_bait", "michelle_selected_for_resistance_influence"),
-        "audit_window_2b": ("janus_known", "kristin_was_bait", "michelle_selected_for_resistance_influence"),
-        "collapse_3c": ("facility_collapse_escalating",),
-        "destruction_3b": ("facility_destruction_threat",),
-        "detention_lockdown_3a": ("detention_lockdown_spreading",),
-        "home_search_narrows_1a": ("home_search_window_narrowing", "house_marked_for_return"),
-        "i_1c_freight_transfer": ("terminal_sweep_closing", "trust_brandon"),
-        "i_2a_real_leak": ("supervisor_convinced",),
-        "i_2b_audit": ("janus_known", "kristin_was_bait", "michelle_selected_for_resistance_influence"),
-        "i_2c_rebecca_corridor": (
-            "antagonist_split_known",
-            "detention_sectors_sealed",
-            "evidence_not_transmitted",
-            "rebecca_offer_active",
-        ),
-        "inspection_nudge_2a": ("supervisor_convinced",),
-        "inspection_recovery_2a": ("supervisor_convinced",),
-        "inspection_window_2a": ("supervisor_convinced",),
-        "kristin_steadies_1a": ("house_marked_for_return",),
-        "officer_presses_1a": ("house_marked_for_return",),
-        "park_lockdown_1b": ("park_lockdown_spreading",),
-        "patrol_arrives_1a": ("house_marked_for_return",),
-        "patrol_enters_1a": ("house_marked_for_return",),
-        "patrol_leaves_1a": ("house_marked_for_return",),
-        "patrol_returns_1a": ("house_marked_for_return",),
-        "purge_nudge_2c": (
-            "antagonist_split_known",
-            "detention_sectors_sealed",
-            "evidence_not_transmitted",
-            "rebecca_offer_active",
-        ),
-        "purge_recovery_2c": (
-            "antagonist_split_known",
-            "detention_sectors_sealed",
-            "evidence_not_transmitted",
-            "rebecca_offer_active",
-        ),
-        "purge_window_2c": (
-            "antagonist_split_known",
-            "detention_sectors_sealed",
-            "evidence_not_transmitted",
-            "rebecca_offer_active",
-        ),
-        "pursuit_1b": ("pursuit_closing_in",),
-        "relay_power_3b": ("relay_power_failing",),
-        "reyes_rams_drawer_1a": ("house_marked_for_return",),
-        "routes_collapse_3c": ("escape_routes_collapsing",),
-        "t_1a_1b": ("house_marked_for_return",),
-        "t_1c_2a": ("terminal_sweep_closing", "trust_brandon"),
-        "t_2a_2b": ("supervisor_convinced",),
-        "t_2b_2c": ("janus_known", "kristin_was_bait", "michelle_selected_for_resistance_influence"),
-        "t_2c_3a": (
-            "antagonist_split_known",
-            "detention_sectors_sealed",
-            "evidence_not_transmitted",
-            "rebecca_offer_active",
-        ),
-        "transfer_nudge_1c": ("brandon_urges_retreat", "terminal_sweep_closing", "trust_brandon"),
-        "transfer_window_1c": ("terminal_sweep_closing", "trust_brandon"),
-        "transfer_withdrawal_1c": ("terminal_sweep_closing", "trust_brandon"),
-    }
-    expected = {
-        ("unread_effect", anchor, fact_id) for anchor, fact_ids in expected_by_anchor.items() for fact_id in fact_ids
-    }
+    for anchor in anchors:
+        flags = run_gap_rules(ROOT, anchor, ["no_producer"])
+        assert not flags, f"{anchor}: no_producer results for {', '.join(flag.subject for flag in flags)}"
 
-    actual = {
-        (flag.rule, flag.anchor, flag.subject)
-        for anchor in anchors
-        for flag in run_gap_rules(ROOT, anchor, ["no_producer", "unread_effect"])
-    }
-    assert actual == expected
+
+def test_unread_effect_is_an_unknown_rule() -> None:
+    with pytest.raises(ValueError, match="unknown rule"):
+        run_gap_rules(ROOT, "pursuit_1b", ["unread_effect"])
 
 
 def test_single_reveal_strand_has_no_flags_for_every_transition() -> None:

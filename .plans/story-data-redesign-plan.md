@@ -28,24 +28,59 @@ Slices 1, 2, 4 and 5 are built; slice 3 is dropped. Slices 4 and 5 are in PR #76
 (branch `story-data-gap-rules`, not merged when this was written). Open items, in
 the order to take them:
 
-1. **`unread_effect` is noisy** (68 results over 20 facts on the real package).
-   Brandon has not chosen. Recommended narrowing: report first the facts that an
-   incident outcome lists under `costs` or `advantages`, because the scene view
-   of 2C showed those are the useful results and the pressure-state facts are
-   noise. The alternatives are to keep it as information or to drop it. Not
-   checked yet: whether the narrator reads the whole fact store (several engine
-   modules read `facts.asserted` broadly). The full list of results is pinned in
-   `test_real_dependency_results_match_the_audit_inventory`
-   (`tests/test_gap_rules.py`); a per-fact snapshot was made on 2026-11-10 but
-   not committed because it goes stale.
-2. **Run the branch report on the other incidents** (`scripts/branch_report.py
-   <incident>`; incidents are in `incidents.yaml`). It has only been run on 2C. Read each
-   report against Brandon's rule: if the next scene's state does not follow from
-   where the branch leaves off, something is broken.
-3. **2C is a story fix, not a tool fix** (Brandon's call): the transmit branch
-   leaves no trace in 3A, and both declared costs (`detention_sectors_sealed`,
-   `evidence_not_transmitted`) are set and never read. 3A's default entry says "a
-   partly unsecured detention sector" after the transmit branch seals them.
+1. **`unread_effect`: dropped (Brandon, 2026-11-14).** It gave 68 results over 20
+   facts; about 10 were pressure markers, 7 minor facts, and only 3 were declared
+   costs or advantages nothing reads (`supervisor_convinced`,
+   `detention_sectors_sealed`, `evidence_not_transmitted`), which the branch
+   report already prints. Checked first: the code paths that read all asserted
+   facts only match them against declared conditions (not checked: `capture.py`,
+   `knowledge_audit.py`). Rule, its helper and tests removed through Ringer
+   (`scripts/ringer/drop-unread-effect/`); `no_producer` now has a test that it
+   gives zero results on every anchor of the real package. The snapshot
+   `.plans/unread-effect-report.md` was deleted with it.
+2. **Branch report on the other incidents: run 2026-11-14, results below, for
+   Brandon to judge** (none is a tool defect; each is a story question).
+   - `i_1c_freight_transfer` (to 2A): coherent. Every branch reaches `t_1c_2a`
+     through `facility_infiltration_needed`; the two real routes show up in 2A's
+     entry variants. The missed-window branch leaves no trace, but its own text
+     points the player back to the service entrance. `trust_brandon` and
+     `terminal_sweep_closing` are set and never read.
+   - `i_2a_real_leak` (to 2B): **resolved 2026-11-15, no story change (Brandon).**
+     `supervisor_convinced` is the only fact that tells the cost-free convinced
+     outcome apart from the others: the loader requires that the recovery
+     storylet cannot award more than one outcome (`loader.py:1204-1215`), and a
+     test run showed that declaring `restricted_corridor_access` instead breaks
+     the load. Nothing needs to read it; the convinced branch's consequence is 2B's
+     default entry (the plot gives only the vague-answer path a consequence). The
+     supervisor in the archive is intended: `plot.md` 2B places him leading the
+     audit, and 2B.4 makes him one of Michelle's recruited workers who lets them
+     go (carried by beat prose, not YAML). Recorded in `docs/story-gap-guide.md`.
+   - `i_2b_audit` (to 2C): coherent. Name kept/erased reach 2C's claim wording and
+     the ending; `evidence_gap_development_record` reaches 3C. The report's
+     "no next-scene transition can fire" lines are because `michelle_reply_received`
+     comes from another route, as designed.
+   - `i_3c_evacuation`: last scene, so handoff analysis is skipped. All its facts
+     read "nothing after this scene" even where the ending in 3C reads them; the
+     report does not separate "read by the ending" from "unread".
+   Raw reports are not committed (they go stale); rerun `scripts/branch_report.py
+   <incident>`.
+3. **2C story fix: done 2026-11-15 (Brandon chose option 1; not committed).**
+   3A now has a second entry variant, `requires: [detention_sectors_sealed]`: "The
+   upload was still running. The other detention sectors had sealed the moment it
+   started, and this was the one sector still open." The base entry line stays: it
+   is true in both branches (3A.1 says one sector is partly unsecured). Brandon
+   confirmed the evidence takes time and is not instant, so the 3A.1 plot sentence
+   "the outside world already has it" became "the upload is still running". The
+   loader rejects protected terms in entry text, so the line cannot say "Michelle's
+   route" or "maintenance route". The branch report now shows
+   `detention_sectors_sealed` read by 3A. `evidence_not_transmitted` (rescue
+   branch) is now read by a 3B entry variant, added 2026-11-15 by the same pattern
+   and not separately reviewed by Brandon: "The evidence had never been sent. It
+   was still with Kristin, and the broadcast would be its first way out." (The
+   loader rejects "copied files" in entry text.) Four
+   `test_branch_report.py` tests pinned the old 2C state and were updated (none
+   weakened); the helper `_remove_rescue_variant` was renamed
+   `_remove_entry_variants` because it drops every 3A variant. Not run: the full suite.
 4. **Rename "flag" to "rule result"** in the plan, the guide, `gap_rules.py` and
    its output (the branch report already says "result").
 5. **The deferred blind run** on 1B.4 (or 2A.4), with Brandon writing the answer
@@ -633,3 +668,8 @@ fixed menu of player actions or a branch per possible action.
 - 2026-11-13. Resumed Phase 1. Item 4 (layer 1 audit) written from reading `models.py` and `loader.py`; item 1 (snapshot) found blocked by uncommitted `scripted_opening` work on `main`. No code or story data changed.
 - 2026-11-14. Wrote the 2C-to-3A hand draft (Phase 1 item 10, option B): `story-data-2c-3a-draft.md`. It lists 13 schema additions the slice needed, with a status each; shows the 2C gap in the generated view without repairing it; sketches the root catalog; and has a two-edit task sheet. Checked by script against the loaded package (180 values, all matching (R1 and R2 dropped from the draft by decision), after two mistakes of mine were fixed). Not checked: passage-list first-match semantics in the runtime, operation order, the shape of `internal_claims`. Open questions for Brandon are in the draft's "Things I noticed": the commit-only variants `negotiated` and `split_exposed` that nothing tells apart, the 11 dead bridge texts, `item` as the key for a character in an exit's `needs`. No code or story data changed. Not committed.
 - 2026-11-14. Deleted `SL-2C-D-R1` and `-R2` from the live package through Ringer (`scripts/ringer/delete-2c-d-r1-r2/`): routes file minus those two options, two test-set entries removed; 206 focused tests passed, ruff clean. The first run failed only on a bug in my check (git add with an ignored `.venv`), not on the worker output; the check was fixed and rerun on the kept worktree, then the patch was applied. Frozen copies, old plans and the generated disclosure matrix still mention them. Not committed.
+- 2026-11-14 (later). Resumed. Repo state: `main` at `eac9d666`, clean; PR #766 (the R1/R2 deletion and the 2C-to-3A draft) is merged, so the two "Not committed" notes above are out of date. Ran the branch report on the four incidents not yet covered (1C, 2A, 2B, 3C); findings are in "Resume here" Track A item 2. One new story question: 2A's convinced branch sets an advantage nothing reads. Nothing else changed. Still waiting on Brandon: his two edits on the 2C-to-3A draft (gates Phase 1 item 2), the `unread_effect` choice, and the 2A/2C story calls.
+- 2026-11-15. Walked Brandon through the "waiting on me" items. Item 1 decided: drop `unread_effect` (see Resume here, Track A item 1); done through Ringer. First Ringer run passed but its check did not export a patch, so Ringer deleted the worktree and the change was lost; the check was fixed and the run repeated. Items 2 (2C/3A) and 3 (2A supervisor) are still open: for 2C the options put to Brandon were a 3A entry variant for the transmit branch (recommended), a neutral default plus two variants, real mechanical teeth, or dropping the two costs. Slice 4's description above still lists `unread_effect` as built; it is historical.
+- 2026-11-15 (later). 2C/3A decided: option 1, plus fixing the plot sentence (see Resume here item 3). Correction to my earlier step-2 reading: entry variants are appended to the base entry text, not substituted (`scene_entry_texts`, `models.py:647`), and the base line "a partly unsecured detention sector" is not a contradiction. Step 3 (the 2A supervisor) is next.
+- 2026-11-15 (end of walkthrough). Step 3 decided: leave 2A alone and document why. My first recommendation (declare `restricted_corridor_access` as the convinced outcome's advantage) failed: it breaks the loader's recovery rule, so it was reverted before commit. All three "waiting on Brandon" items are now closed; open work is `evidence_not_transmitted` (unread, likely a 3B reader, unchecked), the "flag" to "rule result" rename, the deferred blind run, and Phase 1 item 2 once he tries the two 2C-to-3A edits. Uncommitted in the working tree: the `unread_effect` removal, the 3A variant and plot sentence, four updated branch-report tests, guide and plan. The full suite has not been run.
+- 2026-11-15 (after the walkthrough). Added the 3B entry variant for `evidence_not_transmitted` (both 2C costs are now read); updated `test_real_incident_renders_expected_costs_and_variant` to match. Committed everything so far on local branch `story-gap-cleanup` (not pushed) so the next Ringer task, the "flag" to "rule result" rename, starts from current files.

@@ -740,6 +740,8 @@ entry_text: "A partly unsecured detention sector opened onto rows of captives. S
 entry_variants:
 - requires: [committed_to_rescue]
   text: "The captives Kristin had freed from the transfer carts were already on this level. They stood among the organized rows as if they had always belonged there."
+- requires: [detention_sectors_sealed]
+  text: "The upload was still running. The other detention sectors had sealed the moment it started, and this was the one sector still open."
 transition_ids: [t_3a_3b]
 bridge_text:
   t_3a_3b: >-
@@ -774,7 +776,7 @@ The stolen radios are tuned to the facility's own loop, the same ninety seconds 
 
 The reunion gets one unhurried moment before the purge countdown takes over again. Kristin and Michelle can speak to each other before anyone asks either of them for anything.
 
-Kristin's choice in 2C shows here. If she freed a cart of captives, they came down with her, and they join Michelle's people. If she transmitted the evidence, the outside world already has it, the sectors are sealed, and Michelle's route was the only way in.
+Kristin's choice in 2C shows here. If she freed a cart of captives, they came down with her, and they join Michelle's people. If she transmitted the evidence, the upload is still running, the other sectors are sealed, and Michelle's route was the only way in.
 
 Michelle explains that the facility contains only a fraction of the missing millions. Freeing them will matter only if the broadcast reveals the locations of the remaining sites. Michelle points toward the medical level, where the experiment records wait.
 
@@ -839,6 +841,8 @@ entry_text: "Alarms layered over alarms as the facility fought to predict its at
 entry_variants:
 - requires: [brandon_name_erased]
   text: "Brandon had deleted his name from the build record in the archive. Now only his own word could show what he had built, and he knew it."
+- requires: [evidence_not_transmitted]
+  text: "The evidence had never been sent. It was still with Kristin, and the broadcast would be its first way out."
 transition_ids: [t_3b_3c]
 bridge_text:
   t_3b_3c: >-
