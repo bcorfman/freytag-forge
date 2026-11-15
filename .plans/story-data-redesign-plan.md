@@ -1,11 +1,14 @@
 # Story authoring, test contracts, and compiled runtime data
 
-Status (2026-11-14): **Phase 0 measured; review-tooling slices 1, 2, 4 and 5
+Status (2026-11-15): **Phase 0 measured; review-tooling slices 1, 2, 4 and 5
 built (slice 3 dropped); D1 decided 2026-11-12; Phase 1 (schema and compiler
-contract) is under way: items 1 and 4 done, item 10 decided and its 2C-to-3A
-draft written (waiting for Brandon's two edits).** No story data, test
-or deployment has changed. This plan is separate from ongoing story edits and does
-not supersede their plans.
+contract) is under way: items 1 and 4 done, items 3 and 5 proposed (waiting for
+Brandon), item 10 decided and its 2C-to-3A draft written (waiting for Brandon's
+two edits).** Track A is finished except the deferred blind run. The review-tooling
+walkthrough of 2026-11-15 changed story data (3A and 3B entry variants, one plot
+sentence) and code (rule dropped, rename, faster load); all of it is on local
+branch `story-gap-cleanup`, not pushed. This plan is separate from ongoing story
+edits and does not supersede their plans.
 
 Companion documents (evidence lives there, not here):
 
@@ -23,10 +26,9 @@ Companion documents (evidence lives there, not here):
 
 Two tracks. Track A does not wait for Track B.
 
-**Track A, review tooling on today's story package: unblocked.**
-Slices 1, 2, 4 and 5 are built; slice 3 is dropped. Slices 4 and 5 are in PR #761
-(branch `story-data-gap-rules`, not merged when this was written). Open items, in
-the order to take them:
+**Track A, review tooling on today's story package: finished except item 5.**
+Slices 1, 2, 4 and 5 are built and merged (PR #761); slice 3 is dropped. Items
+1 to 4 below were settled on 2026-11-15; item 5 needs Brandon's answer key.
 
 1. **`unread_effect`: dropped (Brandon, 2026-11-14).** It gave 68 results over 20
    facts; about 10 were pressure markers, 7 minor facts, and only 3 were declared
@@ -64,7 +66,7 @@ the order to take them:
      report does not separate "read by the ending" from "unread".
    Raw reports are not committed (they go stale); rerun `scripts/branch_report.py
    <incident>`.
-3. **2C story fix: done 2026-11-15 (Brandon chose option 1; not committed).**
+3. **2C story fix: done 2026-11-15 (Brandon chose option 1; committed on `story-gap-cleanup`).**
    3A now has a second entry variant, `requires: [detention_sectors_sealed]`: "The
    upload was still running. The other detention sectors had sealed the moment it
    started, and this was the one sector still open." The base entry line stays: it
@@ -80,7 +82,8 @@ the order to take them:
    loader rejects "copied files" in entry text.) Four
    `test_branch_report.py` tests pinned the old 2C state and were updated (none
    weakened); the helper `_remove_rescue_variant` was renamed
-   `_remove_entry_variants` because it drops every 3A variant. Not run: the full suite.
+   `_remove_entry_variants` because it drops every 3A variant. Full suite run after the rename: 4433
+   passed, 33 skipped.
 4. **Rename "flag" to "rule result": done 2026-11-15 (through Ringer,
    `scripts/ringer/rename-flag-to-rule-result/`).** `Flag` is now `RuleResult`,
    `render_flags` is `render_rule_results`, the report title is "Gap rule results",
@@ -96,7 +99,9 @@ Brandon tries the two edits on the 2C-to-3A draft
 ([story-data-2c-3a-draft.md](story-data-2c-3a-draft.md), revision 1, written
 2026-11-14); its 13 proposed schema additions and its questions (commit-only
 variants, `internal_claims`, the dead bridge text) feed the Phase 1 schema, item 2.
-Then Phase 1 items 2, 3, 5, 6 in order. The 1A draft
+He also needs to accept or change the proposals for Phase 1 item 3 (ID policy for
+saves) and item 5 (coexistence), written 2026-11-15. Then Phase 1 items 2, 6 in
+order. The 1A draft
 ([story-data-1a-draft.md](story-data-1a-draft.md), revision 2) and the 2C-to-3A
 draft are the starting point for the schema, not a finished one. What they leave
 out is listed in Phase 1 item 10 and in the
@@ -104,12 +109,12 @@ out is listed in Phase 1 item 10 and in the
 
 Housekeeping:
 
-1. PRs #759 and #760 (slice 1 and this plan) are merged. Slice 2 (`f403c4ae`),
-   slice 4 and slice 5 are in PR #761. The 1A departure hold and the phone
-   wording are committed separately on branch `1a-departure-hold` (commits
-   `a5515298`, `0a350fe8`, not pushed when this was written); they belong to
-   [the 1A plan](1a-password-and-officer-plan.md). The working tree also holds one
-   unrelated line in `docs/testing-runbook/local-checks.md`.
+1. PRs #759 to #763 are merged (slice 1, this plan, slices 2/4/5, the 1A
+   departure hold and phone wording, the `scripted_opening` field). Local branch
+   `story-gap-cleanup` holds the commits from 2026-11-15 (unread_effect dropped,
+   3A/3B entry variants, rename, plan items 3 and 5, faster load, this refresh)
+   and has not been pushed; opening a PR is Brandon's call. Each Ringer task's
+   manifest and check are committed with its change.
 2. Known limits of slice 2: custody and co-location results depend on the
    anchor's baseline state, so a transition anchor cannot run the hypothetical
    holder (the trace says "not tested here"). Custody tests that pin today's
