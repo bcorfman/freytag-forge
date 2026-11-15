@@ -1,8 +1,9 @@
 # Story authoring, test contracts, and compiled runtime data
 
-Status (2026-11-13): **Phase 0 measured; review-tooling slices 1, 2, 4 and 5
-built (slice 3 dropped); D1 decided 2026-11-12, so Phase 1 (schema and compiler
-contract) is next.** No story data, test
+Status (2026-11-14): **Phase 0 measured; review-tooling slices 1, 2, 4 and 5
+built (slice 3 dropped); D1 decided 2026-11-12; Phase 1 (schema and compiler
+contract) is under way: items 1 and 4 done, item 10 decided and its 2C-to-3A
+draft written (waiting for Brandon's two edits).** No story data, test
 or deployment has changed. This plan is separate from ongoing story edits and does
 not supersede their plans.
 
@@ -51,9 +52,14 @@ the order to take them:
    key.
 
 **Track B, the migration: unblocked by D1** (decided 2026-11-12, section 4). Next:
-Phase 1 (schema and compiler contract). The 1A draft ([story-data-1a-draft.md](story-data-1a-draft.md),
-revision 2) is the starting point for the schema, not a finished one. What it
-leaves out is listed in Phase 1 item 10 and in the
+Brandon tries the two edits on the 2C-to-3A draft
+([story-data-2c-3a-draft.md](story-data-2c-3a-draft.md), revision 1, written
+2026-11-14); its 13 proposed schema additions and its questions (commit-only
+variants, `internal_claims`, the dead bridge text) feed the Phase 1 schema, item 2.
+Then Phase 1 items 2, 3, 5, 6 in order. The 1A draft
+([story-data-1a-draft.md](story-data-1a-draft.md), revision 2) and the 2C-to-3A
+draft are the starting point for the schema, not a finished one. What they leave
+out is listed in Phase 1 item 10 and in the
 [design reference, section 4](story-data-design-reference.md).
 
 Housekeeping:
@@ -450,7 +456,19 @@ Starts after D1. Order matters: contract, then tests, then code.
       declared costs unread): migration preserves behavior, so the draft shows
       the gap in the generated view and the fix stays a separate story change.
       Counts are from the loaded package. The ending's home (root or last scene)
-      is left to the draft. **Not yet written.** Original wording: typed
+      is left to the draft. **Written 2026-11-14:**
+      [story-data-2c-3a-draft.md](story-data-2c-3a-draft.md), revision 1. A
+      scratch script compared 180 of its values with the loaded package, all
+      matching; Brandon has not tried its two edits. Corrections it found: the
+      two variants with no claim are `SL-2C-D-R1` and `-R2`, not the incident
+      outcomes (those have claims); the 2C bridge text sits under a legacy key
+      (`fallback_realization`) that the loader never reads, in all 11 bridge
+      events. The ending's home is still open (the draft puts it in a root
+      `catalog` and marks it). **Decision 2026-11-14 (Brandon): delete `SL-2C-D-R1` and `-R2`**
+      (their claims were removed on purpose in `16d6094c`; they do nothing R3, R4
+      and the recovery storylet do not). The draft omits them and the commit-only
+      variant is withdrawn; the live package still has them until a separate
+      story change removes them. Original wording: typed
       relations beyond the exit's `needs`
       (hold, know, reach, exist, negations); drafts for what 1A did not cover
       (entities, connections, entry claims, handoffs, incidents, disclosure
@@ -613,3 +631,5 @@ fixed menu of player actions or a branch per possible action.
 - 2026-11-13. Coverage check of the chosen format against the design reference. The draft covers passage ownership, field separation, fact purpose, claim effect defaults and stable IDs; it only partly covers typed relations and relationship context; it does not cover a root catalog (and differs from the sketch on shared facts), entities, incidents, handoffs and other undrafted parts, or walks 3–6. Compiler, runtime and test redesign are not the format's job and were already in Phase 1 items 6–7 and Phases 2–3. Two risks recorded in the design reference section 4: `examples` written beside the matcher, and search-block overrides that can shrink `leak_terms`. Added Phase 1 item 10 and two Phase 2 items.
 - 2026-11-13. Item 10 decisions made by Brandon: matcher examples become accept/reject lists in a separate fixture; a variant override may only add `leak_terms`/`boundaries` entries. Item 10 is fully decided as of this entry: shared facts live where first set (A), typed relations use one shared shape (B), a second slice 2C to 3A is drafted by hand (B, not yet written), and no new authored field for requirement 5 (A, plus exit trigger purposes in the view). The probe behind the accept/reject design ran the draft's word groups through `_matches_all`, not the legacy story file.
 - 2026-11-13. Resumed Phase 1. Item 4 (layer 1 audit) written from reading `models.py` and `loader.py`; item 1 (snapshot) found blocked by uncommitted `scripted_opening` work on `main`. No code or story data changed.
+- 2026-11-14. Wrote the 2C-to-3A hand draft (Phase 1 item 10, option B): `story-data-2c-3a-draft.md`. It lists 13 schema additions the slice needed, with a status each; shows the 2C gap in the generated view without repairing it; sketches the root catalog; and has a two-edit task sheet. Checked by script against the loaded package (180 values, all matching (R1 and R2 dropped from the draft by decision), after two mistakes of mine were fixed). Not checked: passage-list first-match semantics in the runtime, operation order, the shape of `internal_claims`. Open questions for Brandon are in the draft's "Things I noticed": the commit-only variants `negotiated` and `split_exposed` that nothing tells apart, the 11 dead bridge texts, `item` as the key for a character in an exit's `needs`. No code or story data changed. Not committed.
+- 2026-11-14. Deleted `SL-2C-D-R1` and `-R2` from the live package through Ringer (`scripts/ringer/delete-2c-d-r1-r2/`): routes file minus those two options, two test-set entries removed; 206 focused tests passed, ruff clean. The first run failed only on a bug in my check (git add with an ignored `.venv`), not on the worker output; the check was fixed and rerun on the kept worktree, then the patch was applied. Frozen copies, old plans and the generated disclosure matrix still mention them. Not committed.
