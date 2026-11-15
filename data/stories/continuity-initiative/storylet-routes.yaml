@@ -2619,56 +2619,6 @@ storylets:
       pressure_bias: normal_before_target; prefer_after_target; strongly_prefer_near_latest
   pressure_role: Let Rebecca’s offer, the purge, the physical commitment, and Michelle’s route unfold as one live crisis.
   realization_options:
-  - id: SL-2C-D-R1
-    dramatic_intent: Rebecca offers Brandon Michelle’s release. Her tablet shows the purge. Brandon says yes and Michelle sends her route.
-    source_beats: [scene-2c1--rebeccas-offer, scene-2c2--the-purge-order, scene-2c3--evidence-or-rescue, scene-2c5--michelle-changes-the-choice]
-    operations:
-    - op: assert
-      fact_id: rebecca_offer_active
-      value: true
-    - op: assert
-      fact_id: antagonist_split_known
-      value: true
-    - op: assert
-      fact_id: purge_clock_started
-      value: true
-    - op: assert
-      fact_id: evidence_ready_to_transmit
-      value: true
-    - op: assert
-      fact_id: rebecca_office_required_for_broadcast
-      value: true
-    - op: assert
-      fact_id: combined_broadcast_rescue_plan_known
-      value: true
-    eligible_storylet_event_id: null
-    helps_transition_triggers: [t_2c_3a]
-    protected_knowledge_boundaries: [janus_phase_two]
-  - id: SL-2C-D-R2
-    dramatic_intent: The negotiation exposes the split between Rebecca and Charles. Michelle’s route makes the combined mission clear.
-    source_beats: [scene-2c1--rebeccas-offer, scene-2c2--the-purge-order, scene-2c3--evidence-or-rescue, scene-2c5--michelle-changes-the-choice]
-    operations:
-    - op: assert
-      fact_id: rebecca_offer_active
-      value: true
-    - op: assert
-      fact_id: antagonist_split_known
-      value: true
-    - op: assert
-      fact_id: purge_clock_started
-      value: true
-    - op: assert
-      fact_id: evidence_ready_to_transmit
-      value: true
-    - op: assert
-      fact_id: rebecca_office_required_for_broadcast
-      value: true
-    - op: assert
-      fact_id: combined_broadcast_rescue_plan_known
-      value: true
-    eligible_storylet_event_id: null
-    helps_transition_triggers: [t_2c_3a]
-    protected_knowledge_boundaries: [janus_phase_two]
   - id: SL-2C-D-R3
     dramatic_intent: Kristin commits to the uplink after Rebecca’s offer and Michelle’s route reveal. The detention sectors seal.
     source_beats: [scene-2c1--rebeccas-offer, scene-2c2--the-purge-order, scene-2c3--evidence-or-rescue, scene-2c5--michelle-changes-the-choice]

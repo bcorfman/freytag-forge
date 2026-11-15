@@ -338,8 +338,6 @@ def test_continuity_package_loads_all_scene_headings_and_storylets() -> None:
     unmapped_realizations = {
         "storylet:SL-2A-D:SL-2A-D-R1",
         "storylet:SL-2B-D:SL-2B-D-R1",
-        "storylet:SL-2C-D:SL-2C-D-R1",
-        "storylet:SL-2C-D:SL-2C-D-R2",
         "storylet:SL-2C-E:SL-2C-E-R1",
         "storylet:SL-3C-F:SL-3C-F-R1",
     }
