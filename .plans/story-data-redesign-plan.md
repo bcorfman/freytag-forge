@@ -78,7 +78,7 @@ Slices 1, 2, 4 and 5 are built and merged (PR #761); slice 3 is dropped. Items
    `detention_sectors_sealed` read by 3A. `evidence_not_transmitted` (rescue
    branch) is now read by a 3B entry variant, added 2026-11-15 by the same pattern
    and not separately reviewed by Brandon: "The evidence had never been sent. It
-   was still with Kristin, and the broadcast would be its first way out." (The
+   was still with Kristin, and the broadcast was the first chance to get it out." (The
    loader rejects "copied files" in entry text.) Four
    `test_branch_report.py` tests pinned the old 2C state and were updated (none
    weakened); the helper `_remove_rescue_variant` was renamed
@@ -739,3 +739,4 @@ fixed menu of player actions or a branch per possible action.
 - 2026-11-15 (rename). Rename applied from the Ringer patch (first run passed; this time the check exported the patch). Full suite run once after it: 4433 passed, 33 skipped (4 min 31 s). Repo-wide `ruff check .` reports 229 lint errors, all in older `.plans/` scratch scripts and `scripts/ringer/story-data` generators that this work did not touch (CI's rule set `E9,F63,F7,F82` is clean); `ruff format --check .` flagged 3 `.plans/` scripts, now formatted.
 - 2026-11-15 (load time). Compiled the delivery token pattern once per package (Ringer, check compared old and new logic): uncached load about 0.40 s to about 0.16 s. D4's budget check (cold load at most 0.5 s) now has more room for a compiler. Remaining validation hotspot recorded as a Phase 4 candidate.
 - 2026-11-15 (final run). Full suite on the committed branch: 4435 passed, 1 failed, 33 skipped. The failure was `test_real_manifest_covers_test_files`: the new `tests/test_delivery_token_matcher.py` was missing from `tests/shard_durations.json`; added with `scripts/regen_shard_durations.py --missing-only` and the test passes. The suite was not rerun in full after that one-line manifest change.
+- 2026-11-15 (wording approved). Brandon approved the 3A and 3B entry lines (walkthrough item 1 of 5). He asked for the last sentence of the 3B line to be reworded: now "The evidence had never been sent. It was still with Kristin, and the broadcast was the first chance to get it out." Focused story tests pass (142); the full suite was not rerun for this one-sentence text change.

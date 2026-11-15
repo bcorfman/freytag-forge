@@ -842,7 +842,7 @@ entry_variants:
 - requires: [brandon_name_erased]
   text: "Brandon had deleted his name from the build record in the archive. Now only his own word could show what he had built, and he knew it."
 - requires: [evidence_not_transmitted]
-  text: "The evidence had never been sent. It was still with Kristin, and the broadcast would be its first way out."
+  text: "The evidence had never been sent. It was still with Kristin, and the broadcast was the first chance to get it out."
 transition_ids: [t_3b_3c]
 bridge_text:
   t_3b_3c: >-
