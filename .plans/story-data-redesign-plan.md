@@ -447,13 +447,21 @@ Starts after D1. Order matters: contract, then tests, then code.
      exists and the phase matches; saved facts are checked only for predicate
      name pattern and length. The compiler keeps the same moment (D4). **A
      load-time check of saved IDs against the package is rejected.**
-   - *Enforcement is on the schema side:* the compiler writes a save-identity
-     manifest (the frozen IDs by kind) from the snapshot package; a layer 2
-     check fails the build when a compiled package lacks a frozen ID, unless a
-     retirement file lists it with a reason. Limit: it protects ID names, not
-     their meaning, so an ID reused with a different meaning would pass; and an
-     old save loaded against a package that dropped an ID loads fine and the
-     orphaned facts simply do nothing. Not built or tested.
+   - *Enforcement is a developer warning, not a build error (Brandon,
+     2026-11-15):* the compiler writes a save-identity manifest (the frozen IDs
+     by kind) from the snapshot package. A test compares the current package
+     with it and emits a `UserWarning` naming every missing frozen ID; it does
+     not fail the suite, it never runs at load or play time, and a player never
+     sees it. This is a layer 3 result in the sense of D3 (reported, never
+     blocks). An intended removal is listed in a retirement file with a reason,
+     which silences the warning for that ID (the exemption lives on the authored
+     record, as D2 requires). Checked: `pyproject.toml` ignores only
+     `DeprecationWarning`, so a `UserWarning` shows in pytest's summary; no test
+     uses `warnings.warn` yet, and a summary line is easy to scroll past, so the
+     same check should also be runnable as a script. Limits: it protects ID
+     names, not their meaning, so an ID reused with a different meaning would
+     pass; and an old save loaded against a package that dropped an ID loads
+     fine and the orphaned facts simply do nothing. Not built or tested.
 4. **Layer 1 audit.** List what `storygame/story_package/models.py` already
    enforces and what the schema adds; record it here.
    **Audit, 2026-11-13 (read from code, not run):**
@@ -766,3 +774,4 @@ fixed menu of player actions or a branch per possible action.
 - 2026-11-15 (wording approved). Brandon approved the 3A and 3B entry lines (walkthrough item 1 of 5). He asked for the last sentence of the 3B line to be reworded: now "The evidence had never been sent. It was still with Kristin, and the broadcast was the first chance to get it out." Focused story tests pass (142); the full suite was not rerun for this one-sentence text change.
 - 2026-11-15 (rule on checks). Brandon: schema checks belong to package build/load; saves and loads stay flexible tag/value so in-process work can be saved. Phase 1 item 3 rewritten around it; the load-time saved-ID check I had raised as an option is withdrawn. Verified in code first: package validation runs at package load (startup, tests, CI), save load checks structure only.
 - 2026-11-15 (item 3 accepted). Brandon accepted Phase 1 item 3, the ID policy for saves, as revised.
+- 2026-11-15 (item 3 amended). Brandon: the frozen-ID check should be a warning, not an error, and run as a test, not at runtime, so only the developer sees it. Item 3 changed from a layer 2 build failure to a test-time layer 3 warning with a retirement file.
