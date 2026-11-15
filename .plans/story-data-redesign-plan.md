@@ -487,7 +487,7 @@ Starts after D1. Order matters: contract, then tests, then code.
      checked); a variant's `leak_terms`/`boundaries` override may only add
      entries (item 10). Dead consumers are layer 3, already covered by
      `no_producer`.
-5. **Coexistence.** **Proposal 2026-11-15, not decided, not built.**
+5. **Coexistence.** **Accepted by Brandon 2026-11-15 (option 1, as written); not built.**
    - *Explicit mode, no precedence.* An ownership manifest in the package root
      lists, for each scene and for the root catalog, `legacy` or `compiled`; a
      missing manifest means all `legacy`, which is today's behavior. No
@@ -775,3 +775,4 @@ fixed menu of player actions or a branch per possible action.
 - 2026-11-15 (rule on checks). Brandon: schema checks belong to package build/load; saves and loads stay flexible tag/value so in-process work can be saved. Phase 1 item 3 rewritten around it; the load-time saved-ID check I had raised as an option is withdrawn. Verified in code first: package validation runs at package load (startup, tests, CI), save load checks structure only.
 - 2026-11-15 (item 3 accepted). Brandon accepted Phase 1 item 3, the ID policy for saves, as revised.
 - 2026-11-15 (item 3 amended). Brandon: the frozen-ID check should be a warning, not an error, and run as a test, not at runtime, so only the developer sees it. Item 3 changed from a layer 2 build failure to a test-time layer 3 warning with a retirement file.
+- 2026-11-15 (item 5 accepted). Brandon accepted Phase 1 item 5, coexistence, as written (explicit ownership manifest, two owners an error, the four raw-file readers move to a generated export before the first scene flips, 1A stays legacy in the shipping package during Phase 2). Walkthrough item 3 of 5 is closed.
