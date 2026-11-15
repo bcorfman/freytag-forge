@@ -50,8 +50,8 @@ the `cover_suspected` variant). Before calling such a result a gap, ask whether
 the next scene's state still follows from the branch.
 
 An anchor is a pacing event, an incident or a transition id. The trace is data
-only. The rules print flags with evidence; flags are never errors and never
-block a build. Custody and co-location depend on the anchor's starting state, so
+only. The rules print rule results with evidence; rule results are never errors
+and never block a build. Custody and co-location depend on the anchor's starting state, so
 the trace says when custody was not tested.
 
 The author set the checks after the first drafts missed them, so the method is

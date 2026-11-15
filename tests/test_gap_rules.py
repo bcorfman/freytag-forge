@@ -8,7 +8,7 @@ import pytest
 import yaml
 
 from scripts.gap_rules import main
-from storygame.story_package.gap_rules import custody_checks, exit_transitions, render_flags, run_gap_rules
+from storygame.story_package.gap_rules import custody_checks, exit_transitions, render_rule_results, run_gap_rules
 from storygame.story_package.loader import load_story_package
 
 ROOT = Path("data/stories/continuity-initiative")
@@ -51,29 +51,33 @@ def _remove_asserted_fact(data: object, fact_id: str) -> None:
             _remove_asserted_fact(item, fact_id)
 
 
-def test_real_data_reports_the_known_flags() -> None:
-    flags = run_gap_rules(ROOT, "officer_presses_1a")
+def test_real_data_reports_the_known_results() -> None:
+    results = run_gap_rules(ROOT, "officer_presses_1a")
 
     assert any(
-        flag.rule == "custody" and flag.subject == "k_sl_1a_b_r1" and "memory_card" in flag.summary for flag in flags
+        result.rule == "custody" and result.subject == "k_sl_1a_b_r1" and "memory_card" in result.summary
+        for result in results
     )
     assert any(
-        flag.rule == "co_location" and flag.subject == "k_sl_1a_b_r1" and "kristin_laptop" in flag.summary
-        for flag in flags
+        result.rule == "co_location" and result.subject == "k_sl_1a_b_r1" and "kristin_laptop" in result.summary
+        for result in results
     )
     assert any(
-        flag.rule == "no_strand" and flag.subject == "k_sl_1a_b_r1" and "memory_card" in flag.summary for flag in flags
+        result.rule == "no_strand" and result.subject == "k_sl_1a_b_r1" and "memory_card" in result.summary
+        for result in results
     )
 
 
-def test_custody_checks_include_every_flagged_pair() -> None:
+def test_custody_checks_include_every_pair_with_a_result() -> None:
     package = load_story_package(ROOT)
-    flags = run_gap_rules(ROOT, "officer_presses_1a", ["custody"])
+    results = run_gap_rules(ROOT, "officer_presses_1a", ["custody"])
     checks = custody_checks(package, "officer_presses_1a")
 
-    for flag in flags:
+    for result in results:
         matching = [
-            check for check in checks if check.claim_id == flag.subject and f"names {check.item_id} " in flag.summary
+            check
+            for check in checks
+            if check.claim_id == result.subject and f"names {check.item_id} " in result.summary
         ]
         assert matching
         assert all(not check.holder_checked for check in matching)
@@ -97,12 +101,12 @@ def test_custody_checks_report_checked_moves_as_unchecked_rows() -> None:
     assert all(check.character_id is not None for check in checks)
 
 
-def test_untested_custody_rows_do_not_produce_flags() -> None:
+def test_untested_custody_rows_do_not_produce_results() -> None:
     assert not run_gap_rules(ROOT, "t_1a_1b", ["custody"])
 
 
 def test_real_data_citations_point_to_record_definitions() -> None:
-    rendered = render_flags(run_gap_rules(ROOT, "officer_presses_1a"), "officer_presses_1a")
+    rendered = render_rule_results(run_gap_rules(ROOT, "officer_presses_1a"), "officer_presses_1a")
     citation = re.compile(r"(?P<path>\S+\.(?:yaml|md)):(?P<line>\d+)$")
     id_definition = re.compile(r"\bid:\s*[A-Za-z0-9_.-]+(?=\s*(?:$|[,}#]))")
     bare_key = re.compile(r"\s*[A-Za-z0-9_.-]+:\s*(?:#.*)?$")
@@ -117,21 +121,21 @@ def test_real_data_citations_point_to_record_definitions() -> None:
 
 
 def test_baseline_holder_simulation_has_no_citation() -> None:
-    flags = run_gap_rules(ROOT, "officer_presses_1a", ["custody"])
+    results = run_gap_rules(ROOT, "officer_presses_1a", ["custody"])
     simulation_lines = [
-        evidence for flag in flags for evidence in flag.evidence if evidence.startswith("holder at baseline:")
+        evidence for result in results for evidence in result.evidence if evidence.startswith("holder at baseline:")
     ]
     assert simulation_lines
     assert all(re.search(r"\S+\.(?:yaml|md):\d+$", line) is None for line in simulation_lines)
 
 
 def test_no_strand_reports_already_true_effect() -> None:
-    flags = run_gap_rules(ROOT, "officer_presses_1a", ["no_strand"])
+    results = run_gap_rules(ROOT, "officer_presses_1a", ["no_strand"])
     assert any(
         "already true, so it cannot fire again" in evidence
-        for flag in flags
-        if flag.subject == "k_sl_1a_b_r1"
-        for evidence in flag.evidence
+        for result in results
+        if result.subject == "k_sl_1a_b_r1"
+        for evidence in result.evidence
     )
 
 
@@ -144,8 +148,8 @@ def test_custody_seeded_defect_and_clean_variant(tmp_path: Path) -> None:
             entity_ids=list(dict.fromkeys(_claim(data, "k_sl_1a_b_r1")["entity_ids"]))
         ),
     )
-    flags = run_gap_rules(package_root, "officer_presses_1a", ["custody"])
-    assert any(flag.subject == "k_sl_1a_b_r1" and "memory_card" in flag.summary for flag in flags)
+    results = run_gap_rules(package_root, "officer_presses_1a", ["custody"])
+    assert any(result.subject == "k_sl_1a_b_r1" and "memory_card" in result.summary for result in results)
 
     def clean(data: dict) -> None:
         claim = _claim(data, "k_sl_1a_b_r1")
@@ -153,29 +157,29 @@ def test_custody_seeded_defect_and_clean_variant(tmp_path: Path) -> None:
         claim["relevance"]["entity_ids"].remove("memory_card")
 
     _edit_yaml(package_root, "knowledge.yaml", clean)
-    flags = run_gap_rules(package_root, "officer_presses_1a", ["custody"])
-    assert not any(flag.subject == "k_sl_1a_b_r1" for flag in flags)
+    results = run_gap_rules(package_root, "officer_presses_1a", ["custody"])
+    assert not any(result.subject == "k_sl_1a_b_r1" for result in results)
 
 
 def test_co_location_seeded_defect_and_clean_variant(tmp_path: Path) -> None:
     package_root = _copy_package(tmp_path)
     _edit_yaml(package_root, "knowledge.yaml", lambda data: _claim(data, "k_sl_1a_b_r1").update(reach_entity_ids=[]))
-    flags = run_gap_rules(package_root, "officer_presses_1a", ["co_location"])
-    assert any(flag.subject == "k_sl_1a_b_r1" and "kristin_laptop" in flag.summary for flag in flags)
+    results = run_gap_rules(package_root, "officer_presses_1a", ["co_location"])
+    assert any(result.subject == "k_sl_1a_b_r1" and "kristin_laptop" in result.summary for result in results)
 
     _edit_yaml(
         package_root,
         "knowledge.yaml",
         lambda data: _claim(data, "k_sl_1a_b_r1").update(reach_entity_ids=["kristin_laptop"]),
     )
-    flags = run_gap_rules(package_root, "officer_presses_1a", ["co_location"])
-    assert not any(flag.subject == "k_sl_1a_b_r1" for flag in flags)
+    results = run_gap_rules(package_root, "officer_presses_1a", ["co_location"])
+    assert not any(result.subject == "k_sl_1a_b_r1" for result in results)
 
 
 def test_no_strand_seeded_defect_and_clean_variant(tmp_path: Path) -> None:
     package_root = _copy_package(tmp_path)
     assert any(
-        flag.subject == "k_sl_1a_b_r1" for flag in run_gap_rules(package_root, "officer_presses_1a", ["no_strand"])
+        result.subject == "k_sl_1a_b_r1" for result in run_gap_rules(package_root, "officer_presses_1a", ["no_strand"])
     )
 
     def add_non_item_gated_producer(data: dict) -> None:
@@ -183,8 +187,8 @@ def test_no_strand_seeded_defect_and_clean_variant(tmp_path: Path) -> None:
         event["effects"].append({"fact_id": "michelle_lead_actionable", "equals": True})
 
     _edit_yaml(package_root, "pacing.yaml", add_non_item_gated_producer)
-    flags = run_gap_rules(package_root, "officer_presses_1a", ["no_strand"])
-    assert not any(flag.subject == "k_sl_1a_b_r1" for flag in flags)
+    results = run_gap_rules(package_root, "officer_presses_1a", ["no_strand"])
+    assert not any(result.subject == "k_sl_1a_b_r1" for result in results)
 
 
 def test_no_producer_seeded_defect_loads_and_clean_variant(tmp_path: Path) -> None:
@@ -195,8 +199,8 @@ def test_no_producer_seeded_defect_loads_and_clean_variant(tmp_path: Path) -> No
         _edit_yaml(package_root, filename, lambda data: _remove_asserted_fact(data, "kristin_marked_by_patrol"))
 
     assert load_story_package(package_root)
-    flags = run_gap_rules(package_root, "pursuit_1b", ["no_producer"])
-    assert any(flag.subject == "kristin_marked_by_patrol" for flag in flags)
+    results = run_gap_rules(package_root, "pursuit_1b", ["no_producer"])
+    assert any(result.subject == "kristin_marked_by_patrol" for result in results)
 
 
 def test_real_package_has_no_producer_results_for_every_anchor() -> None:
@@ -206,8 +210,8 @@ def test_real_package_has_no_producer_results_for_every_anchor() -> None:
     anchors += [transition.id for transition in package.pacing.transitions]
 
     for anchor in anchors:
-        flags = run_gap_rules(ROOT, anchor, ["no_producer"])
-        assert not flags, f"{anchor}: no_producer results for {', '.join(flag.subject for flag in flags)}"
+        results = run_gap_rules(ROOT, anchor, ["no_producer"])
+        assert not results, f"{anchor}: no_producer results for {', '.join(result.subject for result in results)}"
 
 
 def test_unread_effect_is_an_unknown_rule() -> None:
@@ -215,7 +219,7 @@ def test_unread_effect_is_an_unknown_rule() -> None:
         run_gap_rules(ROOT, "pursuit_1b", ["unread_effect"])
 
 
-def test_single_reveal_strand_has_no_flags_for_every_transition() -> None:
+def test_single_reveal_strand_has_no_results_for_every_transition() -> None:
     package = load_story_package(ROOT)
 
     for transition in package.pacing.transitions:
@@ -246,13 +250,15 @@ def test_single_reveal_strand_seeded_defect_and_clean_variant(tmp_path: Path) ->
 
     _edit_yaml(package_root, "storylet-routes.yaml", remove_exit_fact)
     _edit_yaml(package_root, "knowledge.yaml", lambda data: edit_knowledge(data, "drawer_opened"))
-    flags = run_gap_rules(package_root, "t_1a_1b", ["single_reveal_strand"])
-    assert any(flag.subject == "SL-1A-E/SL-1A-E-R1" and "memory_card_recovered" in flag.summary for flag in flags)
+    results = run_gap_rules(package_root, "t_1a_1b", ["single_reveal_strand"])
+    assert any(
+        result.subject == "SL-1A-E/SL-1A-E-R1" and "memory_card_recovered" in result.summary for result in results
+    )
 
     _edit_yaml(package_root, "storylet-routes.yaml", restore_exit_fact)
     _edit_yaml(package_root, "knowledge.yaml", lambda data: edit_knowledge(data, "memory_card_recovered"))
-    flags = run_gap_rules(package_root, "t_1a_1b", ["single_reveal_strand"])
-    assert not any(flag.subject == "SL-1A-E/SL-1A-E-R1" for flag in flags)
+    results = run_gap_rules(package_root, "t_1a_1b", ["single_reveal_strand"])
+    assert not any(result.subject == "SL-1A-E/SL-1A-E-R1" for result in results)
 
 
 def test_unknown_anchor_and_rule_raise() -> None:
@@ -284,7 +290,7 @@ def test_output_and_inputs_are_deterministic_and_read_only() -> None:
     first = run_gap_rules(ROOT, "officer_presses_1a")
     second = run_gap_rules(ROOT, "officer_presses_1a")
     assert first == second
-    assert render_flags(first, "officer_presses_1a") == render_flags(second, "officer_presses_1a")
+    assert render_rule_results(first, "officer_presses_1a") == render_rule_results(second, "officer_presses_1a")
     after = {path.relative_to(ROOT): path.read_bytes() for path in ROOT.rglob("*") if path.is_file()}
     assert before == after
 
@@ -295,8 +301,8 @@ def test_module_has_no_story_specific_words() -> None:
         assert word not in source
 
 
-def test_script_main_returns_zero_with_flags_and_two_for_unknown_anchor(capsys) -> None:
+def test_script_main_returns_zero_with_results_and_two_for_unknown_anchor(capsys) -> None:
     assert main(["officer_presses_1a", "--rule", "custody"]) == 0
-    assert "# Gap flags: officer_presses_1a" in capsys.readouterr().out
+    assert "# Gap rule results: officer_presses_1a" in capsys.readouterr().out
     assert main(["missing_anchor"]) == 2
     assert "unknown anchor 'missing_anchor'" in capsys.readouterr().err

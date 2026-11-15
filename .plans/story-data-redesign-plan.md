@@ -81,8 +81,13 @@ the order to take them:
    `test_branch_report.py` tests pinned the old 2C state and were updated (none
    weakened); the helper `_remove_rescue_variant` was renamed
    `_remove_entry_variants` because it drops every 3A variant. Not run: the full suite.
-4. **Rename "flag" to "rule result"** in the plan, the guide, `gap_rules.py` and
-   its output (the branch report already says "result").
+4. **Rename "flag" to "rule result": done 2026-11-15 (through Ringer,
+   `scripts/ringer/rename-flag-to-rule-result/`).** `Flag` is now `RuleResult`,
+   `render_flags` is `render_rule_results`, the report title is "Gap rule results",
+   and the word is gone from `gap_rules.py`, `scripts/gap_rules.py`,
+   `tests/test_gap_rules.py` and the guide (same 22 tests, same 38 assertions).
+   This plan, the frozen Ringer manifests and old plans keep "flag" in their
+   history on purpose.
 5. **The deferred blind run** on 1B.4 (or 2A.4), with Brandon writing the answer
    key.
 
@@ -401,8 +406,35 @@ Starts after D1. Order matters: contract, then tests, then code.
    rules, each explicit: one fact owner; claim effects default to the source's
    effects with a declared subset allowed; incident costs and advantages derived
    from the named variant.
-3. **ID policy for saves.** Which IDs are preserved and which may change. (The
-   save-compatibility decision itself is Phase 3.)
+3. **ID policy for saves.** **Proposal 2026-11-15, read from `persistence.py` and
+   `state.py`, for Brandon to accept or change.** The save-compatibility decision
+   itself stays in Phase 3.
+   - *What a save holds:* the session state without the package, as JSON, keyed by
+     `story_id` and a store schema version (5). On load the only checks are story
+     id, schema version, payload hash, and that the saved scene exists with a
+     matching phase. **Every other ID in a save is accepted unchecked**, so a
+     renamed fact or event would be silently orphaned, not rejected. This is true
+     today, before any migration.
+   - *Frozen IDs (a save stores them; migration must keep them):* scene ids (9),
+     fact ids (177; they are the `predicate` of every saved fact), entity ids
+     (items, places, characters and groups; they appear as fact subjects and
+     objects), knowledge claim ids (122; saved as `reveal_ids` and
+     `revealed_knowledge_ids`), pacing event ids (31; `active_event_ids`,
+     `fired_event_ids`, turn records), transition ids (8), delivery fact ids (48;
+     the cue ledger and staged handoffs), and the story id.
+   - *Free IDs (a save does not store them; the migration may change them):*
+     passage and variant ids, storylet and realization ids (68 storylets),
+     incident and outcome ids (derived from facts), matcher groups, source file
+     names, headings and block order. One exception to note: the saved
+     `last_turn_delivery.beats_projected` holds beat anchors, which today are
+     derived from beat headings (for example `scene-3a4--the-uprising-begins`);
+     it is read once, for the last turn only, so it is not frozen, but the new
+     format should not derive any ID from a heading.
+   - *Enforcement:* the compiler writes a save-identity manifest (the frozen IDs
+     by kind) from the snapshot package; a layer 2 check fails the build when a
+     compiled package lacks a frozen ID, unless a retirement file lists it with a
+     reason. Whether load should also check saved IDs against the package (the
+     fail-closed gap above) is a Phase 3 decision. Not built or tested.
 4. **Layer 1 audit.** List what `storygame/story_package/models.py` already
    enforces and what the schema adds; record it here.
    **Audit, 2026-11-13 (read from code, not run):**
@@ -428,10 +460,26 @@ Starts after D1. Order matters: contract, then tests, then code.
      checked); a variant's `leak_terms`/`boundaries` override may only add
      entries (item 10). Dead consumers are layer 3, already covered by
      `no_producer`.
-5. **Coexistence.** Legacy nine-file loading and compiled loading as explicit
-   package modes with a per-scene ownership manifest that rejects two owners, and
-   no silent precedence. State how the raw-file readers (section 2) keep working
-   while both exist.
+5. **Coexistence.** **Proposal 2026-11-15, not decided, not built.**
+   - *Explicit mode, no precedence.* An ownership manifest in the package root
+     lists, for each scene and for the root catalog, `legacy` or `compiled`; a
+     missing manifest means all `legacy`, which is today's behavior. No
+     environment switch. The loader builds legacy scenes from the nine files and
+     compiled scenes from compiled records, and merges them into one
+     `StoryPackage`.
+   - *Two owners are an error.* A record id defined on both sides, a scene marked
+     `compiled` that the legacy files still define, or a scene marked `legacy`
+     that has compiled records fails the build (layer 2) and names both sources.
+   - *Raw-file readers (section 2).* They parse the legacy files directly, so a
+     scene marked `compiled` would vanish from them. Sequencing rule: a scene is
+     marked `compiled` in the shipping package only after the readers that touch
+     it read through a generated export of the package
+     (`scripts/export_story_package.py`, to be written) instead of the source
+     files. Until then, Phase 2 keeps 1A legacy in the shipping package and runs
+     the compiled 1A beside it in the parity test, not in a mixed package. Mixed
+     ownership starts in Phase 3, per scene, after that scene's readers have
+     moved (the Phase 3 reader list). Not checked: exactly which files each
+     reader opens, per scene.
 6. **Fixtures and tests first.** Small typed fixtures and patch helpers that
    address records by ID and field, drawn from continuity-initiative and together
    covering claims, protected material and audience scoping, pacing, an incident
@@ -673,3 +721,5 @@ fixed menu of player actions or a branch per possible action.
 - 2026-11-15 (later). 2C/3A decided: option 1, plus fixing the plot sentence (see Resume here item 3). Correction to my earlier step-2 reading: entry variants are appended to the base entry text, not substituted (`scene_entry_texts`, `models.py:647`), and the base line "a partly unsecured detention sector" is not a contradiction. Step 3 (the 2A supervisor) is next.
 - 2026-11-15 (end of walkthrough). Step 3 decided: leave 2A alone and document why. My first recommendation (declare `restricted_corridor_access` as the convinced outcome's advantage) failed: it breaks the loader's recovery rule, so it was reverted before commit. All three "waiting on Brandon" items are now closed; open work is `evidence_not_transmitted` (unread, likely a 3B reader, unchecked), the "flag" to "rule result" rename, the deferred blind run, and Phase 1 item 2 once he tries the two 2C-to-3A edits. Uncommitted in the working tree: the `unread_effect` removal, the 3A variant and plot sentence, four updated branch-report tests, guide and plan. The full suite has not been run.
 - 2026-11-15 (after the walkthrough). Added the 3B entry variant for `evidence_not_transmitted` (both 2C costs are now read); updated `test_real_incident_renders_expected_costs_and_variant` to match. Committed everything so far on local branch `story-gap-cleanup` (not pushed) so the next Ringer task, the "flag" to "rule result" rename, starts from current files.
+- 2026-11-15 (Phase 1). Wrote proposals for item 3 (ID policy for saves) and item 5 (coexistence) from reading `persistence.py`, `state.py` and the loaded package. Finding: a save's IDs are not checked at load beyond scene and phase, so an ID change fails silently today. Both items wait for Brandon to accept or change them. Nothing built.
+- 2026-11-15 (rename). Rename applied from the Ringer patch (first run passed; this time the check exported the patch). Full suite run once after it: 4433 passed, 33 skipped (4 min 31 s). Repo-wide `ruff check .` reports 229 lint errors, all in older `.plans/` scratch scripts and `scripts/ringer/story-data` generators that this work did not touch (CI's rule set `E9,F63,F7,F82` is clean); `ruff format --check .` flagged 3 `.plans/` scripts, now formatted.
