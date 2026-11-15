@@ -435,11 +435,23 @@ Starts after D1. Order matters: contract, then tests, then code.
      derived from beat headings (for example `scene-3a4--the-uprising-begins`);
      it is read once, for the last turn only, so it is not frozen, but the new
      format should not derive any ID from a heading.
-   - *Enforcement:* the compiler writes a save-identity manifest (the frozen IDs
-     by kind) from the snapshot package; a layer 2 check fails the build when a
-     compiled package lacks a frozen ID, unless a retirement file lists it with a
-     reason. Whether load should also check saved IDs against the package (the
-     fail-closed gap above) is a Phase 3 decision. Not built or tested.
+   - *When the checks run (rule from Brandon, 2026-11-15):* **schema strictness
+     belongs to package build and load; saves stay flexible, tag and value, so
+     in-progress work can always be saved and reloaded.** Today this already
+     holds: `load_story_package` runs shape and integrity checks once, at app
+     startup (`web_demo.py:208`), in tests and in CI, cached by a hash of the
+     source files, and a bad package stops the server. A save load checks only
+     story id, store version, hash, the state's own shape, that the saved scene
+     exists and the phase matches; saved facts are checked only for predicate
+     name pattern and length. The compiler keeps the same moment (D4). **A
+     load-time check of saved IDs against the package is rejected.**
+   - *Enforcement is on the schema side:* the compiler writes a save-identity
+     manifest (the frozen IDs by kind) from the snapshot package; a layer 2
+     check fails the build when a compiled package lacks a frozen ID, unless a
+     retirement file lists it with a reason. Limit: it protects ID names, not
+     their meaning, so an ID reused with a different meaning would pass; and an
+     old save loaded against a package that dropped an ID loads fine and the
+     orphaned facts simply do nothing. Not built or tested.
 4. **Layer 1 audit.** List what `storygame/story_package/models.py` already
    enforces and what the schema adds; record it here.
    **Audit, 2026-11-13 (read from code, not run):**
@@ -740,3 +752,4 @@ fixed menu of player actions or a branch per possible action.
 - 2026-11-15 (load time). Compiled the delivery token pattern once per package (Ringer, check compared old and new logic): uncached load about 0.40 s to about 0.16 s. D4's budget check (cold load at most 0.5 s) now has more room for a compiler. Remaining validation hotspot recorded as a Phase 4 candidate.
 - 2026-11-15 (final run). Full suite on the committed branch: 4435 passed, 1 failed, 33 skipped. The failure was `test_real_manifest_covers_test_files`: the new `tests/test_delivery_token_matcher.py` was missing from `tests/shard_durations.json`; added with `scripts/regen_shard_durations.py --missing-only` and the test passes. The suite was not rerun in full after that one-line manifest change.
 - 2026-11-15 (wording approved). Brandon approved the 3A and 3B entry lines (walkthrough item 1 of 5). He asked for the last sentence of the 3B line to be reworded: now "The evidence had never been sent. It was still with Kristin, and the broadcast was the first chance to get it out." Focused story tests pass (142); the full suite was not rerun for this one-sentence text change.
+- 2026-11-15 (rule on checks). Brandon: schema checks belong to package build/load; saves and loads stay flexible tag/value so in-process work can be saved. Phase 1 item 3 rewritten around it; the load-time saved-ID check I had raised as an option is withdrawn. Verified in code first: package validation runs at package load (startup, tests, CI), save load checks structure only.
