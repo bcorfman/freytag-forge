@@ -6,8 +6,8 @@ contract) is under way: items 1 and 4 done, items 3 and 5 proposed (waiting for
 Brandon), item 10 decided and its 2C-to-3A draft written (waiting for Brandon's
 two edits).** Track A is finished except the deferred blind run. The review-tooling
 walkthrough of 2026-11-15 changed story data (3A and 3B entry variants, one plot
-sentence) and code (rule dropped, rename, faster load); all of it is on local
-branch `story-gap-cleanup`, not pushed. This plan is separate from ongoing story
+sentence) and code (rule dropped, rename, faster load); all of it is in PR #767
+(branch `story-gap-cleanup`, open, not merged). This plan is separate from ongoing story
 edits and does not supersede their plans.
 
 Companion documents (evidence lives there, not here):
@@ -113,7 +113,7 @@ Housekeeping:
    departure hold and phone wording, the `scripted_opening` field). Local branch
    `story-gap-cleanup` holds the commits from 2026-11-15 (unread_effect dropped,
    3A/3B entry variants, rename, plan items 3 and 5, faster load, this refresh)
-   and has not been pushed; opening a PR is Brandon's call. Each Ringer task's
+   and is PR #767 (open, not merged; Brandon merges per PR). Each Ringer task's
    manifest and check are committed with its change.
 2. Known limits of slice 2: custody and co-location results depend on the
    anchor's baseline state, so a transition anchor cannot run the hypothetical
