@@ -1,6 +1,6 @@
 # Scenes 2C and 3A in the proposed authoring format (hand-written draft, no compiler)
 
-Status (2026-11-14): **revision 1, not yet tried by Brandon.** This is the second
+Status (2026-11-15): **revision 2, not yet tried by Brandon** (revision 1 was written 2026-11-14; revision 2 brings it up to the live story, see the box below). This is the second
 hand-written slice from [Phase 1 item 10](story-data-redesign-plan.md) (option B,
 decided 2026-11-13). Nothing here is read by any code. It extends
 [the 1A draft](story-data-1a-draft.md), which defines the format; this file only
@@ -11,10 +11,17 @@ about behavior I say so. Where the format forced a choice it is marked
 **CHOICE**; where the data raised a question I did not answer it is marked
 **QUESTION**.
 
-**This draft does not repair anything.** The 2C finding (the transmit branch
-leaves no trace in 3A; both declared costs are set and never read) is still
-there. The generated view at the end shows it. Fixing it is a separate story
-change.
+**Revision 2 (2026-11-15): the 2C gap is repaired in the live story, and this
+draft now shows the repaired state.** Revision 1 deliberately did not repair it
+(migration preserves behavior, so the repair was a separate story change). That
+change has been made and is in PR #767: 3A has a second entry variant, keyed on
+`detention_sectors_sealed`, and 3B has an entry variant keyed on
+`evidence_not_transmitted`, so both declared costs of the incident now have a
+reader. This draft was updated to match: the second 3A variant, a short 3B
+excerpt, the generated view, the task sheet's answers and the notes. Nothing else
+in the draft changed since revision 1. The gap itself is no longer in the data, so
+it is no longer the thing to find; the edits below test whether the format makes a
+consequence easy to follow and a passage easy to change.
 
 What the slice covers, and what it leaves out:
 
@@ -24,7 +31,8 @@ What the slice covers, and what it leaves out:
 | 2C recovery reveal (SL-2C-E) and the missed-window bridge | 3A reveals and beats other than the entry |
 | 2C beats (3 pacing events), exit `t_2c_3a` | |
 | The incident `i_2c_rebecca_corridor` | |
-| 3A header, entry, the one entry variant, placements, entry claim | |
+| 3A header, entry, the two entry variants, placements, entry claim | |
+| 3B entry and its two entry variants (excerpt only, added in revision 2) | The rest of 3B |
 | Fact declarations and fact deliveries for the facts 2C sets | |
 | Root catalog, as short sketches only (last file below) | Full conversion of the catalog (about 110 entities) |
 
@@ -444,6 +452,10 @@ entry_variants:
       The captives Kristin had freed from the transfer carts were already on this
       level. They stood among the organized rows as if they had always belonged
       there.
+  - when: {detention_sectors_sealed: true}   # revision 2: the transmit branch's declared cost, read here
+    text: >-
+      The upload was still running. The other detention sectors had sealed the
+      moment it started, and this was the one sector still open.
 
 entry_claim:
   id: k_scene_3a_entry
@@ -467,9 +479,38 @@ placements:
 # beats (override_deadline_3a, detention_lockdown_3a), reveals SL-3A-A to -I, and the exit t_3a_3b.
 ```
 
-The first entry variant's `when` has no entry for the transmit branch. That is
-how the legacy file reads, and it is the 2C finding: the transmit branch commits
-two facts and 3A reacts to neither.
+Entry variants are **appended** to the base `entry` text, in order, when their
+`when` holds; they do not replace it (`scene_entry_texts`, `models.py:647`). So
+after the transmit branch the player reads the base paragraph and then the
+sealed-sectors paragraph. The base line says "a partly unsecured detention
+sector", which stays true in both branches: it is one sector, reached by
+Michelle's route, while the others are sealed. The loader also rejects entry text
+that names a term the player has not earned, so neither variant can say "Michelle's
+route" or "maintenance route"; the format has to keep that check.
+
+## File: `scenes/3B.yaml` (excerpt, entry only; added in revision 2)
+
+```yaml
+scene: 3B
+title: The Battle for the Broadcast
+location: broadcast_relay
+
+entry: >-
+  Alarms layered over alarms as the facility fought to predict its attackers.
+  Water-pressure warnings flashed on the inspection console while doors opened and
+  closed in empty service corridors that JANUS watched move by move.
+entry_variants:
+  - when: {brandon_name_erased: true}        # fact declared in 2B
+    text: >-
+      Brandon had deleted his name from the build record in the archive. Now only
+      his own word could show what he had built, and he knew it.
+  - when: {evidence_not_transmitted: true}   # revision 2: the rescue branch's declared cost, declared in 2C, read here
+    text: >-
+      The evidence had never been sent. It was still with Kristin, and the
+      broadcast was the first chance to get it out.
+
+# Not drafted: everything else in 3B.
+```
 
 ## File: `catalog.yaml` (root; sketches only)
 
@@ -535,8 +576,8 @@ ending:                                      # legacy pacing.yaml; its scene is 
 
 **How this block was made:** by running `scripts/branch_report.py
 i_2c_rebecca_corridor` and the producer/consumer lookups
-(`storygame/story_package/dependencies.py`) on the loaded package at the
-snapshot, then reformatting. It is the legacy graph shown in the new
+(`storygame/story_package/dependencies.py`) on the loaded package (first at the
+snapshot, regenerated for revision 2 on the live package), then reformatting. It is the legacy graph shown in the new
 vocabulary, not the output of a compiler for this format. The Phase 2 parity
 gate would compare a real one with it.
 
@@ -544,22 +585,22 @@ gate would compare a real one with it.
 detention_sectors_sealed
   declared in: 2C
   set by:   reveals.michelle_changes_the_choice.transmit
-  read by:  nothing
+  read by:  3A entry_variants[1] (adds the sealed-sectors paragraph)
   declared cost of: incident i_2c_rebecca_corridor, outcome committed_to_transmit
-  RESULT:   a declared cost that nothing reads
+  RESULT:   none; the declared cost has a reader
 
 evidence_not_transmitted
   declared in: 2C
   set by:   reveals.michelle_changes_the_choice.rescue
-  read by:  nothing
+  read by:  3B entry_variants[1] (adds the evidence-not-sent paragraph)
   declared cost of: incident i_2c_rebecca_corridor, outcome committed_to_rescue
-  RESULT:   a declared cost that nothing reads
+  RESULT:   none; the declared cost has a reader
 
 committed_to_transmit
   declared in: 2C
   set by:   reveals.michelle_changes_the_choice.transmit
   read by:  beats.purge_nudge_2c (when, must be false)
-  read in 3A: nothing
+  read in 3A: nothing (3A reads the cost fact, not this one)
 
 committed_to_rescue
   declared in: 2C
@@ -575,11 +616,12 @@ combined_broadcast_rescue_plan_known
   read by:  exit.t_2c_3a (trigger), reveals.*.done_when
 ```
 
-The branch report for the same incident also says that, apart from the freed
-captives paragraph, the four ways out of 2C leave 3A identical, and that 3A's
-default entry text ("A partly unsecured detention sector") follows the transmit
-branch, which seals the detention sectors. The report quotes both texts side by
-side for a reader to judge; the tool does not decide.
+The branch report for the same incident (run on the live package, 2026-11-15)
+now says that the transmit branch leaves a trace in 3A through the sealed-sectors
+paragraph, that the rescue branch leaves one in 3A (the freed captives) and one in
+3B (the evidence not sent), and that the recovery and missed-window ways out
+leave 3A at its base text. The report quotes the branch text beside the next
+scene's text for a reader to judge; the tool does not decide.
 
 ---
 
@@ -616,34 +658,48 @@ contains, so they must change too, and nothing in the format tells you that. Tha
 is the honest result to record. The bridge fallback text and the fact's delivery
 are separate sentences and do not change unless you change them.
 
-### Edit 2. Follow one consequence out of 2C and into 3A (read-only)
+### Edit 2. Follow one consequence out of 2C and into 3A and 3B (read-only)
 
 **Change:** none. Start at `detention_sectors_sealed` and answer, using only this
 file: where is it set; what reads it in 2C; what reads it in 3A; what does the
 player see in 3A because of it; and what is the declared cost of the transmit
-outcome. Then do the same for `committed_to_rescue`.
+outcome. Then do the same for `evidence_not_transmitted` (3B), and say which of the
+two scenes a player who rescued would see a difference in.
 
 **Done when:** you have written the answers for both facts.
 
 **Where to look:** the `outcome` fields of the two outcome variants, the 3A
-`entry_variants`, and the generated block at the end.
+`entry_variants`, the 3B excerpt, and the generated block at the end.
 
 **Legacy:** the two facts appear in `world.yaml`, `knowledge.yaml` (purpose and
 claim), `handoffs.yaml` (delivery), `storylet-routes.yaml` (definition and
-operations) and `incidents.yaml`; `committed_to_rescue` also appears in the 3A `entry_variants`
-in `plot.md` and in `pacing.yaml` (the nudge event).
+operations) and `incidents.yaml`. As of revision 2 they are also read in
+`plot.md`: `detention_sectors_sealed` in a 3A `entry_variants` entry and
+`evidence_not_transmitted` in a 3B one; `committed_to_rescue` is read by the other
+3A entry variant and in `pacing.yaml` (the nudge event).
 
 **Check yourself:** `detention_sectors_sealed` is set by the transmit variant, read
-by nothing, and the player sees nothing in 3A because of it; its declared cost
-has no effect. `committed_to_rescue` is read by the nudge beat and by one 3A entry
-variant, so the rescue branch leaves a trace and the transmit branch does not.
-The generated block states this without you grepping. Whether to fix it is a
-story decision, and this edit does not make it.
+by 3A `entry_variants[1]`, and the player sees the sealed-sectors paragraph; its
+declared cost has an effect. `evidence_not_transmitted` is set by the rescue
+variant and read by 3B `entry_variants[1]`, so a player who rescued sees a
+difference in 3A (the freed captives) and again in 3B (the evidence not sent).
+The generated block states this without you grepping. If you wanted to know what
+else reads `detention_sectors_sealed` and the file does not say, that is the
+finding.
 
 ---
 
 ## Things I noticed while writing this (for you, not decisions)
 
+- **Revision 2: variants append.** An entry variant adds its text after the base
+  `entry`; it cannot replace it. That is how the legacy `plot.md` works, and an
+  author who reads `entry_variants:` can easily assume a variant substitutes. The
+  format may want to say so in the field name or the generated view.
+- **Revision 2: the loader checks entry text for unearned terms.** Both new lines
+  were first rejected for naming terms the player had not yet earned ("maintenance
+  route", "Michelle's route", "copied files"). The format has to keep that check
+  at the same layer (a build error), and the author needs the error to say which
+  term and which claim owns it, as the loader does today.
 - **The plan's sentence about "two outcomes with no claim" is wrong.** See the
   correction above. Plan item 10 should be amended.
 - **D's two claimless variants were deleted.** `SL-2C-D-R1` and `-R2` had no
@@ -686,6 +742,14 @@ story decision, and this edit does not make it.
   two edits test.
 
 ## What I checked by running code, and what I did not
+
+**Revision 2 (2026-11-15).** The revision 1 script was not kept, so I did not
+re-run all 180 comparisons. I wrote a small new script that pulls the `scene: 3A`
+and `scene: 3B` blocks out of this file and compares both scenes' base entry text
+and every entry variant (`when` and text, whitespace collapsed) with the loaded
+live package; the result is reported in the plan's record. Everything in the
+revision 1 list below was true of the file as of 2026-11-14 and is unchanged in
+revision 2, except the 3A entry variants, which that script re-checks.
 
 I wrote a scratch script (not committed; it lives in the session scratchpad, and
 the repo's code goes through Ringer) that pulls the three YAML blocks out of this
@@ -743,6 +807,8 @@ What it did **not** check, and nobody has:
 
 
 ## Live package
+
+**2026-11-15 (PR #767):** the live package gained a 3A entry variant on `detention_sectors_sealed`, a 3B entry variant on `evidence_not_transmitted`, and the 3A.1 plot sentence now says the upload is still running. This draft matches both.
 
 `SL-2C-D-R1` and `-R2` were deleted from the live package on 2026-11-14 (Ringer run
 `delete-2c-d-r1-r2`): 50 lines out of `storylet-routes.yaml` and the two entries out of
