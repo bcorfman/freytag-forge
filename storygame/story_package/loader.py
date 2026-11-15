@@ -666,22 +666,41 @@ _HANDOFF_BOOKKEEPING_LABELS = (
 )
 
 
-def _delivery_internal_token(package: StoryPackage, text: str) -> str | None:
+_GENERIC_SNAKE_CASE_TOKEN = re.compile(r"(?<!\w)[a-z][a-z0-9]*(?:_[a-z0-9]+)+(?!\w)")
+
+
+def _delivery_token_matcher(package: StoryPackage) -> re.Pattern[str]:
+    """Build the implementation-token matcher for a story package."""
+
+    tokens = {
+        token.casefold()
+        for token in (
+            *(known.id for known in package.knowledge.knowledge),
+            *package.fact_ids,
+            *(transition.id for transition in package.pacing.transitions),
+            *(route.id for route in package.storylet_routes.storylets),
+            *(realization.id for route in package.storylet_routes.storylets for realization in route.realizations),
+            *(
+                event.id
+                for event in (*package.storylet_routes.bridge_events, *package.storylet_routes.resolution_events)
+            ),
+            *_HANDOFF_BOOKKEEPING_LABELS,
+        )
+        if token
+    }
+    ordered_tokens = sorted(tokens, key=lambda token: (-len(token), token))
+    pattern = r"(?<![\w-])(?:" + "|".join(re.escape(token) for token in ordered_tokens) + r")(?![\w-])"
+    return re.compile(pattern)
+
+
+def _delivery_internal_token(matcher: re.Pattern[str], text: str) -> str | None:
     """Return an implementation token that must not appear in authored prose."""
 
-    ids = {
-        *(known.id for known in package.knowledge.knowledge),
-        *package.fact_ids,
-        *(transition.id for transition in package.pacing.transitions),
-        *(route.id for route in package.storylet_routes.storylets),
-        *(realization.id for route in package.storylet_routes.storylets for realization in route.realizations),
-        *(event.id for event in (*package.storylet_routes.bridge_events, *package.storylet_routes.resolution_events)),
-    }
     folded = text.casefold()
-    for token in (*ids, *_HANDOFF_BOOKKEEPING_LABELS):
-        if token and re.search(rf"(?<![\w-]){re.escape(token.casefold())}(?![\w-])", folded):
-            return token
-    match = re.search(r"(?<!\w)[a-z][a-z0-9]*(?:_[a-z0-9]+)+(?!\w)", folded)
+    match = matcher.search(folded)
+    if match:
+        return match.group(0)
+    match = _GENERIC_SNAKE_CASE_TOKEN.search(folded)
     return match.group(0) if match else None
 
 
@@ -690,6 +709,7 @@ def _validate_authored_handoffs(package: StoryPackage) -> None:
 
     from storygame.runtime.validation import unconveyed_terms
 
+    matcher = _delivery_token_matcher(package)
     for item in package.knowledge.knowledge:
         if item.delivery_variants and (item.delivery_text is None or not item.delivery_text.strip()):
             raise StoryPackageError(
@@ -715,7 +735,7 @@ def _validate_authored_handoffs(package: StoryPackage) -> None:
                 raise StoryPackageError(
                     f"authored handoff knowledge '{item.id}' {label} misses must_convey: {', '.join(missing)}"
                 )
-            token = _delivery_internal_token(package, text)
+            token = _delivery_internal_token(matcher, text)
             if token:
                 raise StoryPackageError(
                     f"authored handoff knowledge '{item.id}' {label} contains implementation-only token '{token}'"

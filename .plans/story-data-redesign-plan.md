@@ -664,9 +664,18 @@ fallback in section 3.
   and SHA-bound hosted E2E per the
   [promotion guide](../docs/railway-production-promotion.md).
 
-Independent of all phases: validation is about 0.34 s of the 0.36 s load, mostly
-recompiled patterns in `_delivery_internal_token`. Compiling them once is a small
-fix that can ship on its own at any time.
+Independent of all phases: **done 2026-11-15 (through Ringer,
+`scripts/ringer/compile-delivery-token-pattern/`).** `_delivery_internal_token`
+ran 100 times and each call rebuilt the id set and ran about 630 `re.search`
+calls (about 63,000 in all, 0.21 s unprofiled). It now uses one compiled pattern
+per package. Measured uncached load, best of 5, same machine: about 0.40 s
+before, about 0.16 s after (budget 0.5 s). The check compared the new matcher
+with a copy of the old logic on thousands of texts. The only visible difference:
+an error message shows a matched token in lower case. **Phase 4 candidate, not
+done:** the profile also shows `world_for` rebuilding the world schema about 100
+times inside `_validate_narration_term_traps` (about 0.18 s profiled); it is also
+called on the per-turn path, so it is not an isolated fix and the budget is
+already met.
 
 ## 7. Acceptance and scope limits
 
@@ -723,3 +732,4 @@ fixed menu of player actions or a branch per possible action.
 - 2026-11-15 (after the walkthrough). Added the 3B entry variant for `evidence_not_transmitted` (both 2C costs are now read); updated `test_real_incident_renders_expected_costs_and_variant` to match. Committed everything so far on local branch `story-gap-cleanup` (not pushed) so the next Ringer task, the "flag" to "rule result" rename, starts from current files.
 - 2026-11-15 (Phase 1). Wrote proposals for item 3 (ID policy for saves) and item 5 (coexistence) from reading `persistence.py`, `state.py` and the loaded package. Finding: a save's IDs are not checked at load beyond scene and phase, so an ID change fails silently today. Both items wait for Brandon to accept or change them. Nothing built.
 - 2026-11-15 (rename). Rename applied from the Ringer patch (first run passed; this time the check exported the patch). Full suite run once after it: 4433 passed, 33 skipped (4 min 31 s). Repo-wide `ruff check .` reports 229 lint errors, all in older `.plans/` scratch scripts and `scripts/ringer/story-data` generators that this work did not touch (CI's rule set `E9,F63,F7,F82` is clean); `ruff format --check .` flagged 3 `.plans/` scripts, now formatted.
+- 2026-11-15 (load time). Compiled the delivery token pattern once per package (Ringer, check compared old and new logic): uncached load about 0.40 s to about 0.16 s. D4's budget check (cold load at most 0.5 s) now has more room for a compiler. Remaining validation hotspot recorded as a Phase 4 candidate.
