@@ -162,8 +162,10 @@ Measured in Phase 0 on `2bb01bbc` unless noted. These facts shape the order of w
   A prose-only edit fails a test; a rename fails four.
 - **The loader misses a dead consumer.** Removing the effect that marks Kr leaves
   the marked pursuit passage with no producer, and the package still loads.
-- **Raw-file readers exist outside the loader.** Three browser E2E helpers, two
-  scripts and 72 tests parse the source files directly. An adapter to
+- **Raw-file readers exist outside the loader.** Three browser E2E helpers, one
+  script (`generate_spine_expected_reveals.py`; Phase 0 counted two, but
+  `disclosure_matrix.py` uses the loader) and 72 tests parse the source files
+  directly. An adapter to
   `StoryPackage` alone does not carry them.
 - **A reading view organized by reveal failed the author; one organized by
   situation passed.** The situation trace is accepted as a reading view. No
@@ -411,8 +413,8 @@ Starts after D1. Order matters: contract, then tests, then code.
    rules, each explicit: one fact owner; claim effects default to the source's
    effects with a declared subset allowed; incident costs and advantages derived
    from the named variant.
-3. **ID policy for saves.** **Proposal 2026-11-15, read from `persistence.py` and
-   `state.py`, for Brandon to accept or change.** The save-compatibility decision
+3. **ID policy for saves.** **Accepted by Brandon 2026-11-15** (proposal read from
+   `persistence.py` and `state.py`; revised the same day around his rule below). The save-compatibility decision
    itself stays in Phase 3.
    - *What a save holds:* the session state without the package, as JSON, keyed by
      `story_id` and a store schema version (5). On load the only checks are story
@@ -495,8 +497,16 @@ Starts after D1. Order matters: contract, then tests, then code.
      files. Until then, Phase 2 keeps 1A legacy in the shipping package and runs
      the compiled 1A beside it in the parity test, not in a mixed package. Mixed
      ownership starts in Phase 3, per scene, after that scene's readers have
-     moved (the Phase 3 reader list). Not checked: exactly which files each
-     reader opens, per scene.
+     moved (the Phase 3 reader list). Checked 2026-11-15: the raw readers
+     scan whole files, not scenes. `frontend/e2e/authored-spans.js` reads
+     `plot.md`, `knowledge.yaml`, `handoffs.yaml`, `pacing.yaml` and
+     `storylet-routes.yaml`; `knowledge-available.js` reads `knowledge.yaml` and
+     `storylet-routes.yaml`; `roleplay-judge.test.js` reads `knowledge.yaml`;
+     `scripts/generate_spine_expected_reveals.py` reads `knowledge.yaml`.
+     `scripts/disclosure_matrix.py` uses the loader and is not a raw reader. So
+     the export and the four reader changes are one prerequisite before the
+     first scene flips, not a per-scene task. The 72 raw-reading tests are the
+     Phase 0 count at `2bb01bbc` and were not recounted.
 6. **Fixtures and tests first.** Small typed fixtures and patch helpers that
    address records by ID and field, drawn from continuity-initiative and together
    covering claims, protected material and audience scoping, pacing, an incident
@@ -662,8 +672,10 @@ fallback in section 3.
   per scene.
 - [ ] Migrate the raw-file readers: `frontend/e2e/authored-spans.js`,
   `knowledge-available.js`, `roleplay-judge.test.js`,
-  `scripts/disclosure_matrix.py`, `scripts/generate_spine_expected_reveals.py`,
-  and the tests that name story files.
+  `scripts/generate_spine_expected_reveals.py`, and the tests that name story
+  files. (`scripts/disclosure_matrix.py` was listed here until 2026-11-15; it
+  already uses the loader.) Per the coexistence proposal in Phase 1 item 5, the
+  four readers move before the first scene flips.
 - [ ] Migrate active tests, E2E setup, probes and Ringer manifests to stable
   record operations.
 - [ ] Another genre as a portability gate.
@@ -753,3 +765,4 @@ fixed menu of player actions or a branch per possible action.
 - 2026-11-15 (final run). Full suite on the committed branch: 4435 passed, 1 failed, 33 skipped. The failure was `test_real_manifest_covers_test_files`: the new `tests/test_delivery_token_matcher.py` was missing from `tests/shard_durations.json`; added with `scripts/regen_shard_durations.py --missing-only` and the test passes. The suite was not rerun in full after that one-line manifest change.
 - 2026-11-15 (wording approved). Brandon approved the 3A and 3B entry lines (walkthrough item 1 of 5). He asked for the last sentence of the 3B line to be reworded: now "The evidence had never been sent. It was still with Kristin, and the broadcast was the first chance to get it out." Focused story tests pass (142); the full suite was not rerun for this one-sentence text change.
 - 2026-11-15 (rule on checks). Brandon: schema checks belong to package build/load; saves and loads stay flexible tag/value so in-process work can be saved. Phase 1 item 3 rewritten around it; the load-time saved-ID check I had raised as an option is withdrawn. Verified in code first: package validation runs at package load (startup, tests, CI), save load checks structure only.
+- 2026-11-15 (item 3 accepted). Brandon accepted Phase 1 item 3, the ID policy for saves, as revised.
