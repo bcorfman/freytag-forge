@@ -95,8 +95,8 @@ Slices 1, 2, 4 and 5 are built and merged (PR #761); slice 3 is dropped. Items
 
 **Track B, the migration: unblocked by D1** (decided 2026-11-12, section 4). Next:
 Brandon tries the two edits on the 2C-to-3A draft
-([story-data-2c-3a-draft.md](story-data-2c-3a-draft.md), revision 1, written
-2026-11-14); its 13 proposed schema additions and its questions (commit-only
+([story-data-2c-3a-draft.md](story-data-2c-3a-draft.md), revision 2, brought up
+to the live story 2026-11-15; revision 1 was written 2026-11-14); its 13 proposed schema additions and its questions (commit-only
 variants, `internal_claims`, the dead bridge text) feed the Phase 1 schema, item 2.
 Phase 1 items 3 (ID policy for saves) and 5 (coexistence) were accepted on
 2026-11-15, so the schema (item 2) is the next piece, after his two edits; then
@@ -775,3 +775,4 @@ fixed menu of player actions or a branch per possible action.
 - 2026-11-15 (item 3 accepted). Brandon accepted Phase 1 item 3, the ID policy for saves, as revised.
 - 2026-11-15 (item 3 amended). Brandon: the frozen-ID check should be a warning, not an error, and run as a test, not at runtime, so only the developer sees it. Item 3 changed from a layer 2 build failure to a test-time layer 3 warning with a retirement file.
 - 2026-11-15 (item 5 accepted). Brandon accepted Phase 1 item 5, coexistence, as written (explicit ownership manifest, two owners an error, the four raw-file readers move to a generated export before the first scene flips, 1A stays legacy in the shipping package during Phase 2). Walkthrough item 3 of 5 is closed.
+- 2026-11-15 (draft revision 2). Walkthrough item 4, option 1: refreshed `story-data-2c-3a-draft.md` to match the live story (2C repair in PR #767). It now shows the second 3A entry variant, adds a 3B entry excerpt, regenerates the generated view (both costs read), rewrites Edit 2's answers, and adds notes (variants append to the base text; the loader checks entry text for unearned terms). Checked by a new scratch script: 14 comparisons of the 3A and 3B base entry text, every entry variant and the location against the loaded package, all matching, and all YAML blocks parse. The revision 1 script (180 comparisons) was not kept, so the rest of the draft was not re-verified; it is unchanged since revision 1. Brandon has not tried the two edits.

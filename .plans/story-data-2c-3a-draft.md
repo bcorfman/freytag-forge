@@ -706,8 +706,8 @@ finding.
   `when`, no claim and the same operations as `commits_common`. Git history
   (commit `16d6094c`, 2026-11-01; `act2-propagation-contract.md` lines 134-144)
   shows their claims were removed on purpose and the promised rewrite never
-  happened. Brandon decided on 2026-11-14 to delete them. The live package
-  still has them.
+  happened. Brandon decided on 2026-11-14 to delete them, and they were
+  deleted from the live package the same day (PR #766).
 - **Two places say "the purge begins within hours"**: the fact delivery for
   `purge_clock_started` and the Reveal C passage (not drafted). That is a
   wording duplication for the author to judge, not a derivation.
