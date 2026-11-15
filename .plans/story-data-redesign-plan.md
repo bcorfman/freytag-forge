@@ -2,8 +2,7 @@
 
 Status (2026-11-15): **Phase 0 measured; review-tooling slices 1, 2, 4 and 5
 built (slice 3 dropped); D1 decided 2026-11-12; Phase 1 (schema and compiler
-contract) is under way: items 1 and 4 done, items 3 and 5 proposed (waiting for
-Brandon), item 10 decided and its 2C-to-3A draft written (waiting for Brandon's
+contract) is under way: items 1, 3, 4 and 5 done or accepted, item 10 decided and its 2C-to-3A draft written (waiting for Brandon's
 two edits).** Track A is finished except the deferred blind run. The review-tooling
 walkthrough of 2026-11-15 changed story data (3A and 3B entry variants, one plot
 sentence) and code (rule dropped, rename, faster load); all of it is in PR #767
@@ -99,9 +98,9 @@ Brandon tries the two edits on the 2C-to-3A draft
 ([story-data-2c-3a-draft.md](story-data-2c-3a-draft.md), revision 1, written
 2026-11-14); its 13 proposed schema additions and its questions (commit-only
 variants, `internal_claims`, the dead bridge text) feed the Phase 1 schema, item 2.
-He also needs to accept or change the proposals for Phase 1 item 3 (ID policy for
-saves) and item 5 (coexistence), written 2026-11-15. Then Phase 1 items 2, 6 in
-order. The 1A draft
+Phase 1 items 3 (ID policy for saves) and 5 (coexistence) were accepted on
+2026-11-15, so the schema (item 2) is the next piece, after his two edits; then
+item 6 (fixtures and tests first). The 1A draft
 ([story-data-1a-draft.md](story-data-1a-draft.md), revision 2) and the 2C-to-3A
 draft are the starting point for the schema, not a finished one. What they leave
 out is listed in Phase 1 item 10 and in the
