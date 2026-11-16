@@ -60,6 +60,8 @@ story_value(address, *, package=None)
 
 These look up addresses as specified in contract section 8.2.
 
+The remaining API names (`check_parity`, `check_save_identity`, `override_ratio`, `pass2_gate`, `check_examples`, `source_digest`, `storygame.story_cli.main`) are settled in contract section 10.1.
+
 ## Ambiguities found
 
 # NOTE: F01 ends at 2C, so its ending keeps the live 3C base text and marker but does not copy the conditional 3C additions.

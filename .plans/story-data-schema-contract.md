@@ -1054,6 +1054,26 @@ are F01 plus one change. Tests for each can be written before the compiler.
 | F30 | `claimless_variant` | a variant with no `claim_id` | a realization with no claim |
 | F31 | `deterministic` | compile twice, in two processes | identical canonical JSON; the digest covers schema version, compiler version and every source file |
 
+### 10.1 API names the fixtures settled (2026-11-16)
+
+Fixtures round 2 had to assume these; the five `tests/story_source/ambiguities_*.md`
+files list each case. Settled here so the validator and compiler are written to them.
+All live in `storygame.story_source` unless noted.
+
+| Name | Contract |
+| --- | --- |
+| `Diagnostic.address`, `.field` | `address` is a section 8.1 address string; `field` is the field key. Tests assert both are non-empty and that the message names the id; they never assert exact message wording. Order of several diagnostics is not fixed; tests compare as multisets |
+| Loader errors after compile | A cycle in transitions or prerequisites is `L2.cycles`; any other check inherited from `loader.py` is wrapped as one diagnostic named `LOADER` carrying the loader message. `compile_source_tree` raises `SourceError` for both; only the name `L2.cycles` is asserted |
+| `check_parity(legacy, compiled, *, reviews=None)` | Returns a report with `differences` (a list of the section 9 JSON objects) and `summary` (`records`, `differences`, `auto`, `reviewed`, `unreviewed`, `pass`). A stale compiled digest in a review entry counts as `unreviewed` |
+| `check_save_identity(package, manifest, *, retired_ids=None)` | Emits one `UserWarning` per frozen id missing from the package and not retired; silent otherwise. Never raises |
+| `override_ratio(root)`, `pass2_gate(root)` | `override_ratio` returns one row per claim field with `added`, `dropped`, `expanded`, `ratio`, `status` (`ok` or `over`); `pass2_gate` returns `False` when any row is `over`. `check_source_tree` does not depend on either |
+| `check_examples(root, examples_path)` | Returns a list of failures, empty when every line behaves. A failure has `claim_id`, `kind` (`accept` or `reject`), `line`, `group` (the matcher group index that failed) and `missing` (the smallest word to add to pass it). It runs the real matcher |
+| Examples file location | `tests/fixtures/story_examples/<story>/<scene>.yaml` (section 2 layout), never inside the source tree. Keys `schema`, `scene`, `claims`, `shared`; each claim has `accept` and `reject` lists of player lines |
+| `storygame.story_cli.main(argv) -> int` | The `story` CLI entry point; returns the exit code. The source root is the current directory when it holds `story.yaml`, else `data/stories/<story>/source` |
+| `source_digest(root) -> str` | sha256 over the schema version, `COMPILER_VERSION` and every source file's relative path and bytes in sorted path order. Canonical package JSON is `model_dump(mode="json", by_alias=True)` with sorted keys |
+| Claimless variant | The realization compiles with no claim; no knowledge entry names it |
+| Required dependencies | Compiled order and duplicates are not fixed; tests compare as sets |
+
 ## 11. Questions for Brandon (answered)
 
 **Decided 2026-11-16 (Brandon): all five recommendations accepted as written.** Each
