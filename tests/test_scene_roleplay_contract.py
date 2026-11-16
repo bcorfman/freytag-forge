@@ -12,6 +12,7 @@ from storygame.runtime.engine import SCENE_ENTRY_REQUEST, RuntimeEngine
 from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import ProposalValidationError
+from storygame.runtime.world_model import world_for
 from storygame.story_package.loader import load_story_package
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
@@ -23,6 +24,12 @@ POLICY_INPUTS = (
     "Confront the obstacle directly.",
     "Improvise a strange but legal way to advance the current scene.",
 )
+
+
+def _move_kristin_to_truck(state: RuntimeState) -> None:
+    world = world_for(PACKAGE, state.facts)
+    assert world.move("kristin", "outside_house").ok
+    assert world.move("kristin", "truck_driver_seat").ok
 
 
 def _selection_provider(state: RuntimeState, calls: list[str]) -> Callable[[str], object]:
@@ -53,6 +60,7 @@ def test_every_policy_style_reaches_the_provider_as_normalized(player_input: str
     calls: list[str] = []
     state.facts.assert_fact(Fact(predicate="memory_card_recovered", subject="story", value="true"))
     state.active_event_ids.add("SL-1A-B")
+    _move_kristin_to_truck(state)
     engine = RuntimeEngine(state, _selection_provider(state, calls))
 
     engine.turn(player_input)

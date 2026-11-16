@@ -1661,6 +1661,16 @@ def test_one_storylet_can_be_read_in_isolation(monkeypatch) -> None:
 
     _use_legacy_candidates(monkeypatch, {"k_sl_1a_d_r1", "k_sl_1a_b_r1"})
     _seed_bench_custody(monkeypatch)
+    original_package_and_state = core.package_and_state
+
+    def package_and_state_with_laptop(variation, scene_id=None):
+        package, state = original_package_and_state(variation, scene_id)
+        world = world_for(package, state.facts)
+        assert world.move("kristin_laptop", "truck_passenger_seat").ok
+        assert world.move("kristin", "truck_driver_seat").ok
+        return package, state
+
+    monkeypatch.setattr(core, "package_and_state", package_and_state_with_laptop)
     narrow = prompt_for(default_variation(), "1A", "Feel under the drawer.", None, "SL-1A-D")
     wide = prompt_for(default_variation(), "1A", "Feel under the drawer.", "1A.2")
 

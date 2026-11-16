@@ -166,6 +166,9 @@ def test_recovery_and_custody_survive_a_snapshot_round_trip() -> None:
 
     restored = RuntimeState.bootstrap(PACKAGE)
     restored.restore_snapshot(RuntimeSnapshot.model_validate_json(state.snapshot().model_dump_json()))
+    world = world_for(PACKAGE, restored.facts)
+    assert world.move("kristin_laptop", "truck_passenger_seat").ok
+    assert world.move("kristin", "truck_driver_seat").ok
     engine = RuntimeEngine(restored, _reveal_provider("k_sl_1a_b_r1"))
     engine.turn("Read Michelle's memory card.")
 

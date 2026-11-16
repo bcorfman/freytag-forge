@@ -7,6 +7,8 @@ const expectedOneA = [
   "Search the kitchen and the back door for concrete signs of what happened here - the overturned chair, the forced lock, her phone left on the floor.",
   "Search under the drawer in her workstation.",
   "Read the remaining research fragments on Michelle's memory card.",
+  "Go outside.",
+  "Go out to Kristin's truck.",
   "Read the files on Michelle's memory card.",
   "Play the damaged recording on Michelle's memory card.",
   "Watch the officers ask about Michelle's research.",

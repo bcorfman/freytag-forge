@@ -55,17 +55,22 @@ def test_real_data_reports_the_known_results() -> None:
     results = run_gap_rules(ROOT, "officer_presses_1a")
 
     assert any(
-        result.rule == "custody" and result.subject == "k_sl_1a_b_r1" and "memory_card" in result.summary
+        result.rule == "custody" and result.subject == "k_sl_1a_d_r1" and "memory_card" in result.summary
         for result in results
     )
+    # 1A laptop reach: the fixed b_r1 claim no longer produces a co-location gap.
+    assert not any(result.rule == "co_location" and result.subject == "k_sl_1a_b_r1" for result in results)
     assert any(
-        result.rule == "co_location" and result.subject == "k_sl_1a_b_r1" and "kristin_laptop" in result.summary
+        result.rule == "no_strand" and result.subject == "k_sl_1a_d_r1" and "memory_card" in result.summary
         for result in results
     )
-    assert any(
-        result.rule == "no_strand" and result.subject == "k_sl_1a_b_r1" and "memory_card" in result.summary
-        for result in results
-    )
+
+    transition_results = run_gap_rules(ROOT, "t_1a_1b")
+    # 1A laptop reach: the transition has no co-location result after b_r1 is laptop-gated.
+    assert not any(result.rule == "co_location" for result in transition_results)
+
+    custody_results = run_gap_rules(ROOT, "t_2c_3a", ["custody"])
+    assert {result.subject for result in custody_results} == {"k_sl_2c_d_r3", "k_sl_2c_d_r4"}
 
 
 def test_custody_checks_include_every_pair_with_a_result() -> None:
@@ -134,7 +139,7 @@ def test_no_strand_reports_already_true_effect() -> None:
     assert any(
         "already true, so it cannot fire again" in evidence
         for result in results
-        if result.subject == "k_sl_1a_b_r1"
+        if result.subject == "k_sl_1a_d_r1"
         for evidence in result.evidence
     )
 
@@ -144,21 +149,21 @@ def test_custody_seeded_defect_and_clean_variant(tmp_path: Path) -> None:
     _edit_yaml(
         package_root,
         "knowledge.yaml",
-        lambda data: _claim(data, "k_sl_1a_b_r1").update(
-            entity_ids=list(dict.fromkeys(_claim(data, "k_sl_1a_b_r1")["entity_ids"]))
+        lambda data: _claim(data, "k_sl_1a_d_r1").update(
+            entity_ids=list(dict.fromkeys(_claim(data, "k_sl_1a_d_r1")["entity_ids"]))
         ),
     )
     results = run_gap_rules(package_root, "officer_presses_1a", ["custody"])
-    assert any(result.subject == "k_sl_1a_b_r1" and "memory_card" in result.summary for result in results)
+    assert any(result.subject == "k_sl_1a_d_r1" and "memory_card" in result.summary for result in results)
 
     def clean(data: dict) -> None:
-        claim = _claim(data, "k_sl_1a_b_r1")
+        claim = _claim(data, "k_sl_1a_d_r1")
         claim["entity_ids"].remove("memory_card")
         claim["relevance"]["entity_ids"].remove("memory_card")
 
     _edit_yaml(package_root, "knowledge.yaml", clean)
     results = run_gap_rules(package_root, "officer_presses_1a", ["custody"])
-    assert not any(result.subject == "k_sl_1a_b_r1" for result in results)
+    assert not any(result.subject == "k_sl_1a_d_r1" for result in results)
 
 
 def test_co_location_seeded_defect_and_clean_variant(tmp_path: Path) -> None:
@@ -179,7 +184,7 @@ def test_co_location_seeded_defect_and_clean_variant(tmp_path: Path) -> None:
 def test_no_strand_seeded_defect_and_clean_variant(tmp_path: Path) -> None:
     package_root = _copy_package(tmp_path)
     assert any(
-        result.subject == "k_sl_1a_b_r1" for result in run_gap_rules(package_root, "officer_presses_1a", ["no_strand"])
+        result.subject == "k_sl_1a_d_r1" for result in run_gap_rules(package_root, "officer_presses_1a", ["no_strand"])
     )
 
     def add_non_item_gated_producer(data: dict) -> None:
@@ -188,7 +193,7 @@ def test_no_strand_seeded_defect_and_clean_variant(tmp_path: Path) -> None:
 
     _edit_yaml(package_root, "pacing.yaml", add_non_item_gated_producer)
     results = run_gap_rules(package_root, "officer_presses_1a", ["no_strand"])
-    assert not any(result.subject == "k_sl_1a_b_r1" for result in results)
+    assert not any(result.subject == "k_sl_1a_d_r1" for result in results)
 
 
 def test_no_producer_seeded_defect_loads_and_clean_variant(tmp_path: Path) -> None:

@@ -14,6 +14,7 @@ from pathlib import Path
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeState
+from storygame.runtime.world_model import world_for
 from storygame.story_package.loader import load_story_package
 from tests._legacy_package import legacy_package
 
@@ -135,6 +136,10 @@ class _ScriptedProvider:
 
 
 def _drive(engine: RuntimeEngine, provider: _ScriptedProvider, selection: str | None, **kwargs) -> None:
+    if selection == "k_sl_1a_b_r1":
+        world = world_for(engine.state.package, engine.state.facts)
+        assert world.move("kristin", "outside_house").ok
+        assert world.move("kristin", "truck_driver_seat").ok
     provider.selected = [selection] if selection else []
     command = {
         "k_sl_1b_d_r1": "Look under the park bench.",

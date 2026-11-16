@@ -12,6 +12,7 @@ from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.knowledge import KnowledgeProjector
 from storygame.runtime.reveal_eligibility import ALREADY_ESTABLISHED, explain_reveal
 from storygame.runtime.state import RuntimeState
+from storygame.runtime.world_model import world_for
 from storygame.story_package.loader import load_story_package
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
@@ -49,6 +50,9 @@ def _handoff(state: RuntimeState, command: str):
 def test_b_r1_establishes_research_files_and_closes_d_r1() -> None:
     engine = _engine(CARD_REVEAL)
     engine.turn("Feel underneath the drawer.")
+    world = world_for(PACKAGE, engine.state.facts)
+    assert world.move("kristin_laptop", "truck_passenger_seat").ok
+    assert world.move("kristin", "truck_driver_seat").ok
     engine.provider = _provider(CARD_FILES_REVEAL)
     engine.turn("Insert Michelle's memory card into my laptop.")
 
