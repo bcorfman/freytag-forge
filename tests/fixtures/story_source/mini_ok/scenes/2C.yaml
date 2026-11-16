@@ -1,0 +1,254 @@
+schema: 1
+scene: 2C
+title: The Trap Closes
+location: purge_chamber
+objective: Get free of Rebecca and commit to a move before the purge
+freytag_phase: crisis
+situation: A command corridor on the facility’s command levels, above the detention sectors
+pressure: Charles's purge order arrives in the middle of it.
+turns: {min: 8, nudge: 9, handoff: 16}
+companions: [brandon]
+participants: [kristin, brandon, michelle, rebecca]
+items: [copied_janus_files, broadcast_uplink, transfer_carts, corridor_camera, monitor_light, cart_tags]
+entry: "Guards closed the command corridor at both ends. Then a woman in an executive's suit walked between them, unhurried, a tablet under her arm. She looked at Brandon first. \"I wondered when you'd come back,\" said Rebecca Jenkins. \"Charles means to kill everyone below us, my people too. Help me remove him, Brandon, and I will give you Michelle.\" Kristin still carried the copied JANUS files.\n\n"
+entry_claims:
+  - claim_id: k_scene_2c_entry
+    says: Kristin fears a possible purge. She must choose her next move.
+    entities: [kristin, purge_chamber]
+    audience: public
+brief: |
+  **Setting:** A command corridor on the facility’s command levels, above the detention sectors
+
+  **Characters:**
+
+  * Kristin Schweitzer
+  * Brandon Corfman
+  * Rebecca Jenkins
+  * Dr. Michelle McGehee, through the maintenance network
+  * Charles Jenkins, through his orders
+
+  **Plot:** Rebecca corners Kristin and Brandon in person and makes her offer face to face. Charles's purge order arrives in the middle of it. Brandon's apparent acceptance gets them free. Kristin commits to sending the evidence or rescuing captives by acting on it, and Michelle then shows her a way to do both.
+
+  Kristin's choice in 2B shapes this moment. If she refused to let him erase his name, the build record already proves his role, and his confession confirms it; he tells her she was right not to let him hide. If she let him erase it, his confession is the only proof of his role, and he tells her he is giving back what she let him take.
+
+  Brandon remains behind to keep the relay open while Kristin and Michelle begin the broadcast. Brandon waits beside the broadcast controls.
+outline:
+  - id: 2C.1
+    anchor: scene-2c1--rebeccas-offer
+    title: Rebecca’s Offer
+    details: [command corridor, Rebecca in person, guards at both ends, offer to Brandon, Michelle's release]
+    prose: |
+      Rebecca has watched them since the camera turned toward Brandon in 2A. She comes herself. Guards hold both ends of the corridor. A camera over the guards has the same slow turn as the one at the manifold, and it stays on Brandon the whole time she talks.
+
+      She makes her offer to Brandon in front of Kristin. Charles has become unstable, she says. He means to kill the prisoners and the lower-level conspirators once the new government is in place. If Brandon helps her remove Charles and take control of the Continuity Initiative, she will release Michelle.
+
+      Kristin can speak, bluff, threaten or stay silent. Rebecca answers her, but she is negotiating with Brandon.
+facts:
+  ticket_header_matched:
+    purpose: Kristin has matched the maintenance line's ticket header to the held transfers.
+  rebecca_offer_heard:
+    purpose: Kristin has answered Rebecca's offer and learned the purge order and Brandon's answer.
+  rebecca_offer_active:
+    purpose: Rebecca has offered Brandon safety/Michelle’s release in exchange for helping her displace Charles.
+  antagonist_split_known:
+    purpose: Kristin has legitimate evidence that Rebecca and Charles are in conflict.
+  purge_clock_started:
+    purpose: Charles has ordered valuable captives transferred and the rest destroyed within hours after Michelle corrupts the records.
+    delivery:
+      source_kind: message
+      source_entity: rebecca
+      fallback_text: Rebecca's tablet shows Charles's purge order. The purge begins within hours.
+  evidence_ready_to_transmit:
+    purpose: The protagonists have enough authenticated evidence to attempt the combined exposure-and-rescue mission.
+    delivery:
+      source_kind: observation
+      source_entity: kristin
+      fallback_text: Kristin carries the copied JANUS files. The evidence is ready to transmit.
+  rebecca_office_required_for_broadcast:
+    purpose: Rebecca's secured office is the required manual activation point to broadcast the evidence and release the sealed detention sectors.
+    delivery:
+      source_kind: message
+      source_entity: michelle
+      fallback_text: Michelle's route leads to Rebecca's secured office. The office contains the manual command controls.
+  combined_broadcast_rescue_plan_known:
+    purpose: Kristin and Brandon know Michelle’s plan to enter her detention sector through local maintenance access, then combine evidence transmission with opening sealed detention sectors via Rebecca’s office.
+    delivery:
+      source_kind: message
+      source_entity: michelle
+      fallback_text: Michelle says that Rebecca's office can broadcast the evidence. It can also open the detention cells.
+  committed_to_transmit:
+    purpose: Kristin physically committed to sending the JANUS evidence through the uplink.
+    delivery:
+      source_kind: observation
+      source_entity: kristin
+      fallback_text: Kristin heads to the uplink and starts sending the copied files.
+  detention_sectors_sealed:
+    purpose: The detention sectors sealed when Kristin began transmitting the evidence.
+    delivery:
+      source_kind: observation
+      source_entity: kristin
+      fallback_text: The detention sectors seal as transmission starts from the uplink.
+  committed_to_rescue:
+    purpose: Kristin physically committed to freeing captives from the transfer carts.
+    delivery:
+      source_kind: observation
+      source_entity: kristin
+      fallback_text: Kristin heads to the transfer carts and frees a cart of captives.
+  evidence_not_transmitted:
+    purpose: Kristin rescued captives before sending the copied evidence.
+    delivery:
+      source_kind: observation
+      source_entity: kristin
+      fallback_text: Evidence not transmitted. The evidence in Kristin's hands remains with her. Kristin keeps the copied files with her.
+  purge_window_missed:
+    purpose: The purge alarm forced the group out before Kristin made a commitment.
+    delivery:
+      source_kind: observation
+      source_entity: rebecca
+      fallback_text: The purge alarm forces Kristin and Brandon out of the command corridor.
+  purge_alarm_active:
+    purpose: The purge alarm is active while Michelle's neutral route remains open.
+  purge_recovery_ready:
+    purpose: The purge alarm has lasted long enough for the neutral route recovery to move the group onward.
+  evacuation_complete:
+    purpose: The last captive has passed through the surface gates.
+placements:
+  copied_janus_files: {parent: kristin}
+  broadcast_uplink: {parent: purge_chamber, text: at the end of the command corridor}
+  transfer_carts: {parent: purge_chamber, text: at the other end of the command corridor}
+  corridor_camera: {parent: purge_chamber, text: over the guards at the near end of the command corridor, its lens held on Brandon}
+  monitor_light: {parent: purge_chamber, text: burning steady amber beside the one outbound channel on the broadcast uplink}
+  cart_tags: {parent: purge_chamber, text: on the rails of the transfer carts}
+  rebecca: {parent: purge_chamber, text: standing between her guards in the command corridor}
+  corridor_guards: {parent: purge_chamber, text: holding both ends of the command corridor}
+beats:
+  - id: purge_window_2c
+    at_turn: 5
+    sets: {purge_window_missed: true}
+    say: The purge alarm forces Kristin and Brandon out. A maintenance ticket scrolls across the nearest wall panel and opens a way forward.
+  - id: purge_nudge_2c
+    at_turn: 6
+    when: {purge_window_missed: true, committed_to_transmit: false, committed_to_rescue: false}
+    sets: {purge_alarm_active: true}
+    say: The purge alarm is active. A maintenance channel is open. Kristin must follow it without making a commitment here.
+  - id: purge_recovery_2c
+    at_turn: 6
+    when: {purge_window_missed: true, purge_alarm_active: true}
+    sets: {purge_recovery_ready: true}
+reveals:
+  - id: rebecca_hears_her_answer
+    storylet_id: SL-2C-C
+    title: Rebecca Hears Her Answer
+    from_outline: [2C.1]
+    guidance:
+      pressure_role: Let Rebecca's offer become a live negotiation after Kristin answers in her own way.
+      window: {earliest_turn: 0, target_turn: 1, latest_turn: 2}
+      available_while: {purge_window_missed: false}
+      boundaries: [janus_phase_two]
+    audience: public
+    variants:
+      answer:
+        realization_id: SL-2C-C-R1
+        intent: Rebecca reveals the purge order and Brandon says yes after Kristin answers her offer.
+        from_outline: [2C.1]
+        commits: {rebecca_offer_heard: true}
+        claim_id: k_sl_2c_c_r1
+        when: {purge_window_missed: false}
+        says: Rebecca reveals the purge order, Brandon says yes, and the corridor opens onto two urgent moves.
+        text: >-
+          Rebecca answers Kristin without taking her eyes off Brandon. "Trust is a luxury. Decide quickly."
+          Her tablet chimes. She reads it, and her face changes. "The purge order. It starts within hours, and my people
+          are on the list." Brandon looks at Kristin, then says, "Yes." The guards stand down, and Rebecca goes to move
+          against Charles. Brandon says, "There is no time to argue. The broadcast uplink is at one end of this corridor.
+          We can send the evidence now. The transfer carts are at the other end. You can free a cart of captives before
+          the guards react. Pick one, Kristin."
+  - id: michelle_changes_the_choice
+    storylet_id: SL-2C-D
+    title: Michelle Changes the Choice
+    from_outline: [2C.1]
+    guidance:
+      pressure_role: Let Rebecca’s offer, the purge, the physical commitment, and Michelle’s route unfold as one live crisis.
+      window: {earliest_turn: 0, target_turn: 13, latest_turn: 14}
+      available_while: {rebecca_offer_heard: true}
+      boundaries: [janus_phase_two]
+    helps_exit: [t_2c_3a]
+    commits_common: {rebecca_offer_active: true, antagonist_split_known: true, purge_clock_started: true, evidence_ready_to_transmit: true, rebecca_office_required_for_broadcast: true, combined_broadcast_rescue_plan_known: true}
+    parts:
+      route_close: >-
+        Michelle's route leads to Rebecca's secured office. The office can broadcast the evidence and open the detention cells.
+      sending: >-
+        Kristin heads to the uplink and starts sending the copied files. The detention sectors seal.
+      freeing: >-
+        Kristin heads to the transfer carts and frees a cart of captives. The evidence is not transmitted.
+    variants:
+      transmit:
+        realization_id: SL-2C-D-R3
+        intent: Kristin commits to the uplink after Rebecca’s offer and Michelle’s route reveal. The detention sectors seal.
+        from_outline: [2C.1]
+        commits: {committed_to_transmit: true, detention_sectors_sealed: true}
+        outcome: {id: committed_to_transmit, advantages: [committed_to_transmit], costs: [detention_sectors_sealed]}
+        claim_id: k_sl_2c_d_r3
+        when: {rebecca_offer_heard: true}
+        says: Kristin starts the uplink as the detention sectors seal and receives Michelle’s route to the combined plan.
+        entities: [kristin, brandon, michelle, rebecca, purge_chamber, copied_janus_files]
+        relevance: {entity_ids: [kristin, brandon, michelle, rebecca, purge_chamber, copied_janus_files], priority: 10}
+        audience: public
+        text: "{sending} A maintenance ticket scrolls up the uplink's status panel. {route_close}"
+        text_when:
+          - when: [ticket_header_matched]
+            text: >-
+              {sending} A maintenance ticket scrolls up the uplink's status panel with the archive header and the code sensor fault.
+              {route_close}
+      rescue:
+        realization_id: SL-2C-D-R4
+        intent: Kristin commits to the transfer carts after Rebecca’s offer and Michelle’s route reveal. The evidence stays unsent.
+        from_outline: [2C.1]
+        commits: {committed_to_rescue: true, evidence_not_transmitted: true}
+        outcome: {id: committed_to_rescue, advantages: [committed_to_rescue], costs: [evidence_not_transmitted]}
+        claim_id: k_sl_2c_d_r4
+        when: {rebecca_offer_heard: true}
+        says: Kristin commits to rescue, accepts that the evidence is not transmitted, and receives Michelle’s route to the combined plan.
+        entities: [kristin, brandon, michelle, rebecca, purge_chamber, copied_janus_files]
+        relevance: {entity_ids: [kristin, brandon, michelle, rebecca, purge_chamber, copied_janus_files], priority: 10}
+        audience: public
+        text: "{freeing} A maintenance ticket scrolls across the cart's latch display. {route_close}"
+  - id: michelles_route_arrives
+    storylet_id: SL-2C-E
+    title: Michelle’s Route Arrives
+    from_outline: [2C.1]
+    guidance:
+      pressure_role: Let the missed purge window force the group onto Michelle’s route without deciding Kristin’s commitment.
+      window: {earliest_turn: 5, target_turn: 6, latest_turn: 10}
+      available_while: {purge_window_missed: true}
+      boundaries: [janus_phase_two]
+    helps_exit: [t_2c_3a]
+    variants:
+      forced_route:
+        realization_id: SL-2C-E-R1
+        intent: The purge alarm forces the group out of the corridor before Kristin commits. Michelle’s route identifies Rebecca’s office and widens the options without crediting a commitment.
+        from_outline: [2C.1]
+        when: {purge_window_missed: true}
+        commits: {rebecca_offer_active: true, antagonist_split_known: true, purge_clock_started: true, evidence_ready_to_transmit: true, rebecca_office_required_for_broadcast: true, combined_broadcast_rescue_plan_known: true, purge_alarm_active: true, purge_recovery_ready: true}
+        claim_id: k_sl_2c_e_route_effects
+        says: The missed-window purge recovery carries its route effects.
+        audience: {kind: characters, character_ids: [charles], player_visible: false}
+        extra_claims:
+          - claim_id: k_purge_recovery_ready
+            says: The purge alarm is ready for the neutral route recovery.
+            audience: {kind: world_only, player_visible: false}
+            commits_subset: {purge_recovery_ready: true}
+incidents:
+  - id: i_2c_rebecca_corridor
+    reveal: michelle_changes_the_choice
+    outcomes: [transmit, rescue]
+    recovery: michelles_route_arrives
+    missed_window: purge_window_2c
+    observed_by: [k_sl_2c_c_r1, k_sl_2c_d_r3, k_sl_2c_d_r4]
+    completes_scene: true
+ending:
+  when: [evacuation_complete]
+  text: >-
+    Dawn finds Michelle alive and Kristin reunited with her. The captives are out.
+    Brandon was last seen holding the relay, and no one knows what happened to him.
+    Charles is still out there. Their old lives are gone.
+  marker: The story ends here.

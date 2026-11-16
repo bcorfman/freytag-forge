@@ -1,0 +1,81 @@
+schema: 1
+scene: 2C
+claims:
+  k_scene_2c_entry:
+    aliases: [purge]
+  k_sl_2c_c_r1:
+    aliases: [Rebecca's offer heard, purge order, Brandon says yes]
+    action_evidence:
+      - [say, tell, ask, answer, reply, respond, speak, talk, bluff, threaten, refuse, demand, argue, warn, accuse, negotiate, stay silent, say nothing, wait, stand, watch]
+      - [Rebecca, Rebecca Jenkins, her, the guards, her offer, the offer]
+    must_convey:
+      - [purge order, purge begins within hours]
+      - [Brandon says yes, Brandon's yes, says, 'Yes.']
+      - [broadcast uplink, uplink]
+  k_sl_2c_d_r3:
+    aliases: [committed to transmit, detention sectors sealed, combined broadcast rescue plan known]
+    action_evidence:
+      - [head, go, move, start, begin, send, transmit, upload]
+      - [uplink, broadcast uplink, copied files, JANUS files, JANUS evidence, evidence]
+    must_convey:
+      - [starts sending the evidence, transmit the evidence, uplink]
+      - [detention sectors seal, detention sectors sealed]
+      - [Michelle's route, maintenance route, route to Michelle]
+      - [Rebecca's secured office, Rebecca's office]
+      - [broadcast the evidence, open the detention cells, combined plan]
+  k_sl_2c_d_r4:
+    aliases: [committed to rescue, evidence not transmitted, combined broadcast rescue plan known]
+    action_evidence:
+      - [head, go, move, reach, free, release, open]
+      - [transfer carts, rescue cart, cart of captives, frees a cart of captives, free a cart of captives, prisoners, rescue]
+    must_convey:
+      - [rescue cart, frees a cart of captives, rescue]
+      - [evidence is not transmitted, evidence remains in Kristin's hands]
+      - [Michelle's route, maintenance route, route to Michelle]
+      - [Rebecca's secured office, Rebecca's office]
+      - [broadcast the evidence, open the detention cells, combined plan]
+  k_purge_recovery_ready:
+    aliases: [purge recovery ready]
+    leak_terms: []
+  k_sl_2c_e_route_effects:
+    aliases: [purge recovery route effects]
+    must_convey: [[purge recovery, route effects]]
+deliveries:
+  purge_clock_started:
+    must_convey:
+      - [Charles's purge order, purge order, command order]
+      - [purge begins within hours, purge deadline, hours remain before the purge]
+  evidence_ready_to_transmit:
+    must_convey:
+      - [copied JANUS files, copied files, JANUS evidence]
+      - [evidence in hand, ready to transmit, transmit the evidence]
+  rebecca_office_required_for_broadcast:
+    must_convey:
+      - [Michelle's route, maintenance route, route to Michelle]
+      - [Rebecca's secured office, Rebecca's office]
+      - [manual broadcast controls, command controls]
+  combined_broadcast_rescue_plan_known:
+    must_convey:
+      - [broadcast the evidence, transmit the evidence]
+      - [open the detention cells, rescue the captives]
+      - [Rebecca's office, Rebecca's secured office]
+  committed_to_transmit:
+    must_convey:
+      - [heads to the uplink, goes to the uplink, starts sending]
+      - [copied files, evidence]
+  detention_sectors_sealed:
+    must_convey:
+      - [detention sectors seal, detention sectors sealed, sectors lock]
+      - [transmission starts, transmission begins, sending starts]
+  committed_to_rescue:
+    must_convey:
+      - [heads to the transfer carts, goes to the transfer carts, rescue]
+      - [frees a cart of captives, frees captives, captives get out]
+  evidence_not_transmitted:
+    must_convey:
+      - [evidence not transmitted, nothing has been sent, no evidence sent]
+      - [evidence in Kristin's hands, copied files remain with Kristin]
+  purge_window_missed:
+    must_convey:
+      - [purge alarm, purge window closes, purge forces them out]
+      - [command corridor, corridor, guards]

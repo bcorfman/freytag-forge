@@ -1,6 +1,7 @@
 {
   "version": 1,
   "files": {
+    "tests/story_source/test_f01_mini_ok.py": 0.8,
     "tests/test_1a_arrival_glance.py": 4.66,
     "tests/test_1a_back_door_gap.py": 0.09,
     "tests/test_1a_departure_hold.py": 1.55,
