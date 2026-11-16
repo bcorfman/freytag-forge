@@ -73,7 +73,7 @@ The gate is the parity gate you already planned: the compiled package must equal
 - **Give workers a story CLI instead of grep.** `story show <id>`, `story set <id>.<field>`, `story rename <id>`, `story impact <id>` (the impact report already exists). A worker edits one record by ID and never loads a 176 KB file. For story data this replaces the knowledge graph. Keep Serena for engine and Worldkeeper code.
 - **Generate the reading view.** The situation trace you accepted becomes the per-scene script: prose in order, with wiring folded away. You read that, not YAML.
 
-Time-box it. If 1A parity is not green within the box you set, take the fallback already written in the redesign plan: keep the nine files and add only the derivations and checks.
+No time box and no fallback format. The nine files are not coming back. If 1A parity stalls, the ordinary escalation applies (Sonnet rewrite, Opus refresh of the schema decision, set aside and return with the accumulated evidence); the parity diff stays the gate and the work continues until it is empty.
 
 ## Step 2: world model inside the factory loop
 
@@ -327,7 +327,9 @@ Build the line first on today's files so it pays back at once, then migrate the 
 6. **Content passes in story order (large, dark).** Per scene: world tickets, prose, wiring, free gates, playtests, triage. Every scene gets the new pacing, delay costs and bond beats, so 1A and 1B are no longer exempt. Act 2 and 3C get the most work, since that is where runs stalled.
 7. **Whole-game runs and delivery (dark).** Blind-player full runs at the adoption sample size and hosted E2E on the staged SHA. Zero stuck turns and every target met, then the factory reports the delivered build.
 
-Steps 1 to 4 build the factory, and you may still be steering there as you do today. The dark run is steps 6 and 7. The format fallback is a rule, not a decision: if 1A parity is not green within the time box set in step 1, the build switches to the nine files plus derivations and carries on.
+**Status, 2026-11-16.** Step 1 is built: `factory/` has the ticket queue, state file, model allowlist and spend ledger, the eight circuit breakers, the manifest generator with check linting, the frozen-harness guard, the check library (`factory/checks/`, including the gap-rule baseline comparison and canary tickets), the breaker drill, and the `python -m factory` entry point with preflight. `python -m factory drill` trips all eight breakers on the real code. Preflight fails on purpose until the owner sets the budget and caps. Not yet built: the real model station handlers (stations 2 to 9), so the line runs only with injected handlers. The planned shakedown defect (the 2C transmit branch leaving no trace in 3A) was fixed by hand before the factory existed; the 1A laptop defect was fixed through Ringer as a stand-in, and canary tickets cover the "no valid solution" case. Next is step 2, the compiler and lexicon for 1A, with no time box and no fallback to the nine files (owner decision, 2026-11-16).
+
+Steps 1 to 4 build the factory, and you may still be steering there as you do today. The dark run is steps 6 and 7.
 
 ### Pre-flight: everything you do, all before start
 
