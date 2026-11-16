@@ -22,7 +22,7 @@ Worker capacity is not the bottleneck. Four things in the repo are, and each map
 
 | What the repo shows | Evidence | Fixed by |
 | --- | --- | --- |
-| Story facts and wording have several owners | 121 facts defined in both routes and knowledge, all 176 listed again in `world.yaml`, 24 already drifted; 87 of 99 claim effects restate route effects (`story-data-redesign-plan.md`) | Step 1 |
+| Story facts and wording have several owners | 121 facts defined in both routes and knowledge, all 176 listed again in `world.yaml`, 24 already drifted; 96 of 112 sourced claims restate their route's effects and 16 are subsets (recounted 2026-11-16 in `story-data-schema-contract.md`; the redesign plan's earlier "87 of 99" is stale) | Step 1 |
 | Tests are tied to wording | 67 authored sentences copied into 36 test files; 43 test files patch source strings; a rename fails four tests | Step 1 |
 | World-model gaps surface late, in play | Stage 7 blind run: 84 turns, 30 stuck, 2B forced after the narrator invented an undeclared door; the Reyes card custody gap; 2C costs set and never read | Step 2 |
 | Every fix is a bespoke experiment that waits on you | 57 run folders and about 1,600 files under `scripts/ringer/`, about 130 plan files, a hand-written preregistration per probe, and status lines such as "waiting for Brandon's two edits" | Step 3 |
@@ -63,7 +63,7 @@ Pass 2 derivation rules, all explicit and all overridable with `add:` and `drop:
 - `action_evidence` comes from the slots: a verb class the matcher already has, a position class, and the entity's names.
 - `must_convey` comes from `conveys`, expanded through the lexicon.
 - `leak_terms` come from the hidden names of every entity the reveal uncovers, plus the committed fact's key phrase.
-- `purpose`, `intent` and `says` collapse into one sentence per variant. The other two are derived unless overridden.
+- ~~`purpose`, `intent` and `says` collapse into one sentence per variant.~~ **Removed 2026-11-16 (Brandon).** `intent` equals `says` in only 10 of 100 claims; they are different sentences by design (a writer's note and what the player now knows), so deriving one from the other changes 90 compiled strings. A merge, if wanted, is a reviewed prose edit per scene later.
 - `examples` stay, but as a separate test file per scene, so the scene file stays readable.
 
 **Gates.** Pass 1 uses the parity gate you already planned: the compiled package must equal the legacy-loaded one, shown as a semantic diff, with an empty diff the exit. Pass 2 runs one scene at a time, after that scene has parity. A derived list either reproduces the explicit list exactly, or the difference is listed and reviewed as an override, a representation change, or a real bug in today's data. A field where more than a third of entries need `add:` or `drop:` stays explicit. Where a derivation shortens a list on purpose (for example, dropping verbs the engine's synonym class already admits), the compiler expands it back to the full list, so the compiled package does not change and matching behavior stays what was tuned in live play.
@@ -354,6 +354,8 @@ What this means for the schema:
 - The bespoke entries are not random. They are story concepts that are not entities (`dead drop`, `damaged recording`, `reflective tape`, `federal patrol`) and verbs the engine has no class for (`call`, `listen`, `connect`, `insert`, `drive`, `head`). So the lexicon needs three sections: **entities** (names), **concepts** (named phrases that are not world things), and **verb classes** (story-level, added to the engine's). Re-measure against that lexicon before the schema is frozen.
 - **There is little copying between claims in 1A.** 19 claims with `action_evidence` have 17 distinct lists, and 16 with `must_convey` have 15. The duplication this step removes is the same noun phrase repeated across fields of one claim (`leak_terms`, `must_convey`, `aliases`, `says`), not shared lists. The saving is real but smaller than "one edit by record ID" suggests for matcher words.
 - The counts say what the lexicon *could* hold, not that derivation reproduces today's lists. That is still what the parity diff measures.
+
+**Schema contract, 2026-11-16.** [story-data-schema-contract.md](story-data-schema-contract.md) is drafted (Opus, read-only on the live package) and Brandon accepted its five open questions: keep the 13 unplaced facts in `catalog.unplaced_facts`, drop the sentence-collapse rule, keep `storylets.md` sections as `notes`, keep the 11 bridge texts as `note`, leave `SL-3C-F-R1` claimless (review it with 3C's story work, step 6). Not built: no fixtures, validator or compiler yet. Next is Phase 1 item 6, the fixtures and schema tests, written before any compiler code and routed through Ringer.
 
 **All-scene sample, same day** (`lexicon_repeat_by_scene.py`; every claim belongs to exactly one scene). "Repeated" is the share of phrase occurrences, counting `action_evidence`, `must_convey`, `leak_terms` and `aliases`, whose phrase appears in two or more claims or fields. "Bespoke" is the share that is not an entity name, a name token or an engine class word. Both are heuristics; the entity test is a substring match, so some "bespoke" words would be covered by a lexicon's short names.
 
