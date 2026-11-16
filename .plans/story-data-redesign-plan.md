@@ -154,7 +154,9 @@ Measured in Phase 0 on `2bb01bbc` unless noted. These facts shape the order of w
   all 176 are listed again in the world file, and 24 of the 121 have already
   drifted.
 - **Most claim effects restate route effects.** 87 of 99 are identical, 12 are a
-  strict subset. So the rule is "derive by default, allow a declared subset", not
+  strict subset. (Recounted 2026-11-16 in
+  [story-data-schema-contract.md](story-data-schema-contract.md): of 112 sourced
+  claims, 96 are equal sets and 16 are subsets. The rule below stands.) So the rule is "derive by default, allow a declared subset", not
   "always equal". Incidents restate costs their variant already asserts.
 - **Tests are coupled to wording and layout.** 67 authored sentences are copied
   into 36 test files; 43 test files use `.replace(` on source; 72 name story files.
