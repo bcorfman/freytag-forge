@@ -374,6 +374,8 @@ What this means for the schema:
 
 1A does not represent the whole story. It is the most repetitive scene, and 3B and 3C are a different kind of data (long synonym enumerations, almost no sharing). `lexicon_plural_twins.py` counts `action_evidence` entries that are the plural or singular twin of another entry in the same group: 13% overall (2139 entries), 4% in 1A, 12% in 3A, 24% in 3B, 18% in 3C. Step 1 is rewritten around this: pass 1 compiles with explicit lists, pass 2 adds the lexicon per scene where it pays (see "Where the lexicon pays").
 
+**Fixtures round 1, 2026-11-16.** Phase 1 item 6 has started, through Ringer (`scripts/ringer/story-data/fixtures-round1-manifest.json`, one Luna task, passed first try). Built: fixture F01 `mini_ok` under `tests/fixtures/story_source/` (1A `find_card` with both variants, the 2C incident, two entry claims, an ending), the patch helper `tests/story_source/helpers.py` that edits a copy by record ID and field, and the F01 tests (8 pass; the compiler test skips until `storygame.story_source` exists). The README there fixes the API the tests are written against: `check_source_tree`, `Diagnostic`, `compile_source_tree`, `story_text`, `story_value`. An independent check (`check_fixture_f01.py`) verifies key order, ids and that every passage is exact live text. I tightened it after the first pass, because the worker had parked live text in `NEW_TEXT.txt`; F01 needs no new text. Next: fixtures F02 to F31 (each F01 plus one change) in parallel workers, then the Layer 1 and 2 validator tests, then the compiler.
+
 Steps 1 to 4 build the factory, and you may still be steering there as you do today. The dark run is steps 6 and 7.
 
 ### Pre-flight: everything you do, all before start

@@ -1,0 +1,195 @@
+schema: 1
+places:
+  mcgehee_home:
+    name: Michelle's house
+    aliases: [Michelle's home, the house, inside, indoors, the living room, the front room, the hallway]
+  kitchen:
+    name: Michelle's kitchen
+    aliases: [kitchen, the kitchen]
+    parent: mcgehee_home
+  outside_house:
+    name: outside the house
+    aliases: [outside, the yard, the driveway, the street, the curb, the front of the house]
+    description: "Michelle's house stands behind a low gate. Kristin's truck is parked at the curb, and sirens carry from the next street."
+  regional_facility:
+    name: Regional facility
+  purge_chamber:
+    name: command levels
+    aliases: [command level, upper command corridors]
+    parent: regional_facility
+  detention_level:
+    name: detention level
+    parent: regional_facility
+  maintenance_network:
+    name: maintenance network
+    aliases: [maintenance route, maintenance routes, maintenance tunnel, maintenance tunnels]
+    parent: purge_chamber
+  executive_office:
+    name: executive office
+    parent: regional_facility
+    owner: rebecca
+characters:
+  kristin:
+    name: Kristin Schweitzer
+    aliases: [Kristin, Kristin Schweitzer]
+    narrator_bio: A 47-year-old former assessment lead for the U.S. Army with a background in Army intelligence, infrastructure, and operations who is practical, persistent, and reluctant to trust conspiracy theories.
+  michelle:
+    name: Dr. Michelle McGehee
+    aliases: [Michelle, Dr. McGehee, Michelle McGehee, Shelly]
+    narrator_bio: A 48-year-old molecular biology and biotechnology researcher and author who is thoughtful, determined, and private. She is Kristin's closest friend; Kristin alone calls her "Shelly", while everyone else addresses her as Dr. McGehee.
+  brandon:
+    name: Brandon Corfman
+    aliases: [Brandon, Brandon Corfman]
+    unnamed_label: the man watching Kristin
+    named_by: brandon_identified
+    axes: [{conscious: [awake], unconscious: [knocked out]}]
+    unavailable: unconscious
+    narrator_bio: A 54-year-old former software developer who now lives as an isolated conspiracy researcher estranged from his family. His warnings about a shadow emergency program were widely dismissed before the disappearances. He helps Kristin, though he is guarded about his own past.
+  rebecca:
+    name: Rebecca Jenkins
+    aliases: [Rebecca]
+    narrator_bio: Charles's 56-year-old wife and the chief executive of a biotechnology and defense contractor. She is exacting and technically capable.
+  charles:
+    name: Charles Jenkins
+    narrator_bio: A 58-year-old former senior government official with a forceful, disciplined manner and experience directing complex operations. He is Rebecca Jenkins's husband.
+  patrol_officer:
+    name: Officer Reyes
+    aliases: [federal patrol officer, patrol officer, the officer, Reyes]
+    narrator_bio: A young, polite federal patrol officer who works from a printed list and does not like what the list asks of him.
+  walt_pruitt:
+    name: Walt Pruitt
+    aliases: [Walt, Mr. Pruitt, the neighbor]
+    narrator_bio: A retired bus driver in his seventies whose wife is one of the missing. He is tired, careful with his words, and unsure what he saw.
+groups:
+  corridor_guards:
+    name: corridor guards
+    scoped_aliases: [guards, guard]
+items:
+  memory_card:
+    name: Michelle's memory card
+    aliases: [memory card]
+    fallback_ids: [michelle_phone]
+    hidden: true
+  michelle_phone:
+    name: Michelle's phone
+  kristin_laptop:
+    name: Kristin's laptop
+    axes: [{closed: [shut], open: []}]
+    use_seated: true
+    take_text: Kristin picked up her laptop.
+    notice_text: Kristin's laptop sat on the passenger seat.
+  michelle_drawer:
+    name: drawer
+    fixed: true
+    kind: container
+    openable: true
+    contents: [pens, binder clips, stapler, spare batteries]
+  back_door:
+    name: back door
+    kind: opening
+    fixed: true
+  house_gate:
+    name: house gate
+    kind: opening
+    scoped_aliases: [front gate, gate]
+    fixed: true
+  kristin_truck:
+    name: Kristin's truck
+    kind: vehicle
+    owner: kristin
+  truck_driver_seat:
+    name: driver's seat
+    kind: seat
+    fixed: true
+    seat_for: kristin_truck
+    enter_text: Kristin sat down in the driver's seat.
+    leave_text: Kristin got out of the truck.
+  truck_passenger_seat:
+    name: passenger seat
+    kind: seat
+    fixed: true
+    contents_complete: true
+  michelle_workstation:
+    name: workstation
+    kind: desk
+    owner: michelle
+  workstation_chair:
+    name: workstation chair
+    scoped_aliases: [chair]
+    kind: seat
+    axes: [{overturned: [], upright: [standing]}]
+    enter_pole: upright
+    seat_for: michelle_workstation
+    right_text: Kristin set the workstation chair upright.
+    enter_text: Kristin sat down in the workstation chair.
+    leave_text: Kristin stood up from the workstation chair.
+  michelle_tea_mug:
+    name: mug of tea
+    aliases: [tea mug]
+    scoped_aliases: [mug, tea]
+  michelle_reading_glasses:
+    name: reading glasses
+    scoped_aliases: [glasses]
+  manuscript_pages:
+    name: manuscript pages
+    aliases: [manuscript, red-penned pages]
+    scoped_aliases: [pages, paper, papers]
+  kitchen_calendar:
+    name: wall calendar
+    aliases: [calendar]
+    fixed: true
+  lake_photograph:
+    name: lake photograph
+    scoped_aliases: [photograph, photo]
+  back_door_splinters:
+    name: splinters around the back door frame
+    aliases: [door splinters, splinters]
+    scoped_aliases: [frame, door frame]
+    fixed: true
+  back_door_deadbolt:
+    name: back door deadbolt
+    aliases: [deadbolt]
+    scoped_aliases: [lock, door lock]
+    fixed: true
+  truck_radio:
+    name: truck radio
+    aliases: [truck radio]
+    scoped_aliases: [radio]
+    fixed: true
+  copied_janus_files:
+    name: copied JANUS files
+    disclosure: public
+    owner: kristin
+    scoped_aliases: [copied files, JANUS files, JANUS evidence]
+  broadcast_uplink:
+    name: broadcast uplink
+    scoped_aliases: [uplink]
+    fixed: true
+  transfer_carts:
+    name: transfer carts
+    aliases: [transfer cart]
+    fixed: true
+  corridor_camera:
+    name: corridor camera
+    scoped_aliases: [camera]
+    fixed: true
+    kind: thing
+  monitor_light:
+    name: monitor light
+    scoped_aliases: [status light, amber light, light]
+    fixed: true
+    kind: thing
+  cart_tags:
+    name: cart tags
+    scoped_aliases: [tags, tag, cart tag]
+    fixed: true
+    kind: thing
+kinds:
+  desk: {is: [furniture, supporter]}
+  seat: {is: [furniture, supporter], fixed: false, enterable: true}
+props: {}
+connections: {}
+protected_knowledge: [janus_selection_system, brandon_history, janus_phase_two]
+disclosure_guards:
+  memory_card_word_guard: {terms: [card], unlock_fact: memory_card_recovered}
+unplaced_facts: {}

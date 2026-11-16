@@ -1,0 +1,28 @@
+schema: 1
+scene: 1A
+shared:
+  drawer_search:
+    action_evidence:
+      - [look, search, inspect, check]
+      - [under, beneath, underside, gap, lower edge, bottom edge]
+      - [drawer, KMS, workstation, "drawer's"]
+    must_convey:
+      - [memory card, card, "Michelle's card", the card, hidden card, hidden memory card]
+      - [taped]
+      - [beneath the KMS drawer, under the KMS drawer, beneath the drawer]
+      - [Michelle, "Michelle's", Dr. McGehee, Michelle McGehee, Shelly]
+    leak_terms: [memory card, hidden memory card, hidden card, "Michelle's card", the card, taped beneath the drawer, taped under the drawer, taped to the drawer, memory card recovered]
+claims:
+  k_scene_1a_entry:
+    aliases: [Michelle's phone, kitchen floor, empty house]
+  k_sl_1a_b_r0:
+    use: drawer_search
+    aliases: [memory card recovered]
+  k_sl_1a_b_r0w:
+    use: drawer_search
+    aliases: [memory card recovered in sight of the patrol]
+deliveries:
+  continuity_initiative_known:
+    must_convey:
+      - ["Michelle's memory card", "Michelle's files", "Michelle's notes", "Michelle's card", memory card, research files]
+      - [Continuity Initiative, federal emergency program, Continuity program, federal Continuity program, Continuity project, population-selection program]
