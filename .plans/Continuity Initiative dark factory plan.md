@@ -1,0 +1,369 @@
+# Continuity Initiative: dark factory plan
+
+Nov 15, 2026 · @Brandon Corfman
+
+## Bottom line
+
+Build the factory in three steps, in this order, because each one removes a reason you are still in the loop.
+
+1. **One story source, wording written once.** Finish the D1 compiler, and add a name lexicon so matcher words, leak terms and must-convey lists are derived instead of typed. A beat change becomes one edit by record ID.
+2. **World model inside the loop.** Before any prose is written for a scene, a free check lists the state the scene depends on and compares it with what Worldkeeper can represent. Gaps become Worldkeeper tickets first. This replaces the unplanned fork you have hit three times.
+3. **A deterministic line with no LLM orchestrator session.** A small Python state machine drives Ringer. Models are called only at fixed stations with small packets: Opus for planning and replanning under a hard call cap, Sonnet for specs, prose and triage, Luna for wiring and code, Jev for judging. Free checks always run before billed ones.
+
+Your work ends before the factory starts. Pre-flight is setting the budget and the spend caps; there is no manual planning session. After start you write and check nothing until the game is delivered. The only interruption is a circuit breaker: a factory error or a spend loop.
+
+One change to your tiering: canon prose is written by the expensive model, not Luna. The whole authored text is small, and every player reads it. Wiring, tests and code stay cheap.
+
+This plan is based on reading `main` at `eac9d666` (PR #766, 2026-11-14). I did not run the suite or play the game.
+
+## What the repo shows today
+
+Worker capacity is not the bottleneck. Four things in the repo are, and each maps to one step of this plan.
+
+| What the repo shows | Evidence | Fixed by |
+| --- | --- | --- |
+| Story facts and wording have several owners | 121 facts defined in both routes and knowledge, all 176 listed again in `world.yaml`, 24 already drifted; 87 of 99 claim effects restate route effects (`story-data-redesign-plan.md`) | Step 1 |
+| Tests are tied to wording | 67 authored sentences copied into 36 test files; 43 test files patch source strings; a rename fails four tests | Step 1 |
+| World-model gaps surface late, in play | Stage 7 blind run: 84 turns, 30 stuck, 2B forced after the narrator invented an undeclared door; the Reyes card custody gap; 2C costs set and never read | Step 2 |
+| Every fix is a bespoke experiment that waits on you | 57 run folders and about 1,600 files under `scripts/ringer/`, about 130 plan files, a hand-written preregistration per probe, and status lines such as "waiting for Brandon's two edits" | Step 3 |
+
+Much of the factory already exists as loose parts. The scripted provider, stall-exit audit, gap rules, branch report, impact report, `bench prompt`, the blind player and the Jev judge are all built. What is missing is a fixed order, pass rules a machine can apply, and a loop that does not need a chat session to hold its state.
+
+The D1 decision is the right base. Scene blocks compile to the existing `StoryPackage`, so the engine, loader checks and most tests keep working. The 1A draft still repeats one noun phrase across `purpose`, `intent`, `says`, `text`, `aliases`, `leak_terms`, `must_convey` and `action_evidence`. Step 1 goes after that.
+
+## Step 1: one story source, wording written once
+
+Keep D1, and add one idea to it: a **name lexicon**. Every entity and fact declares its names once, and the compiler expands them wherever today's files repeat them.
+
+In the 1A draft, the card's names appear in the placement, nine `leak_terms`, two `must_convey` groups, two `action_evidence` groups, `aliases`, and three sentences that say the same thing. With a lexicon the reveal shrinks to roughly this:
+
+```yaml
+entities:
+  memory_card:
+    names: [memory card, card, "Michelle's card"]
+    hidden_names: [hidden card, hidden memory card]   # guarded until revealed
+  michelle_drawer:
+    names: [drawer, KMS drawer, workstation drawer]
+
+reveals:
+  - id: find_card
+    earned_by: [look_closely, under, michelle_drawer]   # slots, not word lists
+    conveys: [memory_card, taped, {under: michelle_drawer}, {owner: michelle}]
+    variants:
+      quiet:
+        when: {patrol_in_house: false}
+        commits: {memory_card_recovered: true}
+        text: "{find_lead} Her laptop is still out in her truck."
+```
+
+Derivation rules, all explicit and all overridable with `add:` and `drop:`:
+
+- `action_evidence` comes from the slots: a verb class the matcher already has, a position class, and the entity's names.
+- `must_convey` comes from `conveys`, expanded through the lexicon.
+- `leak_terms` come from the hidden names of every entity the reveal uncovers, plus the committed fact's key phrase.
+- `purpose`, `intent` and `says` collapse into one sentence per variant. The other two are derived unless overridden.
+- `examples` stay, but as a separate test file per scene, so the scene file stays readable.
+
+The gate is the parity gate you already planned: the compiled package must equal the legacy-loaded one, shown as a semantic diff. I have not checked that derived lists reproduce today's lists exactly. Where they differ, the diff says so, and the difference is either an override or a real bug in today's data.
+
+### How this becomes factory work
+
+- **Conversion is mechanical, so it is a swarm job.** After 1A passes parity, the other eight scenes convert in parallel, one Luna worker per scene, check equals parity diff empty.
+- **Decouple the tests the same way.** One worker per test file replaces copied prose with a lookup by record ID. The check is the suite plus the existing `copied_prose.py` audit reporting zero.
+- **Give workers a story CLI instead of grep.** `story show <id>`, `story set <id>.<field>`, `story rename <id>`, `story impact <id>` (the impact report already exists). A worker edits one record by ID and never loads a 176 KB file. For story data this replaces the knowledge graph. Keep Serena for engine and Worldkeeper code.
+- **Generate the reading view.** The situation trace you accepted becomes the per-scene script: prose in order, with wiring folded away. You read that, not YAML.
+
+Time-box it. If 1A parity is not green within the box you set, take the fallback already written in the redesign plan: keep the nine files and add only the derivations and checks.
+
+## Step 2: world model inside the factory loop
+
+The world model gets its own station ahead of writing, and its own lane in triage, so a gap costs a ticket and not a fork in the road.
+
+### Before a scene is written: the world-need check
+
+The planner's scene contract lists every piece of state the scene relies on, in the four relations your plan already names: **hold, know, reach, exist**, plus hidden, seated, companion and any state axis. A free script then answers three questions per item:
+
+1. Can Worldkeeper represent it today (kind, relation, axis)?
+2. Does something earlier in the story produce it (the `no_producer` lookup)?
+3. Does something later read it (the `unread_effect` lookup, narrowed to incident costs and advantages as your plan recommends)?
+
+A "no" on question 1 opens a Worldkeeper ticket. It is built first, as a `World` method with its test in `packages/worldkeeper/tests/`, per your existing boundary rule. A "no" on 2 or 3 goes back to the planner as a story hole. No prose is written until the list is clean. This generalizes the one bookmark in `world-model.md`: declare an axis only when a story depends on it.
+
+### After a scene is written: free continuity gates
+
+All of these exist or nearly exist, cost nothing to run, and run on every change:
+
+- **Gap rules as a delta gate.** Custody, co-location, no-strand, no-producer. Your D3 says rule results never block a build, and CI stays that way. The factory adds one rule for itself: a factory change may not add a new rule result against the baseline.
+- **Carry matrix.** For each scene transition, enumerate the entry states (ledger facts times custody) and run the scripted stall and journey prefixes. You did this by hand for 2A to 3B and it found the 2B stuck state.
+- **Branch report on every incident,** with one mechanical test: the next scene's entry variant must be selected by a fact the branch sets. That is the 2C-to-3A finding turned into a check.
+- **Scene-versus-guard lint.** Fail if any leak term appears in narrator-visible text of the same scene before it is earned. The 2A "cooling fault" defect took five live rounds to find and is a string comparison.
+- **Undeclared-noun lint.** Every multi-word noun in authored prose resolves in the lexicon or is listed as an incidental prop. The invented 2B door is the case this protects.
+
+### In live play: triage routes to the right layer
+
+Each failed playtest turn is classified into one of four classes: story data, world model, narrator prompt, engine. Jev answers the per-object fact questions it is good at (did the phone move, who holds the card), and code compares before and after lists. World-model failures open a Worldkeeper ticket with a failing test, never a story patch.
+
+One escalation rule replaces the forks: **three failures of the same class in one scene stop story work on that scene and send one packet to the planner.** The engine change is then planned once, not discovered across weeks.
+
+## Step 3: the factory line
+
+The orchestrator is a Python state machine, not a model session. It reads a ticket queue from disk, generates Ringer manifests from templates, applies pass rules, and calls a model only at the stations below.
+
+&#91;embedded content: factory line · 8 stations, 1 decision, 1 loop\]
+
+A failed playtest loops back through triage to the writing station; nothing reaches a billed playtest without passing the free gates.
+
+| Station | Who | Input packet | Passes when |
+| --- | --- | --- | --- |
+| 0. Act contracts, at start | Opus at medium effort, headless through Claude Code | Outline, scene rules, character list and contract template | Contract lint passes: every scene has beats, clock, delay costs, bond beats and world needs |
+| 1. Contract refresh, only on escalation | Opus at medium effort, capped | One scene's contract and the failing evidence | Contract lint passes |
+| 2. World-need check | Script, then Luna for Worldkeeper tickets | Contract's state list | Every item representable, produced and read |
+| 3. Prose | Sonnet; Opus trialled on the tentpole passages, five candidates each | One scene's contract and character cards | Two or three candidates per passage; pairwise pick by the judge |
+| 4. Wiring | Luna through the story CLI | Scene file, contract | Compiles; shape and integrity checks pass |
+| 5. Free gates | Scripts | Compiled package | Gap-rule delta empty, no stuck state in the carry matrix, lints clean, quick suite and Ruff green |
+| 6. Prompt snapshot | `bench prompt` | Changed scene | Payload diff limited to intended lines |
+| 7. Live playtest | Blind player, Cloudflare narrator, Jev | Scene with a scripted prefix | Holdout scenarios met, zero stuck turns |
+| 8. Triage | Script, Sonnet only for unclear cases | Failing turns only | Routed to a class; the escalation ladder below takes it from there |
+| 9. Deliver | CI, staging, hosted E2E | Merged SHA | Green, every target met; the staged build is the delivery |
+
+What makes it dark:
+
+- **Holdout scenarios.** The contract's acceptance scenarios live outside every worker's `ownership` list. Workers never see them, so they cannot write to the test. This extends your rule that player actions are not generated from the matcher vocabulary they test.
+- **Checks from a library, not written per run.** A dozen parameterized checks replace the hand-written check scripts. Use Ringer's `--baseline` so a broken check is caught before tokens are spent, and its lint for checks that cannot fail.
+- **Preregistration as data.** Arms, sample size, keep rule and stop rule go in a small JSON file the state machine enforces. The discipline stays; the 100 KB plan files stop.
+- **State on disk.** `factory/state.json` and the ticket queue replace "Resume here" sections. Any model call starts cold with only its packet.
+- **Loop caps.** Three attempts per ticket, a token budget per ticket, a daily spend cap. A ticket that hits its cap climbs the escalation ladder below; it does not wait for you.
+
+On review: Ringer's own README says a green check is not proof of semantic correctness and recommends [keeping orchestrator patch review mandatory](https://github.com/NateBJones-Projects/ringer). For story data the parity and scenario gates stand in for review. For engine and Worldkeeper code, add a fresh-context reviewer that sees only the diff and the ticket, and keep the 90 percent coverage gate.
+
+### Keeping the graders honest
+
+A loop that retries until its checks pass will optimize against the checks. These rules come from the loop-engineering and eval-integrity chapters of the [AI System Design Guide](https://github.com/ombharatiya/ai-system-design-guide), applied to this factory.
+
+- **Verdicts, not reasons.** Test failures, exit codes and compile errors go back to the worker in full. A judge's reasoning and the text of a holdout scenario never do; the worker gets pass or fail plus the failing transcript. The guide cites a study where detailed rejections roughly doubled evaluator evasion.
+- **Holdouts live outside the repository.** A worker with git can read history. Scenarios and judge prompts sit in a separate repository that only the playtest runner can read, and failure reports carry hashes.
+- **Producer and grader come from different model families.** Luna fixes, so Luna does not write the scenarios. Claude writes prose, so a non-Claude model judges it.
+- **Canary tickets.** A few tickets with no valid solution run through the line. A pass on one is a harness bug and trips a breaker.
+- **The harness is frozen.** Gates, lints, judge prompts, caps, the allowlist and the protected-character list are outside every worker's ownership. A diff that touches one stops the factory.
+- **Evidence from the executor.** Pass and fail come from Ringer's check exit codes and engine state, never from a worker's own report.
+- **Noise-corrected gates.** Rate-based gates use the judge's measured error rates on the labelled set and pass on the lower bound, not the raw score. Stuck-turn detection is computed from engine state, with no judge involved.
+- **Every replicate, not any replicate.** Delivery requires each holdout to pass in all runs of the final sample.
+- **Budgets enforced outside the agents.** Caps live in the state machine and the Cloudflare gateway, with a rate-of-spend breaker beside the totals. Merge and deploy steps carry idempotency keys so a restart cannot repeat them.
+
+### Which model does what
+
+Sonnet is the right level for most judgment work here, and Opus is used in a few narrow places where a wrong early decision is expensive and the output is small. Both run headless through Claude Code on one subscription, so no step needs VS Code.
+
+| Role | Model | Why |
+| --- | --- | --- |
+| Act contracts at start, scene-contract refresh, three-strikes replanning | Opus at medium | Few calls, small output, and everything downstream depends on them |
+| Compiler and lexicon schema, during the build | Opus at medium | A schema mistake repeats across nine scenes |
+| Slice specs, Ringer manifests, routine triage, holdout scenarios | Sonnet at high | Well-scoped work that is checked afterward; one independent index shows Sonnet falling off faster than Opus below high effort |
+| Diff review on engine and Worldkeeper | Opus for those two, Sonnet elsewhere | High-risk changes get the deeper reviewer |
+| Reunion, sacrifice and act-closing passages | Opus trialled against Sonnet | A handful of passages every player reads; the pairwise judge keeps whichever wins |
+| Other canon prose and character cards | Sonnet | Volume is small and the judge picks among candidates |
+| Pairwise prose judge | A mid-tier OpenAI model through Codex, if your plan includes one | A different family from the prose writer; a handful of calls |
+| Wiring, test writing, scene conversion | Luna | Mechanical work with a hard check |
+| Compiler core and Worldkeeper code | Luna first; step up one OpenAI tier if first-try pass rate is poor | The guide places Luna at routing, classification and extraction; retries on a weak model can cost more per task than one pass on a stronger one |
+| Fact judging | Jev, binary questions only | Your 800-answer test supports it; the guide reports it weaker on graded scales and with irrelevant context |
+
+Every station pins its model ID and effort level. Defaults move between versions, and a silent change to a judge or planner is a change to the factory.
+
+Published comparisons put Opus 5.5 at [twice Sonnet 5.5's price on every line](https://claudefa.st/blog/models/claude-sonnet-vs-opus), ahead on repository-scale and long-context coding, and roughly level elsewhere. Anthropic's Claude Code guidance is to [plan with Opus and execute with Sonnet](https://support.claude.com/en/articles/14552983-models-usage-and-limits-in-claude-code), and it warns that routine work on Opus drains a subscription limit fastest. That is why Opus is capped by call count here.
+
+The act contracts are the factory's first dark step. Opus gets the outline, the scene rules in this plan, the character list and a fixed contract template, and returns three act contracts with no prose, tests or code. A lint validates them.
+
+Everything downstream of the contracts is cheaper models. Sonnet writes the character cards from the contracts as the first dark step. Sonnet expands each contract into holdout scenarios, stored in a separate repository no worker can read.
+
+After start, planning is narrow and capped:
+
+- **Replanning goes to Opus at medium effort through headless Claude Code,** one scene at a time, with a fixed number of calls per scene and per day.
+- **A Luna critic checks each replanned contract against the contract checklist** before it is accepted.
+- **No Fable and no other API-priced planner anywhere in the loop.** Every model call goes through a wrapper that refuses a model not on the allowlist.
+- **Subscription rate limits are a wait, not a failure.** The affected lane sleeps until the limit clears (see sleep mode below).
+
+### Running with nobody watching
+
+Nothing parks for a human. A ticket that fails climbs this ladder:
+
+1. Luna retries with the check output, up to three attempts.
+2. Sonnet rewrites the scene's wiring from the contract, fresh context.
+3. Opus refreshes the scene contract inside the act contract, then stations 2 to 7 rerun.
+4. The scene is set aside, the factory works other scenes, and it returns later with a fresh context and the accumulated evidence.
+
+A scene that still fails is never shipped around. Delivery needs all nine scenes green.
+
+The factory stops and messages you only on a circuit breaker:
+
+- The total budget set at pre-flight is spent before delivery.
+- The same ticket fails the same check with the same output three times in a row.
+- Tokens per ticket run far above the running median.
+- A provider is still unavailable 24 hours after its expected reset.
+- The state machine itself crashes.
+
+### Sleep mode: limits are a wait, not a stop
+
+A rate limit, a daily quota or a daily spend cap puts that provider's lane to sleep. It does not stop the factory or message you. State is on disk, so a sleeping lane costs nothing and resumes at the same station.
+
+- **Short rate limits** (a 429 with a retry time): back off and retry that one call.
+- **Daily quotas and daily spend caps:** sleep until the reset. The narrator's `AI_QUOTA_EXCEEDED` and `AI_DAILY_BUDGET_EXCEEDED` clear at 00:00 UTC, per your runbook.
+- **Subscription windows** (Codex, Claude Code): sleep, then probe with one cheap call on a slow timer when the error gives no reset time.
+- **Other lanes keep working.** Compiles, lints, gap rules and scripted journeys need no model.
+- **A limit is never a failed attempt.** It does not count toward a ticket's three tries or the repeat-failure breaker.
+
+The honest consequence: with no human in the loop, the two possible end states are a delivered game or a stop at the budget with a report of what is still red.
+
+## Fun and writing quality
+
+A factory only delivers what it can measure, so fun and character are turned into contract fields, free checks and cheap judge questions. The targets are fixed at pre-flight, and the judges stand in for your taste until delivery.
+
+### Pace: the thriller contract
+
+Your `whole-story-pacing.md` already has the right five rules. The factory enforces them per scene. Most are checkable from story data with no model call:
+
+| Rule | Free check |
+| --- | --- |
+| Room to explore, then pressure | The first pressure event lands on turn 3 or 4. It may land earlier only when the previous scene's exit already set the threat |
+| One set piece done with the hands | The scene has an incident with at least two earned outcomes that are not "read" or "search" verbs |
+| A person in the way | A talkable NPC is placed in the scene and named in the entry text |
+| One choice per act that leaves a mark | Each ledger fact is read by a later entry variant or delivery variant |
+| Release before the next blow | Pacing events alternate pressure and relief; no two reversals inside two turns |
+| A visible clock | The scene states what is running out, and its bridge text ends on a hook |
+| Delay costs you | Every missed window and recovery path carries a real cost (next section) |
+
+### Delay costs you: a real price, never a free pass
+
+A missed window or a wasted clock never opens the same exit for a token penalty. The contract must give each one a cost from this list:
+
+- **A riskier storylet.** The player now has to do something more dangerous to get what they need.
+- **Harm on stage to a valued NPC.** They are injured, shot, or must sacrifice themselves for the story to move. Michelle is protected and is never harmed.
+- **Harm to the captives.** If information leaks early, prisoners are tortured or killed, and the player sees it.
+
+Not allowed: a trust-only penalty, a substitute item that opens the same exit, or a neutral recovery bridge. Today's Act 2 has neutral ones (the 2C missed window, the 2A to 2C staller bridges), so those are rewritten as costed paths.
+
+Free checks:
+
+- Every recovery path either requires an extra earned storylet marked as higher risk, or sets a cost fact of the harm kinds above.
+- Every cost fact has an authored passage shown when it lands, and at least one later scene reads it.
+- No recovery asserts an exit trigger without a cost.
+- No effect, cost or passage harms a character on the protected list. The list starts with Michelle.
+- No-strand still holds: a cost never dead-ends the story.
+- Each act contract carries a harm ladder, so costs escalate and do not spend a character canon needs later.
+
+### Stuck turns: zero, as a hard gate
+
+A stuck turn is one where the player is trying to progress and the story gives no way forward: a loop, a request for a task already done, a state with no authored path to the exit, or a forced handoff after a stall. Exploring is not stuck; a turn where the player looks around and the world answers is a good turn.
+
+- **Structural proof, free.** The carry matrix and no-strand rule cover every reachable entry state and every recovery. Any state without an authored exit path blocks the change.
+- **Live.** One stuck turn in any playtest opens a blocking ticket with the transcript. The scene cannot pass station 7.
+- **Delivery.** Zero stuck turns across the final whole-game runs, or the factory does not deliver.
+
+A sample cannot prove zero for all play. The structural proof carries that claim; the live runs catch what the model does with it.
+
+Live playtest targets, fixed at pre-flight:
+
+- Stuck turns: zero. The Stage 7 run had 30 of 84.
+- Earned exits: every scene. A costed recovery counts only when its cost was shown.
+- Scene length: 10 to 13 turns on average. Nine scenes make roughly 90 to 120 turns, so the 120-turn ceiling in `whole-story-pacing.md` has to rise; I would set 160.
+- Quiet stretch: once the first pressure event has landed, no more than four turns without a reveal, a pressure event or an NPC move.
+- Guard rejections and turn latency: tracked per scene, under your ten-second target.
+
+### Character: one card each, used three ways
+
+Write a card for Kristin, Michelle, Brandon, Charles, Rebecca, Reyes, the supervisor and the official. Each holds: what they want in this act, what they fear, what they hide, how they talk (three sample lines and two things they never say), and what they know scene by scene.
+
+- The **prose station** writes from the cards, so Rebecca's survival instinct and Charles's ideology sound different.
+- The **runtime** already builds NPC dialogue from the addressed NPC's permitted context. A short voice line from the card belongs there, written to your narrator guide.
+- The **judge** asks yes or no questions against the card, one line at a time: does this line serve what she wants, does it give away what she hides, would a guard under orders say this. In-text questions suit Jev. Consistency with earlier scenes goes to Luna, per your own Jev findings.
+
+### Feeling: bonds planted early, paid off with room
+
+The player should feel the reunion and the sacrifice, and that is built scenes earlier. Each act contract carries an emotional line beside the plot line.
+
+- **Bond beats.** Every valued NPC gets small shared moments with Kristin before anything happens to them: a favor, a joke, a confession, a habit. Brandon needs several across 1B to 3A for his goodbye to land. Michelle is present before 3A through her voice, her handwriting and the name only Kristin uses.
+- **Setups and payoffs as data.** Each payoff passage lists the setup beats it depends on. A free check confirms every setup is deliverable before the payoff on every path, and the payoff has a variant for a player who missed one.
+- **Room around the big beats.** No pressure event fires for two turns after the reunion or the sacrifice. The player gets a turn to answer, and the NPC answers back in voice.
+- **Harm that matters.** The delay costs above fall on NPCs the player has bonded with, which is why the bond beats come first.
+- **What the player should feel** is one line per scene in the contract: dread, relief, guilt, fury. The prose station writes to it, and the pairwise judge picks the candidate that best produces it.
+- **The tentpoles get the largest prose budget** with Opus trialled against Sonnet: five candidates each, judged pairwise against the scene's feeling line. The winner is frozen so later passes cannot dull it.
+
+### Prose: spend where players read
+
+The narrator is a small model, so the ceiling on improvised prose is low. Put the quality in authored text: entries, verbatim beats, delivery text, NPC lines, bridges.
+
+- The prose station writes two or three candidates per passage. A judge picks pairwise, which is cheaper and steadier than scoring.
+- Use more verbatim beats for the punches: the officer's demand, Rebecca's offer, Brandon's goodbye.
+- A style sheet of ten lines: short sentences under pressure, concrete nouns, one physical detail per beat, no summary of feelings.
+- Cut reading-as-gameplay. Where a scene still makes the player a clerk, the contract fails rule two.
+
+### Judging without you
+
+There is no human sample during the run. Judge questions are frozen at pre-flight and checked against the labelled sets already in `bench/calibration/`. A second judge model re-scores a slice of every batch, and a disagreement rate above the noise you measured (about 3 in 100) pauses that judge's verdicts and falls back to the stricter one. At delivery you get the build, the full-run transcripts and the cost report.
+
+## Token budget rules
+
+The largest saving is removing the long-lived orchestrator session; the rest is ordering work so cheap evidence comes first.
+
+1. **No model holds the loop.** Sonnet at high effort carrying a session's history is your largest avoidable cost. The state machine holds state; Sonnet sees only a triage packet.
+2. **Free before billed, always.** Compile, lints, gap rules, carry matrix, quick suite and `bench prompt` run before any narrator or judge call. A change that fails a free gate never reaches a live run.
+3. **Packets, not context.** Each call gets one scene file, its contract and the failing evidence. No plan history. Archive `.plans/` out of every agent's reach; several files there are 100 to 550 KB.
+4. **Edit by ID.** The story CLI means a wiring worker reads one record, not a file.
+5. **Jev first, one question at a time.** Per your guard rules: code does the counting, Jev answers in-text questions, and only unsure answers and story-sense questions go up to Luna.
+6. **Sequential sampling.** Three replicates as a smoke. Stop on a clear fail. Go to twelve only for an adoption decision. Reach mid-story scenes with scripted prefixes, which are free.
+7. **Opus plans, in few calls with small output.** Act contracts at start and replanning in flight both run under a per-scene and per-day call cap. A model allowlist blocks Fable and any other API-priced planner.
+8. **Expensive prose, tiny volume.** Authored text for nine scenes is on the order of tens of thousands of tokens once. That is small next to one day of playtests.
+9. **Route by scoreboard.** Ringer logs tokens and first-try pass rate per model. Start each task type on the cheapest model and move up only where the pass rate says so.
+10. **Cost per merged ticket** is the factory's own metric. It feeds the circuit breakers during the run and the cost report at delivery.
+
+## Order of work
+
+Build the line first on today's files so it pays back at once, then migrate the story through it. Sizes are my estimates from reading the repo, not measurements.
+
+1. **Factory skeleton on today's package (small).** Ticket schema, state file, manifest templates, check library, model allowlist, spend caps and circuit breakers. Wire in the gates that already exist. Add the lints. Shake it down on one open defect, such as the 2C transmit branch leaving no trace in 3A.
+2. **Compiler and lexicon, 1A to parity (medium, the critical path).** Finish Phase 1 schema items with the lexicon added. Fixtures and tests first, as your plan says. Exit on an empty parity diff for 1A.
+3. **Swarm the migration (medium, parallel).** Eight scenes and the coupled tests, one worker each, parity gate per scene. Build the story CLI and the generated script view here.
+4. **World-need check, contract lint and judge calibration (small, parallel with 2 and 3).** None depends on the new format.
+5. **Pre-flight, then start.** First a watched rehearsal: one scene goes through the whole line, and each circuit breaker is tripped on purpose with an injected fault. Then you set the budget and caps and press start. Opus writes the three act contracts as the first dark step. The lint accepts the three act contracts. Pressing start is your last action.
+6. **Content passes in story order (large, dark).** Per scene: world tickets, prose, wiring, free gates, playtests, triage. Every scene gets the new pacing, delay costs and bond beats, so 1A and 1B are no longer exempt. Act 2 and 3C get the most work, since that is where runs stalled.
+7. **Whole-game runs and delivery (dark).** Blind-player full runs at the adoption sample size and hosted E2E on the staged SHA. Zero stuck turns and every target met, then the factory reports the delivered build.
+
+Steps 1 to 4 build the factory, and you may still be steering there as you do today. The dark run is steps 6 and 7. The format fallback is a rule, not a decision: if 1A parity is not green within the time box set in step 1, the build switches to the nine files plus derivations and carries on.
+
+### Pre-flight: everything you do, all before start
+
+- [ ] Confirm headless Claude Code runs Opus and Sonnet on your subscription, not on API billing
+- [ ] Set the total budget, the daily spend cap per provider, and the subscription call caps
+- [ ] Give the factory a way to reach you for a circuit breaker
+- [ ] Press start
+
+After delivery: play the game, then promote it to production if you like it.
+
+## Risks and open decisions
+
+| Risk | Why it matters | Default the factory runs with |
+| --- | --- | --- |
+| The run ends at the budget, not at a delivered game | Full autonomy removes the person who would unstick it | Escalation ladder, set-aside and return, and a final report of what is red |
+| Judges stand in for your taste | Emotional beats and fun are the hardest things to judge by model | Five candidates per tentpole; frozen questions; second-judge agreement check; pairwise picks |
+| Zero stuck turns is proven structurally but only sampled live | A phrasing no playtest tried could still loop | Carry matrix on every state; blind-player personas with varied phrasing; any live stuck turn blocks |
+| Harsher delay costs meet protected characters and canon | A cost could harm Michelle or spend a character needed later | Protected list lint; harm ladder in each act contract |
+| Longer scenes raise playtest cost | 10 to 13 turns per scene roughly doubles narrator and judge calls per run | Scripted prefixes, three-replicate smokes, twelve only at adoption |
+| Lexicon derivation may not reproduce today's matcher and guard lists | Parity fails, or overrides pile up | Measured on 1A; a field with more than a third overridden drops back to explicit lists |
+| New gap-rule results block factory changes | It amends the spirit of D3 | On for the factory; CI stays non-blocking |
+| No human reads code diffs | Ringer's README advises against it | Fresh-context diff reviewer for engine and Worldkeeper; ownership lists; coverage gate |
+| Opus, Sonnet and Luna call volume on subscriptions | Rate limits or overage could stall or cost | Call caps, backoff, and the circuit breakers |
+| Old saves | The migration changes package identity | Stale saves are rejected, as the loader does today |
+
+### What I did not verify
+
+- I read the README, PRD, guides, the redesign and reimagination plans, the 1A draft and the repo layout. I did not read all of `.plans/` or the engine modules line by line.
+- I did not run tests, the bench or the game.
+- Jev accuracy figures are yours, from one story.
+- The Serena page lists YAML and Markdown among its languages but [does not say how deep symbol support goes](https://github.com/oraios/serena) for them, which is one more reason to prefer the story CLI for story edits.
+
+### Sources
+
+- [bcorfman/freytag-forge](https://github.com/bcorfman/freytag-forge) at `eac9d666`: `README.md`, `docs/PRD.md`, `docs/jev-guard-rules.md`, `docs/scene-fixing-guide.md`, `docs/story-gap-guide.md`, `.plans/story-data-redesign-plan.md`, `.plans/story-data-1a-draft.md`, `.plans/game-reimagination-plan.md`, `.plans/game-reimagination/whole-story-pacing.md`, `.plans/implementation_plan.md`
+- [NateBJones-Projects/ringer](https://github.com/NateBJones-Projects/ringer)
+- [oraios/serena](https://github.com/oraios/serena)
+
+* [ombharatiya/ai-system-design-guide](https://github.com/ombharatiya/ai-system-design-guide) at `10bdeb25`: loop engineering, evaluating agentic systems, LLM evaluation, eval-gated CI/CD, model selection guide. Many of its figures are vendor-reported.
