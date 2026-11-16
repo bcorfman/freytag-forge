@@ -382,6 +382,8 @@ What this means for the schema:
 
 **Validator round 3b, 2026-11-16.** Layer 1 shape checks are built through Ringer (`build_validator_round3b_manifest.py`, two parallel tasks, both passed first try): `l1_root.py` (ownership, story, catalog, match, lock and lexicon files; `L1.lexicon_off`, `L1.plural_off`, `L1.match_scene`) and `l1_scene.py` (scene files; condition values, passage lists, claim keys without a claim). I fixed one fixture, F19, which wrote a derived `leak_terms` as a one-item list; the contract shows a map. In `tests/story_source` 7 tests still fail, F04 to F08, F14 and F20, and each needs a Layer 2 diagnostic. Next: round 3c, the Layer 2 checks (facts and ids; claims, overrides and ownership).
 
+**Validator round 3c, 2026-11-16.** Layer 2 checks are built through Ringer (`build_validator_round3c_manifest.py`, two parallel tasks, both passed first try): `l2_facts.py` (duplicate ids, dangling references, fact ownership and declaring scene, unplaced and undeclared facts) and `l2_claims.py` (claim authorization, add-only overrides, match coverage, incident observers, scene scope, ending scene, ownership manifest). `tests/story_source` now gives 87 passed, 24 skipped. F20 (`L2.lock_stale`) skips on purpose until the pass 2 expander exists; `L2.lock_stale`, `L2.drop_unused`, `L2.cycles` and `LOADER` are left to later rounds. The branch `story-data-validator-skeleton` holds rounds 3a to 3c, ready for a PR. Next: the pass 1 compiler to `StoryPackage` (Phase 1 item 7), then its parity gate against 1A.
+
 Steps 1 to 4 build the factory, and you may still be steering there as you do today. The dark run is steps 6 and 7.
 
 ### Pre-flight: everything you do, all before start
