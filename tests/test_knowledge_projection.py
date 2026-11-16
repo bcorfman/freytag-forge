@@ -15,7 +15,7 @@ from storygame.runtime.knowledge import KnowledgeProjector
 from storygame.runtime.persistence import RuntimeStateSqliteStore
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import ProposalValidationError
-from storygame.runtime.world_model import apply_scene_placements
+from storygame.runtime.world_model import apply_scene_placements, world_for
 from storygame.story_package.loader import load_story_package
 from storygame.story_package.models import Audience
 from tests._legacy_package import legacy_package
@@ -356,6 +356,8 @@ def test_scene_1a_shadow_timeline_is_fact_backed_and_causal() -> None:
 def test_scene_1a_route_windows_preserve_the_recording_timeline() -> None:
     package = legacy_package(PACKAGE, {"k_sl_1a_a_r1", "k_sl_1a_c_r1"}, strip_must_convey=True)
     state = RuntimeState.bootstrap(package)
+    world = world_for(package, state.facts)
+    assert world.move("kristin_laptop", "kristin").ok
     responses = iter(
         (
             {

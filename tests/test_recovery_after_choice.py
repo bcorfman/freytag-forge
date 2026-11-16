@@ -6,6 +6,7 @@ import pytest
 
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.state import RuntimeState
+from storygame.runtime.world_model import world_for
 from storygame.story_package.loader import load_story_package
 
 PACKAGE = Path("data/stories/continuity-initiative")
@@ -29,7 +30,12 @@ class _ScriptedProvider:
 
 def _drive(engine: RuntimeEngine, provider: _ScriptedProvider, selection: str | None) -> None:
     provider.selected = [selection] if selection else []
+    if selection == "k_sl_1a_b_r1":
+        world = world_for(engine.state.package, engine.state.facts)
+        assert world.move("kristin", "outside_house").ok
+        assert world.move("kristin", "truck_driver_seat").ok
     command = {
+        "k_sl_1a_b_r1": "Read the files on Michelle's memory card.",
         "k_sl_1b_d_r1": "Look under the park bench.",
         "k_sl_1b_b_r2": "Ask the man about Michelle.",
         "k_sl_1b_c_r1": "Open the service gate.",

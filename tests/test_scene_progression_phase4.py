@@ -11,6 +11,7 @@ from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import ProgressionValidator, ProposalValidationError
+from storygame.runtime.world_model import world_for
 from storygame.story_package.loader import load_story_package
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
@@ -22,6 +23,12 @@ def _turn(text: str, selected: list[str] | None = None) -> dict[str, object]:
     if selected:
         segment["grounding_ids"] = list(selected)
     return {"segments": [segment], "selected_knowledge_ids": selected or []}
+
+
+def _move_kristin_to_truck(state: RuntimeState) -> None:
+    world = world_for(PACKAGE, state.facts)
+    assert world.move("kristin", "outside_house").ok
+    assert world.move("kristin", "truck_driver_seat").ok
 
 
 def test_recording_only_reveal_is_rejected_before_custody_is_committed() -> None:
@@ -91,6 +98,11 @@ def test_complete_path_secures_card_with_files_and_park_lead() -> None:
 
     engine.turn("Search beneath the marked drawer for Michelle's memory card.")
     state.active_event_ids.add("SL-1A-B")
+
+    with pytest.raises(ProposalValidationError, match="selected knowledge is not eligible"):
+        engine.turn("Read the files on Michelle's recovered memory card.")
+
+    _move_kristin_to_truck(state)
     engine.turn("Read the files on Michelle's recovered memory card.")
 
     assert Fact(predicate="memory_card_recovered", subject="story", value="true") in state.facts.asserted
@@ -141,6 +153,7 @@ def test_a_reveal_the_narration_never_delivers_cannot_commit_or_move_the_scene()
     state = RuntimeState.bootstrap(PACKAGE)
     state.facts.assert_fact(Fact(predicate="memory_card_recovered", subject="story", value="true"))
     state.active_event_ids.add("SL-1A-B")
+    _move_kristin_to_truck(state)
     engine = RuntimeEngine(
         state,
         lambda _: {
@@ -168,6 +181,7 @@ def test_a_fully_conveyed_reveal_commits_and_opens_the_scene_exit() -> None:
     state = RuntimeState.bootstrap(PACKAGE)
     state.facts.assert_fact(Fact(predicate="memory_card_recovered", subject="story", value="true"))
     state.active_event_ids.add("SL-1A-B")
+    _move_kristin_to_truck(state)
     engine = RuntimeEngine(
         state,
         lambda _: (
@@ -209,6 +223,7 @@ def test_an_ungrounded_fully_conveyed_reveal_derives_its_grounding_and_commits()
     state = RuntimeState.bootstrap(PACKAGE)
     state.facts.assert_fact(Fact(predicate="memory_card_recovered", subject="story", value="true"))
     state.active_event_ids.add("SL-1A-B")
+    _move_kristin_to_truck(state)
     engine = RuntimeEngine(
         state,
         lambda _: {
@@ -237,6 +252,7 @@ def test_an_ungrounded_partially_told_reveal_is_still_rejected() -> None:
     state = RuntimeState.bootstrap(PACKAGE)
     state.facts.assert_fact(Fact(predicate="memory_card_recovered", subject="story", value="true"))
     state.active_event_ids.add("SL-1A-B")
+    _move_kristin_to_truck(state)
     engine = RuntimeEngine(
         state,
         lambda _: {

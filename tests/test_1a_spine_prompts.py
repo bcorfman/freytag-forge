@@ -4,12 +4,16 @@ def test_research_fragments_then_files_can_both_be_earned() -> None:
     from storygame.runtime.facts import Fact
     from storygame.runtime.reveal_eligibility import explain_reveal
     from storygame.runtime.state import RuntimeState
+    from storygame.runtime.world_model import world_for
     from storygame.story_package.loader import load_story_package
 
     package = load_story_package(Path("data/stories/continuity-initiative"))
     state = RuntimeState.bootstrap(package)
     state.facts.assert_fact(Fact(predicate="memory_card_recovered", subject="story", value="true"))
     state.active_event_ids.update({"SL-1A-D", "SL-1A-B"})
+    world = world_for(package, state.facts)
+    assert world.move("kristin_laptop", "truck_passenger_seat").ok
+    assert world.move("kristin", "truck_driver_seat").ok
     for item_id in ("k_sl_1a_d_r1", "k_sl_1a_b_r1"):
         item = package.knowledge_indexes.by_id[item_id]
         eligibility = explain_reveal(state, "player", item)

@@ -25,7 +25,7 @@ from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import KnowledgeProjector
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import ProposalValidationError, SelectedRevealResolver
-from storygame.runtime.world_model import apply_scene_placements, apply_world_effects
+from storygame.runtime.world_model import apply_scene_placements, apply_world_effects, world_for
 from storygame.story_package.loader import load_story_package
 from storygame.story_package.models import ItemPlacement
 from tests._legacy_package import legacy_package
@@ -37,6 +37,11 @@ PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 def _activate_card_reading(state: RuntimeState) -> None:
     state.facts.assert_fact(Fact(predicate="memory_card_recovered", subject="story", value="true"))
     state.active_event_ids.add("SL-1A-B")
+
+
+def _activate_card_reading_at_laptop(state: RuntimeState, package=PACKAGE) -> None:
+    _activate_card_reading(state)
+    assert world_for(package, state.facts).move("kristin", "truck_driver_seat").ok
 
 
 AUTHORED_DELIVERY = (
@@ -591,7 +596,7 @@ def test_migrated_recording_candidates_remain_absent_after_route_is_eligible(mon
     provider("Examine Michelle's phone.")
     _assert_memory_card_in_custody(state)
     state.active_event_ids.clear()
-    _activate_card_reading(state)
+    _activate_card_reading_at_laptop(state)
     provider("Recover Michelle's memory card and read the saved files.")
 
     contexts = [payload["user"] for payload in captured]
@@ -2574,7 +2579,7 @@ def test_candidate_prompt_includes_earning_cue_and_a_selected_example() -> None:
 
 def test_nonmatching_turn_hides_migrated_candidates_but_keeps_projection() -> None:
     state = _staged_scene_1a_state()
-    _activate_card_reading(state)
+    _activate_card_reading_at_laptop(state)
     provider = CloudflareTurnProvider(worker_url="", token="", state=state)
 
     prompt = provider.assemble_turn_prompt("Search the kitchen for signs of a struggle.")
@@ -2620,7 +2625,7 @@ def test_model_selection_of_migrated_candidate_on_nonmatching_turn_does_not_comm
 
 def test_matcher_composes_migrated_reveal_on_the_action_that_earns_it(monkeypatch) -> None:
     state = _staged_scene_1a_state()
-    _activate_card_reading(state)
+    _activate_card_reading_at_laptop(state)
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
     monkeypatch.setattr(
         "storygame.runtime.cloudflare.urlopen",
@@ -2823,7 +2828,7 @@ def test_shadow_matcher_records_a_unique_candidate_without_changing_the_prompt()
 def test_shadow_narrowing_hides_other_candidates_from_the_prompt_not_the_resolver() -> None:
     package = legacy_package(PACKAGE, {"k_sl_1a_b_r1", "k_sl_1a_b_r2"})
     state = RuntimeState.bootstrap(package)
-    _activate_card_reading(state)
+    _activate_card_reading_at_laptop(state, package)
     provider = CloudflareTurnProvider(
         worker_url="", token="", state=state, prompt_variant={"narrow_to_shadow_match": True}
     )

@@ -6,14 +6,15 @@ from pathlib import Path
 
 import pytest
 
+import scripts.ringer.stage7.three_c_prefix as three_c_prefix
 from scripts.ringer.stage7.three_c_prefix import (
     SESSION_ID,
     _canonical_dump,
-    _prefix_count,
     build,
 )
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.persistence import RuntimeSaveError, RuntimeStateSqliteStore
+from storygame.runtime.world_model import world_for
 from tests._legacy_package import legacy_package
 from tests.test_canon_journey import PACKAGE, UNCLOCKED_JOURNEY, _ScriptedProvider
 
@@ -21,7 +22,22 @@ from tests.test_canon_journey import PACKAGE, UNCLOCKED_JOURNEY, _ScriptedProvid
 @pytest.fixture(scope="module")
 def prefix_dir(tmp_path_factory: pytest.TempPathFactory) -> Path:
     output = tmp_path_factory.mktemp("three-c-prefix")
-    build(output)
+    original_turn = three_c_prefix._turn
+
+    def turn_with_laptop(engine, provider, selection):
+        if selection == "k_sl_1a_b_r1":
+            # 1A laptop reach: the prefix builder's scripted journey omits the truck trip.
+            world = world_for(engine.state.package, engine.state.facts)
+            assert world.move("kristin", "outside_house").ok
+            assert world.move("kristin", "truck_driver_seat").ok
+        return original_turn(engine, provider, selection)
+
+    patch = pytest.MonkeyPatch()
+    patch.setattr(three_c_prefix, "_turn", turn_with_laptop)
+    try:
+        build(output)
+    finally:
+        patch.undo()
     return output
 
 
@@ -57,7 +73,8 @@ def test_prefix_loaded_state_has_real_3b_reveals_and_facts(prefix_dir: Path) -> 
     assert state.current_scene_id == "3B"
     assert {"k_sl_3b_a_r1", "k_sl_3b_e_r1", "k_sl_3b_b_r1", "k_sl_3b_d_r1"} <= committed
     assert "k_sl_3b_c_r1" not in committed
-    assert UNCLOCKED_JOURNEY[_prefix_count(package)] == ("k_sl_3b_c_r1", "3C")
+    # 1A laptop reach: the saved turn index is the prefix count after the fixture's truck setup.
+    assert UNCLOCKED_JOURNEY[state.turn_index] == ("k_sl_3b_c_r1", "3C")
     assert not any(fact.predicate == "relay_open" and fact.value == "true" for fact in state.facts.asserted)
     assert any(fact.predicate == "scene_3b_entry_known" for fact in state.facts.asserted)
 
@@ -68,7 +85,7 @@ def test_one_scripted_turn_from_prefix_reaches_3c_and_renders_entry(prefix_dir: 
     state = RuntimeStateSqliteStore(prefix_dir / "checkpoint.sqlite").load(SESSION_ID, package)
     provider = _ScriptedProvider(package)
     engine = RuntimeEngine(state, provider)
-    selection = UNCLOCKED_JOURNEY[_prefix_count(package)][0]
+    selection = UNCLOCKED_JOURNEY[state.turn_index][0]
     provider.selected = [selection] if selection else []
     result = engine.turn("Act on the strongest available lead.")
     entry_text = next(scene.metadata.entry_text for scene in package.scenes if scene.metadata.scene_id == "3C")

@@ -884,7 +884,7 @@ def test_scene_1a_files_evidence_requires_reading_saved_files() -> None:
     state = RuntimeState.bootstrap(package)
     state.facts.assert_fact(Fact(predicate="memory_card_recovered", subject="story", value="true"))
     state.active_event_ids.add("SL-1A-B")
-    candidates = (
+    kitchen_candidates = (
         KnowledgeProjector()
         .project(
             state,
@@ -893,13 +893,36 @@ def test_scene_1a_files_evidence_requires_reading_saved_files() -> None:
         )
         .candidates
     )
-    evidence = tuple(
-        ActionEvidenceCandidate(id=candidate.id, required_groups=candidate.action_evidence) for candidate in candidates
+    kitchen_evidence = tuple(
+        ActionEvidenceCandidate(id=candidate.id, required_groups=candidate.action_evidence)
+        for candidate in kitchen_candidates
     )
 
-    assert uniquely_matched_candidate("Recover Michelle's memory card.", evidence) is None
-    assert uniquely_matched_candidate("Recover Michelle's memory card and read the saved files.", evidence).id == (
-        "k_sl_1a_b_r1"
+    assert uniquely_matched_candidate("Recover Michelle's memory card.", kitchen_evidence) is None
+    # 1A laptop reach: the files cannot be read while Kristin is still in the kitchen.
+    assert (
+        uniquely_matched_candidate("Recover Michelle's memory card and read the saved files.", kitchen_evidence) is None
+    )
+
+    assert world_for(package, state.facts).move("kristin", "truck_driver_seat").ok
+    laptop_candidates = (
+        KnowledgeProjector()
+        .project(
+            state,
+            "player",
+            "Recover Michelle's memory card and read the saved files.",
+        )
+        .candidates
+    )
+    laptop_evidence = tuple(
+        ActionEvidenceCandidate(id=candidate.id, required_groups=candidate.action_evidence)
+        for candidate in laptop_candidates
+    )
+
+    # 1A laptop reach: the same action resolves once Kristin is with her laptop.
+    assert (
+        uniquely_matched_candidate("Recover Michelle's memory card and read the saved files.", laptop_evidence).id
+        == "k_sl_1a_b_r1"
     )
 
 
@@ -919,6 +942,8 @@ def test_scene_1a_recording_warning_handoff_rejects_unsafe_partial_actions(
     state = RuntimeState.bootstrap(package)
     state.facts.assert_fact(Fact(predicate="memory_card_recovered", subject="story", value="true"))
     state.active_event_ids.add("SL-1A-B")
+    if expected_id is not None:
+        assert world_for(package, state.facts).move("kristin", "truck_driver_seat").ok
     candidates = KnowledgeProjector().project(state, "player", player_input).candidates
 
     handoff = uniquely_matched_authored_handoff(player_input, candidates)

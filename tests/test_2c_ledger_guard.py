@@ -10,6 +10,7 @@ import yaml
 
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.state import RuntimeState
+from storygame.runtime.world_model import world_for
 from storygame.story_package import StoryPackageError, load_story_package
 
 PACKAGE = Path("data/stories/continuity-initiative")
@@ -94,6 +95,10 @@ def test_2b_outcome_blocks_late_audit_recovery(selection: str, expected_fact: st
         "k_sl_2a_c_r5",
     ]
     for item in prefix:
+        if item == "k_sl_1a_b_r1":
+            world = world_for(package, state.facts)
+            assert world.move("kristin_laptop", "truck_passenger_seat").ok
+            assert world.move("kristin", "truck_driver_seat").ok
         _drive(engine, provider, item)
 
     assert state.current_scene_id == "2B"
