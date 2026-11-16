@@ -1,0 +1,185 @@
+"""Deterministic orchestration for the factory's persisted ticket queue."""
+
+from __future__ import annotations
+
+from collections.abc import Callable
+from dataclasses import dataclass
+from datetime import datetime, timedelta
+
+from factory.guard import LimitSleep
+from factory.state import FactoryState
+from factory.tickets import LadderRung, Station, Status, Ticket, TicketQueue
+
+
+@dataclass
+class StationResult:
+    """The result of one model-backed station check."""
+
+    passed: bool
+    check: str
+    output: str
+    tokens: int = 0
+
+
+StationHandler = Callable[[Ticket, datetime], StationResult]
+
+
+@dataclass
+class StepOutcome:
+    """The observable result of one line step."""
+
+    kind: str
+    ticket_id: str | None
+    detail: str = ""
+
+
+def _parse_datetime(value: str) -> datetime:
+    """Parse a persisted ISO timestamp."""
+
+    return datetime.fromisoformat(value.replace("Z", "+00:00"))
+
+
+class FactoryLine:
+    """Drive persisted tickets through fixed stations and injected handlers."""
+
+    def __init__(
+        self,
+        *,
+        queue: TicketQueue,
+        state: FactoryState,
+        handlers: dict[Station, StationHandler],
+        provider_for: Callable[[Ticket], str | None],
+        check_breakers: Callable[[datetime], list[str]],
+        max_attempts: int = 3,
+        set_aside_s: int = 21600,
+        probe_s: int = 1800,
+    ) -> None:
+        self.queue = queue
+        self.state = state
+        self.handlers = handlers
+        self.provider_for = provider_for
+        self.check_breakers = check_breakers
+        self.max_attempts = max_attempts
+        self.set_aside_s = set_aside_s
+        self.probe_s = probe_s
+
+    def _next_ready(self, now: datetime) -> tuple[Ticket, str | None] | None:
+        for ticket in self.queue.all():
+            if ticket.status is Status.QUEUED:
+                ready = True
+            elif ticket.status is Status.SLEEPING and ticket.sleep_until is not None:
+                ready = _parse_datetime(ticket.sleep_until) <= now
+            elif ticket.status is Status.SET_ASIDE and ticket.return_after is not None:
+                ready = _parse_datetime(ticket.return_after) <= now
+            else:
+                ready = False
+            if not ready:
+                continue
+
+            provider = self.provider_for(ticket)
+            if provider is not None and not self.state.lane_ready(provider, now):
+                continue
+            return ticket, provider
+        return None
+
+    def _check_breakers(self, now: datetime) -> None:
+        reasons = self.check_breakers(now)
+        if reasons:
+            self.state.trip_breaker("; ".join(reasons), now)
+            self.state.save()
+
+    def step(self, now: datetime) -> StepOutcome:
+        if self.state.is_tripped():
+            return StepOutcome("halted", None)
+
+        selected = self._next_ready(now)
+        if selected is None:
+            return StepOutcome("idle", None)
+
+        ticket, provider = selected
+        self.queue.mark_running(ticket.id, now)
+        handler = self.handlers.get(ticket.station)
+        if handler is None:
+            raise ValueError(f"missing handler for station {ticket.station.name}")
+
+        try:
+            result = handler(ticket, now)
+        except LimitSleep as error:
+            resume_at = error.resume_at or now + timedelta(seconds=self.probe_s)
+            if provider is not None:
+                self.state.sleep_lane(provider, resume_at)
+                self.state.save()
+            self.queue.record_limit_hit(ticket.id, error.provider, resume_at, now)
+            self._check_breakers(now)
+            return StepOutcome("slept", ticket.id)
+
+        self.queue.record_tokens(ticket.id, result.tokens)
+        if result.passed:
+            if ticket.station is Station.DELIVER:
+                self.queue.record_pass(ticket.id, now)
+                outcome = StepOutcome("delivered", ticket.id)
+            else:
+                updated = self.queue.get(ticket.id)
+                updated.station = Station(ticket.station + 1)
+                updated.status = Status.QUEUED
+                updated.attempts = 0
+                updated.ladder_rung = LadderRung.LUNA_RETRY
+                updated.provider = None
+                updated.sleep_until = None
+                updated.return_after = None
+                self.queue.save(updated)
+                outcome = StepOutcome("advanced", ticket.id)
+        else:
+            self.queue.record_failure(
+                ticket.id,
+                result.check,
+                result.output,
+                now,
+                max_attempts=self.max_attempts,
+                set_aside_s=self.set_aside_s,
+            )
+            outcome = StepOutcome("failed_attempt", ticket.id)
+
+        self._check_breakers(now)
+        return outcome
+
+    def _all_passed(self) -> bool:
+        tickets = self.queue.all()
+        return not tickets or all(ticket.status is Status.PASSED for ticket in tickets)
+
+    def _next_wake(self, now: datetime) -> datetime | None:
+        wake_times: list[datetime] = []
+        for ticket in self.queue.all():
+            if ticket.status is Status.SLEEPING and ticket.sleep_until is not None:
+                wake_times.append(_parse_datetime(ticket.sleep_until))
+            elif ticket.status is Status.SET_ASIDE and ticket.return_after is not None:
+                wake_times.append(_parse_datetime(ticket.return_after))
+        wake_times.extend(_parse_datetime(until) for until in self.state.lanes.values())
+        future = [wake for wake in wake_times if wake > now]
+        return min(future) if future else None
+
+    def run(
+        self,
+        *,
+        clock: Callable[[], datetime],
+        sleep: Callable[[float], None],
+        max_steps: int = 10000,
+    ) -> list[StepOutcome]:
+        outcomes: list[StepOutcome] = []
+        for _ in range(max_steps):
+            now = clock()
+            outcome = self.step(now)
+            outcomes.append(outcome)
+            if outcome.kind == "halted" or self._all_passed():
+                break
+            if outcome.kind != "idle":
+                continue
+
+            if not self.queue.all():
+                break
+            wake = self._next_wake(now)
+            if wake is None:
+                break
+            seconds = max(1.0, (wake - now).total_seconds())
+            sleep(seconds)
+        return outcomes
