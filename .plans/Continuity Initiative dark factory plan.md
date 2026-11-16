@@ -6,7 +6,7 @@ Nov 15, 2026 · @Brandon Corfman
 
 Build the factory in three steps, in this order, because each one removes a reason you are still in the loop.
 
-1. **One story source, wording written once.** Finish the D1 compiler, and add a name lexicon so matcher words, leak terms and must-convey lists are derived instead of typed. A beat change becomes one edit by record ID.
+1. **One story source, wording written once.** Finish the D1 compiler first, with matcher lists written out and parity on every scene. That alone gives one owner per fact, effects stated once, tests that look wording up by record ID, and a beat change that is one edit by record ID. Then add a name lexicon as a second pass, only where the measurements show phrases repeat (the noun-phrase scenes, 1A to 2C). It is not the foundation of step 1, and it does not help the large synonym lists in 3A to 3C.
 2. **World model inside the loop.** Before any prose is written for a scene, a free check lists the state the scene depends on and compares it with what Worldkeeper can represent. Gaps become Worldkeeper tickets first. This replaces the unplanned fork you have hit three times.
 3. **A deterministic line with no LLM orchestrator session.** A small Python state machine drives Ringer. Models are called only at fixed stations with small packets: Opus for planning and replanning under a hard call cap, Sonnet for specs, prose and triage, Luna for wiring and code, Jev for judging. Free checks always run before billed ones.
 
@@ -33,9 +33,11 @@ The D1 decision is the right base. Scene blocks compile to the existing `StoryPa
 
 ## Step 1: one story source, wording written once
 
-Keep D1, and add one idea to it: a **name lexicon**. Every entity and fact declares its names once, and the compiler expands them wherever today's files repeat them.
+Step 1 has two passes, and they have separate gates.
 
-In the 1A draft, the card's names appear in the placement, nine `leak_terms`, two `must_convey` groups, two `action_evidence` groups, `aliases`, and three sentences that say the same thing. With a lexicon the reveal shrinks to roughly this:
+**Pass 1: the D1 compiler with explicit lists.** Matcher lists (`action_evidence`, `must_convey`, `leak_terms`, `aliases`) are written out in the scene file as they are today. Fact ownership, claim effects, test lookup by record ID and the story CLI all work without any derivation. The gate is an empty parity diff per scene. This pass does not depend on the lexicon, so a lexicon problem cannot hold up the migration.
+
+**Pass 2: a name lexicon, scoped to where it pays.** Every entity and concept declares its names once, and the compiler expands them wherever today's files repeat them. The sample in "Where the lexicon pays" below says where that is. In the 1A draft, the card's names appear in the placement, nine `leak_terms`, two `must_convey` groups, two `action_evidence` groups, `aliases`, and three sentences that say the same thing. With a lexicon the reveal shrinks to roughly this:
 
 ```yaml
 entities:
@@ -56,7 +58,7 @@ reveals:
         text: "{find_lead} Her laptop is still out in her truck."
 ```
 
-Derivation rules, all explicit and all overridable with `add:` and `drop:`:
+Pass 2 derivation rules, all explicit and all overridable with `add:` and `drop:`. The lexicon has three sections: **entities** (names and aliases), **concepts** (named phrases that are not world things, such as `dead drop`, `damaged recording`), and **verb classes** added by the story to the engine's own. An entity-only lexicon would leave half of 1A's matcher words typed by hand.
 
 - `action_evidence` comes from the slots: a verb class the matcher already has, a position class, and the entity's names.
 - `must_convey` comes from `conveys`, expanded through the lexicon.
@@ -64,7 +66,16 @@ Derivation rules, all explicit and all overridable with `add:` and `drop:`:
 - `purpose`, `intent` and `says` collapse into one sentence per variant. The other two are derived unless overridden.
 - `examples` stay, but as a separate test file per scene, so the scene file stays readable.
 
-The gate is the parity gate you already planned: the compiled package must equal the legacy-loaded one, shown as a semantic diff. I have not checked that derived lists reproduce today's lists exactly. Where they differ, the diff says so, and the difference is either an override or a real bug in today's data.
+**Gates.** Pass 1 uses the parity gate you already planned: the compiled package must equal the legacy-loaded one, shown as a semantic diff, with an empty diff the exit. Pass 2 runs one scene at a time, after that scene has parity. A derived list either reproduces the explicit list exactly, or the difference is listed and reviewed as an override, a representation change, or a real bug in today's data. A field where more than a third of entries need `add:` or `drop:` stays explicit. Where a derivation shortens a list on purpose (for example, dropping verbs the engine's synonym class already admits), the compiler expands it back to the full list, so the compiled package does not change and matching behavior stays what was tuned in live play.
+
+### Where the lexicon pays
+
+Measured 2026-11-16 on the loaded package (`.plans/story-data-phase0/lexicon_derivable.py` and the sample table in the status note below). The matcher data is two different kinds of thing:
+
+- **Noun-phrase scenes, 1A to 2C (and partly 3A).** Short lists that name things and concepts. 46% to 68% of phrase occurrences repeat across claims or fields, so a lexicon removes real repetition. 1A is the most repetitive scene, so its saving is the best case, not the average.
+- **Broad-action scenes, 3A to 3C.** 3B has 563 `action_evidence` words across 11 claims and no `must_convey` or `leak_terms`; 3C has 502 across 17. Each claim lists dozens of ways to do one thing. Sibling claims share almost nothing (3B mean pairwise overlap 0.01), and only 16% to 22% of occurrences repeat. A lexicon does not help here. The one mechanical saving is plural twins: about 13% of all `action_evidence` entries (24% in 3B) are the plural or singular of another entry in the same group, which the matcher does not fold for phrases. Whether to derive those is a pass-2 choice with the same expand-back rule.
+
+So pass 2 starts on 1A to 2C. 3A to 3C stay explicit unless the plural-twin derivation is taken, and it needs its own parity check.
 
 ### How this becomes factory work
 
@@ -320,7 +331,7 @@ The largest saving is removing the long-lived orchestrator session; the rest is 
 Build the line first on today's files so it pays back at once, then migrate the story through it. Sizes are my estimates from reading the repo, not measurements.
 
 1. **Factory skeleton on today's package (small).** Ticket schema, state file, manifest templates, check library, model allowlist, spend caps and circuit breakers. Wire in the gates that already exist. Add the lints. Shake it down on one open defect, such as the 2C transmit branch leaving no trace in 3A.
-2. **Compiler and lexicon, 1A to parity (medium, the critical path).** Finish Phase 1 schema items with the lexicon added. Fixtures and tests first, as your plan says. Exit on an empty parity diff for 1A.
+2. **Compiler, 1A to parity (medium, the critical path).** Finish Phase 1 schema items with matcher lists written out and the lexicon left as an optional layer in the schema. Fixtures and tests first, as your plan says. Exit on an empty parity diff for 1A. The lexicon pass for 1A follows as its own ticket with its own gate, and does not block step 3.
 3. **Swarm the migration (medium, parallel).** Eight scenes and the coupled tests, one worker each, parity gate per scene. Build the story CLI and the generated script view here.
 4. **World-need check, contract lint and judge calibration (small, parallel with 2 and 3).** None depends on the new format.
 5. **Pre-flight, then start.** First a watched rehearsal: one scene goes through the whole line, and each circuit breaker is tripped on purpose with an injected fault. Then you set the budget and caps and press start. Opus writes the three act contracts as the first dark step. The lint accepts the three act contracts. Pressing start is your last action.
@@ -328,6 +339,38 @@ Build the line first on today's files so it pays back at once, then migrate the 
 7. **Whole-game runs and delivery (dark).** Blind-player full runs at the adoption sample size and hosted E2E on the staged SHA. Zero stuck turns and every target met, then the factory reports the delivered build.
 
 **Status, 2026-11-16.** Step 1 is built: `factory/` has the ticket queue, state file, model allowlist and spend ledger, the eight circuit breakers, the manifest generator with check linting, the frozen-harness guard, the check library (`factory/checks/`, including the gap-rule baseline comparison and canary tickets), the breaker drill, and the `python -m factory` entry point with preflight. `python -m factory drill` trips all eight breakers on the real code. Preflight fails on purpose until the owner sets the budget and caps. Not yet built: the real model station handlers (stations 2 to 9), so the line runs only with injected handlers. The planned shakedown defect (the 2C transmit branch leaving no trace in 3A) was fixed by hand before the factory existed; the 1A laptop defect was fixed through Ringer as a stand-in, and canary tickets cover the "no valid solution" case. Next is step 2, the compiler and lexicon for 1A, with no time box and no fallback to the nine files (owner decision, 2026-11-16).
+
+**Step 2 measurement, 2026-11-16** (`.plans/story-data-phase0/lexicon_derivable.py`, read-only, run on the loaded package). I sorted every entry in the 20 scene-1A claims' matcher lists by where a lexicon could get it. The categories are an entity name or alias, a word already in the engine's synonym classes, a word inside an entity name (`card`, `laptop`), and "bespoke" (none of those).
+
+| List | Entries | Entity name or contained in one | Engine class word | Name token | Bespoke |
+| --- | --- | --- | --- | --- | --- |
+| `action_evidence` | 232 | 36 | 64 | 16 | 116 (50%) |
+| `must_convey` | 174 | 74 | 0 | 23 | 77 (44%) |
+| `leak_terms` | 34 | 17 | 0 | 0 | 17 (50%) |
+
+What this means for the schema:
+
+- **An entity-only lexicon fails the plan's own one-third rule** (a field with more than a third overridden drops back to explicit lists). Half of each list is bespoke.
+- The bespoke entries are not random. They are story concepts that are not entities (`dead drop`, `damaged recording`, `reflective tape`, `federal patrol`) and verbs the engine has no class for (`call`, `listen`, `connect`, `insert`, `drive`, `head`). So the lexicon needs three sections: **entities** (names), **concepts** (named phrases that are not world things), and **verb classes** (story-level, added to the engine's). Re-measure against that lexicon before the schema is frozen.
+- **There is little copying between claims in 1A.** 19 claims with `action_evidence` have 17 distinct lists, and 16 with `must_convey` have 15. The duplication this step removes is the same noun phrase repeated across fields of one claim (`leak_terms`, `must_convey`, `aliases`, `says`), not shared lists. The saving is real but smaller than "one edit by record ID" suggests for matcher words.
+- The counts say what the lexicon *could* hold, not that derivation reproduces today's lists. That is still what the parity diff measures.
+
+**All-scene sample, same day** (`lexicon_repeat_by_scene.py`; every claim belongs to exactly one scene). "Repeated" is the share of phrase occurrences, counting `action_evidence`, `must_convey`, `leak_terms` and `aliases`, whose phrase appears in two or more claims or fields. "Bespoke" is the share that is not an entity name, a name token or an engine class word. Both are heuristics; the entity test is a substring match, so some "bespoke" words would be covered by a lexicon's short names.
+
+| Scene | Claims | Occurrences | Distinct | Repeated | Bespoke |
+| --- | --- | --- | --- | --- | --- |
+| 1A | 20 | 471 | 255 | 68% | 47% |
+| 1B | 14 | 178 | 117 | 56% | 37% |
+| 1C | 11 | 124 | 84 | 53% | 32% |
+| 2A | 12 | 165 | 107 | 58% | 56% |
+| 2B | 12 | 208 | 122 | 64% | 49% |
+| 2C | 10 | 149 | 112 | 46% | 53% |
+| 3A | 15 | 371 | 233 | 61% | 54% |
+| 3B | 11 | 581 | 525 | 16% | 79% |
+| 3C | 17 | 540 | 471 | 22% | 77% |
+| All | 122 | 2787 | 1693 | 55% | 60% |
+
+1A does not represent the whole story. It is the most repetitive scene, and 3B and 3C are a different kind of data (long synonym enumerations, almost no sharing). `lexicon_plural_twins.py` counts `action_evidence` entries that are the plural or singular twin of another entry in the same group: 13% overall (2139 entries), 4% in 1A, 12% in 3A, 24% in 3B, 18% in 3C. Step 1 is rewritten around this: pass 1 compiles with explicit lists, pass 2 adds the lexicon per scene where it pays (see "Where the lexicon pays").
 
 Steps 1 to 4 build the factory, and you may still be steering there as you do today. The dark run is steps 6 and 7.
 
@@ -349,7 +392,7 @@ After delivery: play the game, then promote it to production if you like it.
 | Zero stuck turns is proven structurally but only sampled live | A phrasing no playtest tried could still loop | Carry matrix on every state; blind-player personas with varied phrasing; any live stuck turn blocks |
 | Harsher delay costs meet protected characters and canon | A cost could harm Michelle or spend a character needed later | Protected list lint; harm ladder in each act contract |
 | Longer scenes raise playtest cost | 10 to 13 turns per scene roughly doubles narrator and judge calls per run | Scripted prefixes, three-replicate smokes, twelve only at adoption |
-| Lexicon derivation may not reproduce today's matcher and guard lists | Parity fails, or overrides pile up | Measured on 1A; a field with more than a third overridden drops back to explicit lists |
+| Lexicon derivation may not reproduce today's matcher and guard lists | Parity fails, or overrides pile up. About half of 1A's matcher words are bespoke, and 3A to 3C have almost no repetition to remove | Pass 1 keeps explicit lists, so parity never depends on derivation. Pass 2 is per scene, starts on 1A to 2C, and a field with more than a third overridden stays explicit |
 | New gap-rule results block factory changes | It amends the spirit of D3 | On for the factory; CI stays non-blocking |
 | No human reads code diffs | Ringer's README advises against it | Fresh-context diff reviewer for engine and Worldkeeper; ownership lists; coverage gate |
 | Opus, Sonnet and Luna call volume on subscriptions | Rate limits or overage could stall or cost | Call caps, backoff, and the circuit breakers |
