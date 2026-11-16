@@ -1,0 +1,30 @@
+{
+  "caps": {
+    "total_budget_usd": 0.0,
+    "daily_cap_usd": {
+      "claude_code": 0.0,
+      "codex": 0.0,
+      "cloudflare": 0.0
+    },
+    "call_caps": [],
+    "rate_window_s": 3600,
+    "rate_max_usd": 0.0
+  },
+  "breakers": {
+    "repeat_failures": 3,
+    "token_median_factor": 5.0,
+    "min_tickets_for_median": 5,
+    "provider_overdue_s": 86400
+  },
+  "notifier": {
+    "kind": "file",
+    "path": "factory/state/notices.txt"
+  },
+  "paths": {
+    "state": "factory/state/state.json",
+    "tickets": "factory/state/tickets",
+    "ledger": "factory/state/ledger.jsonl",
+    "allowlist": "factory/config/allowlist.json",
+    "frozen": "factory/config/frozen.json"
+  }
+}
