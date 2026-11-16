@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from tests.story_source.helpers import copy_fixture, load_tree, patch_source
+from tests.story_source.helpers import copy_fixture, load_tree, patch_source, require_story_source
 
 
 def _add_cycle_exit(root: Path) -> dict[str, object]:
@@ -59,7 +59,7 @@ def test_cycles_fixture_changes_only_the_cycle_inputs(tmp_path: Path) -> None:
 
 
 def test_cycles_are_reported_as_source_error(tmp_path: Path) -> None:
-    story_source = pytest.importorskip("storygame.story_source")
+    story_source = require_story_source()
     clean = copy_fixture("mini_ok", tmp_path / "clean")
     assert story_source.check_source_tree(clean) == []
 

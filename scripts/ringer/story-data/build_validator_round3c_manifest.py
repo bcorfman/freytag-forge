@@ -1,0 +1,92 @@
+# ruff: noqa: E501  (spec strings are prose briefs for a worker)
+"""Build the Ringer manifest for validator round 3c: layer 2 checks (two parallel tasks)."""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+REPO = "/home/bcorfman/dev/freytag-forge"
+WORK = "/home/bcorfman/dev/ringer-work/story-data-validator"
+
+COMMON = f"""You are a Python engineer. Your current working directory IS a git worktree of {REPO} (detached at HEAD). Edit files here directly. NEVER git commit, never touch {REPO} itself, never run `uv`, never call a billed model or the network. FIRST run: [ -e .venv ] || ln -s {REPO}/.venv .venv ; run tests as `PYTHONPATH=$PWD:$PWD/packages/worldkeeper/src TMPDIR=/tmp .venv/bin/python -m pytest -q -p no:cacheprovider -n 0 <files>` (never pass --cov); ruff as `.venv/bin/python -m ruff check <files>` and `.venv/bin/python -m ruff format <files>` (line length 120, double quotes, Python 3.12, PyYAML only, no new dependencies).
+
+BACKGROUND. The game's story data is moving to a declarative source format that a compiler turns into the existing `StoryPackage`. The format is fixed by the contract at .plans/story-data-schema-contract.md (read it; do not edit it). The package `storygame/story_source/` already exists with: `diagnostics.py` (`Diagnostic(name, file, address, field, message)`), `reader.py` (`read_source_tree(root) -> (SourceTree, diagnostics)`; `SourceTree.files` maps relative posix path to parsed data, `SourceTree.line_of(file, path_tuple)` gives a 1-based line), `checks.py` (a registry: decorate `fn(tree: SourceTree) -> list[Diagnostic]` with `@layer2_check`; any module in the package named `l2_*.py` is imported automatically, so you add a file and edit no shared file), and layer 1 shape checks in `l1_root.py` and `l1_scene.py` (read them for how keys are walked and how addresses are written; reuse the address style). `check_source_tree(root)` runs layer 1 and, when the files read cleanly, layer 2. Layer 2 checks may assume layer 1 shapes are valid but must still never crash: if a value is not the expected type, skip it quietly (layer 1 reports it). Read these files and tests/story_source/test_reader.py first. The valid base tree is tests/fixtures/story_source/mini_ok/ (fixture F01); `check_source_tree` must return [] for it, always. Fixture tests live in tests/story_source/test_f*.py; read the ones named below, and the matching tests/story_source/ambiguities_*.md notes.
+
+YOUR JOB: layer 2 checks (contract section 7, the L2 rows; plus sections 4.5 to 4.14, 5, 8.1 and 10.1). Layer 2 is cross-record: ids, references and rules between records. Each Diagnostic carries the stable name from the table, the file, a non-empty section 8.1 style address, the offending key as `field`, and a message that names the id involved (tests never assert exact wording; they assert name, file, non-empty address and field, and that the message names the id). Write at least one failing-case test per check name you implement, in your own test file, built by copying mini_ok with `copy_fixture` and mutating with `patch_source` or by writing a file; each also asserts that the unmutated tree has none of your diagnostics. Keep modules readable: no function longer than about 60 lines, a docstring on each module, private helpers inside your own module (another worker writes a sibling module in parallel; do not import from it).
+
+NOT yours: layer 1 names, `L2.lock_stale`, `L2.drop_unused` (they need the pass 2 expander, built later), `L2.cycles` and the `LOADER` diagnostics (they come from the compiler), and any `L3.*` name. Put a short `# NOTE:` comment at the top of your test file for any contract ambiguity and what you assumed.
+"""
+
+TASKS = [
+    {
+        "key": "r3c-l2-facts-and-refs",
+        "owned": ["storygame/story_source/l2_facts.py", "tests/story_source/test_l2_facts.py"],
+        "text": """You own ONLY: storygame/story_source/l2_facts.py and tests/story_source/test_l2_facts.py.
+
+YOUR CHECKS: `L2.duplicate_id` (an id defined twice within a kind, story-wide: fact, claim, beat, exit, entity, storylet, realization, reveal handle, incident, bridge, outline anchor), `L2.dangling_ref` (any id, part name `{name}` in a passage, `use` block, fact in a condition, exit target scene, outline id or entity that does not resolve; the F08 fixture seeds four: a `{missing}` part, `use: nope`, an unknown fact in `when`, an exit to an unknown scene), `L2.fact_one_owner` (a fact declared in two places, scene files and catalog), `L2.fact_declaring_scene` (a fact's declaring scene is not its first setting scene, or with no setter its first reading scene; the message prints the declaration block and the scene file to move it to; `story.yaml` `scenes` gives the scene order), `L2.unplaced_fact` (a fact listed in catalog `unplaced_facts` that something sets or reads), `L2.undeclared_fact` (a fact used but declared nowhere). Read contract sections 4.2, 4.5, 4.6, 4.7, 4.8, 4.11 to 4.13, 5 and 7.
+
+Fixture tests that must pass (their check_source_tree parts; skip parts needing a compiler): tests/story_source/test_f04_fact_two_owners.py, test_f05_fact_wrong_scene.py, test_f08_dangling.py. Read the ambiguities_f02-f08 note too.""",
+        "own_tests": "tests/story_source/test_l2_facts.py tests/story_source/test_f04_fact_two_owners.py tests/story_source/test_f05_fact_wrong_scene.py tests/story_source/test_f08_dangling.py",
+    },
+    {
+        "key": "r3c-l2-claims-and-scope",
+        "owned": ["storygame/story_source/l2_claims.py", "tests/story_source/test_l2_claims.py"],
+        "text": """You own ONLY: storygame/story_source/l2_claims.py and tests/story_source/test_l2_claims.py.
+
+YOUR CHECKS: `L2.claim_authorized` (a claim's `commits_subset` is not a subset of its source variant's compiled commits), `L2.override_add_only` (a claim's `leak_terms` over a `shared` value written as anything but `{add: [...]}`; a variant `boundaries` key, which is reveal-level only), `L2.match_coverage` (a claim with no match entry, a match entry with no claim, a `delivery` with no `deliveries` entry; the match file's `claims` must hold exactly the scene's claims), `L2.incident_observes_outcomes` (`observed_by` lacks an outcome variant's claim), `L2.scene_scope` (`helps_exit` or `successor` naming another scene's exit; `reach` or `needs` items absent from the scene's `items`/`participants`; the contract says this is not yet verified against the loader, so implement what the contract states and no more), `L2.ending_scene` (`ending` outside the last scene of `story.scenes`), and `L2.ownership` (the manifest `ownership.yaml` marks a scene `compiled` while a legacy file still defines it, or a record id is defined on both sides; the message names both sources; see contract sections 2 and 4.1 and fixture F14, whose ownership.yaml sits in the tree root per tests/story_source/ambiguities_f09-f16-loader-and-order.md; with no ownership.yaml nothing is flagged). Read contract sections 4.8, 4.9, 4.11 to 4.14, 5 and 7.
+
+Fixture tests that must pass (their check_source_tree parts; skip parts needing a compiler): tests/story_source/test_f06_claim_unauthorized.py, test_f07_leak_narrowed.py (two diagnostics), test_f11_observes_missing.py, test_f14_two_owners_manifest.py. Read the ambiguities_f02-f08 and ambiguities_f09-f16 notes too.""",
+        "own_tests": "tests/story_source/test_l2_claims.py tests/story_source/test_f06_claim_unauthorized.py tests/story_source/test_f07_leak_narrowed.py tests/story_source/test_f11_observes_missing.py tests/story_source/test_f14_two_owners_manifest.py",
+    },
+]
+
+def check(owned: list[str], own_tests: str, key: str) -> str:
+    keep = " ".join(f"-e '^{p}$'" for p in owned)
+    return f"""set -eo pipefail
+[ -e .venv ] || ln -s {REPO}/.venv .venv
+export PYTHONPATH=$PWD:$PWD/packages/worldkeeper/src TMPDIR=/tmp
+out=$(mktemp)
+rc=0
+.venv/bin/python -m pytest -q -p no:cacheprovider -n 0 {own_tests} tests/story_source/test_f01_mini_ok.py tests/story_source/test_f02_dup_key.py tests/story_source/test_reader.py tests/story_source/test_layer_registry.py > "$out" 2>&1 || rc=$?
+tail -40 "$out"
+[ "$rc" -eq 0 ] || exit "$rc"
+.venv/bin/python -m ruff check storygame/story_source tests/story_source
+.venv/bin/python -m ruff format --check storygame/story_source tests/story_source
+git add -A -- storygame/story_source tests/story_source
+bad=$(git diff --cached --name-only | grep -v {keep} || true)
+[ -z "$bad" ] || {{ echo "files outside ownership staged: $bad"; exit 1; }}
+git diff --cached > {WORK}/{key}.patch
+test -s {WORK}/{key}.patch
+"""
+
+
+manifest = {
+    "run_name": "story-data-validator",
+    "workdir": WORK,
+    "max_parallel": 2,
+    "worktrees": True,
+    "repo": REPO,
+    "tasks": [
+        {
+            "key": t["key"],
+            "task_type": "code-feature",
+            "engine": "codex",
+            "engine_args": ["-c", "model_reasoning_effort=high"],
+            "max_attempts": 2,
+            "timeout_s": 2700,
+            "check_timeout_s": 900,
+            "ownership": t["owned"],
+            "spec": COMMON + "\n" + t["text"],
+            "check": check(t["owned"], t["own_tests"], t["key"]),
+            "expect_files": [],
+            "verified": "Layer 2 checks for the owned names exist, each has a failing-case test, F01 stays clean, ruff clean, only owned files changed.",
+        }
+        for t in TASKS
+    ],
+}
+
+if __name__ == "__main__":
+    out = Path(__file__).with_name("validator-round3c-manifest.json")
+    out.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+    print(out)

@@ -2,9 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
-from tests.story_source.helpers import copy_fixture, load_tree
+from tests.story_source.helpers import copy_fixture, load_tree, require_story_source
 
 _EXAMPLES = """schema: 1
 scene: 1A
@@ -53,14 +51,14 @@ def test_examples_are_separate_and_only_add_the_1a_examples_file(tmp_path: Path)
 
 
 def test_examples_source_tree_is_clean_when_compiler_exists(tmp_path: Path) -> None:
-    story_source = pytest.importorskip("storygame.story_source")
+    story_source = require_story_source()
     root = copy_fixture("mini_ok", tmp_path)
 
     assert story_source.check_source_tree(root) == []
 
 
 def test_checker_names_the_failing_group_and_smallest_word(tmp_path: Path) -> None:
-    story_source = pytest.importorskip("storygame.story_source")
+    story_source = require_story_source()
     root = copy_fixture("mini_ok", tmp_path / "source")
     examples = _write_examples(tmp_path)
 

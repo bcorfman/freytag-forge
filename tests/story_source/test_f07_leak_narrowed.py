@@ -2,9 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
-from tests.story_source.helpers import copy_fixture, load_tree, patch_source
+from tests.story_source.helpers import copy_fixture, load_tree, patch_source, require_story_source
 
 
 def _changed_paths(before: dict[str, object], after: dict[str, object]) -> set[str]:
@@ -49,7 +47,7 @@ def test_leak_narrowed_has_exactly_the_two_contract_mutations(tmp_path: Path) ->
 
 
 def test_leak_narrowed_diagnostics(tmp_path: Path) -> None:
-    story_source = pytest.importorskip("storygame.story_source")
+    story_source = require_story_source()
     root = copy_fixture("mini_ok", tmp_path)
     patch_source(root, "scenes/1A.match.yaml", "claims.k_sl_1a_b_r0.leak_terms", ["memory card"])
     patch_source(root, "scenes/1A.yaml", "reveals[find_card].variants.quiet.boundaries", ["janus_phase_two"])

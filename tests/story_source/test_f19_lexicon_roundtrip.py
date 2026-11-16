@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from tests.story_source.helpers import copy_fixture, load_tree
+from tests.story_source.helpers import copy_fixture, load_tree, require_story_source
 
 _MEMORY_NAMES = ["memory card", "card", "Michelle's card", "the card"]
 _MEMORY_HIDDEN_NAMES = ["hidden card", "hidden memory card"]
@@ -96,19 +96,17 @@ def _build_roundtrip_fixture(root: Path) -> None:
     _replace_shared_value(
         root,
         "leak_terms",
-        [
-            {
-                "from": ["$memory_card.all"],
-                "add": [
-                    "taped beneath the drawer",
-                    "taped under the drawer",
-                    "taped to the drawer",
-                    "memory card recovered",
-                    "saved file(s)",
-                ],
-                "drop": ["saved file", "saved files"],
-            }
-        ],
+        {
+            "from": ["$memory_card.all"],
+            "add": [
+                "taped beneath the drawer",
+                "taped under the drawer",
+                "taped to the drawer",
+                "memory card recovered",
+                "saved file(s)",
+            ],
+            "drop": ["saved file", "saved files"],
+        },
     )
     _write_lexicon(root)
     _write_lock(root)
@@ -145,7 +143,7 @@ def test_lexicon_roundtrip_tree_has_only_lexicon_inputs_and_lock(tmp_path: Path)
 
 
 def test_equivalent_lexicon_lock_compiles_to_the_f01_package(tmp_path: Path) -> None:
-    story_source = pytest.importorskip("storygame.story_source")
+    story_source = require_story_source()
     root = copy_fixture("mini_ok", tmp_path / "mutated")
     _build_roundtrip_fixture(root)
     baseline_root = copy_fixture("mini_ok", tmp_path / "baseline")
@@ -158,7 +156,7 @@ def test_equivalent_lexicon_lock_compiles_to_the_f01_package(tmp_path: Path) -> 
 def test_story_expand_roundtrip_without_lexicon_keeps_canonical_json(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    story_source = pytest.importorskip("storygame.story_source")
+    story_source = require_story_source()
     story_cli = pytest.importorskip("storygame.story_cli")
     root = copy_fixture("mini_ok", tmp_path / "expanded")
     _build_roundtrip_fixture(root)

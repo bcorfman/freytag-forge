@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from tests.story_source.helpers import DELETE, copy_fixture, load_tree, patch_source
+from tests.story_source.helpers import DELETE, copy_fixture, load_tree, patch_source, require_story_source
 
 
 def test_fixture_copies_and_loads(tmp_path: Path) -> None:
@@ -90,7 +90,7 @@ def test_scene_claims_equal_match_claims(tmp_path: Path, scene: str) -> None:
 
 
 def test_mini_ok_compiles_when_api_exists(tmp_path: Path) -> None:
-    story_source = pytest.importorskip("storygame.story_source")
+    story_source = require_story_source()
     root = copy_fixture("mini_ok", tmp_path)
 
     assert story_source.check_source_tree(root) == []

@@ -2,9 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
-from tests.story_source.helpers import DELETE, copy_fixture, load_tree, patch_source
+from tests.story_source.helpers import DELETE, copy_fixture, load_tree, patch_source, require_story_source
 
 
 def test_claimless_variant_removes_only_claimed_passage_fields_and_match_entry(tmp_path: Path) -> None:
@@ -29,7 +27,7 @@ def test_claimless_variant_removes_only_claimed_passage_fields_and_match_entry(t
 
 
 def test_claimless_variant_compiles_without_a_knowledge_claim(tmp_path: Path) -> None:
-    story_source = pytest.importorskip("storygame.story_source")
+    story_source = require_story_source()
     root = copy_fixture("mini_ok", tmp_path)
     for address in ("claim_id", "says", "text"):
         patch_source(root, "scenes/1A.yaml", f"reveals[find_card].variants.quiet.{address}", DELETE)

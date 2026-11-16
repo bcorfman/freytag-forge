@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from tests.story_source.helpers import copy_fixture, load_tree
+from tests.story_source.helpers import copy_fixture, load_tree, require_story_source
 
 
 def test_duplicate_key_is_the_only_raw_source_mutation(tmp_path: Path) -> None:
@@ -39,7 +39,7 @@ def test_duplicate_key_is_the_only_raw_source_mutation(tmp_path: Path) -> None:
 
 
 def test_duplicate_key_diagnostic(tmp_path: Path) -> None:
-    story_source = pytest.importorskip("storygame.story_source")
+    story_source = require_story_source()
     root = copy_fixture("mini_ok", tmp_path)
     scene = root / "scenes/1A.yaml"
     original = scene.read_text(encoding="utf-8")

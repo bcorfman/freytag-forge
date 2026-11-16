@@ -6,9 +6,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-import pytest
-
-from tests.story_source.helpers import copy_fixture, load_tree, patch_source
+from tests.story_source.helpers import copy_fixture, load_tree, patch_source, require_story_source
 
 _DIGEST_SCRIPT = r"""
 import hashlib
@@ -83,9 +81,10 @@ def test_deterministic_fixture_changes_only_the_story_title(tmp_path: Path) -> N
 
 
 def test_compiling_twice_in_two_processes_is_canonical_json_deterministic(tmp_path: Path) -> None:
-    story_source = pytest.importorskip("storygame.story_source")
+    story_source = require_story_source()
     root = copy_fixture("mini_ok", tmp_path)
     patch_source(root, "story.yaml", "title", "Story 1373 deterministic fixture")
     assert story_source.check_source_tree(root) == []
+    _ = story_source.compile_source_tree  # skips while the compiler is not built; the subprocesses need it
 
     assert _run_compile(root) == _run_compile(root)
