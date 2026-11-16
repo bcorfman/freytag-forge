@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from tests.story_source.helpers import copy_fixture, load_tree
+from tests.story_source.helpers import copy_fixture, load_tree, require_story_source
 
 _LOOKUP_BRIDGE = {
     "id": "bridge_1a_lookup",
@@ -46,7 +46,7 @@ def test_lookup_fixture_adds_only_one_bridge_record(tmp_path: Path) -> None:
 
 
 def test_every_contract_lookup_kind_resolves_and_unknown_addresses_fail(tmp_path: Path) -> None:
-    story_source = pytest.importorskip("storygame.story_source")
+    story_source = require_story_source()
     root = copy_fixture("mini_ok", tmp_path)
     _add_bridge(root)
     clean_root = copy_fixture("mini_ok", tmp_path / "clean")

@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from tests.story_source.helpers import copy_fixture, load_tree, patch_source
+from tests.story_source.helpers import copy_fixture, load_tree, patch_source, require_story_source
 
 
 def test_observes_fixture_changes_only_observed_by(tmp_path: Path) -> None:
@@ -27,7 +27,7 @@ def test_observes_fixture_changes_only_observed_by(tmp_path: Path) -> None:
 
 
 def test_missing_outcome_observation_is_reported(tmp_path: Path) -> None:
-    story_source = pytest.importorskip("storygame.story_source")
+    story_source = require_story_source()
     clean = copy_fixture("mini_ok", tmp_path / "clean")
     assert story_source.check_source_tree(clean) == []
 

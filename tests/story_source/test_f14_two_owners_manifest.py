@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from tests.story_source.helpers import copy_fixture, load_tree
+from tests.story_source.helpers import copy_fixture, load_tree, require_story_source
 
 _OWNERSHIP = """schema: 1
 catalog: legacy
@@ -29,7 +29,7 @@ def test_two_owners_fixture_adds_only_the_manifest(tmp_path: Path) -> None:
 
 
 def test_compiled_scene_with_legacy_definition_reports_ownership(tmp_path: Path) -> None:
-    story_source = pytest.importorskip("storygame.story_source")
+    story_source = require_story_source()
     clean = copy_fixture("mini_ok", tmp_path / "clean")
     assert story_source.check_source_tree(clean) == []
     root = copy_fixture("mini_ok", tmp_path / "mutated")

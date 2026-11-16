@@ -3,10 +3,9 @@ from __future__ import annotations
 import copy
 from pathlib import Path
 
-import pytest
 import yaml
 
-from tests.story_source.helpers import copy_fixture, load_tree, patch_source
+from tests.story_source.helpers import copy_fixture, load_tree, patch_source, require_story_source
 
 _SAY_ENTRIES = [
     {"when": {"card_challenged": True}, "text": "The first matching patrol line."},
@@ -57,7 +56,7 @@ def test_passage_rules_fixture_changes_only_the_three_passage_fields(tmp_path: P
 
 
 def test_passage_rules_compile_to_ordered_and_ambiguous_values(tmp_path: Path) -> None:
-    story_source = pytest.importorskip("storygame.story_source")
+    story_source = require_story_source()
     from storygame.runtime.delivery_text import AMBIGUOUS, resolve_delivery_text
 
     clean = copy_fixture("mini_ok", tmp_path / "clean")

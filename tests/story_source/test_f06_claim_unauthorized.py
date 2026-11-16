@@ -2,9 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
-from tests.story_source.helpers import copy_fixture, load_tree, patch_source
+from tests.story_source.helpers import copy_fixture, load_tree, patch_source, require_story_source
 
 
 def _changed_paths(before: dict[str, object], after: dict[str, object]) -> set[str]:
@@ -50,7 +48,7 @@ def test_claim_unauthorized_mutation_changes_only_commits_subset(tmp_path: Path)
 
 
 def test_claim_unauthorized_diagnostic(tmp_path: Path) -> None:
-    story_source = pytest.importorskip("storygame.story_source")
+    story_source = require_story_source()
     root = copy_fixture("mini_ok", tmp_path)
     patch_source(
         root,

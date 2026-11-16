@@ -2,10 +2,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
 import yaml
 
-from tests.story_source.helpers import copy_fixture, load_tree
+from tests.story_source.helpers import copy_fixture, load_tree, require_story_source
 
 
 def _set_match_options(root: Path, scene: str, *, lexicon: bool) -> None:
@@ -42,7 +41,7 @@ def test_malformed_lexicon_is_added_but_both_scenes_are_explicitly_off(tmp_path:
 
 
 def test_malformed_lexicon_is_ignored_when_every_scene_is_off(tmp_path: Path) -> None:
-    story_source = pytest.importorskip("storygame.story_source")
+    story_source = require_story_source()
     root = copy_fixture("mini_ok", tmp_path / "mutated")
     _set_match_options(root, "1A", lexicon=False)
     _set_match_options(root, "2C", lexicon=False)

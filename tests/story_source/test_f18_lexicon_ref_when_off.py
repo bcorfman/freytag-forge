@@ -2,10 +2,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
 import yaml
 
-from tests.story_source.helpers import copy_fixture, load_tree
+from tests.story_source.helpers import copy_fixture, load_tree, require_story_source
 
 
 def _replace_mapping_value(root: Path, field: str, value: object) -> None:
@@ -34,7 +33,7 @@ def test_lexicon_reference_without_flag_changes_only_one_match_group(tmp_path: P
 
 
 def test_lexicon_reference_is_rejected_when_scene_is_off(tmp_path: Path) -> None:
-    story_source = pytest.importorskip("storygame.story_source")
+    story_source = require_story_source()
     root = copy_fixture("mini_ok", tmp_path / "mutated")
     _replace_mapping_value(root, "must_convey", [{"from": ["$memory_card"]}])
     baseline_root = copy_fixture("mini_ok", tmp_path / "baseline")

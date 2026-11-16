@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from tests.story_source.helpers import copy_fixture, load_tree
+from tests.story_source.helpers import copy_fixture, load_tree, require_story_source
 
 
 def _set_match_options(root: Path, *, plural_twins: bool) -> None:
@@ -92,7 +92,7 @@ def test_plural_twin_on_and_off_trees_have_the_same_intended_change(tmp_path: Pa
 
 
 def test_plural_twins_expand_to_two_entries_and_off_is_rejected(tmp_path: Path) -> None:
-    story_source = pytest.importorskip("storygame.story_source")
+    story_source = require_story_source()
     on_root = copy_fixture("mini_ok", tmp_path / "on")
     _build_plural_fixture(on_root, plural_twins=True)
     off_root = copy_fixture("mini_ok", tmp_path / "off")

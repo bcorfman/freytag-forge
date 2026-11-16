@@ -2,10 +2,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
 import yaml
 
-from tests.story_source.helpers import copy_fixture, load_tree
+from tests.story_source.helpers import copy_fixture, load_tree, require_story_source
 
 _FIVE_NAMES = ["memory card", "card", "Michelle's card", "the card", "recovered card"]
 _SEVEN_ALIASES = _FIVE_NAMES + ["extra alias one", "extra alias two"]
@@ -85,7 +84,7 @@ def test_override_ratio_fixture_has_two_adds_to_five_expanded_names(tmp_path: Pa
 
 
 def test_override_ratio_is_over_gate_but_build_still_passes(tmp_path: Path) -> None:
-    story_source = pytest.importorskip("storygame.story_source")
+    story_source = require_story_source()
     root = copy_fixture("mini_ok", tmp_path / "mutated")
     _build_ratio_fixture(root)
     baseline_root = copy_fixture("mini_ok", tmp_path / "baseline")

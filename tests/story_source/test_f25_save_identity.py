@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from tests.story_source.helpers import copy_fixture, load_tree, patch_source
+from tests.story_source.helpers import copy_fixture, load_tree, patch_source, require_story_source
 
 FROZEN_CLAIM_ID = "k_sl_1a_b_r0w"
 
@@ -32,7 +32,7 @@ def test_fixture_adds_only_the_retired_id_entry(tmp_path: Path) -> None:
 
 
 def test_missing_frozen_id_warns_then_retired_id_is_silent(tmp_path: Path) -> None:
-    story_source = pytest.importorskip("storygame.story_source")
+    story_source = require_story_source()
     clean_root = copy_fixture("mini_ok", tmp_path / "clean")
     assert story_source.check_source_tree(clean_root) == []
 

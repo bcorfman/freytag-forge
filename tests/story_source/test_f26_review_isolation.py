@@ -5,10 +5,9 @@ from copy import deepcopy
 from dataclasses import asdict, is_dataclass
 from pathlib import Path
 
-import pytest
 import yaml
 
-from tests.story_source.helpers import copy_fixture, load_tree, patch_source
+from tests.story_source.helpers import copy_fixture, load_tree, patch_source, require_story_source
 
 MARKER = "F26_REVIEW_ONLY_NOTE_7F4A91"
 _BRIDGE = {
@@ -67,7 +66,7 @@ def test_fixture_adds_only_the_beat_and_bridge_notes(tmp_path: Path) -> None:
 
 
 def test_reader_only_notes_stay_out_of_package_and_narrator_material(tmp_path: Path) -> None:
-    story_source = pytest.importorskip("storygame.story_source")
+    story_source = require_story_source()
     clean_root = copy_fixture("mini_ok", tmp_path / "clean")
     assert story_source.check_source_tree(clean_root) == []
 

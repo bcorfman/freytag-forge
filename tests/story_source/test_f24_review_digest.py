@@ -6,9 +6,7 @@ from dataclasses import dataclass
 from hashlib import sha256
 from pathlib import Path
 
-import pytest
-
-from tests.story_source.helpers import copy_fixture, load_tree, patch_source
+from tests.story_source.helpers import copy_fixture, load_tree, patch_source, require_story_source
 
 
 @dataclass(frozen=True)
@@ -45,7 +43,7 @@ def test_fixture_changes_only_the_reviewed_title(tmp_path: Path) -> None:
 
 
 def test_stale_compiled_digest_is_unreviewed_and_fails(tmp_path: Path) -> None:
-    story_source = pytest.importorskip("storygame.story_source")
+    story_source = require_story_source()
     clean_root = copy_fixture("mini_ok", tmp_path / "clean")
     assert story_source.check_source_tree(clean_root) == []
 

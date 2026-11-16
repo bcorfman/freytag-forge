@@ -2,9 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
-from tests.story_source.helpers import copy_fixture, load_tree, patch_source
+from tests.story_source.helpers import copy_fixture, load_tree, patch_source, require_story_source
 
 _NEEDS = [
     {"item": "memory_card", "relation": "exists"},
@@ -35,7 +33,7 @@ def test_typed_needs_change_only_the_exit_needs(tmp_path: Path) -> None:
 
 
 def test_only_exists_and_held_needs_become_required_dependencies(tmp_path: Path) -> None:
-    story_source = pytest.importorskip("storygame.story_source")
+    story_source = require_story_source()
     root = copy_fixture("mini_ok", tmp_path)
     patch_source(root, "scenes/1A.yaml", "exit.needs", _NEEDS)
     clean_root = copy_fixture("mini_ok", tmp_path / "clean")

@@ -7,6 +7,7 @@ import shutil
 from pathlib import Path
 from typing import Any
 
+import pytest
 import yaml
 
 
@@ -30,6 +31,22 @@ def _construct_mapping(loader: DuplicateKeyLoader, node: yaml.MappingNode, deep:
 
 
 DuplicateKeyLoader.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, _construct_mapping)
+
+
+def require_story_source() -> object:
+    """Import story-source APIs, skipping individual APIs not built yet."""
+
+    module = pytest.importorskip("storygame.story_source")
+
+    class StorySourceProxy:
+        def __getattr__(self, name: str) -> Any:
+            try:
+                return getattr(module, name)
+            except AttributeError:
+                pytest.skip(f"storygame.story_source.{name} is not built yet")
+
+    return StorySourceProxy()
+
 
 DELETE = object()
 _SEGMENT = re.compile(r"^(?P<key>[^.\[\]]+)(?:\[(?P<selector>[^\]]+)\])?$")
