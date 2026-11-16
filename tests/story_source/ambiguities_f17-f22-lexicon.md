@@ -1,0 +1,6 @@
+F17: The contract does not specify the malformed-but-YAML lexicon shape or the compiler's ignored-file implementation; assumed schema-valid top-level keys with invalid value types and no diagnostics when both match files set `lexicon: false`.
+F18: The contract does not specify the diagnostic address/field for a reference inside a shared matcher group; assumed the diagnostic points through the using claim and reports the shared field.
+F19: The contract does not specify the Python CLI module or callable for `story expand`; assumed `storygame.story_cli.main(["expand", "1A"])` from the fixture root, with lock entries keyed by effective claim fields.
+F20: The contract does not specify whether a stale shared/derived value is reported once per effective claim or at the shared source; assumed a direct claim `aliases` value and `claim:k_sl_1a_b_r0.aliases` diagnostic address.
+F21: The contract does not specify Python names for the ratio report and pass-2 gate; assumed `storygame.story_source.override_ratio(root)` returns row mappings and `pass2_gate(root)` returns a boolean.
+F22: The contract does not specify the diagnostic location for a plural twin in a lexicon name; assumed `lexicon.yaml` is reported, while `plural_twins: true` expands `saved file(s)` to singular then plural.
