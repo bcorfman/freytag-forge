@@ -1,0 +1,13 @@
+{
+  "frozen": [
+    "factory/guard.py",
+    "factory/frozen.py",
+    "factory/verdicts.py",
+    "factory/config/**",
+    "factory/checks/**",
+    "factory/judges/**",
+    "bench/calibration/**",
+    "docs/jev-guard-rules.md",
+    "docs/jev-guard-rules/**"
+  ]
+}
