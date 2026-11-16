@@ -96,19 +96,17 @@ def _build_roundtrip_fixture(root: Path) -> None:
     _replace_shared_value(
         root,
         "leak_terms",
-        [
-            {
-                "from": ["$memory_card.all"],
-                "add": [
-                    "taped beneath the drawer",
-                    "taped under the drawer",
-                    "taped to the drawer",
-                    "memory card recovered",
-                    "saved file(s)",
-                ],
-                "drop": ["saved file", "saved files"],
-            }
-        ],
+        {
+            "from": ["$memory_card.all"],
+            "add": [
+                "taped beneath the drawer",
+                "taped under the drawer",
+                "taped to the drawer",
+                "memory card recovered",
+                "saved file(s)",
+            ],
+            "drop": ["saved file", "saved files"],
+        },
     )
     _write_lexicon(root)
     _write_lock(root)
