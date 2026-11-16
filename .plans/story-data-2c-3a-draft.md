@@ -146,7 +146,7 @@ facts:
       must_convey:
         - [broadcast the evidence, transmit the evidence]
         - [open the detention cells, rescue the captives]
-        - [Rebecca's office, Rebecca's secured office]
+        - [Rebecca's office, the secured office on the command level]
       fallback_text: >-
         Michelle says that Rebecca's office can broadcast the evidence. It can
         also open the detention cells.
@@ -287,7 +287,7 @@ reveals:
           - [starts sending the evidence, transmit the evidence, uplink]
           - [detention sectors seal, detention sectors sealed]
           - [Michelle's route, maintenance route, route to Michelle]
-          - [Rebecca's secured office, Rebecca's office]
+          - [the secured office on the command level, Rebecca's office]
           - [broadcast the evidence, open the detention cells, combined plan]
         text:
           - when: {ticket_header_matched: true}
@@ -319,7 +319,7 @@ reveals:
           - [rescue cart, frees a cart of captives, rescue]
           - [evidence is not transmitted, evidence remains in Kristin's hands]
           - [Michelle's route, maintenance route, route to Michelle]
-          - [Rebecca's secured office, Rebecca's office]
+          - [the secured office on the command level, Rebecca's office]
           - [broadcast the evidence, open the detention cells, combined plan]
         text:
           - when: {ticket_header_matched: true}
@@ -802,9 +802,37 @@ What it did **not** check, and nobody has:
 
 | Edit | Looked first | Edited | Hesitated at |
 | --- | --- | --- | --- |
-| 1 | | | |
-| 2 | | | |
+| 1 | I did a find in the file and came up with "Rebecca's secured office" which I then changed | I did a find in the file and came up with "Rebecca's secured office" which I then changed in every place that looked like a tag and not a description | I was down in the variants and didn't understand how to pull it up to a shared tag, or where it would be located. | I guess I was supposed to move the shared tag up higher under the michelle_changes_the_choice section, but it only mildly made sense in looking at your "Check yourself" section of the task sheet. route_close looks like a description only, so I still wouldn't think to change the name there unless it was just for consistency.
+| 2 | Just did a find in the file again to locate the tag. Looks like it's set at k_sl_2c_d_r3 in variants: transmit: commits. It's read at the entry for 3A. The player sees the other detention areas closed, but one left open for Kristin, Michelle and other prisoners in the uprising. With "what is the declared cost I feel like you are just asking  | | |
 
+### Edit 2. Follow one consequence out of 2C and into 3A and 3B (read-only)
+
+**Change:** none. Start at `detention_sectors_sealed` and answer, using only this
+file: where is it set; what reads it in 2C; what reads it in 3A; what does the
+player see in 3A because of it; and what is the declared cost of the transmit
+outcome. Then do the same for `evidence_not_transmitted` (3B), and say which of the
+two scenes a player who rescued would see a difference in.
+
+**Done when:** you have written the answers for both facts.
+
+**Where to look:** the `outcome` fields of the two outcome variants, the 3A
+`entry_variants`, the 3B excerpt, and the generated block at the end.
+
+**Legacy:** the two facts appear in `world.yaml`, `knowledge.yaml` (purpose and
+claim), `handoffs.yaml` (delivery), `storylet-routes.yaml` (definition and
+operations) and `incidents.yaml`. As of revision 2 they are also read in
+`plot.md`: `detention_sectors_sealed` in a 3A `entry_variants` entry and
+`evidence_not_transmitted` in a 3B one; `committed_to_rescue` is read by the other
+3A entry variant and in `pacing.yaml` (the nudge event).
+
+**Check yourself:** `detention_sectors_sealed` is set by the transmit variant, read
+by 3A `entry_variants[1]`, and the player sees the sealed-sectors paragraph; its
+declared cost has an effect. `evidence_not_transmitted` is set by the rescue
+variant and read by 3B `entry_variants[1]`, so a player who rescued sees a
+difference in 3A (the freed captives) and again in 3B (the evidence not sent).
+The generated block states this without you grepping. If you wanted to know what
+else reads `detention_sectors_sealed` and the file does not say, that is the
+finding.
 
 ## Live package
 
