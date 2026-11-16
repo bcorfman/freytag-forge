@@ -1,0 +1,29 @@
+{
+ "run_name": "drop-unread-effect",
+ "workdir": "/home/bcorfman/dev/ringer-work/drop-unread-effect",
+ "max_parallel": 1,
+ "worktrees": true,
+ "repo": "/home/bcorfman/dev/freytag-forge",
+ "tasks": [
+  {
+   "key": "drop-rule",
+   "task_type": "code-fix",
+   "engine": "codex",
+   "engine_args": [
+    "-c",
+    "model_reasoning_effort=medium"
+   ],
+   "max_attempts": 2,
+   "timeout_s": 1800,
+   "check_timeout_s": 900,
+   "ownership": [
+    "storygame/story_package/gap_rules.py",
+    "tests/test_gap_rules.py"
+   ],
+   "spec": "Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge (detached at HEAD). Edit files here directly. NEVER git commit, never touch /home/bcorfman/dev/freytag-forge itself, never run `uv`, never call a billed model or the network. FIRST run: [ -e .venv ] || ln -s /home/bcorfman/dev/freytag-forge/.venv .venv ; run tests as `PYTHONPATH=$PWD TMPDIR=/tmp .venv/bin/python -m pytest -q -p no:cacheprovider <tests>` (never pass --cov) and ruff as `.venv/bin/python -m ruff`. Never delete the .venv link. You own exactly two files: storygame/story_package/gap_rules.py and tests/test_gap_rules.py. Do not edit anything else (docs and plans are handled by someone else).\n\nTASK: Brandon decided on 2026-11-14 to DROP the layer 3 rule `unread_effect` (\"a fact set and never read\") from storygame/story_package/gap_rules.py. Reason: on the real continuity-initiative package it gave 68 results over 20 facts, mostly noise (pressure markers that only record an event fired); the useful results (declared costs/advantages nothing reads) are already reported by the branch report. The other rules (`custody`, `co_location`, `no_strand`, `single_reveal_strand`, `no_producer`) stay exactly as they are. Do exactly this:\n\n1. In storygame/story_package/gap_rules.py delete `_unread_effect_flags`, `_run_unread_effect` and the `\"unread_effect\": _run_unread_effect` entry of the `RULES` dict. `_scoped_sets` exists only for `unread_effect`: confirm with grep (`grep -n _scoped_sets storygame -r`) and delete it too, and delete any other helper, import or constant that is left with no user after these deletions (ruff will flag unused imports; for functions grep every name before deleting, and keep anything another rule or another module still uses, for example `consumers`, `producers` and `_anchor_matches` are used by `no_producer`). Do not change the behavior or text of any other rule. Do not reformat unrelated code. Update the module docstring or comments only if they name `unread_effect`.\n2. In tests/test_gap_rules.py:\n   a. Delete `test_unread_effect_seeded_defect_and_clean_variant` (near line 221), and any helper used only by it.\n   b. `test_real_dependency_results_match_the_audit_inventory` (near line 247) pins the unread_effect results. Rename it `test_real_package_has_no_producer_results_for_every_anchor`, delete the whole `expected_by_anchor` table and the `expected` set built from it, keep the anchor list (every pacing event, incident and transition id), and assert that `run_gap_rules(ROOT, anchor, [\"no_producer\"])` returns an empty list for every anchor, with an assertion message that names the anchor and subject of any result.\n   c. Add one small test that `run_gap_rules(ROOT, \"pursuit_1b\", [\"unread_effect\"])` raises ValueError (the rule no longer exists), using pytest.raises with match=\"unknown rule\".\n   d. Leave the `no_producer` seeded-defect and clean-variant tests and every other test unchanged.\n3. Run `grep -rn unread_effect storygame tests scripts/gap_rules.py` : the only remaining hit may be the string in the new test 2c.\n4. Run the focused tests: tests/test_gap_rules.py tests/test_impact_report.py tests/test_branch_report.py tests/test_situation_trace.py, then `.venv/bin/python -m ruff check storygame tests` and `.venv/bin/python -m ruff format --check storygame tests`. Fix what you broke; if a failure is unrelated to this change, say so in your final message instead of changing it.\nLeave all changes uncommitted.",
+   "check": "bash /home/bcorfman/dev/freytag-forge/scripts/ringer/drop-unread-effect/check.sh",
+   "verified": "unread_effect and its only-user helper are gone, the remaining five rules still register and run, no_producer still gives zero results on the real package, and the focused tests and ruff pass.",
+   "expect_files": []
+  }
+ ]
+}

@@ -35,13 +35,23 @@ PYTHONPATH=.:packages/worldkeeper/src .venv/bin/python scripts/impact_report.py 
 ```
 
 The impact report lists what sets a fact, what reads it and the related claims.
-The rules `no_producer` (a condition nothing can satisfy) and `unread_effect` (a
-fact set and never read) use the same lookup. `unread_effect` is noisy on facts
-that only record that an event happened, so read its results as information.
+The rule `no_producer` (a condition nothing can satisfy) uses the same lookup.
+There is no rule for a fact that is set and never read: it was dropped on
+2026-11-14 because it was noise on facts that only record that an event
+happened. A declared cost or advantage that nothing reads is reported by
+`scripts/branch_report.py <incident>` instead.
+
+Not every unread declared advantage is a gap. The loader requires that an
+incident's recovery storylet cannot award more than one outcome's facts, so an
+outcome with no cost needs one fact that tells it apart. In `i_2a_real_leak` that
+is `supervisor_convinced`; nothing needs to read it, because the convinced
+branch's consequence is that 2B's default entry applies (the doubted branch gets
+the `cover_suspected` variant). Before calling such a result a gap, ask whether
+the next scene's state still follows from the branch.
 
 An anchor is a pacing event, an incident or a transition id. The trace is data
-only. The rules print flags with evidence; flags are never errors and never
-block a build. Custody and co-location depend on the anchor's starting state, so
+only. The rules print rule results with evidence; rule results are never errors
+and never block a build. Custody and co-location depend on the anchor's starting state, so
 the trace says when custody was not tested.
 
 The author set the checks after the first drafts missed them, so the method is

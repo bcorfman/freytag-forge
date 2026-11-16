@@ -1,11 +1,13 @@
 # Story authoring, test contracts, and compiled runtime data
 
-Status (2026-11-14): **Phase 0 measured; review-tooling slices 1, 2, 4 and 5
+Status (2026-11-15): **Phase 0 measured; review-tooling slices 1, 2, 4 and 5
 built (slice 3 dropped); D1 decided 2026-11-12; Phase 1 (schema and compiler
-contract) is under way: items 1 and 4 done, item 10 decided and its 2C-to-3A
-draft written (waiting for Brandon's two edits).** No story data, test
-or deployment has changed. This plan is separate from ongoing story edits and does
-not supersede their plans.
+contract) is under way: items 1, 3, 4 and 5 done or accepted, item 10 decided and its 2C-to-3A draft written (waiting for Brandon's
+two edits).** Track A is finished except the deferred blind run. The review-tooling
+walkthrough of 2026-11-15 changed story data (3A and 3B entry variants, one plot
+sentence) and code (rule dropped, rename, faster load); all of it is in PR #767
+(branch `story-gap-cleanup`, open, not merged). This plan is separate from ongoing story
+edits and does not supersede their plans.
 
 Companion documents (evidence lives there, not here):
 
@@ -23,40 +25,82 @@ Companion documents (evidence lives there, not here):
 
 Two tracks. Track A does not wait for Track B.
 
-**Track A, review tooling on today's story package: unblocked.**
-Slices 1, 2, 4 and 5 are built; slice 3 is dropped. Slices 4 and 5 are in PR #761
-(branch `story-data-gap-rules`, not merged when this was written). Open items, in
-the order to take them:
+**Track A, review tooling on today's story package: finished except item 5.**
+Slices 1, 2, 4 and 5 are built and merged (PR #761); slice 3 is dropped. Items
+1 to 4 below were settled on 2026-11-15; item 5 needs Brandon's answer key.
 
-1. **`unread_effect` is noisy** (68 results over 20 facts on the real package).
-   Brandon has not chosen. Recommended narrowing: report first the facts that an
-   incident outcome lists under `costs` or `advantages`, because the scene view
-   of 2C showed those are the useful results and the pressure-state facts are
-   noise. The alternatives are to keep it as information or to drop it. Not
-   checked yet: whether the narrator reads the whole fact store (several engine
-   modules read `facts.asserted` broadly). The full list of results is pinned in
-   `test_real_dependency_results_match_the_audit_inventory`
-   (`tests/test_gap_rules.py`); a per-fact snapshot was made on 2026-11-10 but
-   not committed because it goes stale.
-2. **Run the branch report on the other incidents** (`scripts/branch_report.py
-   <incident>`; incidents are in `incidents.yaml`). It has only been run on 2C. Read each
-   report against Brandon's rule: if the next scene's state does not follow from
-   where the branch leaves off, something is broken.
-3. **2C is a story fix, not a tool fix** (Brandon's call): the transmit branch
-   leaves no trace in 3A, and both declared costs (`detention_sectors_sealed`,
-   `evidence_not_transmitted`) are set and never read. 3A's default entry says "a
-   partly unsecured detention sector" after the transmit branch seals them.
-4. **Rename "flag" to "rule result"** in the plan, the guide, `gap_rules.py` and
-   its output (the branch report already says "result").
+1. **`unread_effect`: dropped (Brandon, 2026-11-14).** It gave 68 results over 20
+   facts; about 10 were pressure markers, 7 minor facts, and only 3 were declared
+   costs or advantages nothing reads (`supervisor_convinced`,
+   `detention_sectors_sealed`, `evidence_not_transmitted`), which the branch
+   report already prints. Checked first: the code paths that read all asserted
+   facts only match them against declared conditions (not checked: `capture.py`,
+   `knowledge_audit.py`). Rule, its helper and tests removed through Ringer
+   (`scripts/ringer/drop-unread-effect/`); `no_producer` now has a test that it
+   gives zero results on every anchor of the real package. The snapshot
+   `.plans/unread-effect-report.md` was deleted with it.
+2. **Branch report on the other incidents: run 2026-11-14, results below, for
+   Brandon to judge** (none is a tool defect; each is a story question).
+   - `i_1c_freight_transfer` (to 2A): coherent. Every branch reaches `t_1c_2a`
+     through `facility_infiltration_needed`; the two real routes show up in 2A's
+     entry variants. The missed-window branch leaves no trace, but its own text
+     points the player back to the service entrance. `trust_brandon` and
+     `terminal_sweep_closing` are set and never read.
+   - `i_2a_real_leak` (to 2B): **resolved 2026-11-15, no story change (Brandon).**
+     `supervisor_convinced` is the only fact that tells the cost-free convinced
+     outcome apart from the others: the loader requires that the recovery
+     storylet cannot award more than one outcome (`loader.py:1204-1215`), and a
+     test run showed that declaring `restricted_corridor_access` instead breaks
+     the load. Nothing needs to read it; the convinced branch's consequence is 2B's
+     default entry (the plot gives only the vague-answer path a consequence). The
+     supervisor in the archive is intended: `plot.md` 2B places him leading the
+     audit, and 2B.4 makes him one of Michelle's recruited workers who lets them
+     go (carried by beat prose, not YAML). Recorded in `docs/story-gap-guide.md`.
+   - `i_2b_audit` (to 2C): coherent. Name kept/erased reach 2C's claim wording and
+     the ending; `evidence_gap_development_record` reaches 3C. The report's
+     "no next-scene transition can fire" lines are because `michelle_reply_received`
+     comes from another route, as designed.
+   - `i_3c_evacuation`: last scene, so handoff analysis is skipped. All its facts
+     read "nothing after this scene" even where the ending in 3C reads them; the
+     report does not separate "read by the ending" from "unread".
+   Raw reports are not committed (they go stale); rerun `scripts/branch_report.py
+   <incident>`.
+3. **2C story fix: done 2026-11-15 (Brandon chose option 1; committed on `story-gap-cleanup`).**
+   3A now has a second entry variant, `requires: [detention_sectors_sealed]`: "The
+   upload was still running. The other detention sectors had sealed the moment it
+   started, and this was the one sector still open." The base entry line stays: it
+   is true in both branches (3A.1 says one sector is partly unsecured). Brandon
+   confirmed the evidence takes time and is not instant, so the 3A.1 plot sentence
+   "the outside world already has it" became "the upload is still running". The
+   loader rejects protected terms in entry text, so the line cannot say "Michelle's
+   route" or "maintenance route". The branch report now shows
+   `detention_sectors_sealed` read by 3A. `evidence_not_transmitted` (rescue
+   branch) is now read by a 3B entry variant, added 2026-11-15 by the same pattern
+   and not separately reviewed by Brandon: "The evidence had never been sent. It
+   was still with Kristin, and the broadcast was the first chance to get it out." (The
+   loader rejects "copied files" in entry text.) Four
+   `test_branch_report.py` tests pinned the old 2C state and were updated (none
+   weakened); the helper `_remove_rescue_variant` was renamed
+   `_remove_entry_variants` because it drops every 3A variant. Full suite run after the rename: 4433
+   passed, 33 skipped.
+4. **Rename "flag" to "rule result": done 2026-11-15 (through Ringer,
+   `scripts/ringer/rename-flag-to-rule-result/`).** `Flag` is now `RuleResult`,
+   `render_flags` is `render_rule_results`, the report title is "Gap rule results",
+   and the word is gone from `gap_rules.py`, `scripts/gap_rules.py`,
+   `tests/test_gap_rules.py` and the guide (same 22 tests, same 38 assertions).
+   This plan, the frozen Ringer manifests and old plans keep "flag" in their
+   history on purpose.
 5. **The deferred blind run** on 1B.4 (or 2A.4), with Brandon writing the answer
    key.
 
 **Track B, the migration: unblocked by D1** (decided 2026-11-12, section 4). Next:
 Brandon tries the two edits on the 2C-to-3A draft
-([story-data-2c-3a-draft.md](story-data-2c-3a-draft.md), revision 1, written
-2026-11-14); its 13 proposed schema additions and its questions (commit-only
+([story-data-2c-3a-draft.md](story-data-2c-3a-draft.md), revision 2, brought up
+to the live story 2026-11-15; revision 1 was written 2026-11-14); its 13 proposed schema additions and its questions (commit-only
 variants, `internal_claims`, the dead bridge text) feed the Phase 1 schema, item 2.
-Then Phase 1 items 2, 3, 5, 6 in order. The 1A draft
+Phase 1 items 3 (ID policy for saves) and 5 (coexistence) were accepted on
+2026-11-15, so the schema (item 2) is the next piece, after his two edits; then
+item 6 (fixtures and tests first). The 1A draft
 ([story-data-1a-draft.md](story-data-1a-draft.md), revision 2) and the 2C-to-3A
 draft are the starting point for the schema, not a finished one. What they leave
 out is listed in Phase 1 item 10 and in the
@@ -64,12 +108,12 @@ out is listed in Phase 1 item 10 and in the
 
 Housekeeping:
 
-1. PRs #759 and #760 (slice 1 and this plan) are merged. Slice 2 (`f403c4ae`),
-   slice 4 and slice 5 are in PR #761. The 1A departure hold and the phone
-   wording are committed separately on branch `1a-departure-hold` (commits
-   `a5515298`, `0a350fe8`, not pushed when this was written); they belong to
-   [the 1A plan](1a-password-and-officer-plan.md). The working tree also holds one
-   unrelated line in `docs/testing-runbook/local-checks.md`.
+1. PRs #759 to #763 are merged (slice 1, this plan, slices 2/4/5, the 1A
+   departure hold and phone wording, the `scripted_opening` field). Local branch
+   `story-gap-cleanup` holds the commits from 2026-11-15 (unread_effect dropped,
+   3A/3B entry variants, rename, plan items 3 and 5, faster load, this refresh)
+   and is PR #767 (open, not merged; Brandon merges per PR). Each Ringer task's
+   manifest and check are committed with its change.
 2. Known limits of slice 2: custody and co-location results depend on the
    anchor's baseline state, so a transition anchor cannot run the hypothetical
    holder (the trace says "not tested here"). Custody tests that pin today's
@@ -117,8 +161,10 @@ Measured in Phase 0 on `2bb01bbc` unless noted. These facts shape the order of w
   A prose-only edit fails a test; a rename fails four.
 - **The loader misses a dead consumer.** Removing the effect that marks Kr leaves
   the marked pursuit passage with no producer, and the package still loads.
-- **Raw-file readers exist outside the loader.** Three browser E2E helpers, two
-  scripts and 72 tests parse the source files directly. An adapter to
+- **Raw-file readers exist outside the loader.** Three browser E2E helpers, one
+  script (`generate_spine_expected_reveals.py`; Phase 0 counted two, but
+  `disclosure_matrix.py` uses the loader) and 72 tests parse the source files
+  directly. An adapter to
   `StoryPackage` alone does not carry them.
 - **A reading view organized by reveal failed the author; one organized by
   situation passed.** The situation trace is accepted as a reading view. No
@@ -366,8 +412,55 @@ Starts after D1. Order matters: contract, then tests, then code.
    rules, each explicit: one fact owner; claim effects default to the source's
    effects with a declared subset allowed; incident costs and advantages derived
    from the named variant.
-3. **ID policy for saves.** Which IDs are preserved and which may change. (The
-   save-compatibility decision itself is Phase 3.)
+3. **ID policy for saves.** **Accepted by Brandon 2026-11-15** (proposal read from
+   `persistence.py` and `state.py`; revised the same day around his rule below). The save-compatibility decision
+   itself stays in Phase 3.
+   - *What a save holds:* the session state without the package, as JSON, keyed by
+     `story_id` and a store schema version (5). On load the only checks are story
+     id, schema version, payload hash, and that the saved scene exists with a
+     matching phase. **Every other ID in a save is accepted unchecked**, so a
+     renamed fact or event would be silently orphaned, not rejected. This is true
+     today, before any migration.
+   - *Frozen IDs (a save stores them; migration must keep them):* scene ids (9),
+     fact ids (177; they are the `predicate` of every saved fact), entity ids
+     (items, places, characters and groups; they appear as fact subjects and
+     objects), knowledge claim ids (122; saved as `reveal_ids` and
+     `revealed_knowledge_ids`), pacing event ids (31; `active_event_ids`,
+     `fired_event_ids`, turn records), transition ids (8), delivery fact ids (48;
+     the cue ledger and staged handoffs), and the story id.
+   - *Free IDs (a save does not store them; the migration may change them):*
+     passage and variant ids, storylet and realization ids (68 storylets),
+     incident and outcome ids (derived from facts), matcher groups, source file
+     names, headings and block order. One exception to note: the saved
+     `last_turn_delivery.beats_projected` holds beat anchors, which today are
+     derived from beat headings (for example `scene-3a4--the-uprising-begins`);
+     it is read once, for the last turn only, so it is not frozen, but the new
+     format should not derive any ID from a heading.
+   - *When the checks run (rule from Brandon, 2026-11-15):* **schema strictness
+     belongs to package build and load; saves stay flexible, tag and value, so
+     in-progress work can always be saved and reloaded.** Today this already
+     holds: `load_story_package` runs shape and integrity checks once, at app
+     startup (`web_demo.py:208`), in tests and in CI, cached by a hash of the
+     source files, and a bad package stops the server. A save load checks only
+     story id, store version, hash, the state's own shape, that the saved scene
+     exists and the phase matches; saved facts are checked only for predicate
+     name pattern and length. The compiler keeps the same moment (D4). **A
+     load-time check of saved IDs against the package is rejected.**
+   - *Enforcement is a developer warning, not a build error (Brandon,
+     2026-11-15):* the compiler writes a save-identity manifest (the frozen IDs
+     by kind) from the snapshot package. A test compares the current package
+     with it and emits a `UserWarning` naming every missing frozen ID; it does
+     not fail the suite, it never runs at load or play time, and a player never
+     sees it. This is a layer 3 result in the sense of D3 (reported, never
+     blocks). An intended removal is listed in a retirement file with a reason,
+     which silences the warning for that ID (the exemption lives on the authored
+     record, as D2 requires). Checked: `pyproject.toml` ignores only
+     `DeprecationWarning`, so a `UserWarning` shows in pytest's summary; no test
+     uses `warnings.warn` yet, and a summary line is easy to scroll past, so the
+     same check should also be runnable as a script. Limits: it protects ID
+     names, not their meaning, so an ID reused with a different meaning would
+     pass; and an old save loaded against a package that dropped an ID loads
+     fine and the orphaned facts simply do nothing. Not built or tested.
 4. **Layer 1 audit.** List what `storygame/story_package/models.py` already
    enforces and what the schema adds; record it here.
    **Audit, 2026-11-13 (read from code, not run):**
@@ -393,10 +486,34 @@ Starts after D1. Order matters: contract, then tests, then code.
      checked); a variant's `leak_terms`/`boundaries` override may only add
      entries (item 10). Dead consumers are layer 3, already covered by
      `no_producer`.
-5. **Coexistence.** Legacy nine-file loading and compiled loading as explicit
-   package modes with a per-scene ownership manifest that rejects two owners, and
-   no silent precedence. State how the raw-file readers (section 2) keep working
-   while both exist.
+5. **Coexistence.** **Accepted by Brandon 2026-11-15 (option 1, as written); not built.**
+   - *Explicit mode, no precedence.* An ownership manifest in the package root
+     lists, for each scene and for the root catalog, `legacy` or `compiled`; a
+     missing manifest means all `legacy`, which is today's behavior. No
+     environment switch. The loader builds legacy scenes from the nine files and
+     compiled scenes from compiled records, and merges them into one
+     `StoryPackage`.
+   - *Two owners are an error.* A record id defined on both sides, a scene marked
+     `compiled` that the legacy files still define, or a scene marked `legacy`
+     that has compiled records fails the build (layer 2) and names both sources.
+   - *Raw-file readers (section 2).* They parse the legacy files directly, so a
+     scene marked `compiled` would vanish from them. Sequencing rule: a scene is
+     marked `compiled` in the shipping package only after the readers that touch
+     it read through a generated export of the package
+     (`scripts/export_story_package.py`, to be written) instead of the source
+     files. Until then, Phase 2 keeps 1A legacy in the shipping package and runs
+     the compiled 1A beside it in the parity test, not in a mixed package. Mixed
+     ownership starts in Phase 3, per scene, after that scene's readers have
+     moved (the Phase 3 reader list). Checked 2026-11-15: the raw readers
+     scan whole files, not scenes. `frontend/e2e/authored-spans.js` reads
+     `plot.md`, `knowledge.yaml`, `handoffs.yaml`, `pacing.yaml` and
+     `storylet-routes.yaml`; `knowledge-available.js` reads `knowledge.yaml` and
+     `storylet-routes.yaml`; `roleplay-judge.test.js` reads `knowledge.yaml`;
+     `scripts/generate_spine_expected_reveals.py` reads `knowledge.yaml`.
+     `scripts/disclosure_matrix.py` uses the loader and is not a raw reader. So
+     the export and the four reader changes are one prerequisite before the
+     first scene flips, not a per-scene task. The 72 raw-reading tests are the
+     Phase 0 count at `2bb01bbc` and were not recounted.
 6. **Fixtures and tests first.** Small typed fixtures and patch helpers that
    address records by ID and field, drawn from continuity-initiative and together
    covering claims, protected material and audience scoping, pacing, an incident
@@ -562,8 +679,10 @@ fallback in section 3.
   per scene.
 - [ ] Migrate the raw-file readers: `frontend/e2e/authored-spans.js`,
   `knowledge-available.js`, `roleplay-judge.test.js`,
-  `scripts/disclosure_matrix.py`, `scripts/generate_spine_expected_reveals.py`,
-  and the tests that name story files.
+  `scripts/generate_spine_expected_reveals.py`, and the tests that name story
+  files. (`scripts/disclosure_matrix.py` was listed here until 2026-11-15; it
+  already uses the loader.) Per the coexistence proposal in Phase 1 item 5, the
+  four readers move before the first scene flips.
 - [ ] Migrate active tests, E2E setup, probes and Ringer manifests to stable
   record operations.
 - [ ] Another genre as a portability gate.
@@ -581,9 +700,18 @@ fallback in section 3.
   and SHA-bound hosted E2E per the
   [promotion guide](../docs/railway-production-promotion.md).
 
-Independent of all phases: validation is about 0.34 s of the 0.36 s load, mostly
-recompiled patterns in `_delivery_internal_token`. Compiling them once is a small
-fix that can ship on its own at any time.
+Independent of all phases: **done 2026-11-15 (through Ringer,
+`scripts/ringer/compile-delivery-token-pattern/`).** `_delivery_internal_token`
+ran 100 times and each call rebuilt the id set and ran about 630 `re.search`
+calls (about 63,000 in all, 0.21 s unprofiled). It now uses one compiled pattern
+per package. Measured uncached load, best of 5, same machine: about 0.40 s
+before, about 0.16 s after (budget 0.5 s). The check compared the new matcher
+with a copy of the old logic on thousands of texts. The only visible difference:
+an error message shows a matched token in lower case. **Phase 4 candidate, not
+done:** the profile also shows `world_for` rebuilding the world schema about 100
+times inside `_validate_narration_term_traps` (about 0.18 s profiled); it is also
+called on the per-turn path, so it is not an isolated fix and the budget is
+already met.
 
 ## 7. Acceptance and scope limits
 
@@ -633,3 +761,18 @@ fixed menu of player actions or a branch per possible action.
 - 2026-11-13. Resumed Phase 1. Item 4 (layer 1 audit) written from reading `models.py` and `loader.py`; item 1 (snapshot) found blocked by uncommitted `scripted_opening` work on `main`. No code or story data changed.
 - 2026-11-14. Wrote the 2C-to-3A hand draft (Phase 1 item 10, option B): `story-data-2c-3a-draft.md`. It lists 13 schema additions the slice needed, with a status each; shows the 2C gap in the generated view without repairing it; sketches the root catalog; and has a two-edit task sheet. Checked by script against the loaded package (180 values, all matching (R1 and R2 dropped from the draft by decision), after two mistakes of mine were fixed). Not checked: passage-list first-match semantics in the runtime, operation order, the shape of `internal_claims`. Open questions for Brandon are in the draft's "Things I noticed": the commit-only variants `negotiated` and `split_exposed` that nothing tells apart, the 11 dead bridge texts, `item` as the key for a character in an exit's `needs`. No code or story data changed. Not committed.
 - 2026-11-14. Deleted `SL-2C-D-R1` and `-R2` from the live package through Ringer (`scripts/ringer/delete-2c-d-r1-r2/`): routes file minus those two options, two test-set entries removed; 206 focused tests passed, ruff clean. The first run failed only on a bug in my check (git add with an ignored `.venv`), not on the worker output; the check was fixed and rerun on the kept worktree, then the patch was applied. Frozen copies, old plans and the generated disclosure matrix still mention them. Not committed.
+- 2026-11-14 (later). Resumed. Repo state: `main` at `eac9d666`, clean; PR #766 (the R1/R2 deletion and the 2C-to-3A draft) is merged, so the two "Not committed" notes above are out of date. Ran the branch report on the four incidents not yet covered (1C, 2A, 2B, 3C); findings are in "Resume here" Track A item 2. One new story question: 2A's convinced branch sets an advantage nothing reads. Nothing else changed. Still waiting on Brandon: his two edits on the 2C-to-3A draft (gates Phase 1 item 2), the `unread_effect` choice, and the 2A/2C story calls.
+- 2026-11-15. Walked Brandon through the "waiting on me" items. Item 1 decided: drop `unread_effect` (see Resume here, Track A item 1); done through Ringer. First Ringer run passed but its check did not export a patch, so Ringer deleted the worktree and the change was lost; the check was fixed and the run repeated. Items 2 (2C/3A) and 3 (2A supervisor) are still open: for 2C the options put to Brandon were a 3A entry variant for the transmit branch (recommended), a neutral default plus two variants, real mechanical teeth, or dropping the two costs. Slice 4's description above still lists `unread_effect` as built; it is historical.
+- 2026-11-15 (later). 2C/3A decided: option 1, plus fixing the plot sentence (see Resume here item 3). Correction to my earlier step-2 reading: entry variants are appended to the base entry text, not substituted (`scene_entry_texts`, `models.py:647`), and the base line "a partly unsecured detention sector" is not a contradiction. Step 3 (the 2A supervisor) is next.
+- 2026-11-15 (end of walkthrough). Step 3 decided: leave 2A alone and document why. My first recommendation (declare `restricted_corridor_access` as the convinced outcome's advantage) failed: it breaks the loader's recovery rule, so it was reverted before commit. All three "waiting on Brandon" items are now closed; open work is `evidence_not_transmitted` (unread, likely a 3B reader, unchecked), the "flag" to "rule result" rename, the deferred blind run, and Phase 1 item 2 once he tries the two 2C-to-3A edits. Uncommitted in the working tree: the `unread_effect` removal, the 3A variant and plot sentence, four updated branch-report tests, guide and plan. The full suite has not been run.
+- 2026-11-15 (after the walkthrough). Added the 3B entry variant for `evidence_not_transmitted` (both 2C costs are now read); updated `test_real_incident_renders_expected_costs_and_variant` to match. Committed everything so far on local branch `story-gap-cleanup` (not pushed) so the next Ringer task, the "flag" to "rule result" rename, starts from current files.
+- 2026-11-15 (Phase 1). Wrote proposals for item 3 (ID policy for saves) and item 5 (coexistence) from reading `persistence.py`, `state.py` and the loaded package. Finding: a save's IDs are not checked at load beyond scene and phase, so an ID change fails silently today. Both items wait for Brandon to accept or change them. Nothing built.
+- 2026-11-15 (rename). Rename applied from the Ringer patch (first run passed; this time the check exported the patch). Full suite run once after it: 4433 passed, 33 skipped (4 min 31 s). Repo-wide `ruff check .` reports 229 lint errors, all in older `.plans/` scratch scripts and `scripts/ringer/story-data` generators that this work did not touch (CI's rule set `E9,F63,F7,F82` is clean); `ruff format --check .` flagged 3 `.plans/` scripts, now formatted.
+- 2026-11-15 (load time). Compiled the delivery token pattern once per package (Ringer, check compared old and new logic): uncached load about 0.40 s to about 0.16 s. D4's budget check (cold load at most 0.5 s) now has more room for a compiler. Remaining validation hotspot recorded as a Phase 4 candidate.
+- 2026-11-15 (final run). Full suite on the committed branch: 4435 passed, 1 failed, 33 skipped. The failure was `test_real_manifest_covers_test_files`: the new `tests/test_delivery_token_matcher.py` was missing from `tests/shard_durations.json`; added with `scripts/regen_shard_durations.py --missing-only` and the test passes. The suite was not rerun in full after that one-line manifest change.
+- 2026-11-15 (wording approved). Brandon approved the 3A and 3B entry lines (walkthrough item 1 of 5). He asked for the last sentence of the 3B line to be reworded: now "The evidence had never been sent. It was still with Kristin, and the broadcast was the first chance to get it out." Focused story tests pass (142); the full suite was not rerun for this one-sentence text change.
+- 2026-11-15 (rule on checks). Brandon: schema checks belong to package build/load; saves and loads stay flexible tag/value so in-process work can be saved. Phase 1 item 3 rewritten around it; the load-time saved-ID check I had raised as an option is withdrawn. Verified in code first: package validation runs at package load (startup, tests, CI), save load checks structure only.
+- 2026-11-15 (item 3 accepted). Brandon accepted Phase 1 item 3, the ID policy for saves, as revised.
+- 2026-11-15 (item 3 amended). Brandon: the frozen-ID check should be a warning, not an error, and run as a test, not at runtime, so only the developer sees it. Item 3 changed from a layer 2 build failure to a test-time layer 3 warning with a retirement file.
+- 2026-11-15 (item 5 accepted). Brandon accepted Phase 1 item 5, coexistence, as written (explicit ownership manifest, two owners an error, the four raw-file readers move to a generated export before the first scene flips, 1A stays legacy in the shipping package during Phase 2). Walkthrough item 3 of 5 is closed.
+- 2026-11-15 (draft revision 2). Walkthrough item 4, option 1: refreshed `story-data-2c-3a-draft.md` to match the live story (2C repair in PR #767). It now shows the second 3A entry variant, adds a 3B entry excerpt, regenerates the generated view (both costs read), rewrites Edit 2's answers, and adds notes (variants append to the base text; the loader checks entry text for unearned terms). Checked by a new scratch script: 14 comparisons of the 3A and 3B base entry text, every entry variant and the location against the loaded package, all matching, and all YAML blocks parse. The revision 1 script (180 comparisons) was not kept, so the rest of the draft was not re-verified; it is unchanged since revision 1. Brandon has not tried the two edits.

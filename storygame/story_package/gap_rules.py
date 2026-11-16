@@ -20,7 +20,7 @@ from storygame.story_package.models import FactPredicate, KnowledgeDefinition, S
 
 
 @dataclass(frozen=True)
-class Flag:
+class RuleResult:
     rule: str
     anchor: str
     subject: str
@@ -290,8 +290,8 @@ def custody_checks(package: StoryPackage, anchor: str) -> list[CustodyCheck]:
     ]
 
 
-def _custody_flags(package: StoryPackage, root: Path, anchor: str) -> list[Flag]:
-    flags = []
+def _custody_results(package: StoryPackage, root: Path, anchor: str) -> list[RuleResult]:
+    results = []
     for finding in _custody_findings(package, anchor):
         if finding.status != "unchecked":
             continue
@@ -312,8 +312,8 @@ def _custody_flags(package: StoryPackage, root: Path, anchor: str) -> list[Flag]
             ),
             _located(root, f"claim delivery: {_first_sentence(claim_text)}", claim.id),
         )
-        flags.append(
-            Flag(
+        results.append(
+            RuleResult(
                 rule="custody",
                 anchor=anchor,
                 subject=claim.id,
@@ -324,11 +324,11 @@ def _custody_flags(package: StoryPackage, root: Path, anchor: str) -> list[Flag]
                 evidence=evidence,
             )
         )
-    return flags
+    return results
 
 
-def _co_location_flags(package: StoryPackage, root: Path, anchor: str) -> list[Flag]:
-    flags = []
+def _co_location_results(package: StoryPackage, root: Path, anchor: str) -> list[RuleResult]:
+    results = []
     for transition in exit_transitions(package, anchor):
         for claim in _transition_claims(package, transition):
             state = _baseline(package, anchor, transition, claim)
@@ -357,8 +357,8 @@ def _co_location_flags(package: StoryPackage, root: Path, anchor: str) -> list[F
                         claim.id,
                     ),
                 )
-                flags.append(
-                    Flag(
+                results.append(
+                    RuleResult(
                         rule="co_location",
                         anchor=anchor,
                         subject=claim.id,
@@ -368,7 +368,7 @@ def _co_location_flags(package: StoryPackage, root: Path, anchor: str) -> list[F
                         evidence=evidence,
                     )
                 )
-    return flags
+    return results
 
 
 def _producer_records(package: StoryPackage, fact_id: str, value: object = True) -> list[_Producer]:
@@ -399,8 +399,8 @@ def _moving_effects(package: StoryPackage, item_id: str) -> list[tuple[str, obje
     ]
 
 
-def _no_strand_flags(package: StoryPackage, root: Path, anchor: str) -> list[Flag]:
-    flags = []
+def _no_strand_results(package: StoryPackage, root: Path, anchor: str) -> list[RuleResult]:
+    results = []
     for finding in _custody_findings(package, anchor):
         if finding.status != "unchecked":
             continue
@@ -459,8 +459,8 @@ def _no_strand_flags(package: StoryPackage, root: Path, anchor: str) -> list[Fla
                     f"Not stranded if {trigger.fact_id} is already true before the item is lost.",
                 ),
             )
-            flags.append(
-                Flag(
+            results.append(
+                RuleResult(
                     rule="no_strand",
                     anchor=anchor,
                     subject=claim.id,
@@ -471,23 +471,25 @@ def _no_strand_flags(package: StoryPackage, root: Path, anchor: str) -> list[Fla
                     evidence=evidence,
                 )
             )
-    return flags
+    return results
 
 
-def _run_custody(package: StoryPackage, root: Path, anchor: str, exits: list[Transition]) -> list[Flag]:
-    return _custody_flags(package, root, anchor)
+def _run_custody(package: StoryPackage, root: Path, anchor: str, exits: list[Transition]) -> list[RuleResult]:
+    return _custody_results(package, root, anchor)
 
 
-def _run_co_location(package: StoryPackage, root: Path, anchor: str, exits: list[Transition]) -> list[Flag]:
-    return _co_location_flags(package, root, anchor)
+def _run_co_location(package: StoryPackage, root: Path, anchor: str, exits: list[Transition]) -> list[RuleResult]:
+    return _co_location_results(package, root, anchor)
 
 
-def _run_no_strand(package: StoryPackage, root: Path, anchor: str, exits: list[Transition]) -> list[Flag]:
-    return _no_strand_flags(package, root, anchor)
+def _run_no_strand(package: StoryPackage, root: Path, anchor: str, exits: list[Transition]) -> list[RuleResult]:
+    return _no_strand_results(package, root, anchor)
 
 
-def _run_single_reveal_strand(package: StoryPackage, root: Path, anchor: str, exits: list[Transition]) -> list[Flag]:
-    flags = []
+def _run_single_reveal_strand(
+    package: StoryPackage, root: Path, anchor: str, exits: list[Transition]
+) -> list[RuleResult]:
+    results = []
     for transition in exits:
         required = {trigger.fact_id for trigger in transition.triggers}
         for route in package.storylet_routes.storylets:
@@ -515,8 +517,8 @@ def _run_single_reveal_strand(package: StoryPackage, root: Path, anchor: str, ex
                     ),
                     "Required facts still set by the realization: " + (", ".join(sorted(still_sets)) or "none") + ".",
                 )
-                flags.append(
-                    Flag(
+                results.append(
+                    RuleResult(
                         rule="single_reveal_strand",
                         anchor=anchor,
                         subject=f"{route.id}/{realization.id}",
@@ -527,7 +529,7 @@ def _run_single_reveal_strand(package: StoryPackage, root: Path, anchor: str, ex
                         evidence=evidence,
                     )
                 )
-    return flags
+    return results
 
 
 def _scoped_reads(package: StoryPackage, anchor: str, exits: list[Transition]) -> list[tuple[str, str, object]]:
@@ -545,30 +547,13 @@ def _scoped_reads(package: StoryPackage, anchor: str, exits: list[Transition]) -
     return reads
 
 
-def _scoped_sets(package: StoryPackage, anchor: str, exits: list[Transition]) -> list[tuple[str, str, str]]:
-    sets: list[tuple[str, str, str]] = []
-    for kind, item in _anchor_matches(package, anchor):
-        if kind == "pacing event":
-            sets.extend((kind, item.id, effect.fact_id) for effect in item.effects)
-        elif kind == "incident":
-            sets.extend(
-                ("incident outcome", outcome.id, fact_id)
-                for outcome in item.outcomes
-                for fact_id in (*outcome.advantages, *outcome.costs)
-            )
-    for transition in exits:
-        for claim in _transition_claims(package, transition):
-            sets.extend(("claim", claim.id, effect.fact_id) for effect in claim.establishes if effect.op == "assert")
-    return sets
-
-
-def _no_producer_flags(package: StoryPackage, root: Path, anchor: str, exits: list[Transition]) -> list[Flag]:
+def _no_producer_results(package: StoryPackage, root: Path, anchor: str, exits: list[Transition]) -> list[RuleResult]:
     start = RuntimeState.bootstrap(package)
     scoped: dict[tuple[str, object], list[tuple[str, str]]] = {}
     for kind, record_id, predicate in _scoped_reads(package, anchor, exits):
         scoped.setdefault((predicate.fact_id, predicate.equals), []).append((kind, record_id))
 
-    flags: list[Flag] = []
+    results: list[RuleResult] = []
     for (fact_id, value), readers in scoped.items():
         if predicate_matches(FactPredicate(fact_id=fact_id, equals=value), start.facts):
             continue
@@ -586,8 +571,8 @@ def _no_producer_flags(package: StoryPackage, root: Path, anchor: str, exits: li
         if not read_by:
             evidence += ("Read by: nothing",)
         kind, record_id = readers[0]
-        flags.append(
-            Flag(
+        results.append(
+            RuleResult(
                 rule="no_producer",
                 anchor=anchor,
                 subject=fact_id,
@@ -595,40 +580,11 @@ def _no_producer_flags(package: StoryPackage, root: Path, anchor: str, exits: li
                 evidence=evidence,
             )
         )
-    return flags
+    return results
 
 
-def _unread_effect_flags(package: StoryPackage, root: Path, anchor: str, exits: list[Transition]) -> list[Flag]:
-    scoped: dict[str, list[tuple[str, str]]] = {}
-    for kind, record_id, fact_id in _scoped_sets(package, anchor, exits):
-        scoped.setdefault(fact_id, []).append((kind, record_id))
-
-    flags: list[Flag] = []
-    for fact_id, setters in scoped.items():
-        if consumers(package, fact_id):
-            continue
-        evidence = tuple(
-            _located(root, f"{kind} {record_id} sets {fact_id}.", record_id) for kind, record_id in setters
-        ) + ("Read by: nothing",)
-        kind, record_id = setters[0]
-        flags.append(
-            Flag(
-                rule="unread_effect",
-                anchor=anchor,
-                subject=fact_id,
-                summary=f"{kind} {record_id} sets {fact_id} but nothing reads it.",
-                evidence=evidence,
-            )
-        )
-    return flags
-
-
-def _run_no_producer(package: StoryPackage, root: Path, anchor: str, exits: list[Transition]) -> list[Flag]:
-    return _no_producer_flags(package, root, anchor, exits)
-
-
-def _run_unread_effect(package: StoryPackage, root: Path, anchor: str, exits: list[Transition]) -> list[Flag]:
-    return _unread_effect_flags(package, root, anchor, exits)
+def _run_no_producer(package: StoryPackage, root: Path, anchor: str, exits: list[Transition]) -> list[RuleResult]:
+    return _no_producer_results(package, root, anchor, exits)
 
 
 RULES: dict[str, Callable] = {
@@ -637,12 +593,11 @@ RULES: dict[str, Callable] = {
     "no_strand": _run_no_strand,
     "single_reveal_strand": _run_single_reveal_strand,
     "no_producer": _run_no_producer,
-    "unread_effect": _run_unread_effect,
 }
 
 
-def run_gap_rules(root: Path, anchor: str, rules: Iterable[str] | None = None) -> list[Flag]:
-    """Load a package and report selected deterministic gap flags."""
+def run_gap_rules(root: Path, anchor: str, rules: Iterable[str] | None = None) -> list[RuleResult]:
+    """Load a package and report selected deterministic gap rule results."""
 
     package = load_story_package(root)
     exits = exit_transitions(package, anchor)
@@ -650,25 +605,26 @@ def run_gap_rules(root: Path, anchor: str, rules: Iterable[str] | None = None) -
     unknown = next((rule for rule in selected if rule not in RULES), None)
     if unknown is not None:
         raise ValueError(f"unknown rule '{unknown}'")
-    flags = [flag for rule in selected for flag in RULES[rule](package, root, anchor, exits)]
-    return sorted(flags, key=lambda flag: (flag.rule, flag.subject, flag.summary))
+    results = [result for rule in selected for result in RULES[rule](package, root, anchor, exits)]
+    return sorted(results, key=lambda result: (result.rule, result.subject, result.summary))
 
 
-def render_flags(flags: Iterable[Flag], anchor: str) -> str:
-    """Render flags as a stable, read-only Markdown report."""
+def render_rule_results(results: Iterable[RuleResult], anchor: str) -> str:
+    """Render rule results as a stable, read-only Markdown report."""
 
-    flags = tuple(flags)
+    results = tuple(results)
     lines = [
-        f"# Gap flags: {anchor}",
+        f"# Gap rule results: {anchor}",
         "",
-        "Layer 3 story rules. Flags are reported, never block a build, and are not judgments; read the evidence.",
+        "Layer 3 story rules. Rule results are reported, never block a build, and are not judgments; "
+        "read the evidence.",
         "",
     ]
-    if not flags:
-        lines.append("No flags.")
+    if not results:
+        lines.append("No rule results.")
         return "\n".join(lines) + "\n"
-    for flag in flags:
-        lines.extend([f"### {flag.rule}: {flag.subject}", "", flag.summary, ""])
-        lines.extend(f"- {evidence}" for evidence in flag.evidence)
+    for result in results:
+        lines.extend([f"### {result.rule}: {result.subject}", "", result.summary, ""])
+        lines.extend(f"- {evidence}" for evidence in result.evidence)
         lines.append("")
     return "\n".join(lines)

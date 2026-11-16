@@ -109,6 +109,7 @@
     "tests/test_defect_probe.py": 0.2,
     "tests/test_delivery_echo.py": 4.05,
     "tests/test_delivery_restatement.py": 2.99,
+    "tests/test_delivery_token_matcher.py": 2.66,
     "tests/test_delivery_variants.py": 0.25,
     "tests/test_design_review_fixtures.py": 1.06,
     "tests/test_disclosure_guards.py": 1.22,

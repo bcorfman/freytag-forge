@@ -61,8 +61,14 @@ from storygame.runtime.world_model import world_for
 
 def diag(label):
     world = world_for(package, state.facts)
-    asserted = sorted((f.predicate, f.subject, f.value) for f in state.facts.asserted if "patrol" in f.predicate or "officer" in f.predicate or "walt" in f.subject or "reyes" in f.subject)
-    print(f"  [{label}] officer parent={world.parent('patrol_officer')!r} walt parent={world.parent('walt_pruitt')!r} kristin parent={world.parent('kristin')!r} together(kristin,officer)={world.together('kristin','patrol_officer')} present(officer)={provider._is_present('patrol_officer')}")
+    asserted = sorted(
+        (f.predicate, f.subject, f.value)
+        for f in state.facts.asserted
+        if "patrol" in f.predicate or "officer" in f.predicate or "walt" in f.subject or "reyes" in f.subject
+    )
+    print(
+        f"  [{label}] officer parent={world.parent('patrol_officer')!r} walt parent={world.parent('walt_pruitt')!r} kristin parent={world.parent('kristin')!r} together(kristin,officer)={world.together('kristin', 'patrol_officer')} present(officer)={provider._is_present('patrol_officer')}"
+    )
     print(f"  [{label}] patrol facts={asserted}")
     print(f"  [{label}] scene participants={[c for c in provider._current_scene().participant_ids]}")
 
@@ -85,6 +91,15 @@ for command, reply in SCRIPT:
     print("scene:", state.current_scene_id, "turn_index:", state.turn_index)
     rec = state.turn_records[-1] if state.turn_records else None
     print("last record text:", getattr(rec, "narration", None) or getattr(rec, "text", None))
-    print("patrol facts:", [(f.predicate, f.subject, f.value) for f in state.facts.facts() if "patrol" in f.predicate or "officer" in f.predicate] if hasattr(state.facts, "facts") else "n/a")
+    print(
+        "patrol facts:",
+        [
+            (f.predicate, f.subject, f.value)
+            for f in state.facts.facts()
+            if "patrol" in f.predicate or "officer" in f.predicate
+        ]
+        if hasattr(state.facts, "facts")
+        else "n/a",
+    )
     print("result:", result)
 sys.exit(0)
