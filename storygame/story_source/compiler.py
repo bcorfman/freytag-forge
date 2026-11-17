@@ -2,15 +2,17 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 from storygame.story_package import loader
 from storygame.story_package.models import (
     Character,
     FactPredicate,
+    Incident,
     KnowledgeCatalog,
     PacingSource,
+    StoryletRoute,
     StoryletRoutesSource,
     StoryPackage,
 )
@@ -79,7 +81,7 @@ def _build_package(tree: SourceTree) -> StoryPackage:
         scene_frames=tuple(build_frame(scene) for _, scene in scene_records),
         knowledge=claims,
     )
-    bridges, _ = build_events(scene_contexts)
+    bridges, resolutions = build_events(scene_contexts)
     incidents = build_incidents(scene_contexts, routes)
     pacing = PacingSource(
         budget_seconds=story["budget_seconds"],
@@ -90,13 +92,14 @@ def _build_package(tree: SourceTree) -> StoryPackage:
         events=tuple(event for _, scene in scene_records for event in build_scene_events(scene)),
         ending=build_ending(scene_records[-1][1]),
     )
-    pacing = _supply_transition_sources(pacing)
+    pacing = _supply_transition_sources(pacing, incidents, routes)
     routes_source = StoryletRoutesSource(
         story_id=story["story"],
         canonical_scene_chain=tuple(story["scenes"]),
         sole_ending_scene_id=story["scenes"][-1],
         storylets=routes,
         bridge_events=bridges,
+        resolution_events=resolutions,
     )
     package = StoryPackage(
         story_id=story["story"],
@@ -157,10 +160,25 @@ def _characters(story: Mapping, catalog: Mapping) -> tuple[Character, ...]:
     return tuple(result)
 
 
-def _supply_transition_sources(pacing: PacingSource) -> PacingSource:
-    """Ensure every positive transition trigger has a local pacing producer."""
+def _supply_transition_sources(
+    pacing: PacingSource, incidents: Sequence[Incident], routes: Sequence[StoryletRoute]
+) -> PacingSource:
+    """Ensure reduced source fixtures have a local transition producer."""
+
+    incident_producers: dict[str, set[str]] = {}
+    routes_by_id = {route.id: route for route in routes}
+    for incident in incidents:
+        route = routes_by_id[incident.outcomes[0].storylet_id]
+        realizations = {realization.id: realization for realization in route.realizations}
+        incident_producers.setdefault(incident.scene_id, set()).update(
+            operation.fact_id
+            for outcome in incident.outcomes
+            for operation in realizations[outcome.realization_id].operations
+            if operation.op == "assert" and operation.value is True
+        )
 
     events = list(pacing.events)
+    incident_event_ids = {incident.missed_window_event_id for incident in incidents}
     for transition in pacing.transitions:
         existing = {
             effect.fact_id
@@ -169,6 +187,7 @@ def _supply_transition_sources(pacing: PacingSource) -> PacingSource:
             for effect in event.effects
             if effect.equals is True
         }
+        existing.update(incident_producers.get(transition.source_scene_id, ()))
         missing = [
             trigger.fact_id
             for trigger in transition.triggers
@@ -176,7 +195,16 @@ def _supply_transition_sources(pacing: PacingSource) -> PacingSource:
         ]
         if not missing:
             continue
-        index = next(index for index, event in enumerate(events) if event.scene_id == transition.source_scene_id)
+        index = next(
+            (
+                index
+                for index, event in enumerate(events)
+                if event.scene_id == transition.source_scene_id and event.id not in incident_event_ids
+            ),
+            None,
+        )
+        if index is None:
+            continue
         event = events[index]
         effects = (*event.effects, *(FactPredicate(fact_id=fact_id, equals=True) for fact_id in missing))
         events[index] = event.model_copy(update={"effects": effects})
