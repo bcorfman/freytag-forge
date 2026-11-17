@@ -30,7 +30,7 @@ from storygame.story_package.models import (
     StoryletRoute,
     Transition,
 )
-from tests.story_source.helpers import compiled_story_copy, patch_source
+from tests.story_source.helpers import compiled_story_copy, load_compiled_copy, patch_source
 
 ROOT = Path("data/stories/continuity-initiative")
 FACT = "kristin_marked_by_patrol"
@@ -95,6 +95,19 @@ def test_unknown_and_ambiguous_subjects_raise(tmp_path: Path) -> None:
 
 def test_render_is_deterministic() -> None:
     assert render_impact_report(ROOT, FACT) == render_impact_report(ROOT, FACT)
+
+
+def test_compiled_root_uses_source_tree_paths(tmp_path: Path) -> None:
+    root = compiled_story_copy(tmp_path)
+    load_compiled_copy(root)
+
+    text = render_impact_report(root, CLAIM)
+
+    assert "source: source/scenes/1A.yaml:" in text
+    assert not any(
+        legacy_name in text
+        for legacy_name in ("knowledge.yaml", "pacing.yaml", "storylet-routes.yaml", "connections.yaml", "world.yaml")
+    )
 
 
 def test_render_does_not_change_story_files() -> None:

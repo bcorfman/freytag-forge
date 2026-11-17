@@ -25,13 +25,18 @@ def _value(value: object) -> str:
     return str(value).lower()
 
 
-def _source_location(root: Path, record_id: str, source_file: str | None = None) -> str | None:
+def _source_location(
+    root: Path, record_id: str, source_file: str | None = None, *, include_match_files: bool = True
+) -> str | None:
     patterns = (
         re.compile(rf"^\s*-\s+id:\s*{re.escape(record_id)}(?:\s|$)"),
         re.compile(rf"^\s*\{{?id:\s*{re.escape(record_id)}(?:\s|[,}}]|$)"),
+        re.compile(rf"^\s*(?:claim_id|realization_id|storylet_id):\s*{re.escape(record_id)}(?:\s|$)"),
         re.compile(rf"^\s*{re.escape(record_id)}:\s*(?:#.*)?$"),
     )
     paths = (root / source_file,) if source_file is not None else tuple(root.rglob("*"))
+    if not include_match_files:
+        paths = tuple(path for path in paths if not path.name.endswith(".match.yaml"))
     for path in sorted(item for item in paths if item.is_file()):
         try:
             lines = path.read_text(encoding="utf-8").splitlines()
@@ -54,7 +59,16 @@ def _record_suffix(root: Path, record_id: str, kind: str | None = None) -> str:
         "connection consequence": "connections.yaml",
         "guard": "world.yaml",
     }
-    location = _source_location(root, record_id, source_files.get(kind) if kind else None)
+    compiled_root = (root / "ownership.yaml").is_file() and (root / "source").is_dir()
+    if compiled_root:
+        compiled_source_files = {
+            "connection consequence": "source/catalog.yaml",
+            "guard": "source/catalog.yaml",
+        }
+        source_file = compiled_source_files.get(kind)
+    else:
+        source_file = source_files.get(kind) if kind else None
+    location = _source_location(root, record_id, source_file, include_match_files=not compiled_root)
     return f" [source: {location}]" if location else ""
 
 

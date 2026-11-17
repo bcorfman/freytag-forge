@@ -4,8 +4,6 @@ import json
 import re
 from pathlib import Path
 
-import yaml
-
 from storygame.runtime.candidate_matcher import uniquely_matched_authored_handoff
 from storygame.runtime.cloudflare import CloudflareTurnProvider
 from storygame.runtime.engine import RuntimeEngine
@@ -36,9 +34,11 @@ def scene_prompts() -> dict[str, list[str]]:
     return scenes
 
 
-def knowledge_items() -> dict[str, dict]:
-    raw = yaml.safe_load((PACKAGE_ROOT / "knowledge.yaml").read_text())
-    return {item["id"]: item for item in raw["knowledge"]}
+def knowledge_items(root: Path = PACKAGE_ROOT) -> dict[str, dict]:
+    """Return the package knowledge catalog indexed by claim ID."""
+
+    package = load_story_package(root)
+    return {item.id: item.model_dump(exclude_unset=True, mode="json") for item in package.knowledge.knowledge}
 
 
 class _ScriptedProvider(CloudflareTurnProvider):
@@ -70,10 +70,10 @@ class _ScriptedProvider(CloudflareTurnProvider):
         }
 
 
-def simulate_expected_reveals() -> dict[str, list[str]]:
+def simulate_expected_reveals(root: Path = PACKAGE_ROOT) -> dict[str, list[str]]:
     """Simulate the hosted prompt walk against the real offline runtime."""
 
-    package = load_story_package(PACKAGE_ROOT)
+    package = load_story_package(root)
     state = RuntimeState.bootstrap(package)
     provider = _ScriptedProvider(state)
     engine = RuntimeEngine(state, provider)
