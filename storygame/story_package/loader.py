@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import re
+from collections.abc import Callable
 from copy import deepcopy
 from functools import cache
 from pathlib import Path
@@ -68,6 +69,7 @@ _REQUIRED_STORYLET_SECTIONS = {
 }
 
 _STORY_PACKAGE_CACHE: dict[tuple[Path, str], StoryPackage] = {}
+_OWNERSHIP_SCENE_ID = re.compile(r"^[1-9][A-Z]$")
 
 
 @cache
@@ -1514,7 +1516,95 @@ def _parse_characters(plot_text: str, world: WorldSource) -> tuple[Character, ..
     return tuple(characters)
 
 
+def _ownership_error(entries: set[str]) -> StoryPackageError:
+    """Describe ownership states that cannot be dispatched safely yet."""
+
+    names = ", ".join(sorted(entries)) or "ownership.yaml"
+    return StoryPackageError(f"mixed ownership is not supported yet; offending entries: {names}")
+
+
+def _read_ownership(root: Path) -> tuple[str, dict[str, str]] | None:
+    """Read and validate the root ownership manifest without loading legacy data."""
+
+    path = root / "ownership.yaml"
+    if not path.exists():
+        return None
+    try:
+        value = yaml.safe_load(path.read_text(encoding="utf-8"))
+    except (OSError, yaml.YAMLError) as exc:
+        raise _ownership_error({"ownership.yaml"}) from exc
+    if not isinstance(value, dict):
+        raise _ownership_error({"ownership.yaml"})
+
+    offending: set[str] = set()
+    if list(value)[:1] != ["schema"] or value.get("schema") != 1:
+        offending.add("schema")
+    if set(value) - {"schema", "catalog", "scenes"}:
+        offending.update(f"ownership.yaml.{key}" for key in set(value) - {"schema", "catalog", "scenes"})
+    catalog = value.get("catalog")
+    if catalog not in {"legacy", "compiled"}:
+        offending.add("catalog")
+    scenes = value.get("scenes")
+    if not isinstance(scenes, dict):
+        offending.add("scenes")
+        scenes = {}
+    else:
+        for scene, owner in scenes.items():
+            entry = f"scenes.{scene}"
+            if not isinstance(scene, str) or _OWNERSHIP_SCENE_ID.fullmatch(scene) is None:
+                offending.add(entry)
+            if owner not in {"legacy", "compiled"}:
+                offending.add(entry)
+    if offending:
+        raise _ownership_error(offending)
+    assert isinstance(catalog, str)
+    return catalog, scenes
+
+
+def _source_scene_ids(root: Path) -> set[str] | None:
+    """Read source scene IDs when possible, leaving malformed source to the compiler."""
+
+    try:
+        value = yaml.safe_load((root / "source" / "story.yaml").read_text(encoding="utf-8"))
+    except (OSError, yaml.YAMLError):
+        return None
+    if not isinstance(value, dict) or not isinstance(value.get("scenes"), list):
+        return None
+    scenes = value["scenes"]
+    if not all(isinstance(scene, str) and _OWNERSHIP_SCENE_ID.fullmatch(scene) for scene in scenes):
+        return None
+    return set(scenes)
+
+
 def _load_story_package_uncached(root: Path) -> StoryPackage:
+    """Dispatch a package to its compiled or legacy source without caching."""
+
+    ownership = _read_ownership(root)
+    if ownership is not None:
+        catalog_owner, scene_owners = ownership
+        compiled_entries = {"catalog"} if catalog_owner == "compiled" else set()
+        legacy_entries = {"catalog"} if catalog_owner == "legacy" else set()
+        for scene, owner in scene_owners.items():
+            (compiled_entries if owner == "compiled" else legacy_entries).add(f"scene:{scene}")
+        if compiled_entries and legacy_entries:
+            raise _ownership_error(compiled_entries | legacy_entries)
+        if compiled_entries:
+            source_scene_ids = _source_scene_ids(root)
+            if source_scene_ids is not None:
+                missing = source_scene_ids - set(scene_owners)
+                extra = set(scene_owners) - source_scene_ids
+                if missing or extra:
+                    raise _ownership_error(
+                        {f"scene:{scene}" for scene in (*missing, *extra)}
+                        | ({"source/story.yaml.scenes"} if missing or extra else set())
+                    )
+            from storygame.story_source.compiler import compile_source_tree
+
+            return compile_source_tree(root / "source")
+    return _load_legacy_story_package_uncached(root)
+
+
+def _load_legacy_story_package_uncached(root: Path) -> StoryPackage:
     """Load one package directory without accepting prose as runtime truth."""
     try:
         plot_text = (root / "plot.md").read_text(encoding="utf-8")
@@ -1735,23 +1825,36 @@ def _story_package_fingerprint(root: Path) -> str:
     return digest.hexdigest()
 
 
-def load_story_package(root: Path) -> StoryPackage:
-    """Load one package directory without accepting prose as runtime truth."""
+def _load_cached_story_package(root: Path, uncached: Callable[[Path], StoryPackage], *, namespace: str) -> StoryPackage:
+    """Load one package through the shared fingerprint cache."""
+
     resolved_root = root.resolve()
     try:
         if not resolved_root.is_dir():
-            return _load_story_package_uncached(root)
+            return uncached(root)
         fingerprint = _story_package_fingerprint(resolved_root)
     except OSError:
-        return _load_story_package_uncached(root)
-    key = (resolved_root, fingerprint)
+        return uncached(root)
+    key = (resolved_root, f"{namespace}:{fingerprint}")
     cached = _STORY_PACKAGE_CACHE.get(key)
     if cached is not None:
         return cached
-    package = _load_story_package_uncached(root)
+    package = uncached(root)
     # The cache is safe because packages are frozen.
     if len(_STORY_PACKAGE_CACHE) >= 32:
         oldest_key = next(iter(_STORY_PACKAGE_CACHE))
         _STORY_PACKAGE_CACHE.pop(oldest_key)
     _STORY_PACKAGE_CACHE[key] = package
     return package
+
+
+def load_story_package(root: Path) -> StoryPackage:
+    """Load one package directory, dispatching compiled ownership when declared."""
+
+    return _load_cached_story_package(root, _load_story_package_uncached, namespace="dispatch")
+
+
+def load_legacy_story_package(root: Path) -> StoryPackage:
+    """Load only the legacy files in one package directory."""
+
+    return _load_cached_story_package(root, _load_legacy_story_package_uncached, namespace="legacy")
