@@ -1,3 +1,4 @@
+# NOTE: Keep must_convey on text_when claims because selectable scene-transition claims require it.
 from __future__ import annotations
 
 import copy
@@ -13,8 +14,14 @@ _SAY_ENTRIES = [
     {"text": "The default patrol line."},
 ]
 _TEXT_WHEN_ENTRIES = [
-    {"when": ["ticket_header_matched"], "text": "The first matching delivery."},
-    {"when": ["evidence_ready_to_transmit"], "text": "The second matching delivery."},
+    {
+        "when": ["ticket_header_matched"],
+        "text": "{sending} {route_close} The ticket header matches.",
+    },
+    {
+        "when": ["evidence_ready_to_transmit"],
+        "text": "{sending} {route_close} The evidence is ready to transmit.",
+    },
 ]
 _ENDING_ADDITIONS = [
     {"when": ["evacuation_complete"], "text": "The first aftermath addition."},
@@ -67,7 +74,14 @@ def test_passage_rules_compile_to_ordered_and_ambiguous_values(tmp_path: Path) -
 
     event = next(event for event in package.pacing.events if event.id == "patrol_leaves_1a")
     assert [realization.text for realization in event.realizations] == [entry["text"] for entry in _SAY_ENTRIES]
+    matching = [
+        realization
+        for realization in event.realizations
+        if {predicate.fact_id for predicate in realization.when} <= {"card_challenged", "patrol_on_scene"}
+    ]
+    assert matching[0].text == "The first matching patrol line."
     claim = next(item for item in package.knowledge.knowledge if item.id == "k_sl_2c_d_r3")
+    assert claim.must_convey
     assert resolve_delivery_text(claim, {"ticket_header_matched", "evidence_ready_to_transmit"}) is AMBIGUOUS
     assert [variant.text for variant in package.pacing.ending.variants] == [
         entry["text"] for entry in _ENDING_ADDITIONS

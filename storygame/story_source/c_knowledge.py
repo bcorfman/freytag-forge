@@ -401,12 +401,8 @@ def _definition_matchers(
     action = matcher_groups(
         effective_match(context.match, claim_id, "action_evidence", lexicon=context.lexicon, lock=context.lock)
     )
-    must = (
-        ()
-        if text_when
-        else matcher_groups(
-            effective_match(context.match, claim_id, "must_convey", lexicon=context.lexicon, lock=context.lock)
-        )
+    must = matcher_groups(
+        effective_match(context.match, claim_id, "must_convey", lexicon=context.lexicon, lock=context.lock)
     )
     leaks = _leak_terms(
         effective_match(context.match, claim_id, "leak_terms", lexicon=context.lexicon, lock=context.lock)

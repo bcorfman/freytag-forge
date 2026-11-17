@@ -144,7 +144,7 @@ def build_connections(catalog: Mapping[str, Any]) -> tuple[Connection, ...]:
     """Convert catalog connection records in mapping order."""
 
     result: list[Connection] = []
-    for identifier, record in _records(catalog.get("connections")):
+    for _identifier, record in _records(catalog.get("connections")):
         data = dict(record)
         data["from_place_id"] = data.pop("from")
         data["to_place_id"] = data.pop("to")
@@ -152,5 +152,5 @@ def build_connections(catalog: Mapping[str, Any]) -> tuple[Connection, ...]:
         data["access_fact_id"] = data.pop("access_fact", None)
         data["arrival_text"] = data.pop("arrival")
         data["consequences"] = operations(data.get("consequences"))
-        result.append(Connection(id=identifier, **data))
+        result.append(Connection(**data))
     return tuple(result)
