@@ -698,6 +698,9 @@ def _check_notes(value: object, address: str, issue: Issue) -> None:
 
     names = {
         "allowed_scene",
+        "source_beats",
+        "pacing_window",
+        "storylet_title",
         "available_when",
         "participants",
         "dramatic_purpose",

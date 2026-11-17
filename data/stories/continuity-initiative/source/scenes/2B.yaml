@@ -325,6 +325,25 @@ reveals:
   from_outline:
   - 2B.1
   - 2B.2
+  notes:
+    available_when: '- `audit_window_missed` is false.'
+    participants: '- Kristin Schweitzer
+
+      - Brandon Corfman
+
+      - Archive terminals
+
+      - Kristin''s personnel file'
+    dramatic_purpose: '- Let Kristin pull her own file and learn why she was selected before Brandon offers the name choice.'
+    possible_realizations: '- Kristin pulls her own file at the archive terminals.
+
+      - The file says she was retained to lead investigators to Corfman and names Brandon as an author.
+
+      - Brandon whispers the choice about keeping or erasing his name.'
+    effects: '- May set `kristin_file_read`.'
+    completion: '- Kristin has pulled and read her own file.'
+    abort: '- The scene is no longer `2B`.'
+    protected_boundary: '- The full JANUS history and the final name choice remain unresolved until the observation is complete.'
   variants:
     r1:
       realization_id: SL-2B-A-R1
@@ -377,6 +396,53 @@ reveals:
   - 2B.1
   - 2B.2
   - 2B.3
+  notes:
+    available_when: '- Kristin and Brandon are in the records archive.
+
+      - The audit sweep is moving through the stacks.
+
+      - `kristin_file_read` is true.'
+    participants: '- Kristin Schweitzer
+
+      - Brandon Corfman
+
+      - The shift supervisor
+
+      - Archive terminals
+
+      - Copied JANUS files'
+    dramatic_purpose: '- Make one file pull reveal Kristin’s bait status, JANUS, and Brandon’s role.
+
+      - Turn the audit into a whispered confrontation.'
+    possible_realizations: '- Kristin pulls her own file first.
+
+      - The record reads, “RETAINED — predicted to lead investigators to CORFMAN.”
+
+      - The build record below it names Brandon as JANUS’s author.
+
+      - Kristin confronts Brandon between the shelves while the audit passes.
+
+      - Brandon admits that he wrote the software and claims he broke with Charles.
+
+      - Brandon asks Kristin to remove his name before they copy the files.
+
+      - Kristin keeps his name or lets him erase it.'
+    effects: '- May set `janus_known`.
+
+      - May set `janus_evidence`.
+
+      - May set `kristin_was_bait`.
+
+      - May set `michelle_selected_for_resistance_influence`.
+
+      - May set `brandon_janus_role_known`.
+
+      - May set `brandon_claimed_reform_motive`.
+
+      - May set `archive_crisis_understood`.'
+    completion: '- Kristin has confronted Brandon and resolved whether his name stays in the build record.'
+    abort: '- The scene is no longer `2B`.'
+    protected_boundary: '- Michelle’s uprising and the broadcast solution remain undisclosed.'
   variants:
     r4:
       realization_id: SL-2B-B-R4
@@ -494,6 +560,37 @@ reveals:
     - janus_phase_two
   from_outline:
   - 2B.4
+  notes:
+    available_when: '- Kristin and Brandon have completed the archive discovery.
+
+      - The medical terminal is available.'
+    participants: '- Kristin Schweitzer
+
+      - Brandon Corfman
+
+      - Dr. Michelle McGehee through the medical terminal
+
+      - Medical terminal'
+    dramatic_purpose: '- Let Michelle answer after the betrayal.
+
+      - Show that she is alive and active without revealing the uprising plan.'
+    possible_realizations: '- The medical terminal prints a maintenance line in Michelle’s private phrasing.
+
+      - The line ends with “Shelly.”
+
+      - Kristin types one reply.
+
+      - Michelle answers once.
+
+      - She says she is alive, active, and will send a route.'
+    effects: '- Sets `michelle_resistance_known`.
+
+      - Sets `michelle_reply_received`.
+
+      - Sets `archive_crisis_understood`.'
+    completion: '- Kristin receives Michelle’s single reply.'
+    abort: '- The scene is no longer `2B`.'
+    protected_boundary: '- The uprising and broadcast solution remain undisclosed.'
   variants:
     r3:
       realization_id: SL-2B-C-R3
@@ -548,6 +645,53 @@ reveals:
   - 2B.2
   - 2B.3
   - 2B.4
+  notes:
+    available_when: '- `audit_window_missed` is true.'
+    participants: '- Kristin Schweitzer
+
+      - Brandon Corfman
+
+      - The shift supervisor
+
+      - Archive terminals
+
+      - Medical terminal
+
+      - Copied JANUS files'
+    dramatic_purpose: '- Complete the archive crisis when the audit closes the normal choice.'
+    possible_realizations: '- The audit reaches the stacks.
+
+      - The shift supervisor sees Kristin and Brandon but does not raise the alarm.
+
+      - Kristin keeps Brandon’s name in the build record.
+
+      - They leave with the copied JANUS files.
+
+      - Michelle’s maintenance line prints as they leave.
+
+      - Kristin receives Michelle’s one reply.'
+    effects: '- Sets `brandon_name_kept`.
+
+      - Sets `janus_known`.
+
+      - Sets `janus_evidence`.
+
+      - Sets `kristin_was_bait`.
+
+      - Sets `michelle_selected_for_resistance_influence`.
+
+      - Sets `brandon_janus_role_known`.
+
+      - Sets `brandon_claimed_reform_motive`.
+
+      - Sets `michelle_resistance_known`.
+
+      - Sets `michelle_reply_received`.
+
+      - Sets `archive_crisis_understood`.'
+    completion: '- Kristin and Brandon leave the archive with the files and the audit has passed.'
+    abort: '- The scene is no longer `2B`.'
+    protected_boundary: '- The uprising and broadcast solution remain undisclosed.'
   variants:
     r1:
       realization_id: SL-2B-D-R1
@@ -628,6 +772,23 @@ reveals:
     - janus_phase_two
   from_outline:
   - 2B.3
+  notes:
+    available_when: '- `audit_window_missed` is false.
+
+      - `kristin_file_read` is true.'
+    participants: '- Kristin Schweitzer
+
+      - Brandon Corfman
+
+      - Build record
+
+      - Archive terminals'
+    dramatic_purpose: '- Let Kristin confirm the three checks Brandon knew at the gate.'
+    possible_realizations: '- Kristin reads the access section of the build record or checks what the badge readers check.'
+    effects: '- Sets `badge_checks_read`.'
+    completion: '- Kristin has read the access section of the build record.'
+    abort: '- The scene is no longer `2B`.'
+    protected_boundary: '- The protected system, Brandon’s past, and Rebecca’s interest remain undisclosed.'
   variants:
     r1:
       realization_id: SL-2B-E-R1
@@ -677,6 +838,19 @@ reveals:
     - janus_phase_two
   from_outline:
   - 2B.2
+  notes:
+    available_when: '- `audit_window_missed` is false.'
+    participants: '- Kristin Schweitzer
+
+      - Transfer queue
+
+      - Archive terminals'
+    dramatic_purpose: '- Let Kristin see the held transfers and the repeated maintenance excuse.'
+    possible_realizations: '- Kristin opens or reads the transfer queue on the archive terminals.'
+    effects: '- Sets `held_transfers_seen`.'
+    completion: '- Kristin has read the transfer queue.'
+    abort: '- The scene is no longer `2B`.'
+    protected_boundary: '- The protected system, Brandon’s past, and Rebecca’s interest remain undisclosed.'
   variants:
     r1:
       realization_id: SL-2B-F-R1
@@ -724,6 +898,21 @@ reveals:
     - janus_phase_two
   from_outline:
   - 2B.4
+  notes:
+    available_when: '- `archive_crisis_understood` is true.
+
+      - `held_transfers_seen` is true.'
+    participants: '- Kristin Schweitzer
+
+      - Medical terminal
+
+      - Transfer queue'
+    dramatic_purpose: '- Let Kristin match the maintenance line to the held transfers.'
+    possible_realizations: '- Kristin reads or compares the maintenance line on the medical terminal with the held transfers.'
+    effects: '- Sets `ticket_header_matched`.'
+    completion: '- Kristin has matched the maintenance line to the held transfers.'
+    abort: '- The scene is no longer `2B`.'
+    protected_boundary: '- The protected system, Brandon’s past, and Rebecca’s interest remain undisclosed.'
   variants:
     r1:
       realization_id: SL-2B-G-R1

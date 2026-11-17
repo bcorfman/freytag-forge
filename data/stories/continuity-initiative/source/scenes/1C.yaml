@@ -266,6 +266,31 @@ reveals:
     - janus_phase_two
   from_outline:
   - 1C.1
+  notes:
+    available_when: '- Kristin and Brandon are at the freight terminal/industrial site.
+
+      - The underground complex has not yet been fully confirmed.
+
+      - The transfer window remains open.'
+    participants: '- Kristin Schweitzer
+
+      - Brandon Corfman
+
+      - Transit token
+
+      - Freight-terminal infrastructure'
+    dramatic_purpose: '- Give Kristin’s Army infrastructure and operations background real investigative weight.
+
+      - Make discovery of the facility emerge from physical contradictions in the site.'
+    possible_realizations: '- Kristin compares declared abandonment with electrical load, ventilation, and recent infrastructure work.
+
+      - Brandon supplies operational context while Kristin supplies infrastructure and operations analysis.'
+    effects: '- May set `facility_proof`.
+
+      - May reveal evidence of continuing facility activity.'
+    completion: '- Kristin and Brandon have proof that the terminal is active.'
+    abort: '- The facility becomes openly alerted and the subtle-entry situation ends.'
+    protected_boundary: '- Does not reveal the full national network before the logistics evidence is reached.'
   variants:
     r1:
       realization_id: SL-1C-A-R1
@@ -309,6 +334,41 @@ reveals:
     - janus_phase_two
   from_outline:
   - 1C.2
+  notes:
+    available_when: '- The active underground facility has been credibly confirmed.
+
+      - Kristin can observe the captive-processing area.
+
+      - Michelle’s status remains unconfirmed.
+
+      - The transfer window remains open.'
+    participants: '- Kristin Schweitzer
+
+      - Brandon Corfman
+
+      - Sedated prisoners
+
+      - Dr. Michelle McGehee only as a possible, obscured sighting
+
+      - Michelle’s missing-person evidence/identification records, if available'
+    dramatic_purpose: '- Convert abstract conspiracy evidence into immediate human stakes.
+
+      - Intensify Kristin’s rescue impulse while preserving uncertainty about Michelle.'
+    possible_realizations: '- Kristin studies the prisoners through the observation shaft.
+
+      - She watches a woman who might be Michelle but cannot obtain certainty.
+
+      - Brandon offers copying the prisoner numbers for stronger proof.
+
+      - Brandon offers help with the transfer route at the cost of the full number set.'
+    effects: '- May set `captives_confirmed_alive`.
+
+      - May make rescue more urgent.
+
+      - May set `michelle_possible_sighting` without confirming Michelle''s location.'
+    completion: '- Kristin accepts that living captives are being held here.'
+    abort: '- Observation becomes impossible because of security movement or scene progression.'
+    protected_boundary: '- Michelle’s exact position and resistance network remain protected.'
   variants:
     r1:
       realization_id: SL-1C-B-R1
@@ -379,6 +439,29 @@ reveals:
     - janus_phase_two
   from_outline:
   - 1C.2
+  notes:
+    available_when: '- The active facility and living captives have been credibly confirmed.
+
+      - Kristin knows captives are present.
+
+      - The transfer window remains open.'
+    participants: '- Kristin Schweitzer
+
+      - Brandon Corfman
+
+      - Prisoner number record
+
+      - Service entrance'
+    dramatic_purpose: '- Force a meaningful choice while the transfer window remains open.'
+    possible_realizations: '- Kristin copies the visible prisoner numbers and matches them to missing-person records.
+
+      - Kristin asks Brandon about the transfer route or has him open the service entrance with the transit token.'
+    effects: '- The copy outcome establishes `processing_numbers_copied` and `facility_infiltration_needed`.
+
+      - The route outcome establishes `service_level_access_known`, `evidence_gap_processing_numbers`, `facility_infiltration_needed`, and `trust_brandon`.'
+    completion: '- Kristin has chosen proof or a route into the facility.'
+    abort: '- The transfer window closes.'
+    protected_boundary: '- The national network and the architects’ strategy remain for a later scene.'
   variants:
     r1:
       realization_id: SL-1C-C-R1
@@ -468,6 +551,23 @@ reveals:
     - janus_phase_two
   from_outline:
   - 1C.2
+  notes:
+    available_when: '- The transfer window has been missed.'
+    participants: '- Kristin Schweitzer
+
+      - Brandon Corfman
+
+      - Service entrance'
+    dramatic_purpose: '- Turn the missed window into a costly final chance to enter.'
+    possible_realizations: '- Brandon invites Kristin to follow him through the service entrance. The offer alone grants nothing.
+
+      - Brandon leads Kristin through the service entrance while the sweep closes in.'
+    effects: '- Reuses the secure-route outcome.
+
+      - Establishes `terminal_sweep_closing` as the recovery cost.'
+    completion: '- Kristin reaches the next scene.'
+    abort: '- Kristin leaves the scene.'
+    protected_boundary: '- The national network and the architects’ strategy remain undisclosed.'
   variants:
     r1:
       realization_id: SL-1C-D-R1
@@ -517,6 +617,19 @@ reveals:
     - janus_phase_two
   from_outline:
   - 1C.1
+  notes:
+    available_when: '- The transfer window remains open.
+
+      - Kristin has read the emergency-water label.'
+    participants: '- Kristin Schweitzer
+
+      - Water pallets'
+    dramatic_purpose: '- Tie the park''s emergency water to the active terminal.'
+    possible_realizations: '- Kristin inspects the water pallets, their bottles, or their label.'
+    effects: '- Sets `dock_water_matched`.'
+    completion: '- Kristin has matched the dock''s water pallets to the thermos lot number.'
+    abort: '- Kristin leaves scene 1C.'
+    protected_boundary: '- Does not reveal the protected system, Brandon''s history, or the later phase.'
   variants:
     r1:
       realization_id: SL-1C-E-R1
@@ -566,6 +679,19 @@ reveals:
     - janus_phase_two
   from_outline:
   - 1C.2
+  notes:
+    available_when: '- The facility has been credibly confirmed.
+
+      - The transfer window remains open.'
+    participants: '- Kristin Schweitzer
+
+      - Brandon Corfman'
+    dramatic_purpose: '- Show Brandon keeping watch while Kristin studies the processing line.'
+    possible_realizations: '- Kristin watches Brandon while the shaft view is open.'
+    effects: '- Sets `brandon_watches_door`.'
+    completion: '- Kristin has noticed Brandon watching the door.'
+    abort: '- Kristin leaves scene 1C.'
+    protected_boundary: '- Does not reveal the protected system, Brandon''s history, or the later phase.'
   variants:
     r1:
       realization_id: SL-1C-F-R1
@@ -614,6 +740,30 @@ reveals:
     - janus_phase_two
   from_outline:
   - 1C.1
+  notes:
+    available_when: '- The transfer window remains open.'
+    participants: '- Kristin Schweitzer
+
+      - Overhead speaker
+
+      - Air vents'
+    dramatic_purpose: '- Connect the terminal''s broadcast to the park''s emergency statement.'
+    possible_realizations: '- Kristin listens to the air vents, the speaker, or the sound from below.'
+    effects: '- Sets `line_broadcast_heard`.'
+    completion: '- Kristin has heard the park''s emergency statement over the processing line.'
+    abort: '- Kristin leaves scene 1C.'
+    protected_boundary: '- Does not reveal the protected system, Brandon''s history, or the later phase.'
+    pacing_window: '- earliest: `turn 0`
+
+      - target: `turn 2`
+
+      - latest: `turn 4`
+
+
+      # Scene 2 — The Infiltration
+
+
+      ## Storylets for [Scene 2A — False Identities](plot.md#scene-2a--false-identities)'
   variants:
     r1:
       realization_id: SL-1C-G-R1

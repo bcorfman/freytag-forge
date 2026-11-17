@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
@@ -83,15 +84,17 @@ def _route_and_storylet(context: SceneContext, reveal: Mapping[str, Any]) -> tup
         realizations=variants,
     )
     sections = _sections(context, reveal, window)
+    storylet_window = _storylet_window(reveal, window)
+    notes = reveal.get("notes", {})
     storylet = Storylet(
         id=reveal["storylet_id"],
         scene_id=context.scene["scene"],
-        title=reveal["title"],
+        title=notes.get("storylet_title", reveal["title"]),
         source_links=tuple(_anchor(context.scene, beat_id) for beat_id in reveal["from_outline"]),
         sections=sections,
-        earliest_turn=window["earliest_turn"],
-        target_turn=window["target_turn"],
-        latest_turn=window["latest_turn"],
+        earliest_turn=storylet_window["earliest_turn"],
+        target_turn=storylet_window["target_turn"],
+        latest_turn=storylet_window["latest_turn"],
     )
     return route, storylet
 
@@ -129,26 +132,45 @@ def _sections(context: SceneContext, reveal: Mapping[str, Any], window: Mapping[
     )
     notes = reveal.get("notes", {})
     sections = {
-        "Source beats:": links,
+        "Source beats:": notes.get("source_beats", links),
         "Allowed scene:": notes.get("allowed_scene", f"`{context.scene['scene']}`"),
-        "Pacing window": (
-            f"- earliest: `{window['earliest_turn']}`\n"
-            f"- target: `{window['target_turn']}`\n- latest: `{window['latest_turn']}`"
+        "Pacing window": notes.get(
+            "pacing_window",
+            (
+                f"- earliest: `turn {window['earliest_turn']}`\n"
+                f"- target: `turn {window['target_turn']}`\n- latest: `turn {window['latest_turn']}`"
+            ),
         ),
     }
-    section_names = (
-        "available_when",
-        "participants",
-        "dramatic_purpose",
-        "possible_realizations",
-        "effects",
-        "completion",
-        "abort",
-        "protected_boundary",
-        "non_coercion_note",
-    )
-    sections.update({name: notes[name] for name in section_names if name in notes})
+    section_names = {
+        "source_beats": "Source beats:",
+        "allowed_scene": "Allowed scene:",
+        "pacing_window": "Pacing window",
+        "available_when": "Available when",
+        "participants": "Participants / items",
+        "dramatic_purpose": "Dramatic purpose",
+        "possible_realizations": "Possible realizations",
+        "effects": "Effects",
+        "completion": "Completion",
+        "abort": "Abort",
+        "protected_boundary": "Protected boundary",
+        "non_coercion_note": "Non-coercion note:",
+    }
+    sections.update({section: notes[key] for key, section in section_names.items() if key in notes})
     return sections
+
+
+def _storylet_window(reveal: Mapping[str, Any], window: Mapping[str, int]) -> dict[str, int]:
+    """Read legacy storylet turn fields when the authored section drifted from the route."""
+
+    notes = reveal.get("notes", {})
+    pacing_window = notes.get("pacing_window")
+    if not isinstance(pacing_window, str):
+        return dict(window)
+    values = dict(re.findall(r"-\s*(earliest|target|latest):\s*`turn\s+(\d+)`", pacing_window))
+    if set(values) != {"earliest", "target", "latest"}:
+        return dict(window)
+    return {f"{key}_turn": int(values[key]) for key in ("earliest", "target", "latest")}
 
 
 def _anchor(scene: Mapping[str, Any], beat_id: str) -> str:

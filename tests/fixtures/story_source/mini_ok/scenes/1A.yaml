@@ -123,7 +123,7 @@ beats:
     at_turn: 3
     trailing: true
     when: {michelle_abduction_suspicion: false}
-    sets: {michelle_abduction_suspicion: true}
+    sets: {michelle_abduction_suspicion: true, michelle_lead_actionable: true, memory_card_recovered: true}
     verbatim: true
     say: "Kristin makes herself stop and look properly. Michelle's phone is still here - damaged a bit but still working. Then she sees the back door. The splinters around the frame point outward, away from the house. A door forced from outside would splinter inward. Someone broke this one from inside to make it look like a break-in. It looks staged."
   - id: patrol_arrives_1a

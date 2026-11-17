@@ -255,6 +255,37 @@ reveals:
     - janus_phase_two
   from_outline:
   - 3B.1
+  notes:
+    available_when: '- JANUS is predicting resistance movement.
+
+      - Kristin can affect facility infrastructure.
+
+      - The group is trying to reach Rebecca’s office/broadcast controls.'
+    participants: '- Kristin Schweitzer
+
+      - Dr. Michelle McGehee
+
+      - Brandon Corfman
+
+      - JANUS as system
+
+      - Facility doors, cameras, diagnostic readings, and empty service corridors'
+    dramatic_purpose: '- Make Kristin’s Army operations mindset the counter to predictive security.
+
+      - Encourage creative free-form disruption rather than one prescribed puzzle solution.'
+    possible_realizations: '- Kristin creates false water-pressure and ventilation alarms from the inspection console.
+
+      - Harmless door and light cycles make the group’s true route less legible.
+
+      - The group intentionally chooses tactically irrational movement.
+
+      - A failed disruption can still raise pressure while teaching what JANUS is using.'
+    effects: '- May force `human_security_control` when enough conflicting emergencies overload JANUS.
+
+      - May increase local infrastructure pressure as a cost.'
+    completion: '- JANUS can no longer reliably predict the group’s route and human operators take over.'
+    abort: '- JANUS is already disconnected or the group has reached Rebecca’s office.'
+    protected_boundary: '- The disruption does not itself disconnect the external relay; that remains Brandon’s later task.'
   variants:
     r1:
       realization_id: SL-3B-A-R1
@@ -313,6 +344,19 @@ reveals:
     - janus_phase_two
   from_outline:
   - 3B.2
+  notes:
+    available_when: '- JANUS has been overloaded enough that human security has taken direct control.'
+    participants: '- Kristin Schweitzer
+
+      - Dr. Michelle McGehee
+
+      - Brandon Corfman'
+    dramatic_purpose: '- Bring Kristin and Michelle into Rebecca’s office while Brandon holds off security forces.'
+    possible_realizations: '- Kristin and Michelle enter Rebecca’s office while Brandon holds off security forces.'
+    effects: '- May set `rebecca_office_reached`.'
+    completion: '- Kristin and Michelle have reached Rebecca’s office.'
+    abort: '- The group leaves the scene before reaching Rebecca’s office.'
+    protected_boundary: '- Reaching the office does not confront Rebecca; that remains `SL-3B-B`.'
   variants:
     r1:
       realization_id: SL-3B-E-R1
@@ -353,6 +397,37 @@ reveals:
     - janus_phase_two
   from_outline:
   - 3B.2
+  notes:
+    available_when: '- JANUS has been overloaded enough that human security has taken direct control.
+
+      - Kristin and Michelle have reached Rebecca’s office.
+
+      - Rebecca is present and has not yet escaped.
+
+      - Charles has not fully destroyed the local situation.'
+    participants: '- Kristin Schweitzer
+
+      - Dr. Michelle McGehee
+
+      - Rebecca Jenkins
+
+      - Charles Jenkins through remote communication
+
+      - Detention-site location information available to Rebecca'
+    dramatic_purpose: '- Put Rebecca’s self-preservation against Michelle’s evidence of her direct responsibility.
+
+      - Let the player evaluate Rebecca’s bargain before Charles collapses her position.'
+    possible_realizations: '- Rebecca claims surrender is the only way to save the failing facility.
+
+      - Michelle confronts her with approvals for experiments.
+
+      - Rebecca offers all detention-site locations.'
+    effects: '- May set `rebecca_experiment_approval_confronted`.
+
+      - May set `detention_locations_offer_known`.'
+    completion: '- The group has secured Rebecca’s detention-site information while deciding how much of her word to trust.'
+    abort: '- Rebecca escapes before the confrontation or a non-canonical branch supersedes it.'
+    protected_boundary: '- Rebecca’s offer is not automatically trusted; later archive evidence remains independently valuable.'
   variants:
     r1:
       realization_id: SL-3B-B-R1
@@ -421,6 +496,37 @@ reveals:
     - janus_phase_two
   from_outline:
   - 3B.3
+  notes:
+    available_when: '- Human security control has replaced JANUS’s predictions.
+
+      - The group has secured the detention-site locations.
+
+      - Rebecca remains in the office under pressure.'
+    participants: '- Kristin Schweitzer
+
+      - Dr. Michelle McGehee
+
+      - Rebecca Jenkins
+
+      - Charles Jenkins through remote communication
+
+      - The office security system and outer access-level water controls'
+    dramatic_purpose: '- Give Rebecca’s exposure room to land before Charles demonstrates that she is expendable.
+
+      - Turn Charles’s strategic retreat into a real, contained physical danger rather than an arbitrary disaster.'
+    possible_realizations: '- Charles locks down the office and abandons Rebecca while transferring national control.
+
+      - He turns the harmless diagnostic false alarm into a real deluge in the outer access level.
+
+      - Rising water cuts off routes and makes the already-earned drainage and surface-gate resources urgent.'
+    effects: '- May set `charles_abandoned_rebecca`.
+
+      - May set `facility_destruction_threat`.
+
+      - May change Rebecca from an antagonist in control to a trapped, self-preserving antagonist.'
+    completion: '- Charles has committed to flooding the outer access level, and the group has time to react before the relay climax.'
+    abort: '- The deluge has already begun through a validated alternate event, and the relay crisis takes priority.'
+    protected_boundary: '- The deluge does not destroy the facility, cause explosions, or decide Brandon’s fate.'
   variants:
     r1:
       realization_id: SL-3B-D-R1
@@ -489,6 +595,45 @@ reveals:
     - janus_phase_two
   from_outline:
   - 3B.4
+  notes:
+    available_when: '- JANUS predictive control has been defeated.
+
+      - Charles has stripped Rebecca of control and the protagonists have secured exact detention-site locations.
+
+      - The broadcast is ready except for Charles’s control of the external communications relay.
+
+      - Brandon is still capable of reaching/operating the relay chamber.'
+    participants: '- Brandon Corfman
+
+      - Kristin Schweitzer and Dr. Michelle McGehee through communication where justified
+
+      - External communications relay
+
+      - Brandon’s confession recording/transmission'
+    dramatic_purpose: '- Resolve Brandon’s guilt arc through an action that is both operationally necessary and personally accountable.
+
+      - Create the final condition for the national transmission without scripting Kristin’s emotional response.'
+    possible_realizations: '- Brandon chooses the relay because his old access makes him the viable operator.
+
+      - He transmits a confession that authenticates Michelle’s evidence.
+
+      - Security lockdown and rising water make continued relay control costly.
+
+      - Kristin or Michelle may argue against him, but the authored situation keeps the relay problem concrete.'
+    effects: '- May set `relay_open`.
+
+      - May set `brandon_confession_available`.
+
+      - May set `relay_open`.
+
+      - May set `broadcast_started` once Michelle/Kristin activate the transmission through the opened relay.
+
+      - May critically worsen `brandon_health/status` only through validated effects consistent with the authored sacrifice.
+
+      - `broadcast_started` is the Scene 3B → 3C bridge.'
+    completion: '- The relay remains open long enough for Michelle and Kristin to begin the broadcast.'
+    abort: '- A declared fallback solves the relay dependency instead; otherwise incapacitating Brandon beforehand may be game-breaking and must be handled explicitly.'
+    protected_boundary: '- Brandon’s final survival/fate remains unresolved until the authored flood-and-escape outcome permits it.'
   variants:
     r1:
       realization_id: SL-3B-C-R1

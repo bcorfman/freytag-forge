@@ -432,6 +432,45 @@ reveals:
     - janus_phase_two
   from_outline:
   - 3C.1
+  notes:
+    available_when: '- `broadcast_started` is true.
+
+      - The broadcast path is open.
+
+      - Michelle has sufficient evidence to transmit.
+
+      - Charles still has remote communications capability.'
+    participants: '- Kristin Schweitzer
+
+      - Dr. Michelle McGehee
+
+      - Charles Jenkins remotely
+
+      - Broadcast evidence
+
+      - Brandon’s confession, if available
+
+      - Live facility feeds where available'
+    dramatic_purpose: '- Make exposure a contest over credibility rather than a simple upload-success event.
+
+      - Let accumulated evidence qualities determine how convincingly Michelle can answer Charles.'
+    possible_realizations: '- Michelle presents captives, JANUS records, facility locations, experiment evidence, and planning records.
+
+      - Charles calls the group terrorists.
+
+      - Michelle counters with independently verifiable facility information or live images.
+
+      - Brandon’s confession can authenticate evidence without being the only possible credibility support if fallbacks are declared.'
+    effects: '- May make the public aware of the conspiracy.
+
+      - May set `national_facility_locations_broadcast`.
+
+      - May show Charles publicly denying the evidence.
+
+      - May set `truth_no_longer_containable` once declared credibility/evidence conditions are met.'
+    completion: '- Enough independently checkable evidence is public that Charles cannot contain the story by controlling one broadcast channel.'
+    abort: '- Broadcast capability is permanently lost through a validated non-canonical branch.'
+    protected_boundary: '- Phase Two remains protected until the resolution discovery.'
   variants:
     r1:
       realization_id: SL-3C-A-R1
@@ -495,6 +534,37 @@ reveals:
     - janus_phase_two
   from_outline:
   - 3C.2
+  notes:
+    available_when: '- Rebecca is attempting to escape.
+
+      - The portable archive is present and recoverable.'
+    participants: '- Kristin Schweitzer
+
+      - Dr. Michelle McGehee
+
+      - Rebecca Jenkins
+
+      - Portable archive of conspirator identities and prisoner locations'
+    dramatic_purpose: '- Turn a chase/capture into an information-custody problem.
+
+      - Prevent “destroy the bad thing” from being an uncomplicated solution because the same archive can save captives.'
+    possible_realizations: '- Kristin stops Rebecca and learns what the archive contains.
+
+      - Rebecca exploits the mixed contents to bargain.
+
+      - Michelle argues for duplication/distribution rather than destruction or sole custody.
+
+      - The archive can be copied to independent networks once capability exists.'
+    effects: '- May set `portable_archive_secured`.
+
+      - May set `archive_contains_prisoner_locations`.
+
+      - May set `archive_copies_distributed`.
+
+      - May set `rebecca_captured` when the authored confrontation resolves.'
+    completion: '- The archive is preserved/distributed in a way that does not strand the prisoners whose locations it contains.'
+    abort: '- The archive is destroyed or lost; future-satisfiability rules determine whether this is merely costly or game-breaking based on declared fallbacks.'
+    protected_boundary: '- The archive does not automatically contain or reveal Phase Two unless that is explicitly declared elsewhere in the package.'
   variants:
     r1:
       realization_id: SL-3C-B-R1
@@ -565,6 +635,46 @@ reveals:
   from_outline:
   - 3C.3
   - 3C.4
+  notes:
+    available_when: '- Charles’s emergency deluge is running, and rising water is closing the outer access level.
+
+      - The prisoners are moving toward escape routes.
+
+      - Kristin can still use the inspection console to control drainage pumps and one watertight barrier.'
+    participants: '- Kristin Schweitzer
+
+      - Dr. Michelle McGehee
+
+      - Brandon Corfman only as allowed by his current status/fate
+
+      - Escaping prisoners
+
+      - Drainage pumps, a watertight barrier, and the maintenance tunnel
+
+      - Emergency surface gates'
+    dramatic_purpose: '- Give Kristin one final infrastructure-and-operations problem while Michelle leads the human evacuation.
+
+      - Move the climax into falling action without removing danger too early.'
+    possible_realizations: '- Kristin restores the pumps and holds the watertight barrier until the last captive passes.
+
+      - Kristin gives the lower levels to the water so the captives can pass.
+
+      - Michelle organizes movement through maintenance tunnels.
+
+      - The group must accept that not every section can be saved.
+
+      - Michelle uses the senior official’s authorization to release the surface gates once.'
+    effects: '- May intensify the deluge as Charles seals more access routes.
+
+      - Sets `evacuation_route_open` and `evacuation_complete`.
+
+      - The clean realization sets `barrier_held`.
+
+      - The costly realization sets `captives_out_costly` and `lower_levels_lost`.'
+    completion: '- The last captive has passed through the surface gates.'
+    abort: '- None in the canonical incident.'
+    protected_boundary: '- The final Phase Two revelation is delivered only by the authored recovered-JANUS resolution event, not by this escape storylet.'
+    storylet_title: Escape Through the Deluge
   variants:
     r1:
       realization_id: SL-3C-C-R1
@@ -648,6 +758,23 @@ reveals:
     - janus_phase_two
   from_outline:
   - 3C.3
+  notes:
+    available_when: '- The final evacuation window has been missed.'
+    participants: '- Kristin Schweitzer
+
+      - Dr. Michelle McGehee
+
+      - Escaping prisoners
+
+      - The drainage pumps and watertight barrier'
+    dramatic_purpose: '- Resolve a stalled evacuation without crediting Kristin with an outcome or a cost.'
+    possible_realizations: '- The surge carries the captives through the gates without Kristin''s hand on the barrier.'
+    effects: '- Sets `evacuation_complete`.
+
+      - Sets `surge_forced_evacuation`.'
+    completion: '- The surge has carried the captives out.'
+    abort: '- None in the canonical incident.'
+    protected_boundary: '- The final Phase Two revelation remains optional.'
   variants:
     r1:
       realization_id: SL-3C-H-R1
@@ -711,6 +838,31 @@ reveals:
   from_outline:
   - 3C.3
   - 3C.4
+  notes:
+    available_when: '- Charles’s emergency deluge is running, and rising water is closing the outer access level.
+
+      - The prisoners are moving toward escape routes.
+
+      - Kristin can still use the inspection console to control drainage pumps and one watertight barrier.'
+    participants: '- Kristin Schweitzer
+
+      - Dr. Michelle McGehee
+
+      - Brandon Corfman only as allowed by his current status/fate
+
+      - Escaping prisoners
+
+      - Drainage pumps, a watertight barrier, and the maintenance tunnel
+
+      - Emergency surface gates'
+    dramatic_purpose: '- Give Kristin one final infrastructure-and-operations problem while Michelle leads the human evacuation.
+
+      - Move the climax into falling action without removing danger too early.'
+    possible_realizations: '- Michelle uses the senior official’s authorization to release the surface gates once.'
+    effects: '- May set `los_angeles_facility_lost`.'
+    completion: '- The surface gates are released and the Los Angeles operation can no longer be concealed.'
+    abort: '- Ends on transition to the resolution state.'
+    protected_boundary: '- The final Phase Two revelation is delivered only by the authored recovered-JANUS resolution event, not by this escape storylet.'
   variants:
     r1:
       realization_id: SL-3C-F-R1
@@ -737,6 +889,32 @@ reveals:
     - janus_phase_two
   from_outline:
   - 3C.4
+  notes:
+    available_when: '- `truth_no_longer_containable` is true.
+
+      - Captives have reached the surface.
+
+      - The broadcast consequences are being summarized.'
+    participants: '- Kristin Schweitzer
+
+      - Dr. Michelle McGehee
+
+      - Public reports from other detention sites'
+    dramatic_purpose: '- Show distributed consequences without pulling unrelated off-scene NPC private state into the prompt.'
+    possible_realizations: '- Reports indicate some facilities surrender while others resist.
+
+      - Families and communities begin independent rescue efforts.
+
+      - Official agencies issue conflicting denials.
+
+      - Kristin and Michelle understand that Los Angeles was a victory, not an ending.'
+    effects: '- May set `national_network_fragmenting`.
+
+      - May establish Kristin/Michelle’s next-direction facts.'
+    completion: '- Reports from other detention sites show the national network breaking apart.'
+    abort: '- None in canonical resolution.'
+    protected_boundary: '- Off-scene facilities are described only through public/currently-known reports.'
+    allowed_scene: '`3C` (resolution phase only)'
   variants:
     r1:
       realization_id: SL-3C-D-R1
@@ -778,6 +956,24 @@ reveals:
     - janus_phase_two
   from_outline:
   - 3C.4
+  notes:
+    available_when: '- `truth_no_longer_containable` is true.
+
+      - Captives have reached the surface.
+
+      - The broadcast consequences are being summarized.'
+    participants: '- Kristin Schweitzer
+
+      - Dr. Michelle McGehee
+
+      - Public reports from other detention sites'
+    dramatic_purpose: '- Show distributed consequences without pulling unrelated off-scene NPC private state into the prompt.'
+    possible_realizations: '- Families and communities begin independent rescue efforts.'
+    effects: '- May set `community_rescue_efforts_begun`.'
+    completion: '- Families and communities begin independent rescue efforts.'
+    abort: '- None in canonical resolution.'
+    protected_boundary: '- Off-scene facilities are described only through public/currently-known reports.'
+    allowed_scene: '`3C` (resolution phase only)'
   variants:
     r1:
       realization_id: SL-3C-G-R1
@@ -817,6 +1013,35 @@ reveals:
     boundaries: []
   from_outline:
   - 3C.4
+  notes:
+    available_when: '- Copies of the portable archive have been distributed.
+
+      - A partially recovered JANUS file is available.'
+    participants: '- Kristin Schweitzer
+
+      - Dr. Michelle McGehee
+
+      - Partially recovered JANUS file'
+    dramatic_purpose: '- Offer the final sequel-scale reversal without deciding whether the evacuation is complete.'
+    possible_realizations: '- Michelle or Kristin notices the operation label “Phase One.”
+
+      - The recovered material identifies Phase Two as an effort to provoke conflict among those who remained.
+
+      - The revelation changes the meaning of the unrest already visible outside the facility.'
+    effects: '- Sets `phase_one_label_known`.
+
+      - Sets `phase_two_conflict_plan_known`.
+
+      - Preserves `charles_at_large`.'
+    completion: '- The final unresolved threat is established.'
+    abort: '- None in canonical resolution.'
+    protected_boundary: '- Do not invent Phase Two mechanisms beyond the source statement that it was designed to provoke conflict among those who remained.'
+    allowed_scene: '`3C` (final resolution only)'
+    pacing_window: '- earliest: `turn 0`
+
+      - target: `turn 14`
+
+      - latest: `turn 14`'
   variants:
     r1:
       realization_id: SL-3C-E-R1

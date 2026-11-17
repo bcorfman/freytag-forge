@@ -318,6 +318,31 @@ reveals:
   - 2C.1
   - 2C.2
   - 2C.3
+  notes:
+    available_when: '- `purge_window_missed` is false.'
+    participants: '- Kristin Schweitzer
+
+      - Brandon Corfman
+
+      - Rebecca Jenkins
+
+      - Rebecca’s tablet
+
+      - Broadcast uplink
+
+      - Transfer carts'
+    dramatic_purpose: '- Let Kristin answer Rebecca’s offer before the purge order and Brandon’s yes become known.'
+    possible_realizations: '- Kristin answers Rebecca by speaking, bluffing, threatening, refusing, or staying silent.
+
+      - Rebecca’s tablet reveals the purge order and that her people are on the list.
+
+      - Brandon says yes.
+
+      - The guards stand down and Brandon identifies the broadcast uplink and transfer carts.'
+    effects: '- Sets `rebecca_offer_heard`.'
+    completion: '- Kristin has answered Rebecca and learned the purge order and Brandon’s answer.'
+    abort: '- The scene is no longer `2C`.'
+    protected_boundary: '- The uprising, Brandon’s sacrifice, and Charles’s deluge remain undisclosed.'
   variants:
     r1:
       realization_id: SL-2C-C-R1
@@ -381,6 +406,57 @@ reveals:
   - 2C.3
   - 2C.4
   - 2C.5
+  notes:
+    available_when: '- Kristin and Brandon are in the command corridor.
+
+      - Rebecca has come to meet them.
+
+      - `rebecca_offer_heard` is true.'
+    participants: '- Kristin Schweitzer
+
+      - Brandon Corfman
+
+      - Rebecca Jenkins
+
+      - Dr. Michelle McGehee through the maintenance network
+
+      - Copied JANUS files
+
+      - Rebecca’s tablet
+
+      - Rebecca’s secured office'
+    dramatic_purpose: '- Make Rebecca’s offer, the purge, and the physical commitment one live confrontation.
+
+      - Let Michelle widen the choice without erasing its cost.'
+    possible_realizations: '- Rebecca offers Brandon Michelle’s release if he helps remove Charles.
+
+      - Her tablet shows the purge order during the negotiation.
+
+      - The order includes Rebecca’s people.
+
+      - Brandon says yes and the guards stand down.
+
+      - Kristin commits by heading for the uplink or the transfer carts.
+
+      - Michelle sends a route through the maintenance network.
+
+      - The route reaches Michelle’s holding block and Rebecca’s secured office.
+
+      - The office can broadcast the evidence and open the sealed detention sectors.'
+    effects: '- May set `rebecca_offer_active`.
+
+      - May set `antagonist_split_known`.
+
+      - May set `purge_clock_started`.
+
+      - May set `evidence_ready_to_transmit`.
+
+      - May set `rebecca_office_required_for_broadcast`.
+
+      - May set `combined_broadcast_rescue_plan_known`.'
+    completion: '- Michelle’s route makes the combined broadcast and rescue plan known.'
+    abort: '- The scene is no longer `2C`.'
+    protected_boundary: '- The uprising, Brandon’s sacrifice, and Charles’s deluge remain undisclosed.'
   variants:
     r3:
       realization_id: SL-2C-D-R3
@@ -515,6 +591,49 @@ reveals:
   - 2C.1
   - 2C.2
   - 2C.5
+  notes:
+    available_when: '- `purge_window_missed` is true.'
+    participants: '- Kristin Schweitzer
+
+      - Brandon Corfman
+
+      - Rebecca Jenkins
+
+      - Dr. Michelle McGehee through the maintenance network
+
+      - Copied JANUS files
+
+      - Rebecca’s tablet'
+    dramatic_purpose: '- Let the purge force the group onto Michelle’s route without deciding Kristin’s commitment.'
+    possible_realizations: '- The purge alarm forces Kristin and Brandon out of the command corridor before Kristin has chosen between sending and rescuing.
+
+      - Rebecca’s offer and the purge order remain unresolved behind them.
+
+      - Michelle’s route arrives through the maintenance network.
+
+      - It leads toward her holding block and Rebecca’s secured office.
+
+      - The group learns that the office can broadcast the evidence and open the detention sectors.'
+    effects: '- Sets `rebecca_offer_active`.
+
+      - Sets `antagonist_split_known`.
+
+      - Sets `purge_clock_started`.
+
+      - Sets `evidence_ready_to_transmit`.
+
+      - Sets `rebecca_office_required_for_broadcast`.
+
+      - Sets `combined_broadcast_rescue_plan_known`.
+
+      - Sets `purge_alarm_active`.
+
+      - Does not set `committed_to_transmit`.
+
+      - Does not set `committed_to_rescue`.'
+    completion: '- Michelle’s route is known and neither commitment has been asserted.'
+    abort: '- The scene is no longer `2C`.'
+    protected_boundary: '- The uprising, Brandon’s sacrifice, and Charles’s deluge remain undisclosed.'
   variants:
     r1:
       realization_id: SL-2C-E-R1
@@ -588,6 +707,21 @@ reveals:
     - janus_phase_two
   from_outline:
   - 2C.2
+  notes:
+    available_when: '- `purge_window_missed` is false.
+
+      - `rebecca_offer_heard` is true.'
+    participants: '- Kristin Schweitzer
+
+      - Brandon Corfman
+
+      - Corridor camera'
+    dramatic_purpose: '- Let Kristin notice when the corridor camera stops watching Brandon.'
+    possible_realizations: '- Kristin looks up at or watches the corridor camera.'
+    effects: '- Sets `corridor_watch_lifted`.'
+    completion: '- The corridor camera has returned to its sweep.'
+    abort: '- The scene is no longer `2C`.'
+    protected_boundary: '- The uprising, Brandon’s sacrifice, and Charles’s deluge remain undisclosed.'
   variants:
     r1:
       realization_id: SL-2C-F-R1
@@ -637,6 +771,21 @@ reveals:
     - janus_phase_two
   from_outline:
   - 2C.3
+  notes:
+    available_when: '- `purge_window_missed` is false.
+
+      - `held_transfers_seen` is true.'
+    participants: '- Kristin Schweitzer
+
+      - Cart tags
+
+      - Transfer carts'
+    dramatic_purpose: '- Let Kristin connect the held transfer records to the carts in the chamber.'
+    possible_realizations: '- Kristin reads the tags on the transfer carts.'
+    effects: '- Sets `held_carts_known`.'
+    completion: '- Kristin knows the carts carry held transfers.'
+    abort: '- The scene is no longer `2C`.'
+    protected_boundary: '- The uprising, Brandon’s sacrifice, and Charles’s deluge remain undisclosed.'
   variants:
     r1:
       realization_id: SL-2C-G-R1
@@ -684,6 +833,19 @@ reveals:
     - janus_phase_two
   from_outline:
   - 2C.3
+  notes:
+    available_when: '- `purge_window_missed` is false.'
+    participants: '- Kristin Schweitzer
+
+      - Monitor light
+
+      - Broadcast uplink'
+    dramatic_purpose: '- Let Kristin read the uplink’s visible warning about its outbound channel.'
+    possible_realizations: '- Kristin checks the monitor light on the uplink.'
+    effects: '- Sets `uplink_eye_seen`.'
+    completion: '- Kristin has seen the uplink’s monitor light.'
+    abort: '- The scene is no longer `2C`.'
+    protected_boundary: '- The uprising, Brandon’s sacrifice, and Charles’s deluge remain undisclosed.'
   variants:
     r1:
       realization_id: SL-2C-H-R1

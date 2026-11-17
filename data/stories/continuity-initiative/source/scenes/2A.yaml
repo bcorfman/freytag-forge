@@ -294,6 +294,23 @@ reveals:
   from_outline:
   - 2A.3
   - 2A.4
+  notes:
+    available_when: '- `inspection_window_missed` is false.'
+    participants: '- Kristin Schweitzer
+
+      - Brandon Corfman
+
+      - The shift supervisor
+
+      - Cooling manifold and pressure gauge'
+    dramatic_purpose: '- Let Kristin inspect the manifold and find the fault before the supervisor asks for her diagnosis.'
+    possible_realizations: '- Kristin feels the cooling lines, reads the gauge, or traces the vent.
+
+      - The supervisor asks what is failing and what happens if nobody fixes it.'
+    effects: '- May set `manifold_fault_found`.'
+    completion: '- Kristin has found the cooling-water pressure fault.'
+    abort: '- The scene is no longer `2A`.'
+    protected_boundary: '- The full diagnosis and restricted access remain unresolved until the supervisor hears Kristin''s explanation.'
   variants:
     r1:
       realization_id: SL-2A-B-R1
@@ -345,6 +362,45 @@ reveals:
   from_outline:
   - 2A.3
   - 2A.4
+  notes:
+    available_when: '- Kristin and Brandon are at the facility gate.
+
+      - The shift supervisor is questioning their unscheduled inspection.
+
+      - `manifold_fault_found` is true.'
+    participants: '- Kristin Schweitzer
+
+      - Brandon Corfman
+
+      - The shift supervisor
+
+      - Inspection console
+
+      - False credentials'
+    dramatic_purpose: '- Make Kristin’s infrastructure experience the reason the cover works.
+
+      - Let entry succeed while Rebecca quietly watches Brandon.'
+    possible_realizations: '- The supervisor takes them to the cooling manifold and says, “Show me.”
+
+      - Kristin feels the pipe, reads the gauge, and traces the vent.
+
+      - She explains the real pressure fault in her own words.
+
+      - A camera turns toward Brandon and stays on him.
+
+      - The inspection console reports faults and cycles noncritical systems.
+
+      - The console cannot open detention cells or change the main flood controls.'
+    effects: '- May set `restricted_corridor_access`.
+
+      - May set `rebecca_observing_infiltrators`.
+
+      - May set `inspection_console_used`.
+
+      - A doubtful explanation may set `cover_suspected`.'
+    completion: '- Kristin and Brandon have reached the infrastructure corridors.'
+    abort: '- The scene is no longer `2A`.'
+    protected_boundary: '- Kristin and Brandon do not learn that Rebecca is watching them.'
   variants:
     r5:
       realization_id: SL-2A-C-R5
@@ -453,6 +509,19 @@ reveals:
     - janus_phase_two
   from_outline:
   - 2A.2
+  notes:
+    available_when: '- `inspection_window_missed` is false.'
+    participants: '- Kristin Schweitzer
+
+      - Brandon Corfman
+
+      - Inspector badges'
+    dramatic_purpose: '- Let Kristin notice how easily Brandon understands the forged badges.'
+    possible_realizations: '- Kristin asks Brandon about the badges or checks them.'
+    effects: '- Sets `badge_craft_noted`.'
+    completion: '- Kristin has noticed Brandon''s precise knowledge of the badge readers.'
+    abort: '- The scene is no longer `2A`.'
+    protected_boundary: '- The protected system, Brandon''s past, and Rebecca''s interest remain undisclosed.'
   variants:
     r1:
       realization_id: SL-2A-E-R1
@@ -503,6 +572,19 @@ reveals:
     - janus_phase_two
   from_outline:
   - 2A.2
+  notes:
+    available_when: '- `inspection_window_missed` is false.'
+    participants: '- Kristin Schweitzer
+
+      - The shift supervisor
+
+      - Alarm log'
+    dramatic_purpose: '- Let Kristin read the history behind the supervisor''s anger.'
+    possible_realizations: '- Kristin reads or checks the alarm log on the supervisor''s tablet.'
+    effects: '- Sets `alarm_log_read`.'
+    completion: '- Kristin has read the cooling alarm history.'
+    abort: '- The scene is no longer `2A`.'
+    protected_boundary: '- The protected system, Brandon''s past, and Rebecca''s interest remain undisclosed.'
   variants:
     r1:
       realization_id: SL-2A-F-R1
@@ -554,6 +636,19 @@ reveals:
     - janus_phase_two
   from_outline:
   - 2A.3
+  notes:
+    available_when: '- `inspection_window_missed` is false.
+
+      - `manifold_fault_found` is true.'
+    participants: '- Kristin Schweitzer
+
+      - Return line'
+    dramatic_purpose: '- Let Kristin trace the building consequence of the manifold fault.'
+    possible_realizations: '- Kristin traces or follows the return line from the manifold.'
+    effects: '- Sets `return_line_traced`.'
+    completion: '- Kristin has traced the return line to the pumps and the heavy door.'
+    abort: '- The scene is no longer `2A`.'
+    protected_boundary: '- The protected system, Brandon''s past, and Rebecca''s interest remain undisclosed.'
   variants:
     r1:
       realization_id: SL-2A-G-R1
@@ -603,6 +698,21 @@ reveals:
     - janus_phase_two
   from_outline:
   - 2A.4
+  notes:
+    available_when: '- `inspection_window_missed` is false.
+
+      - `manifold_fault_found` is true.'
+    participants: '- Kristin Schweitzer
+
+      - Brandon Corfman
+
+      - Security camera'
+    dramatic_purpose: '- Let Kristin observe the camera''s attention without explaining it.'
+    possible_realizations: '- Kristin looks at or watches the security camera.'
+    effects: '- Sets `camera_on_brandon_seen`.'
+    completion: '- Kristin has seen the camera turn toward Brandon.'
+    abort: '- The scene is no longer `2A`.'
+    protected_boundary: '- The reason for the camera''s attention remains undisclosed.'
   variants:
     r1:
       realization_id: SL-2A-H-R1
@@ -655,6 +765,35 @@ reveals:
   from_outline:
   - 2A.3
   - 2A.4
+  notes:
+    available_when: '- `inspection_window_missed` is true.'
+    participants: '- Kristin Schweitzer
+
+      - Brandon Corfman
+
+      - The shift supervisor
+
+      - Inspection console'
+    dramatic_purpose: '- Turn a missed inspection window into entry under watch.'
+    possible_realizations: '- The supervisor’s patience ends.
+
+      - He escorts Kristin and Brandon to the manifold and watches the test.
+
+      - Kristin proves the fault well enough to reach the infrastructure corridors.
+
+      - The supervisor logs the inspection for follow-up.'
+    effects: '- Sets `restricted_corridor_access`.
+
+      - Sets `rebecca_observing_infiltrators`.
+
+      - Sets `inspection_console_used`.
+
+      - Sets `cover_suspected`.
+
+      - Sets `supervisor_escorting`.'
+    completion: '- Kristin and Brandon have reached the infrastructure corridors under watch.'
+    abort: '- The scene is no longer `2A`.'
+    protected_boundary: '- Kristin and Brandon do not learn that Rebecca is watching them.'
   variants:
     r1:
       realization_id: SL-2A-D-R1

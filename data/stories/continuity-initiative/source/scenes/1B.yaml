@@ -337,6 +337,25 @@ reveals:
     - janus_phase_two
   from_outline:
   - 1B.1
+  notes:
+    available_when: '- Kristin has not recovered the clues under the park bench.'
+    participants: '- Kristin Schweitzer
+
+      - Park bench
+
+      - Transit token
+
+      - Handwritten number sequence
+
+      - Michelle''s photograph'
+    dramatic_purpose: '- Reward an underside search with the clues Michelle left for Kristin.'
+    possible_realizations: '- Kristin searches beneath the bench, retrieves all three clues, and keeps them with her.'
+    effects: '- Sets `bench_clues_recovered`.'
+    completion: '- Kristin has recovered the three clues.'
+    abort: '- Kristin leaves scene 1B.'
+    protected_boundary: '- Finding the clues does not identify the route or the photographed man.
+
+      - It does not identify Brandon, establish trust, or reveal the fate of the missing.'
   variants:
     r1:
       realization_id: SL-1B-D-R1
@@ -385,6 +404,35 @@ reveals:
     - janus_phase_two
   from_outline:
   - 1B.1
+  notes:
+    available_when: '- Kristin has recovered the three clues beneath the park bench.'
+    participants: '- Kristin Schweitzer
+
+      - Dr. Michelle McGehee through the dead drop
+
+      - Transit token
+
+      - Handwritten number sequence
+
+      - Photograph of Michelle with Brandon'
+    dramatic_purpose: '- Let the player decide which clue feels most important while all clues still point toward the authored transport/test history.
+
+      - Build a quality-based investigative texture rather than a single “correct” inspection.'
+    possible_realizations: '- The dates lead Kristin to suspect earlier tests.
+
+      - The photograph makes the unknown man personally important.
+
+      - The transit token and handwritten sequence can be correlated into routing information that points toward a freight/industrial destination, rather than merely suggesting physical infrastructure.
+
+      - The number sequence remains unresolved context for later interpretation.'
+    effects: '- May reveal evidence of earlier secret tests.
+
+      - May set `brandon_face_known`.
+
+      - May make the transport route more compelling to investigate.'
+    completion: '- Kristin has identified the transport route or recognized the man in the photograph.'
+    abort: '- The park situation is overtaken by the pursuit/ambush.'
+    protected_boundary: '- Brandon is not yet established as trustworthy or as a JANUS developer.'
   variants:
     r1:
       realization_id: SL-1B-A-R1
@@ -453,6 +501,22 @@ reveals:
     - janus_phase_two
   from_outline:
   - 1B.1
+  notes:
+    available_when: '- Kristin has not recovered the clues under the park bench.'
+    participants: '- Kristin Schweitzer
+
+      - Park bench'
+    dramatic_purpose: '- Give a plain look at the bench a short authored reply.
+
+      - Point Kristin toward the space beneath the bench without recovering the clues.'
+    possible_realizations: '- Kristin looks the bench over and notices the shadowed space beneath it.'
+    effects: '- Sets `bench_underside_pointed_out`.
+
+      - Does not recover the clues.'
+    completion: '- Kristin has been pointed toward the space beneath the park bench.'
+    abort: '- Kristin leaves scene 1B.'
+    protected_boundary: '- Does not name or reveal what is beneath the bench, and does not identify Brandon, trust, or the fate of the missing.'
+    non_coercion_note: Offer as a consequence of free-text investigation. Do not present it as a choice or required command; equivalent careful looks at the bench may validate the same operation.
   variants:
     r1:
       realization_id: SL-1B-E-R1
@@ -501,6 +565,39 @@ reveals:
   from_outline:
   - 1B.2
   - 1B.3
+  notes:
+    available_when: '- Brandon is following or has just contacted Kristin.
+
+      - Kristin has not yet reached a stable judgment about Brandon.'
+    participants: '- Kristin Schweitzer, former assessment lead for the U.S. Army with Army intelligence, infrastructure, and operations experience
+
+      - Brandon Corfman
+
+      - Photograph from the dead drop'
+    dramatic_purpose: '- Create an early trust problem without forcing the player to accept Brandon immediately.
+
+      - Give Brandon a reason to earn provisional credibility through behavior and limited disclosure.'
+    possible_realizations: '- Kristin confronts Brandon with the photograph.
+
+      - Kristin tries to evade him and sees Brandon intervene against the patrol.
+
+      - Kristin questions how Brandon knows the missing are alive.
+
+      - Brandon refuses full disclosure, preserving suspicion.'
+    effects: '- May change `trust_brandon` within an early bounded range.
+
+      - May set `brandon_identified`.
+
+      - May set `missing_may_be_alive`.
+
+      - May set `transport_route_identified` when Brandon can credibly connect Michelle’s transit clue to the removal operation.
+
+      - May leave Brandon suspicious even as trust increases.'
+    completion: '- Kristin has enough reason to continue with Brandon, even if he remains distrustful.'
+    abort: '- Brandon becomes unavailable through a validated destructive branch.
+
+      - The park escape forces immediate movement into the next situation.'
+    protected_boundary: '- Brandon may admit prior Continuity Initiative work, but not yet the full JANUS-development history.'
   variants:
     r1:
       realization_id: SL-1B-B-R1
@@ -575,6 +672,39 @@ reveals:
     - janus_phase_two
   from_outline:
   - 1B.4
+  notes:
+    available_when: '- A tactical/emergency team has closed on Kristin and Brandon.
+
+      - The secured maintenance route is relevant.
+
+      - Brandon remains capable of helping.'
+    participants: '- Kristin Schweitzer
+
+      - Brandon Corfman
+
+      - Tactical/emergency patrol
+
+      - Secured service gate'
+    dramatic_purpose: '- Turn escape pressure into character evidence.
+
+      - Let Brandon solve an immediate problem in a way that creates a larger trust problem.'
+    possible_realizations: '- Brandon opens a secured service gate without looking at its keypad.
+
+      - Kristin notices how practiced Brandon is with the system.
+
+      - Brandon minimizes the significance of his access.
+
+      - The escape succeeds but the player can press him afterward.'
+    effects: '- May increase immediate danger.
+
+      - May leave Brandon more suspicious.
+
+      - May set `brandon_retains_system_access`.
+
+      - May establish `transport_route_identified` when Brandon’s retained access and the escape route make the physical removal route followable.'
+    completion: '- Kristin and Brandon escape the immediate park pursuit.'
+    abort: '- The maintenance route is no longer relevant or the scene has advanced.'
+    protected_boundary: '- The access proves deeper involvement, not the exact nature of Brandon’s guilt.'
   variants:
     r1:
       realization_id: SL-1B-C-R1
@@ -645,6 +775,21 @@ reveals:
     - janus_phase_two
   from_outline:
   - 1B.1
+  notes:
+    available_when: '- No conditions.'
+    participants: '- Kristin Schweitzer
+
+      - Picnic blanket
+
+      - Bicycle
+
+      - Dog leash'
+    dramatic_purpose: '- Let Kristin read the abandoned park as a moment cut short.'
+    possible_realizations: '- The park is abandoned: a bicycle and a picnic were left behind.'
+    effects: '- Sets `park_left_behind_read`.'
+    completion: '- Kristin has read the abandoned park as a moment cut short.'
+    abort: '- Kristin leaves scene 1B.'
+    protected_boundary: '- Does not reveal JANUS, Brandon''s history, or JANUS Phase Two.'
   variants:
     r1:
       realization_id: SL-1B-F-R1
@@ -696,6 +841,19 @@ reveals:
     - janus_phase_two
   from_outline:
   - 1B.2
+  notes:
+    available_when: '- Brandon has not yet been identified.'
+    participants: '- Kristin Schweitzer
+
+      - Brandon Corfman
+
+      - Park loudspeaker'
+    dramatic_purpose: '- Let Kristin notice that the stranger knows the looping emergency statement.'
+    possible_realizations: '- The stranger mouths the loudspeaker''s emergency statement along with it.'
+    effects: '- Sets `stranger_knows_script`.'
+    completion: '- Kristin has seen the stranger mouth the emergency statement ahead of the loudspeaker.'
+    abort: '- Kristin leaves scene 1B.'
+    protected_boundary: '- Does not reveal JANUS, Brandon''s history, or JANUS Phase Two.'
   variants:
     r1:
       realization_id: SL-1B-G-R1
@@ -746,6 +904,17 @@ reveals:
     - janus_phase_two
   from_outline:
   - 1B.3
+  notes:
+    available_when: '- Kristin has credible reason to believe at least some missing people are alive.'
+    participants: '- Kristin Schweitzer
+
+      - Picnic thermos'
+    dramatic_purpose: '- Let Kristin connect the picnic''s emergency water to Brandon''s warning.'
+    possible_realizations: '- The thermos carries a county emergency-water label.'
+    effects: '- Sets `emergency_water_label_read`.'
+    completion: '- Kristin has read the emergency-water label on the picnic thermos.'
+    abort: '- Kristin leaves scene 1B.'
+    protected_boundary: '- Does not reveal JANUS, Brandon''s history, or JANUS Phase Two.'
   variants:
     r1:
       realization_id: SL-1B-H-R1

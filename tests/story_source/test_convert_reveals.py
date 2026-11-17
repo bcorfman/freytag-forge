@@ -1,7 +1,7 @@
 """Tests for converting loaded storylet and realization records to source data."""
 
-# NOTE: The compiler feeds one reveal title/window into both package records, so
-# route title/window values win the legacy Storylet drift documented in NOTES.
+# NOTE: The route title/window remain runtime source values; legacy Storylet title/window
+# drift is preserved as reader-only notes and restored by the compiler.
 # NOTE: Reader-only sections, prose, and authoring handles are not package data;
 # the converter uses route IDs as stable reveal/variant handles.
 # NOTE: Entry, bridge, incident-observation, and ending claims are intentionally

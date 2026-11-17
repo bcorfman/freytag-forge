@@ -287,6 +287,49 @@ reveals:
     - janus_phase_two
   from_outline:
   - 3A.1
+  notes:
+    available_when: '- Kristin reaches Michelle’s detention sector.
+
+      - Michelle is active and the purge countdown is running.'
+    participants: '- Kristin Schweitzer
+
+      - Dr. Michelle McGehee
+
+      - Brandon Corfman
+
+      - Prisoners
+
+      - Sympathetic facility workers
+
+      - Stolen radios'
+    dramatic_purpose: '- Pay off Michelle’s agency with an in-person reversal of Kristin’s rescue expectations.
+
+      - Pay off the earlier evidence of a small hidden resistance by showing what it has become in person.
+
+      - Reframe the immediate goal from “get Michelle out” to “help the organized captives expose the whole network.”'
+    possible_realizations: '- Kristin and Michelle share one unhurried moment before Michelle turns back to directing others.
+
+      - Kristin tries to prioritize Michelle; she redirects her to the national stakes.
+
+      - Prisoners treat Michelle as an organizer rather than a victim.
+
+      - Before this storylet, Michelle is reachable only through the coded route and must not be a direct dialogue speaker.
+
+      - The reunion can establish that Michelle is ready to launch coordinated disturbances, but the canonical launch waits until the experiment stakes and expiring-code deadline have been established (or equivalent validated free-text realizations occur).
+
+      - Brandon’s arrival may be met with distrust because of his history.'
+    effects: '- May set `michelle_reached`.
+
+      - May set `uprising_prepared`.
+
+      - May establish that the uprising is prepared; the canonical launch is gated later in the scene.
+
+      - May establish that national facility locations are required for the broadcast.
+
+      - May change relationship/trust facts consistent with the reunion.'
+    completion: '- Kristin accepts Michelle as an operational partner and understands the larger rescue requirement.'
+    abort: '- Scene pressure escalates directly into the uprising before the interaction fully resolves.'
+    protected_boundary: '- The final outcome of the broadcast and Brandon’s fate remain unknown.'
   variants:
     r1:
       realization_id: SL-3A-A-R1
@@ -355,6 +398,35 @@ reveals:
     - janus_phase_two
   from_outline:
   - 3A.2
+  notes:
+    available_when: '- Kristin has reached Michelle and can move with her resistance network.
+
+      - Kristin and Michelle can pass through or access evidence from the medical level.
+
+      - The experiment program is not yet fully understood.'
+    participants: '- Kristin Schweitzer
+
+      - Dr. Michelle McGehee
+
+      - Medical/behavioral experiment records or equipment already present in the authored setting'
+    dramatic_purpose: '- Raise the moral and political stakes of Charles’s planned broadcast.
+
+      - Show that simply releasing selected prisoners could strengthen the conspiracy.'
+    possible_realizations: '- Michelle explains what she has observed while Kristin sees corroborating evidence.
+
+      - A conditioned “rescue” plan becomes visible through records or treatment setup.
+
+      - Kristin recognizes that public testimony itself has been engineered.'
+    effects: '- May set `behavioral_experiments_known`.
+
+      - May set `conditioned_release_plan_known`.
+
+      - May make the broadcast evidence more compelling.
+
+      - May increase danger or moral urgency.'
+    completion: '- Kristin understands why exposing the experiments must be part of the broadcast evidence.'
+    abort: '- Immediate security pressure makes the medical level inaccessible.'
+    protected_boundary: '- Do not invent successful mind control beyond the specific authored methods and goals.'
   variants:
     r1:
       realization_id: SL-3A-B-R1
@@ -430,6 +502,29 @@ reveals:
     - janus_phase_two
   from_outline:
   - 3A.2
+  notes:
+    available_when: '- Kristin has reached Michelle.
+
+      - Kristin knows the facility ran behavioral experiments.
+
+      - Kristin does not yet know the conditioning plan for released captives.'
+    participants: '- Kristin Schweitzer
+
+      - Dr. Michelle McGehee
+
+      - Detention medical records in the medical level'
+    dramatic_purpose: '- Keep the records as an optional second look after the medical level is entered.
+
+      - Show that the planned survivors were prepared to support Charles’s story.'
+    possible_realizations: '- Kristin reads the detention medical records with Michelle.
+
+      - The records confirm the conditioning plan without replaying the medical-level discovery.'
+    effects: '- Sets `conditioned_release_plan_known`.
+
+      - Does not move the group or repeat the medical-level discovery.'
+    completion: '- Kristin understands that the planned survivors were conditioned to support Charles’s story.'
+    abort: '- The conditioning plan is already known.'
+    protected_boundary: '- Do not invent successful mind control beyond the specific authored methods and goals.'
   variants:
     r1:
       realization_id: SL-3A-E-R1
@@ -479,6 +574,36 @@ reveals:
     - janus_phase_two
   from_outline:
   - 3A.3
+  notes:
+    available_when: '- Kristin has reached Michelle.
+
+      - The experiment stakes are understood.
+
+      - The imprisoned senior official can be reached.'
+    participants: '- Kristin Schweitzer
+
+      - Dr. Michelle McGehee
+
+      - The imprisoned senior official
+
+      - One-use emergency surface-gate authorization'
+    dramatic_purpose: '- Turn the political evidence into a human encounter with someone Charles framed and buried.
+
+      - Give the group a narrow escape resource early enough to react to its cost and deadline.'
+    possible_realizations: '- The official explains why Charles framed and detained him.
+
+      - He gives Kristin authorization that can release the emergency surface gates once.
+
+      - A limited system response makes the expiry tied to Charles’s authority activation visible.'
+    effects: '- May set `military_override_codes_available`.
+
+      - May set `charles_framed_officials_known`.
+
+      - May set `override_codes_deadline_known`.'
+    completion: '- The group has a one-use escape authorization and understands that it is a shrinking window, not a general solution.'
+    abort: '- The authority activation voids the code before it can be secured, requiring a declared alternate escape path.'
+    protected_boundary: '- The authorization cannot open the sealed detention sectors or replace the later broadcast controls.'
+    storylet_title: The Framed Official’s Window
   variants:
     r1:
       realization_id: SL-3A-D-R1
@@ -557,6 +682,35 @@ reveals:
     - janus_phase_two
   from_outline:
   - 3A.4
+  notes:
+    available_when: '- Kristin has reached Michelle.
+
+      - Michelle’s uprising preparation is in place.
+
+      - The one-use emergency surface-gate authorization is secured.
+
+      - Charles’s planned authority activation remains pending.'
+    participants: '- Kristin Schweitzer
+
+      - Dr. Michelle McGehee
+
+      - Brandon Corfman
+
+      - Organized prisoners across the detention sectors'
+    dramatic_purpose: '- Convert the expiring authorization deadline into forward motion toward the command levels.
+
+      - Commit the resistance to the coordinated assault that carries the story into Scene 3B.'
+    possible_realizations: '- Michelle hands Kristin the stolen radio, Kristin gives the signal, and the freed checkpoints become a route upward.
+
+      - The expiring authorization window itself forces the resistance to launch while the codes retain value.'
+    effects: '- Sets `detention_uprising_started`.
+
+      - May advance `override_codes_deadline_known` when the deadline forces the launch.
+
+      - Helps the Scene 3A → 3B transition under declared package rules.'
+    completion: '- The uprising is underway and the group is committed to fighting toward the command and broadcast levels.'
+    abort: '- Immediate security lockdown pins the resistance before the disturbances can begin.'
+    protected_boundary: '- The uprising does not by itself defeat JANUS, seize the broadcast, or resolve the national conspiracy.'
   variants:
     r1:
       realization_id: SL-3A-C-R1
@@ -634,6 +788,19 @@ reveals:
     - janus_phase_two
   from_outline:
   - 3A.1
+  notes:
+    available_when: '- Michelle has been reached.'
+    participants: '- Kristin Schweitzer
+
+      - Wrist tags
+
+      - Detention captives'
+    dramatic_purpose: '- Let Kristin read the wrist tags and learn what happened to the captives.'
+    possible_realizations: '- Kristin reads the wrist tags.'
+    effects: '- Sets `wrist_tags_read`.'
+    completion: '- Kristin knows the wrist tags'' transfer date.'
+    abort: '- The scene is no longer `3A`.'
+    protected_boundary: '- JANUS''s later phase remains undisclosed.'
   variants:
     r1:
       realization_id: SL-3A-F-R1
@@ -685,6 +852,19 @@ reveals:
     - janus_phase_two
   from_outline:
   - 3A.1
+  notes:
+    available_when: '- Michelle has been reached.'
+    participants: '- Kristin Schweitzer
+
+      - Stolen radio
+
+      - Dr. Michelle McGehee'
+    dramatic_purpose: '- Let Kristin listen to the stolen radio and learn what the captives hear.'
+    possible_realizations: '- Kristin listens to the stolen radio.'
+    effects: '- Sets `radio_loop_known`.'
+    completion: '- Kristin knows what the captives hear on repeat.'
+    abort: '- The scene is no longer `3A`.'
+    protected_boundary: '- JANUS''s later phase remains undisclosed.'
   variants:
     r1:
       realization_id: SL-3A-G-R1
@@ -737,6 +917,17 @@ reveals:
     - janus_phase_two
   from_outline:
   - 3A.2
+  notes:
+    available_when: '- Michelle has been reached, the experiment program is known, and the kitchen calendar has been read.'
+    participants: '- Kristin Schweitzer
+
+      - Dr. Michelle McGehee'
+    dramatic_purpose: '- Let Kristin ask Michelle about the lemon cake or the calendar.'
+    possible_realizations: '- Kristin asks Michelle about the lemon cake or the calendar.'
+    effects: '- Sets `michelle_private_proof`.'
+    completion: '- Kristin has Michelle''s private answer.'
+    abort: '- The scene is no longer `3A`.'
+    protected_boundary: '- JANUS''s later phase remains undisclosed.'
   variants:
     r1:
       realization_id: SL-3A-H-R1
@@ -783,6 +974,27 @@ reveals:
     - janus_phase_two
   from_outline:
   - 3A.4
+  notes:
+    available_when: '- Michelle has been reached.'
+    participants: '- Kristin Schweitzer
+
+      - Brandon Corfman
+
+      - Checkpoint reader'
+    dramatic_purpose: '- Let Kristin watch the checkpoint reader and Brandon''s first pass.'
+    possible_realizations: '- Kristin watches the checkpoint reader.'
+    effects: '- Sets `checkpoint_opened`.'
+    completion: '- Kristin knows the checkpoint reader opened on the first pass.'
+    abort: '- The scene is no longer `3A`.'
+    protected_boundary: '- JANUS''s later phase remains undisclosed.'
+    pacing_window: '- earliest: `turn 0`
+
+      - target: `turn 8`
+
+      - latest: `turn 9`
+
+
+      ## Storylets for [Scene 3B — The Battle for the Broadcast](plot.md#scene-3b--the-battle-for-the-broadcast)'
   variants:
     r1:
       realization_id: SL-3A-I-R1

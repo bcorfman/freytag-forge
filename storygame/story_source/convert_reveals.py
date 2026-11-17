@@ -160,6 +160,7 @@ def _reveal(
     storylet,
     claims: Mapping[tuple[str, str], list[KnowledgeDefinition]],
     outline_ids: Mapping[str, str],
+    outline_titles: Mapping[str, str],
     outcomes: Mapping[tuple[str, str], Any],
 ) -> dict[str, object]:
     """Render one reveal from its route, reader record, and realization claims."""
@@ -184,14 +185,59 @@ def _reveal(
         )
         for realization in route.realizations
     }
+    notes = _notes(route, storylet, outline_ids, outline_titles)
     return {
         "id": _handle(route.id),
         "storylet_id": route.id,
         "title": route.title,
         "guidance": guidance,
         "from_outline": [outline_ids[anchor] for anchor in storylet.source_links],
+        "notes": notes,
         "variants": variants,
     }
+
+
+def _notes(
+    route,
+    storylet,
+    outline_ids: Mapping[str, str],
+    outline_titles: Mapping[str, str],
+) -> dict[str, str]:
+    """Keep legacy reader sections and only override derivations when they drift."""
+
+    section_keys = {
+        "Available when": "available_when",
+        "Participants / items": "participants",
+        "Dramatic purpose": "dramatic_purpose",
+        "Possible realizations": "possible_realizations",
+        "Effects": "effects",
+        "Completion": "completion",
+        "Abort": "abort",
+        "Protected boundary": "protected_boundary",
+        "Non-coercion note:": "non_coercion_note",
+    }
+    notes = {key: storylet.sections[section] for section, key in section_keys.items() if section in storylet.sections}
+    derived = {
+        "source_beats": (
+            "Source beats:",
+            ", ".join(
+                f"[{outline_ids[anchor]} — {outline_titles[outline_ids[anchor]]}](plot.md#{anchor})"
+                for anchor in storylet.source_links
+            ),
+        ),
+        "allowed_scene": ("Allowed scene:", f"`{route.scene_id}`"),
+        "pacing_window": (
+            "Pacing window",
+            f"- earliest: `turn {route.earliest_turn}`\n"
+            f"- target: `turn {route.target_turn}`\n- latest: `turn {route.latest_turn}`",
+        ),
+    }
+    for key, (section, rendered) in derived.items():
+        if storylet.sections.get(section) != rendered:
+            notes[key] = storylet.sections[section]
+    if storylet.title != route.title:
+        notes["storylet_title"] = storylet.title
+    return notes
 
 
 def _match_claim(claim: KnowledgeDefinition) -> dict[str, object]:
@@ -253,6 +299,9 @@ def convert_reveals(package: StoryPackage) -> RevealsResult:
     outline_ids = {
         scene.metadata.scene_id: {beat.anchor: beat.id for beat in scene.beats.values()} for scene in package.scenes
     }
+    outline_titles = {
+        scene.metadata.scene_id: {beat.id: beat.title for beat in scene.beats.values()} for scene in package.scenes
+    }
     outcomes = {
         (outcome.storylet_id, outcome.realization_id): outcome
         for incident in package.incidents
@@ -265,7 +314,14 @@ def convert_reveals(package: StoryPackage) -> RevealsResult:
             raise ValueError(f"storylet handle {handle!r} is not unique")
         handles.add(handle)
         scene_docs[route.scene_id]["reveals"].append(
-            _reveal(route, storylets[route.id], claims, outline_ids[route.scene_id], outcomes)
+            _reveal(
+                route,
+                storylets[route.id],
+                claims,
+                outline_ids[route.scene_id],
+                outline_titles[route.scene_id],
+                outcomes,
+            )
         )
     return RevealsResult(
         scene_docs=scene_docs,
