@@ -37,6 +37,8 @@
     "tests/story_source/test_identity_ratio_core.py": 0.5,
     "tests/story_source/test_examples_core.py": 0.5,
     "tests/story_source/test_lookup_core.py": 0.5,
+    "tests/story_source/test_lock_core.py": 0.5,
+    "tests/story_source/test_cli_core.py": 0.5,
     "tests/story_source/test_l1_root.py": 0.88,
     "tests/story_source/test_l1_scene.py": 1.11,
     "tests/story_source/test_l2_claims.py": 0.98,

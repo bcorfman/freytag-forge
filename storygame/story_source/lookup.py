@@ -598,25 +598,37 @@ def _source_tree(package: StoryPackage) -> SourceTree | None:
     return trees[0] if trees else None
 
 
+_REGISTERED: dict[int, tuple[StoryPackage, SourceTree]] = {}
+_REGISTERED_LIMIT = 32
+
+
+def register_source_tree(package: StoryPackage, tree: SourceTree) -> None:
+    """Remember the source tree a package was compiled from, for source-only lookups.
+
+    The package is kept alive alongside its tree so its ``id`` cannot be reused while registered.
+    """
+
+    _REGISTERED.pop(id(package), None)
+    _REGISTERED[id(package)] = (package, tree)
+    while len(_REGISTERED) > _REGISTERED_LIMIT:
+        _REGISTERED.pop(next(iter(_REGISTERED)))
+
+
 def _source_trees(package: StoryPackage) -> tuple[SourceTree, ...]:
-    """Return all matching local source trees in deterministic candidate order."""
+    """Return the compiled tree, an exposed source root, or the story's local source tree, in that order."""
 
     trees: list[SourceTree] = []
     seen: set[Path] = set()
-    for attribute in _SOURCE_ATTRIBUTES:
-        root = getattr(package, attribute, None)
-        if isinstance(root, (str, Path)):
-            tree = _matching_tree(Path(root), package.story_id)
-            if tree is not None and tree.root not in seen:
-                seen.add(tree.root)
-                trees.append(tree)
-    candidates = [Path.cwd(), Path.cwd() / "data" / "stories" / package.story_id]
-    recent = sorted(
-        Path("/tmp").rglob("story.yaml"),
-        key=lambda path: path.stat().st_mtime_ns,
-        reverse=True,
-    )
-    candidates.extend(path.parent for path in recent[:24])
+    registered = _REGISTERED.get(id(package))
+    if registered is not None and registered[0] is package:
+        trees.append(registered[1])
+        seen.add(registered[1].root)
+    candidates = [
+        Path(root)
+        for attribute in _SOURCE_ATTRIBUTES
+        if isinstance(root := getattr(package, attribute, None), (str, Path))
+    ]
+    candidates.extend([Path.cwd(), Path.cwd() / "data" / "stories" / package.story_id])
     for candidate in candidates:
         tree = _matching_tree(candidate, package.story_id)
         if tree is not None and tree.root not in seen:
