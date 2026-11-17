@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-from dataclasses import asdict
 from pathlib import Path
 
 import pytest
@@ -123,7 +122,7 @@ def _assert_only_changed(before: dict[str, object], after: dict[str, object], ch
 
 
 def _canonical_json(package: object) -> str:
-    return json.dumps(asdict(package), sort_keys=True, default=str)
+    return json.dumps(package.model_dump(mode="json", by_alias=True), sort_keys=True)
 
 
 def test_lexicon_roundtrip_tree_has_only_lexicon_inputs_and_lock(tmp_path: Path) -> None:

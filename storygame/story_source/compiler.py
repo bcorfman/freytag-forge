@@ -29,6 +29,7 @@ from .c_scene import (
 )
 from .c_world import build_connections, build_fact_models, build_facts, build_world
 from .diagnostics import Diagnostic, SourceError
+from .lookup import register_source_tree
 from .reader import SourceTree
 
 COMPILER_VERSION = "1"
@@ -97,7 +98,7 @@ def _build_package(tree: SourceTree) -> StoryPackage:
         storylets=routes,
         bridge_events=bridges,
     )
-    return StoryPackage(
+    package = StoryPackage(
         story_id=story["story"],
         protagonist_id=story["protagonist"],
         genre=story.get("genre", ""),
@@ -113,6 +114,8 @@ def _build_package(tree: SourceTree) -> StoryPackage:
         incidents=incidents,
         connections=build_connections(catalog),
     )
+    register_source_tree(package, tree)
+    return package
 
 
 def _mapping(value: object) -> Mapping:
