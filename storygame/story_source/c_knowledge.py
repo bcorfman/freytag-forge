@@ -454,10 +454,11 @@ def _scene_deliveries(context: SceneContext) -> list[FactDelivery]:
 
 def build_events(
     contexts: Sequence[SceneContext],
-) -> tuple[tuple[CanonicalRouteEvent, ...], tuple[tuple[str, str], ...]]:
-    """Compile canonical bridge events and return claim-source lookup metadata."""
+) -> tuple[tuple[CanonicalRouteEvent, ...], tuple[CanonicalRouteEvent, ...]]:
+    """Compile canonical bridge and resolution events in source order."""
 
     bridges: list[CanonicalRouteEvent] = []
+    resolutions: list[CanonicalRouteEvent] = []
     for context in contexts:
         for record in context.scene.get("bridge", ()):
             if _skip_vacuous_bridge(record):
@@ -467,18 +468,17 @@ def build_events(
                 any_of=tuple(record.get("when_any", ())),
                 at_least=record.get("at_least", 0),
             )
-            bridges.append(
-                CanonicalRouteEvent(
-                    id=record["id"],
-                    scene_id=context.scene["scene"],
-                    activation=activation,
-                    operations=operations(record["commits"]),
-                    realization_storylets=tuple(record.get("realized_by", ())),
-                    fallback_text=record.get("fallback_text"),
-                    delivery_text=record.get("delivery_text"),
-                )
+            event = CanonicalRouteEvent(
+                id=record["id"],
+                scene_id=context.scene["scene"],
+                activation=activation,
+                operations=operations(record["commits"]),
+                realization_storylets=tuple(record.get("realized_by", ())),
+                fallback_text=record.get("fallback_text"),
+                delivery_text=record.get("delivery_text"),
             )
-    return tuple(bridges), ()
+            (resolutions if record.get("kind") == "resolution" else bridges).append(event)
+    return tuple(bridges), tuple(resolutions)
 
 
 def _skip_vacuous_bridge(record: Mapping[str, Any]) -> bool:
