@@ -30,3 +30,24 @@ from .compiler import COMPILER_VERSION, compile_source_tree  # noqa: E402
 from .digest import source_digest  # noqa: E402
 
 __all__ += ["COMPILER_VERSION", "compile_source_tree", "source_digest"]
+
+_LAZY = {
+    "check_parity": "parity",
+    "check_save_identity": "identity",
+    "override_ratio": "ratio",
+    "pass2_gate": "ratio",
+    "check_examples": "examples",
+    "story_text": "lookup",
+    "story_value": "lookup",
+}
+
+
+def __getattr__(name: str) -> object:
+    """Resolve the later-round APIs from their modules on first use."""
+
+    module_name = _LAZY.get(name)
+    if module_name is None:
+        raise AttributeError(name)
+    import importlib
+
+    return getattr(importlib.import_module(f"{__name__}.{module_name}"), name)
