@@ -44,8 +44,20 @@ def test_conversion_contains_every_owned_record_once():
     assert Counter(beat["id"] for document in result.scene_docs.values() for beat in document["beats"]) == Counter(
         event.id for event in package.pacing.events
     )
-    assert Counter(event["id"] for document in result.scene_docs.values() for event in document["bridge"]) == Counter(
+    event_ids = [
         event.id for event in package.storylet_routes.bridge_events + package.storylet_routes.resolution_events
+    ]
+    event_claims = {}
+    for claim in package.knowledge.knowledge:
+        if claim.source.kind == "canonical_route_event":
+            event_claims.setdefault(claim.source.canonical_event_id, []).append(claim.id)
+    expected_event_ids = [
+        item_id
+        for event_id in event_ids
+        for item_id in [event_id, *[f"{event_id}_claim_{claim_id}" for claim_id in event_claims.get(event_id, [])[1:]]]
+    ]
+    assert Counter(event["id"] for document in result.scene_docs.values() for event in document["bridge"]) == Counter(
+        expected_event_ids
     )
     assert Counter(
         incident["id"] for document in result.scene_docs.values() for incident in document["incidents"]
@@ -116,13 +128,26 @@ def test_representative_scene_owned_records_match_package():
         record = next(item for item in result.scene_docs[event.scene_id]["bridge"] if item["id"] == event.id)
         assert record["when"] == list(event.activation.all_facts_true)
         assert record["commits"] == _operations(event.operations)
-        assert record["realized_by"] == list(event.realization_storylets)
+        assert record["realized_by"] == [item.lower().replace("-", "_") for item in event.realization_storylets]
     for incident in package.incidents[:3]:
         record = next(item for item in result.scene_docs[incident.scene_id]["incidents"] if item["id"] == incident.id)
-        assert record["outcomes"] == [item.realization_id for item in incident.outcomes]
-        assert record["recovery"] == incident.recovery_storylet_id
+        assert record["outcomes"] == [
+            item.realization_id.removeprefix(f"{item.storylet_id}-").lower().replace("-", "_")
+            for item in incident.outcomes
+        ]
+        assert record["recovery"] == incident.recovery_storylet_id.lower().replace("-", "_")
         assert record["missed_window"] == incident.missed_window_event_id
-        assert record["observed_by"] == list(incident.observation_knowledge_ids)
+        observed = list(incident.observation_knowledge_ids)
+        outcome_claims = {
+            claim.source.realization_id: claim.id
+            for claim in package.knowledge.knowledge
+            if claim.source.kind == "storylet_realization"
+        }
+        for outcome in incident.outcomes:
+            claim_id = outcome_claims.get(outcome.realization_id)
+            if claim_id is not None and claim_id not in observed:
+                observed.append(claim_id)
+        assert record["observed_by"] == observed
     entry_claims = [claim for claim in package.knowledge.knowledge if claim.source.kind == "scene_entry"]
     for claim in entry_claims[:3]:
         record = next(

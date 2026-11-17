@@ -43,6 +43,7 @@
     "tests/story_source/test_convert_facts.py": 0.5,
     "tests/story_source/test_convert_reveals.py": 0.5,
     "tests/story_source/test_convert_scene.py": 0.5,
+    "tests/story_source/test_convert_tree.py": 0.5,
     "tests/story_source/test_l1_root.py": 0.88,
     "tests/story_source/test_l1_scene.py": 1.11,
     "tests/story_source/test_l2_claims.py": 0.98,

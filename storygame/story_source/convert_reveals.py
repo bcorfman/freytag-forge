@@ -5,8 +5,11 @@ from __future__ import annotations
 from collections import defaultdict
 from collections.abc import Mapping
 from dataclasses import dataclass
+from typing import Any
 
 from storygame.story_package.models import KnowledgeDefinition, RouteRealization, StoryPackage
+
+from .convert_facts import convert_facts
 
 
 @dataclass(frozen=True)
@@ -84,9 +87,17 @@ def _claim_fields(claim: KnowledgeDefinition, route_commits: Mapping[str, object
 
 
 def _skipped_claim_ids(package: StoryPackage) -> set[str]:
-    """Return incident observation claims owned by the incidents worker."""
+    """Return incident outcome claims whose matcher entries belong to the scene worker."""
 
-    return {claim_id for incident in package.incidents for claim_id in incident.observation_knowledge_ids}
+    outcomes = {
+        (outcome.storylet_id, outcome.realization_id) for incident in package.incidents for outcome in incident.outcomes
+    }
+    return {
+        claim.id
+        for claim in package.knowledge.knowledge
+        if claim.source.kind == "storylet_realization"
+        and (claim.source.storylet_id, claim.source.realization_id) in outcomes
+    }
 
 
 def _claims_by_source(package: StoryPackage, skipped: set[str]) -> dict[tuple[str, str], list[KnowledgeDefinition]]:
@@ -95,7 +106,7 @@ def _claims_by_source(package: StoryPackage, skipped: set[str]) -> dict[tuple[st
     grouped: dict[tuple[str, str], list[KnowledgeDefinition]] = defaultdict(list)
     for claim in package.knowledge.knowledge:
         source = claim.source
-        if source.kind == "storylet_realization" and claim.id not in skipped:
+        if source.kind == "storylet_realization":
             grouped[(source.storylet_id, source.realization_id)].append(claim)
     return grouped
 
@@ -103,6 +114,8 @@ def _claims_by_source(package: StoryPackage, skipped: set[str]) -> dict[tuple[st
 def _variant(
     realization: RouteRealization,
     claims: list[KnowledgeDefinition],
+    outline_ids: Mapping[str, str],
+    outcome: Any | None,
 ) -> dict[str, object]:
     """Render one realization and its primary and extra claim records."""
 
@@ -111,9 +124,16 @@ def _variant(
         "realization_id": realization.id,
         "intent": realization.dramatic_intent,
         "commits": commits,
-        "from_outline": list(realization.source_beats),
         "helps_exit": list(realization.helps_transition_triggers),
     }
+    if realization.source_beats:
+        result["from_outline"] = [outline_ids[anchor] for anchor in realization.source_beats]
+    if outcome is not None:
+        result["outcome"] = {
+            "id": outcome.id,
+            "advantages": list(outcome.advantages),
+            **({"costs": list(outcome.costs)} if outcome.costs else {}),
+        }
     if claims:
         result.update(_claim_fields(claims[0], commits))
         if len(claims) > 1:
@@ -121,7 +141,27 @@ def _variant(
     return result
 
 
-def _reveal(route, storylet, claims: Mapping[tuple[str, str], list[KnowledgeDefinition]]) -> dict[str, object]:
+def _handle(storylet_id: str) -> str:
+    """Convert a legacy storylet ID into the contract's authoring handle."""
+
+    return storylet_id.lower().replace("-", "_")
+
+
+def _variant_key(storylet_id: str, realization_id: str) -> str:
+    """Convert a legacy realization ID into its reveal-local variant key."""
+
+    prefix = f"{storylet_id}-"
+    suffix = realization_id[len(prefix) :] if realization_id.startswith(prefix) else realization_id
+    return suffix.lower().replace("-", "_")
+
+
+def _reveal(
+    route,
+    storylet,
+    claims: Mapping[tuple[str, str], list[KnowledgeDefinition]],
+    outline_ids: Mapping[str, str],
+    outcomes: Mapping[tuple[str, str], Any],
+) -> dict[str, object]:
     """Render one reveal from its route, reader record, and realization claims."""
 
     first_boundaries = list(route.realizations[0].protected_knowledge_boundaries)
@@ -136,18 +176,20 @@ def _reveal(route, storylet, claims: Mapping[tuple[str, str], list[KnowledgeDefi
         "boundaries": first_boundaries,
     }
     variants = {
-        realization.id: _variant(
+        _variant_key(route.id, realization.id): _variant(
             realization,
             claims.get((route.id, realization.id), []),
+            outline_ids,
+            outcomes.get((route.id, realization.id)),
         )
         for realization in route.realizations
     }
     return {
-        "id": route.id,
+        "id": _handle(route.id),
         "storylet_id": route.id,
         "title": route.title,
         "guidance": guidance,
-        "from_outline": list(storylet.source_links),
+        "from_outline": [outline_ids[anchor] for anchor in storylet.source_links],
         "variants": variants,
     }
 
@@ -176,11 +218,19 @@ def _match_documents(package: StoryPackage, route_by_id: Mapping[str, object], s
         route = route_by_id[source.storylet_id]
         claims_by_scene[route.scene_id][claim.id] = _match_claim(claim)
 
+    fact_result = convert_facts(package)
+    fact_scenes = {
+        fact_id: scene_id
+        for scene_id, document in fact_result.scene_docs.items()
+        for fact_id, declaration in document["facts"].items()
+        if "delivery" in declaration
+    }
     deliveries_by_scene: dict[str, dict[str, dict[str, object]]] = defaultdict(dict)
     for delivery in package.deliveries:
-        deliveries_by_scene[delivery.scene_id][delivery.fact_id] = {
-            "must_convey": [list(group) for group in delivery.must_convey]
-        }
+        record = {"must_convey": [list(group) for group in delivery.must_convey]}
+        deliveries_by_scene[fact_scenes[delivery.fact_id]][delivery.fact_id] = record
+        if fact_scenes[delivery.fact_id] != delivery.scene_id:
+            deliveries_by_scene[delivery.scene_id][delivery.fact_id] = record
 
     result: dict[str, dict] = {}
     for scene in package.scenes:
@@ -200,8 +250,23 @@ def convert_reveals(package: StoryPackage) -> RevealsResult:
     skipped = _skipped_claim_ids(package)
     claims = _claims_by_source(package, skipped)
     scene_docs: dict[str, dict] = {scene.metadata.scene_id: {"reveals": []} for scene in package.scenes}
+    outline_ids = {
+        scene.metadata.scene_id: {beat.anchor: beat.id for beat in scene.beats.values()} for scene in package.scenes
+    }
+    outcomes = {
+        (outcome.storylet_id, outcome.realization_id): outcome
+        for incident in package.incidents
+        for outcome in incident.outcomes
+    }
+    handles: set[str] = set()
     for route in package.storylet_routes.storylets:
-        scene_docs[route.scene_id]["reveals"].append(_reveal(route, storylets[route.id], claims))
+        handle = _handle(route.id)
+        if handle in handles:
+            raise ValueError(f"storylet handle {handle!r} is not unique")
+        handles.add(handle)
+        scene_docs[route.scene_id]["reveals"].append(
+            _reveal(route, storylets[route.id], claims, outline_ids[route.scene_id], outcomes)
+        )
     return RevealsResult(
         scene_docs=scene_docs,
         match_docs=_match_documents(package, routes, skipped),

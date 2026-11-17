@@ -122,15 +122,15 @@ def _match_record(claim: Any) -> dict[str, Any]:
     return record
 
 
-def _event_record(event: Any, kind: str, claim_by_event: Mapping[str, Any]) -> dict[str, Any]:
-    """Copy one canonical bridge or resolution event and its optional claim."""
+def _event_records(event: Any, kind: str, claims_by_event: Mapping[str, list[Any]]) -> list[dict[str, Any]]:
+    """Copy one canonical event once per claim so every legacy claim remains sourceable."""
 
     record: dict[str, Any] = {
         "id": event.id,
         "kind": kind,
         "when": list(event.activation.all_facts_true),
         "commits": _operations(event.operations),
-        "realized_by": list(event.realization_storylets),
+        "realized_by": [_handle(storylet_id) for storylet_id in event.realization_storylets],
     }
     if event.activation.any_of:
         record["when_any"] = list(event.activation.any_of)
@@ -140,25 +140,57 @@ def _event_record(event: Any, kind: str, claim_by_event: Mapping[str, Any]) -> d
         record["fallback_text"] = event.fallback_text
     if event.delivery_text is not None:
         record["delivery_text"] = event.delivery_text
-    claim = claim_by_event.get(event.id)
-    if claim is not None:
-        record["claim"] = _claim_record(claim, commits_subset=_operations(claim.establishes))
-    return record
+    claims = claims_by_event.get(event.id, [])
+    if not claims:
+        return [record]
+    return [
+        {
+            **record,
+            **({} if index == 0 else {"id": f"{event.id}_claim_{claim.id}"}),
+            "claim": _claim_record(claim, commits_subset=_operations(claim.establishes)),
+        }
+        for index, claim in enumerate(claims)
+    ]
 
 
-def _incident_record(incident: Any) -> dict[str, Any]:
-    """Copy one incident, using route IDs as stable reveal handles."""
+def _incident_record(incident: Any, outcome_claims: Mapping[tuple[str, str], str]) -> dict[str, Any]:
+    """Copy one incident using source reveal handles and variant keys."""
 
     return {
         "id": incident.id,
-        "reveal": incident.outcomes[0].storylet_id,
-        "outcomes": [outcome.realization_id for outcome in incident.outcomes],
-        "recovery": incident.recovery_storylet_id,
+        "reveal": _handle(incident.outcomes[0].storylet_id),
+        "outcomes": [_variant_key(outcome.storylet_id, outcome.realization_id) for outcome in incident.outcomes],
+        "recovery": _handle(incident.recovery_storylet_id),
         "missed_window": incident.missed_window_event_id,
-        "observed_by": list(incident.observation_knowledge_ids),
+        "observed_by": _observed_claims(incident, outcome_claims),
         **({"successor": incident.successor_transition_id} if incident.successor_transition_id else {}),
         **({} if incident.completes_scene else {"completes_scene": False}),
     }
+
+
+def _observed_claims(incident: Any, outcome_claims: Mapping[tuple[str, str], str]) -> list[str]:
+    """Keep legacy observation order and append any omitted outcome claims."""
+
+    observed = list(incident.observation_knowledge_ids)
+    for outcome in incident.outcomes:
+        claim_id = outcome_claims.get((outcome.storylet_id, outcome.realization_id))
+        if claim_id is not None and claim_id not in observed:
+            observed.append(claim_id)
+    return observed
+
+
+def _handle(storylet_id: str) -> str:
+    """Convert a legacy storylet ID into the contract's authoring handle."""
+
+    return storylet_id.lower().replace("-", "_")
+
+
+def _variant_key(storylet_id: str, realization_id: str) -> str:
+    """Convert a legacy realization ID into its reveal-local variant key."""
+
+    prefix = f"{storylet_id}-"
+    suffix = realization_id[len(prefix) :] if realization_id.startswith(prefix) else realization_id
+    return suffix.lower().replace("-", "_")
 
 
 def _exit_record(transition: Any) -> dict[str, Any] | None:
@@ -209,7 +241,13 @@ def _owned_claims(package: StoryPackage) -> tuple[set[str], dict[str, Any]]:
     return owned, claims
 
 
-def _scene_doc(package: StoryPackage, scene: Any, event_claims: Mapping[str, Any], ending: Any) -> dict:
+def _scene_doc(
+    package: StoryPackage,
+    scene: Any,
+    event_claims: Mapping[str, list[Any]],
+    outcome_claims: Mapping[tuple[str, str], str],
+    ending: Any,
+) -> dict:
     """Build one scene document in the contract's key order."""
 
     scene_id = scene.metadata.scene_id
@@ -217,21 +255,23 @@ def _scene_doc(package: StoryPackage, scene: Any, event_claims: Mapping[str, Any
     frame = next(item for item in package.knowledge.scene_frames if item.scene_id == scene_id)
     transition = next((item for item in package.pacing.transitions if item.source_scene_id == scene_id), None)
     bridges = [
-        _event_record(event, "bridge", event_claims)
+        record
         for event in package.storylet_routes.bridge_events
         if event.scene_id == scene_id
+        for record in _event_records(event, "bridge", event_claims)
     ]
     bridges.extend(
-        _event_record(event, "resolution", event_claims)
+        record
         for event in package.storylet_routes.resolution_events
         if event.scene_id == scene_id
+        for record in _event_records(event, "resolution", event_claims)
     )
     entry_claims = [
         _claim_record(claim)
         for claim in package.knowledge.knowledge
         if claim.source.kind == "scene_entry" and claim.available_in_scenes == (scene_id,)
     ]
-    incidents = [_incident_record(item) for item in package.incidents if item.scene_id == scene_id]
+    incidents = [_incident_record(item, outcome_claims) for item in package.incidents if item.scene_id == scene_id]
     document: dict[str, Any] = {
         "scene": scene_id,
         "location": scene.metadata.location_id,
@@ -265,13 +305,22 @@ def convert_scenes(package: StoryPackage) -> SceneResult:
     """Convert all package-owned scene records and matcher entries."""
 
     _, claims = _owned_claims(package)
-    event_claims = {
-        claim.source.canonical_event_id: claim
+    event_claims: dict[str, list[Any]] = {}
+    for claim in claims.values():
+        if claim.source.kind == "canonical_route_event":
+            event_claims.setdefault(claim.source.canonical_event_id, []).append(claim)
+    outcome_claims = {
+        (claim.source.storylet_id, claim.source.realization_id): claim.id
         for claim in claims.values()
-        if claim.source.kind == "canonical_route_event"
+        if claim.source.kind == "storylet_realization"
+        and any(
+            (claim.source.storylet_id, claim.source.realization_id) == (outcome.storylet_id, outcome.realization_id)
+            for incident in package.incidents
+            for outcome in incident.outcomes
+        )
     }
     scene_docs = {
-        scene.metadata.scene_id: _scene_doc(package, scene, event_claims, package.pacing.ending)
+        scene.metadata.scene_id: _scene_doc(package, scene, event_claims, outcome_claims, package.pacing.ending)
         for scene in package.scenes
     }
     match_docs: dict[str, dict] = {}

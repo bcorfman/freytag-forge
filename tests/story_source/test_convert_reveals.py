@@ -44,9 +44,17 @@ def _claim_doc(claim_id: str) -> dict:
 
 
 def _skipped_claims() -> set[str]:
-    """Return the incident observation IDs owned by another worker."""
+    """Return incident outcome claim IDs whose match entries are scene-owned."""
 
-    return {claim_id for incident in PACKAGE.incidents for claim_id in incident.observation_knowledge_ids}
+    outcomes = {
+        (outcome.storylet_id, outcome.realization_id) for incident in PACKAGE.incidents for outcome in incident.outcomes
+    }
+    return {
+        claim.id
+        for claim in PACKAGE.knowledge.knowledge
+        if claim.source.kind == "storylet_realization"
+        and (claim.source.storylet_id, claim.source.realization_id) in outcomes
+    }
 
 
 def test_result_shape_and_all_storylets_and_realizations_are_present() -> None:
@@ -73,11 +81,7 @@ def test_claims_are_complete_in_reveals_and_match_order() -> None:
     """Eligible realization claims appear in both outputs in package order."""
 
     skipped = _skipped_claims()
-    expected = [
-        claim
-        for claim in PACKAGE.knowledge.knowledge
-        if claim.source.kind == "storylet_realization" and claim.id not in skipped
-    ]
+    expected = [claim for claim in PACKAGE.knowledge.knowledge if claim.source.kind == "storylet_realization"]
     reveal_claims = [
         variant["claim_id"]
         for document in RESULT.scene_docs.values()
@@ -96,7 +100,9 @@ def test_claims_are_complete_in_reveals_and_match_order() -> None:
 
     for scene_id, document in RESULT.match_docs.items():
         assert document["schema"] == 1
-        expected_scene = [claim.id for claim in expected if claim.available_in_scenes == (scene_id,)]
+        expected_scene = [
+            claim.id for claim in expected if claim.available_in_scenes == (scene_id,) and claim.id not in skipped
+        ]
         assert list(document["claims"]) == expected_scene
         assert set(document) <= {"schema", "scene", "claims", "deliveries"}
 
@@ -106,7 +112,7 @@ def test_three_storylets_and_realizations_copy_route_values() -> None:
 
     for route in PACKAGE.storylet_routes.storylets[:3]:
         reveal = _reveal(route.id)
-        assert reveal["id"] == route.id
+        assert reveal["id"] == route.id.lower().replace("-", "_")
         assert reveal["title"] == route.title
         assert reveal["guidance"]["pressure_role"] == route.pressure_role
         assert reveal["guidance"]["window"] == {
@@ -115,9 +121,15 @@ def test_three_storylets_and_realizations_copy_route_values() -> None:
             "latest_turn": route.latest_turn,
         }
         realization = route.realizations[0]
-        variant = reveal["variants"][realization.id]
+        variant_key = realization.id.removeprefix(f"{route.id}-").lower().replace("-", "_")
+        variant = reveal["variants"][variant_key]
         assert variant["intent"] == realization.dramatic_intent
-        assert variant["from_outline"] == list(realization.source_beats)
+        scene = next(scene for scene in PACKAGE.scenes if scene.metadata.scene_id == route.scene_id)
+        beat_ids = {beat.anchor: beat.id for beat in scene.beats.values()}
+        if realization.source_beats:
+            assert variant["from_outline"] == [beat_ids[anchor] for anchor in realization.source_beats]
+        else:
+            assert "from_outline" not in variant
         assert variant["helps_exit"] == list(realization.helps_transition_triggers)
         assert variant["commits"] == {
             operation.fact_id: "retract" if operation.op == "retract" else operation.value
