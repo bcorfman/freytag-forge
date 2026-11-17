@@ -90,7 +90,7 @@ def build(name: str, tests: list[str]) -> dict:
     return {
         "run_name": "story-data-round6-tests",
         "workdir": work,
-        "max_parallel": 3,
+        "max_parallel": 6,
         "worktrees": True,
         "repo": REPO,
         "tasks": tasks,
