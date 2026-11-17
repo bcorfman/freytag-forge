@@ -1,0 +1,13 @@
+schema: 1
+scene: '*'
+differences:
+- path: world.facts
+  class: dedupe
+  legacy: b7f9dd18a0c4
+  compiled: 040a1d23f012
+  reason: 'Legacy world.facts lists processing_numbers_copied twice (178 entries) and in a different order;
+    the compiled list is the 177 distinct ids in story order (contract section 5 row 5). Fact order only
+    matters for on-assert effects that touch one entity. Checked on the loaded packages: 8 such pairs;
+    6 keep their order; 2 invert: brandon_identified/relay_open (the pair the contract names) and facility_perimeter_reached/rebecca_office_reached
+    (kristin). The second is harmless: facility_perimeter_reached is declared in world.yaml but no route,
+    bridge, pacing event or delivery ever asserts it, so its effect is never pending beside rebecca_office_reached.'
