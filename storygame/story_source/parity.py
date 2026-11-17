@@ -185,7 +185,6 @@ def _compare_lists(
                 "collection_order" if _collection_order_proof(left, right, path, root) else "representation"
             )
             _add_difference(output, path, left, right, difference_class)
-            return
         for key in sorted(keyed_left):
             _compare(keyed_left[key], keyed_right[key], _part(path, key), output, root)
         return
