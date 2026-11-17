@@ -38,31 +38,32 @@ DEFAULT_N = 12
 CAP = 60
 PACKAGE_SOURCE = ROOT / "data/stories/continuity-initiative"
 VARIATION_SOURCE = ROOT / "bench/variations/phase1-slice-current.json"
+SCENE_SOURCE = Path("source/scenes/2A.yaml")
+MATCH_SOURCE = Path("source/scenes/2A.match.yaml")
 
 _LEGACY_REPLACEMENTS = (
     (
-        "  pressure: Prove the cooling system is failing to get inside",
-        "  pressure: Prove the cooling fault is real to get inside",
+        "pressure: Prove the cooling system is failing to get inside",
+        "pressure: Prove the cooling fault is real to get inside",
     ),
     (
-        "  statement: Kristin and Brandon are at the facility gate and must prove the cooling system is failing "
+        "  says: Kristin and Brandon are at the facility gate and must prove the cooling system is failing "
         "to get inside.",
-        "  statement: Kristin and Brandon are at the facility gate and must prove the cooling fault is real "
-        "to get inside.",
+        "  says: Kristin and Brandon are at the facility gate and must prove the cooling fault is real to get inside.",
     ),
 )
-_LEGACY_PLOT_REPLACEMENT = (
+_LEGACY_OBJECTIVE_REPLACEMENT = (
     "objective: Get inside by proving the cooling system is failing",
     "objective: Get inside by proving the cooling fault is real",
 )
 _LEAK_LINES = {
     "k_sl_2a_c_r5": (
-        "  leak_terms: [genuine cooling-water pressure fault, genuine pressure problem, genuine cooling fault, "
+        "    leak_terms: [genuine cooling-water pressure fault, genuine pressure problem, genuine cooling fault, "
         "real ventilation fault, restricted infrastructure corridors, infrastructure corridors, restricted "
         "corridor access, console used]"
     ),
     "k_sl_2a_c_r6": (
-        "  leak_terms: [restricted infrastructure corridors, infrastructure corridors, restricted corridor access, "
+        "    leak_terms: [restricted infrastructure corridors, infrastructure corridors, restricted corridor access, "
         "console used]"
     ),
 }
@@ -80,13 +81,13 @@ def _replace_once(text: str, old: str, new: str, arm: str) -> str:
 
 
 def _insert_leak_term(text: str, knowledge_id: str, leak_line: str, arm: str) -> str:
-    marker = f"- id: {knowledge_id}"
+    marker = f"  {knowledge_id}:"
     if text.count(marker) != 1:
         raise ValueError(f"{arm}: expected exactly one block marker, found {text.count(marker)}: {marker!r}")
     start = text.index(marker)
-    end = text.find("\n- id:", start + len(marker))
+    end = text.find("\n  ", start + len(marker))
     block = text[start:] if end == -1 else text[start:end]
-    if "\n  leak_terms:" in block or block.startswith("  leak_terms:"):
+    if "\n    leak_terms:" in block or block.startswith("    leak_terms:"):
         raise ValueError(f"{arm}: {knowledge_id} already has leak_terms")
     line_end = text.find("\n", start)
     if line_end == -1:
@@ -106,19 +107,19 @@ def build_arm_package(arm: str, workdir: Path) -> Path:
     if arm == "control":
         return destination
 
-    knowledge_path = destination / "knowledge.yaml"
-    knowledge = knowledge_path.read_text(encoding="utf-8")
+    scene_path = destination / SCENE_SOURCE
     if arm == "legacy":
+        scene = scene_path.read_text(encoding="utf-8")
         for old, new in _LEGACY_REPLACEMENTS:
-            knowledge = _replace_once(knowledge, old, new, arm)
-        knowledge_path.write_text(knowledge, encoding="utf-8")
-        plot_path = destination / "plot.md"
-        plot = plot_path.read_text(encoding="utf-8")
-        plot_path.write_text(_replace_once(plot, *_LEGACY_PLOT_REPLACEMENT, arm), encoding="utf-8")
+            scene = _replace_once(scene, old, new, arm)
+        scene = _replace_once(scene, *_LEGACY_OBJECTIVE_REPLACEMENT, arm)
+        scene_path.write_text(scene, encoding="utf-8")
     else:
+        match_path = destination / MATCH_SOURCE
+        match = match_path.read_text(encoding="utf-8")
         for knowledge_id, leak_line in _LEAK_LINES.items():
-            knowledge = _insert_leak_term(knowledge, knowledge_id, leak_line, arm)
-        knowledge_path.write_text(knowledge, encoding="utf-8")
+            match = _insert_leak_term(match, knowledge_id, leak_line, arm)
+        match_path.write_text(match, encoding="utf-8")
     return destination
 
 

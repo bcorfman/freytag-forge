@@ -39,6 +39,7 @@ from storygame.story_package.models import (
     StoryPackage,
     WorldSource,
 )
+from storygame.story_source.diagnostics import SourceError
 from tests.story_source.helpers import compiled_story_copy, load_compiled_copy
 
 ROOT = Path(__file__).parents[1]
@@ -276,7 +277,7 @@ def test_loader_rejects_blank_location_description(tmp_path: Path) -> None:
     catalog = yaml.safe_load(catalog_path.read_text(encoding="utf-8"))
     catalog["places"]["outside_house"]["description"] = "  "
     catalog_path.write_text(yaml.safe_dump(catalog, sort_keys=False), encoding="utf-8")
-    with pytest.raises(StoryPackageError, match="description must be a non-blank string"):
+    with pytest.raises((StoryPackageError, SourceError), match="description must be a non-blank string"):
         load_compiled_copy(root)
 
 

@@ -2,19 +2,23 @@ from __future__ import annotations
 
 import hashlib
 import json
+import shutil
 from pathlib import Path
 
 import pytest
 
 from scripts.ringer.stage7 import three_c_recall_replay as replay
 from storygame.runtime.candidate_matcher import uniquely_matched_authored_handoff
+from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.world_model import apply_scene_placements, apply_world_effects, world_for
+from storygame.story_package.loader import load_legacy_story_package
 from tests.story_source.helpers import compiled_story_copy, load_compiled_copy, patch_source
 
 ROOT = Path(__file__).resolve().parents[1]
 PACKAGE = ROOT / "data/stories/continuity-initiative"
+LEGACY_PACKAGE = ROOT / "tests/fixtures/continuity_initiative_pre_3c_adoption"
 
 
 def _compiled_package_and_state(root: Path, scene_id: str) -> tuple[object, RuntimeState]:
@@ -29,12 +33,58 @@ def _compiled_package_and_state(root: Path, scene_id: str) -> tuple[object, Runt
 
 
 def _patched_variation(tmp_path: Path, claim_id: str, statement: str) -> dict[str, str]:
-    root = tmp_path / "continuity-initiative"
+    root = tmp_path / "continuity-initiative-legacy"
     if not root.exists():
-        root = compiled_story_copy(tmp_path)
-    variant_id = "sl_3c_a" if claim_id == "k_sl_3c_a_r1" else "sl_3c_c"
-    patch_source(root / "source", "scenes/3C.yaml", f"reveals[{variant_id}].variants.r1.says", statement)
+        shutil.copytree(LEGACY_PACKAGE, root)
+    path = root / "knowledge.yaml"
+    text = path.read_text(encoding="utf-8")
+    old = (
+        "Michelle broadcasts captives, JANUS records, planning sessions, and detention locations to independent "
+        "networks."
+        if claim_id == "k_sl_3c_a_r1"
+        else "Kristin restores power to drainage pumps and holds one watertight barrier while Michelle leads captives "
+        "through the maintenance tunnel."
+    )
+    encoded_statement = statement.replace("'", "''")
+    if text.count(old) == 1:
+        path.write_text(text.replace(old, encoded_statement, 1), encoding="utf-8")
+    else:
+        assert text.count(encoded_statement) == 1
+    load_legacy_story_package(root)
     return {"_package_path": str(root)}
+
+
+def _legacy_state_3c(*, turn_index: int = 0) -> RuntimeState:
+    package = load_legacy_story_package(LEGACY_PACKAGE)
+    state = RuntimeState(package=package, current_scene_id="3C", phase="resolution")
+    state._assert_scene_entry_fact("3C")
+    for fact_id in ("broadcast_started", "brandon_confession_available", "detention_locations_secured"):
+        state.facts.assert_fact(Fact(predicate=fact_id, subject="story", value="true"))
+    state.turn_index = turn_index
+    return state
+
+
+def _legacy_provider(package, knowledge_id: str):
+    knowledge = package.knowledge_indexes.by_id[knowledge_id]
+    text = knowledge.delivery_text or knowledge.statement
+    return lambda _command: {
+        "segments": [{"kind": "narration", "text": text, "grounding_ids": [knowledge_id]}],
+        "selected_knowledge_ids": [knowledge_id],
+    }
+
+
+def _legacy_reveal(engine: RuntimeEngine, package, knowledge_id: str, command: str) -> None:
+    engine.provider = _legacy_provider(package, knowledge_id)
+    engine.turn(command)
+    engine._activate_pacing()  # noqa: SLF001 - inspect the next staged cue.
+
+
+def _legacy_finish_a_and_b() -> tuple[object, RuntimeEngine]:
+    package = load_legacy_story_package(LEGACY_PACKAGE)
+    engine = RuntimeEngine(_legacy_state_3c(), _legacy_provider(package, "k_sl_3c_a_r1"))
+    _legacy_reveal(engine, package, "k_sl_3c_a_r1", "Send the evidence package.")
+    _legacy_reveal(engine, package, "k_sl_3c_b_r1", "Take the Portable data case from Rebecca.")
+    return package, engine
 
 
 def _hashes(root: Path) -> dict[str, str]:
@@ -54,7 +104,7 @@ def test_variation_replaces_c1_once_and_loads_with_real_loader(tmp_path: Path) -
     assert package.knowledge_indexes.by_id["k_sl_3c_c_r1"].statement == replay.NEW_C1
 
 
-def test_variation_changes_only_knowledge_file(tmp_path: Path) -> None:
+def test_variation_changes_only_scene_file(tmp_path: Path) -> None:
     root = compiled_story_copy(tmp_path)
     patch_source(root / "source", "scenes/3C.yaml", "reveals[sl_3c_c].variants.r1.says", replay.NEW_C1)
     shipped = _hashes(PACKAGE / "source")
@@ -86,20 +136,17 @@ def test_frozen_arms_have_three_c1_replacements_and_preserve_other_text(
     assert replay.OLD_C1 not in json.dumps(recall)
 
 
-@pytest.mark.skip(reason="the frozen C1 replay targets the retired pre-incident statement")
 def test_c1_only_does_not_make_surface_fact_true_and_c_orders_unlock_d() -> None:
-    from tests.test_3c_cue_chain import _finish_a_and_b, _reveal
-
-    engine = _finish_a_and_b()
-    _reveal(engine, "k_sl_3c_c_r1", "Restore the drainage pumps.")
+    package, engine = _legacy_finish_a_and_b()
+    _legacy_reveal(engine, package, "k_sl_3c_c_r1", "Restore the drainage pumps.")
     assert Fact(predicate="captives_reaching_surface", subject="story", value="true") not in engine.state.facts.asserted
     for first, second in (("k_sl_3c_c_r1", "k_sl_3c_c_r2"), ("k_sl_3c_c_r2", "k_sl_3c_c_r1")):
-        engine = _finish_a_and_b()
+        package, engine = _legacy_finish_a_and_b()
         for knowledge_id, command in (
             (first, "Restore the drainage pumps." if first.endswith("r1") else "Give up the lower levels."),
             (second, "Restore the drainage pumps." if second.endswith("r1") else "Give up the lower levels."),
         ):
-            _reveal(engine, knowledge_id, command)
+            _legacy_reveal(engine, package, knowledge_id, command)
         projection = engine.projector.project(engine.state, "player", "Check reports from other detention sites.")
         assert (
             uniquely_matched_authored_handoff("Check reports from other detention sites.", projection.reveal_universe)
@@ -214,6 +261,9 @@ def test_broadcast_arms_isolate_three_replacements_and_b_r1_delivery(
         "load_variation",
         lambda _path: _patched_variation(tmp_path, "k_sl_3c_a_r1", replay.BROADCAST_NEW_LITERAL),
     )
+    monkeypatch.setattr(
+        replay, "_broadcast_strings", lambda: (replay.BROADCAST_OLD_LITERAL, replay.BROADCAST_NEW_LITERAL)
+    )
     pump, broadcast, count = replay.build_requests("broadcast")
     assert count == 3
     assert pump == replay.recorded_request()
@@ -245,6 +295,9 @@ def test_broadcast_cli_guard_and_request_cap_with_stubbed_network(
 
     monkeypatch.setattr(replay, "_send", fake_send)
     monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://offline.invalid")
+    monkeypatch.setattr(
+        replay, "_broadcast_strings", lambda: (replay.BROADCAST_OLD_LITERAL, replay.BROADCAST_NEW_LITERAL)
+    )
     monkeypatch.setattr(replay, "_package_occurrences", lambda: [])
     pump, broadcast, _ = replay.build_requests("broadcast")
     args = type("Args", (), {"n": 12, "max_requests": 3})()

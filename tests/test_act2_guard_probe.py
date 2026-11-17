@@ -46,10 +46,10 @@ def test_build_arm_requires_each_replacement(monkeypatch: pytest.MonkeyPatch, tm
     import shutil
 
     shutil.copytree(probe.PACKAGE_SOURCE, source)
-    knowledge = source / "knowledge.yaml"
-    target = "  pressure: Prove the cooling system is failing to get inside"
-    knowledge.write_text(
-        knowledge.read_text(encoding="utf-8").replace(target, "  pressure: Prove the cooling issue is real"),
+    scene = source / probe.SCENE_SOURCE
+    target = "pressure: Prove the cooling system is failing to get inside"
+    scene.write_text(
+        scene.read_text(encoding="utf-8").replace(target, "pressure: Prove the cooling issue is real"),
         encoding="utf-8",
     )
     monkeypatch.setattr(probe, "PACKAGE_SOURCE", source)

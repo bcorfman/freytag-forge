@@ -8,6 +8,7 @@ from storygame.runtime.seating import seat_before_use, stand_before_leave
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.world_model import world_for
 from storygame.story_package import StoryPackageError, load_story_package
+from storygame.story_source.diagnostics import SourceError
 from tests.story_source.helpers import DELETE, compiled_story_copy, load_compiled_copy, patch_source
 
 ROOT = Path(__file__).parents[1]
@@ -295,7 +296,7 @@ def test_loader_rejects_a_seat_without_its_lines(tmp_path):
     root = compiled_story_copy(tmp_path)
     patch_source(root, "source/catalog.yaml", "items.workstation_chair.enter_text", DELETE)
 
-    with pytest.raises(StoryPackageError, match="enter_text"):
+    with pytest.raises((StoryPackageError, SourceError), match="enter_text"):
         load_compiled_copy(root)
 
 
@@ -354,5 +355,5 @@ def test_loader_rejects_a_seat_without_its_leave_line(tmp_path):
     root = compiled_story_copy(tmp_path)
     patch_source(root, "source/catalog.yaml", "items.workstation_chair.leave_text", DELETE)
 
-    with pytest.raises(StoryPackageError, match="leave_text"):
+    with pytest.raises((StoryPackageError, SourceError), match="leave_text"):
         load_compiled_copy(root)

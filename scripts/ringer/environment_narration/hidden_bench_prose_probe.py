@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[3]
-PACKAGE_RELATIVE = Path("data/stories/continuity-initiative")
+PACKAGE_RELATIVE = Path("tests/fixtures/parity/continuity-initiative/legacy")
 PACKAGE_ROOT = ROOT / PACKAGE_RELATIVE
 STATES = ("opening", "prefind", "find")
 ARMS = ("P0", "P1")
@@ -104,12 +104,12 @@ def _composed_segments(result: object) -> list[dict[str, str]]:
     return [{"kind": segment.kind, "text": segment.text} for segment in result.segments]
 
 
-def _capture_package(package_root: Path, arm: str) -> list[dict[str, Any]]:
+def _capture_package(package_root: Path, arm: str, *, legacy: bool = False) -> list[dict[str, Any]]:
     from storygame.runtime.cloudflare import CloudflareTurnProvider
     from storygame.runtime.engine import RuntimeEngine
-    from storygame.story_package.loader import load_story_package
+    from storygame.story_package.loader import load_legacy_story_package, load_story_package
 
-    package = load_story_package(package_root)
+    package = (load_legacy_story_package if legacy else load_story_package)(package_root)
     captured: list[dict[str, Any]] = []
 
     def stub_request(provider: object, payload: dict[str, object]) -> dict[str, object]:
@@ -161,7 +161,10 @@ def capture_payloads() -> dict[str, Any]:
     with tempfile.TemporaryDirectory(prefix="t9h-hidden-prose-") as temporary:
         temporary_root = Path(temporary)
         p0_root = _package_from_head(temporary_root)
-        payloads = [*_capture_package(p0_root, "P0"), *_capture_package(PACKAGE_ROOT, "P1")]
+        payloads = [
+            *_capture_package(p0_root, "P0", legacy=True),
+            *_capture_package(PACKAGE_ROOT, "P1", legacy=True),
+        ]
     payloads.sort(key=lambda item: (STATES.index(item["state"]), ARMS.index(item["arm"])))
     return {"schema": 1, "stage": "t9h-hidden-prose", "payloads": payloads}
 
@@ -236,13 +239,13 @@ def _stop_reason(error: BaseException) -> str:
 def run_rows(document: dict[str, Any], *, max_calls: int, max_usd: float, out: Path) -> dict[str, Any]:
     from storygame.runtime.cloudflare import CloudflareTurnProvider
     from storygame.runtime.state import RuntimeState
-    from storygame.story_package.loader import load_story_package
+    from storygame.story_package.loader import load_legacy_story_package
 
     if not os.environ.get("CLOUDFLARE_WORKER_URL", "").strip():
         raise ValueError("run mode requires CLOUDFLARE_WORKER_URL")
     if not os.environ.get("CLOUDFLARE_WORKER_TOKEN", "").strip():
         raise ValueError("run mode requires CLOUDFLARE_WORKER_TOKEN")
-    package = load_story_package(PACKAGE_ROOT)
+    package = load_legacy_story_package(PACKAGE_ROOT)
     calls = _planned(document)
     if len(calls) > max_calls:
         raise ValueError(f"planned calls {len(calls)} exceed --max-calls {max_calls}")
@@ -404,13 +407,13 @@ def _inferred_delivery(package: object, state_name: str, response_text: str) -> 
 
 
 def composed_view(rows_path: Path, output: Path) -> None:
-    from storygame.story_package.loader import load_story_package
+    from storygame.story_package.loader import load_legacy_story_package
 
     document = _read_json(rows_path)
     rows = document.get("rows")
     if not isinstance(rows, list):
         raise ValueError("rows file has no rows list")
-    package = load_story_package(PACKAGE_ROOT)
+    package = load_legacy_story_package(PACKAGE_ROOT)
     output.mkdir(parents=True, exist_ok=True)
     indexed = _shuffled_rows(rows)
     raw_lines = ["# Raw prose view", ""]

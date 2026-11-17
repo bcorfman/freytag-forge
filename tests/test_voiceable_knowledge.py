@@ -11,13 +11,14 @@ from storygame.runtime.knowledge import KnowledgeProjector
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import ProposalValidationError
 from storygame.runtime.world_model import apply_world_effects
-from storygame.story_package.loader import load_story_package
+from storygame.story_package.loader import load_legacy_story_package, load_story_package
 from storygame.story_package.models import KnowledgeDefinition
 from storygame.story_source.compiler import SourceError
 from tests.story_source.helpers import compiled_story_copy, load_compiled_copy, patch_source
 
 PACKAGE_ROOT = Path("data/stories/continuity-initiative")
 PACKAGE = load_story_package(PACKAGE_ROOT)
+LEGACY_PACKAGE = load_legacy_story_package(Path("tests/fixtures/parity/continuity-initiative/legacy"))
 
 
 def _generic_item(*, voiceable: bool | None = None) -> KnowledgeDefinition:
@@ -188,9 +189,10 @@ def test_loader_rejects_non_boolean_voiceable(tmp_path: Path) -> None:
 
 
 def test_real_package_has_exactly_the_non_voiceable_knowledge_items() -> None:
-    non_voiceable = [item for item in PACKAGE.knowledge.knowledge if item.voiceable is False]
+    non_voiceable = {item.id for item in PACKAGE.knowledge.knowledge if item.voiceable is False}
+    legacy_non_voiceable = {item.id for item in LEGACY_PACKAGE.knowledge.knowledge if item.voiceable is False}
 
-    assert [item.id for item in non_voiceable] == [
+    expected = {
         "k_sl_1a_j_r1",
         "k_sl_1a_j_r2",
         "k_sl_1a_j_r3",
@@ -226,7 +228,9 @@ def test_real_package_has_exactly_the_non_voiceable_knowledge_items() -> None:
         "k_sl_3a_g_r1",
         "k_sl_3a_h_r1",
         "k_sl_3a_i_r1",
-    ]
+    }
+    assert non_voiceable == expected
+    assert non_voiceable == legacy_non_voiceable
 
 
 def test_default_serialization_omits_voiceable_but_false_round_trips() -> None:

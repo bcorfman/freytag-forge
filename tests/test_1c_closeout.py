@@ -29,11 +29,11 @@ def test_the_optional_1c_reveals_last_until_the_transfer_window_closes():
     transfer_window = next(event for event in PACKAGE.pacing.events if event.id == "transfer_window_1c")
 
     for storylet_id in ("SL-1C-E", "SL-1C-F", "SL-1C-G"):
-        route_pacing = routes[storylet_id]["activation"]["pacing"]
+        route = routes[storylet_id]
         assert (
-            route_pacing["earliest_turn"],
-            route_pacing["target_turn"],
-            route_pacing["latest_turn"],
+            route.earliest_turn,
+            route.target_turn,
+            route.latest_turn,
         ) == (0, 2, 4)
         storylet = storylets[storylet_id]
         assert (storylet.earliest_turn, storylet.target_turn, storylet.latest_turn) == (0, 2, 4)

@@ -17,7 +17,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[3]
 PACKAGE_ROOT = ROOT / "data" / "stories" / "continuity-initiative"
-WORLD_PATH = PACKAGE_ROOT / "world.yaml"
+WORLD_PATH = PACKAGE_ROOT / "source" / "catalog.yaml"
 STAGE = "t9h-opening-v2"
 SAMPLES = 10
 JUDGE_SAMPLES = 5

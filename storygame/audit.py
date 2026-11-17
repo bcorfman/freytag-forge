@@ -459,10 +459,12 @@ def audit_package(root: Path) -> dict[str, Any]:
     root = Path(root)
     from storygame.story_package.loader import StoryPackageError, load_story_package
 
-    try:
-        package = load_story_package(root)
-    except StoryPackageError:
-        package = None
+    package = None
+    if not (root / "plot.md").exists():
+        try:
+            package = load_story_package(root)
+        except StoryPackageError:
+            package = None
     compiled_storylets: str | None = None
     if package is not None:
         plot, knowledge, world, pacing, routes, compiled_storylets = _compiled_audit_inputs(package)

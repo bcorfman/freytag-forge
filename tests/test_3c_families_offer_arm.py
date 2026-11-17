@@ -25,12 +25,12 @@ def test_variation_loads_and_reverses_only_the_adopted_handoff_sentence() -> Non
     families_offer_root = Path(families_offer["_package_path"])
     assert _files(shipped_root).keys() == _files(families_offer_root).keys()
 
-    handoff = "handoffs.yaml"
+    handoff = "source/scenes/3C.yaml"
     old = (
-        b"  cue_text: Families of the missing call the broadcast chamber for word. "
+        b"      cue_text: Families of the missing call the broadcast chamber for word. "
         b"Kristin can answer the families with news of the captives."
     )
-    new = b"  cue_text: Families of the missing call the broadcast chamber for word."
+    new = b"      cue_text: Families of the missing call the broadcast chamber for word."
     shipped_files = _files(shipped_root)
     families_offer_files = _files(families_offer_root)
     assert shipped_files[handoff].count(old) == 1

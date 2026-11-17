@@ -5,7 +5,7 @@ from pathlib import Path
 
 from scripts.ringer.phase1 import act2_probe
 from storygame.runtime.validation import unconveyed_terms
-from storygame.story_package.loader import load_story_package
+from storygame.story_package.loader import load_legacy_story_package, load_story_package
 
 LIVE_PACKAGE = Path("data/stories/continuity-initiative")
 FROZEN_PACKAGE = Path("bench/frozen/continuity-pre-richer-2b")
@@ -18,7 +18,9 @@ def _collapse_whitespace(text: str) -> str:
 
 
 def _entries(package_path: Path) -> dict[str, object]:
-    package = load_story_package(package_path)
+    package = (
+        load_legacy_story_package(package_path) if package_path == FROZEN_PACKAGE else load_story_package(package_path)
+    )
     return {entry.id: entry for entry in package.knowledge.knowledge}
 
 
@@ -89,7 +91,7 @@ def test_every_must_convey_group_is_met_by_the_entrys_own_delivery() -> None:
 
 def test_the_entries_still_guard_every_leak_term_they_guarded_before() -> None:
     live = load_story_package(LIVE_PACKAGE)
-    frozen = load_story_package(FROZEN_PACKAGE)
+    frozen = load_legacy_story_package(FROZEN_PACKAGE)
 
     for entry_id in ENTRY_IDS:
         frozen_terms = {
@@ -112,6 +114,9 @@ def test_the_gating_of_the_two_entries_is_unchanged() -> None:
         for field in excluded:
             live.pop(field, None)
             frozen.pop(field, None)
+        if entry_id in {"k_sl_2b_b_r4", "k_sl_2b_b_r5"}:
+            live["establishes"] = {frozenset(operation.items()) for operation in live["establishes"]}
+            frozen["establishes"] = {frozenset(operation.items()) for operation in frozen["establishes"]}
         assert live == frozen
 
 

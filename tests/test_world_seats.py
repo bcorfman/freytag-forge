@@ -37,7 +37,7 @@ def test_axis_unavailable_must_be_a_pole(tmp_path):
         "items.workstation_chair.unavailable",
         "gone",
     )
-    with pytest.raises(StoryPackageError, match="item 'workstation_chair' unavailable is not a pole"):
+    with pytest.raises((StoryPackageError, SourceError), match="item 'workstation_chair' unavailable is not a pole"):
         load_story_package(root)
 
 
@@ -47,7 +47,7 @@ def test_npc_axis_unavailable_must_be_a_pole(tmp_path):
         "characters.brandon.unavailable",
         "gone",
     )
-    with pytest.raises(StoryPackageError, match="npc 'brandon' unavailable is not a pole"):
+    with pytest.raises((StoryPackageError, SourceError), match="npc 'brandon' unavailable is not a pole"):
         load_story_package(root)
 
 

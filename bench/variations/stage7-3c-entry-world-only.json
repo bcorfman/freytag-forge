@@ -2,11 +2,11 @@
   "name": "stage7-3c-entry-world-only",
   "story_package": "data/stories/continuity-initiative",
   "overrides": {
-    "knowledge.yaml": {
+    "source/scenes/3C.yaml": {
       "replacements": [
         {
-          "old": "- id: k_scene_3c_entry\n  statement: Exposure and escape are both immediate under the collapsing operation.\n  entity_ids: [kristin, facility_escape]\n  aliases: [escape route, exposure]\n  leak_terms: []\n  audience: {kind: public, player_visible: true}",
-          "new": "- id: k_scene_3c_entry\n  statement: Exposure and escape are both immediate under the collapsing operation.\n  entity_ids: [kristin, facility_escape]\n  aliases: [escape route, exposure]\n  leak_terms: []\n  audience: {kind: world_only, player_visible: false}"
+          "old": "- claim_id: k_scene_3c_entry\n  says: Exposure and escape are both immediate under the collapsing operation.\n  entities:\n  - kristin\n  - facility_escape\n  reach: []\n  relevance:\n    entity_ids: []\n    priority: 0\n  audience:\n    kind: public\n    character_ids: []\n    player_visible: true",
+          "new": "- claim_id: k_scene_3c_entry\n  says: Exposure and escape are both immediate under the collapsing operation.\n  entities:\n  - kristin\n  - facility_escape\n  reach: []\n  relevance:\n    entity_ids: []\n    priority: 0\n  audience:\n    kind: world_only\n    character_ids: []\n    player_visible: false"
         }
       ]
     }
