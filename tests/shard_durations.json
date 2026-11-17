@@ -1,6 +1,7 @@
 {
   "version": 1,
   "files": {
+    "tests/story_source/test_compiler_core.py": 0.66,
     "tests/story_source/test_f01_mini_ok.py": 0.8,
     "tests/story_source/test_f02_dup_key.py": 0.5,
     "tests/story_source/test_f03_unknown_key.py": 0.5,

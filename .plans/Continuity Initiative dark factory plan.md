@@ -386,6 +386,8 @@ What this means for the schema:
 
 Steps 1 to 4 build the factory, and you may still be steering there as you do today. The dark run is steps 6 and 7.
 
+**Compiler round 4a, 2026-11-16.** The pass 1 compiler core is built through Ringer (`build_compiler_round4a_manifest.py`, one Codex task, passed on attempt 2): `compile_source_tree`, `source_digest`, `COMPILER_VERSION` in `storygame/story_source/` (`compiler.py`, `digest.py`, `c_*.py`). It runs every inherited loader check and wraps failures as `L2.cycles` or `LOADER`. `tests/story_source` gives 105 passed, 8 skipped. The worker also built a lexicon/plural expander (`c_lexicon.py`, 148 lines) that I had not asked for; it is pass 2 work and needs its own review before F19 to F22 are trusted. Applied on local branch `story-data-compiler-core`, not committed. Not built: parity (`check_parity`), save identity, examples, `story_cli`, lookup, and a converter that writes the real 1A source tree. Next: round 4b (those APIs), then the 1A converter and parity gate.
+
 ### Pre-flight: everything you do, all before start
 
 - [ ] Confirm headless Claude Code runs Opus and Sonnet on your subscription, not on API billing
