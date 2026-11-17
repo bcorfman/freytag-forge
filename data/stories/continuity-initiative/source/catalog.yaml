@@ -1,0 +1,659 @@
+schema: 1
+places:
+  mcgehee_home:
+    name: Michelle's house
+    aliases:
+    - Michelle's home
+    - the house
+    - inside
+    - indoors
+    - the living room
+    - the front room
+    - the hallway
+  kitchen:
+    name: Michelle's kitchen
+    aliases:
+    - kitchen
+    - the kitchen
+    parent: mcgehee_home
+  outside_house:
+    name: outside the house
+    aliases:
+    - outside
+    - the yard
+    - the driveway
+    - the street
+    - the curb
+    - the front of the house
+    description: Michelle's house stands behind a low gate. Kristin's truck is parked at the curb, and sirens carry from the next street.
+  patrol_staging:
+    name: patrol staging area
+  los_angeles_park:
+    name: Los Angeles park
+  brandon_hideout:
+    name: Brandon's hideout
+    aliases:
+    - hideout
+    - communications center
+  regional_facility:
+    name: Regional facility
+  facility_perimeter:
+    name: Facility perimeter
+    parent: regional_facility
+  janus_archive:
+    name: records archive
+    aliases:
+    - restricted records archive
+    parent: regional_facility
+  purge_chamber:
+    name: command levels
+    aliases:
+    - command level
+    - upper command corridors
+    parent: regional_facility
+  maintenance_network:
+    name: maintenance network
+    aliases:
+    - maintenance route
+    - maintenance routes
+    - maintenance tunnel
+    - maintenance tunnels
+    parent: purge_chamber
+  detention_level:
+    name: detention level
+    parent: regional_facility
+  holding_block:
+    name: holding block
+    parent: detention_level
+  medical_level:
+    name: medical level
+    parent: detention_level
+  broadcast_relay:
+    name: Broadcast relay
+    parent: regional_facility
+  security_corridors:
+    name: security corridors
+    parent: regional_facility
+  executive_office:
+    name: executive office
+    parent: regional_facility
+    owner: rebecca
+  broadcast_chamber:
+    name: broadcast chamber
+    parent: executive_office
+  facility_escape:
+    name: Los Angeles surface
+    parent: regional_facility
+  infrastructure_corridors:
+    name: infrastructure corridors
+    aliases:
+    - restricted infrastructure corridors
+    - infrastructure corridor
+    parent: regional_facility
+  freight_terminal:
+    name: freight terminal
+    aliases:
+    - abandoned freight terminal
+    parent: regional_facility
+  loading_docks:
+    name: loading docks
+    parent: freight_terminal
+  service_level:
+    name: service level
+    parent: freight_terminal
+  observation_shaft:
+    name: observation shaft
+    parent: loading_docks
+  processing_line:
+    name: processing line
+    parent: service_level
+characters:
+  kristin:
+    name: Kristin Schweitzer
+    aliases:
+    - Kristin
+    - Kristin Schweitzer
+    narrator_bio: A 47-year-old former assessment lead for the U.S. Army with a background in Army intelligence, infrastructure, and operations who is practical, persistent, and reluctant to trust conspiracy theories.
+  michelle:
+    name: Dr. Michelle McGehee
+    aliases:
+    - Michelle
+    - Dr. McGehee
+    - Michelle McGehee
+    - Shelly
+    narrator_bio: A 48-year-old molecular biology and biotechnology researcher and author who is thoughtful, determined, and private. She is Kristin's closest friend; Kristin alone calls her "Shelly", while everyone else addresses her as Dr. McGehee.
+  brandon:
+    name: Brandon Corfman
+    aliases:
+    - Brandon
+    - Brandon Corfman
+    unnamed_label: the man watching Kristin
+    named_by: brandon_identified
+    narrator_bio: A 54-year-old former software developer who now lives as an isolated conspiracy researcher estranged from his family. His warnings about a shadow emergency program were widely dismissed before the disappearances. He helps Kristin, though he is guarded about his own past.
+    axes:
+    - conscious:
+      - awake
+      unconscious:
+      - knocked out
+    unavailable: unconscious
+  charles:
+    name: Charles Jenkins
+    narrator_bio: A 58-year-old former senior government official with a forceful, disciplined manner and experience directing complex operations. He is Rebecca Jenkins's husband.
+  rebecca:
+    name: Rebecca Jenkins
+    aliases:
+    - Rebecca
+    narrator_bio: Charles's 56-year-old wife and the chief executive of a biotechnology and defense contractor. She is exacting and technically capable.
+  shift_supervisor:
+    name: Shift supervisor
+    aliases:
+    - shift supervisor
+    - supervisor
+    narrator_bio: A facility shift supervisor responsible for cooling and infrastructure operations and staff oversight.
+  senior_official:
+    name: Imprisoned senior official
+    aliases:
+    - senior official
+    - imprisoned official
+    - government prisoner
+    narrator_bio: A senior government official whom Charles has publicly blamed for the catastrophe. He is exhausted and observant.
+  patrol_officer:
+    name: Officer Reyes
+    aliases:
+    - federal patrol officer
+    - patrol officer
+    - the officer
+    - Reyes
+    narrator_bio: A young, polite federal patrol officer who works from a printed list and does not like what the list asks of him.
+  walt_pruitt:
+    name: Walt Pruitt
+    aliases:
+    - Walt
+    - Mr. Pruitt
+    - the neighbor
+    narrator_bio: A retired bus driver in his seventies whose wife is one of the missing. He is tired, careful with his words, and unsure what he saw.
+groups:
+  captives:
+    name: detention captives
+    scoped_aliases:
+    - prisoners
+    - prisoner
+    - captives
+    - captive
+  corridor_guards:
+    name: corridor guards
+    scoped_aliases:
+    - guards
+    - guard
+items:
+  memory_card:
+    name: Michelle's memory card
+    aliases:
+    - memory card
+    fallback_ids:
+    - michelle_phone
+    hidden: true
+  michelle_phone:
+    name: Michelle's phone
+  kristin_laptop:
+    name: Kristin's laptop
+    use_seated: true
+    take_text: Kristin picked up her laptop.
+    notice_text: Kristin's laptop sat on the passenger seat.
+    axes:
+    - closed:
+      - shut
+      open: []
+  michelle_drawer:
+    name: drawer
+    fixed: true
+    kind: container
+    openable: true
+    contents:
+    - pens
+    - binder clips
+    - stapler
+    - spare batteries
+  back_door:
+    name: back door
+    fixed: true
+    kind: opening
+  house_gate:
+    name: house gate
+    scoped_aliases:
+    - front gate
+    - gate
+    fixed: true
+    kind: opening
+  kristin_truck:
+    name: Kristin's truck
+    kind: vehicle
+    owner: kristin
+  michelle_workstation:
+    name: workstation
+    kind: desk
+    owner: michelle
+  workstation_chair:
+    name: workstation chair
+    scoped_aliases:
+    - chair
+    kind: seat
+    enter_pole: upright
+    seat_for: michelle_workstation
+    right_text: Kristin set the workstation chair upright.
+    enter_text: Kristin sat down in the workstation chair.
+    leave_text: Kristin stood up from the workstation chair.
+    axes:
+    - overturned: []
+      upright:
+      - standing
+  michelle_tea_mug:
+    name: mug of tea
+    aliases:
+    - tea mug
+    scoped_aliases:
+    - mug
+    - tea
+  michelle_reading_glasses:
+    name: reading glasses
+    scoped_aliases:
+    - glasses
+  manuscript_pages:
+    name: manuscript pages
+    aliases:
+    - manuscript
+    - red-penned pages
+    scoped_aliases:
+    - pages
+    - paper
+    - papers
+  kitchen_calendar:
+    name: wall calendar
+    aliases:
+    - calendar
+    fixed: true
+  lake_photograph:
+    name: lake photograph
+    scoped_aliases:
+    - photograph
+    - photo
+  back_door_splinters:
+    name: splinters around the back door frame
+    aliases:
+    - door splinters
+    - splinters
+    scoped_aliases:
+    - frame
+    - door frame
+    fixed: true
+  back_door_deadbolt:
+    name: back door deadbolt
+    aliases:
+    - deadbolt
+    scoped_aliases:
+    - lock
+    - door lock
+    fixed: true
+  truck_radio:
+    name: truck radio
+    aliases:
+    - truck radio
+    scoped_aliases:
+    - radio
+    fixed: true
+  park_bench:
+    name: park bench
+    scoped_aliases:
+    - bench
+    disclosure: public
+    fixed: true
+    kind: seat
+  park_bicycle:
+    name: bicycle
+    scoped_aliases:
+    - bike
+    fixed: true
+  picnic_blanket:
+    name: picnic blanket
+    fixed: true
+    kind: supporter
+  picnic_thermos:
+    name: thermos
+    fixed: false
+  picnic_cups:
+    name: two cups
+    aliases:
+    - cups
+    fixed: false
+  park_fence:
+    name: park fence
+    scoped_aliases:
+    - fence
+    fixed: true
+    kind: supporter
+  dog_leash:
+    name: dog leash
+    aliases:
+    - leash
+    fixed: false
+  park_loudspeaker:
+    name: loudspeaker
+    scoped_aliases:
+    - speaker
+    fixed: true
+  checkpoint_barrier:
+    name: checkpoint barrier
+    scoped_aliases:
+    - barrier
+    fixed: true
+  gate_keypad:
+    name: gate keypad
+    aliases:
+    - keypad
+    fixed: true
+  facility_gate:
+    name: facility gate
+    scoped_aliases:
+    - gate
+    - front gate
+    fixed: true
+    kind: opening
+  service_gate:
+    name: service gate
+    aliases:
+    - secured gate
+    fixed: true
+    kind: opening
+  storm_drain:
+    name: storm drain
+    aliases:
+    - storm-drain
+    scoped_aliases:
+    - drain
+    - tunnel
+    fixed: true
+    kind: opening
+  truck_driver_seat:
+    name: driver's seat
+    fixed: true
+    kind: seat
+    seat_for: kristin_truck
+    enter_text: Kristin sat down in the driver's seat.
+    leave_text: Kristin got out of the truck.
+  truck_passenger_seat:
+    name: passenger seat
+    fixed: true
+    kind: seat
+    contents_complete: true
+  transit_card:
+    name: Transit token
+    hidden: true
+    unavailable: destroyed
+    axes:
+    - intact: []
+      destroyed:
+      - broken
+      - snapped
+      - crushed
+  michelle_photograph:
+    name: photograph of an unknown person
+    scoped_aliases:
+    - photograph
+    - photo
+    - Michelle's photograph
+    - Michelle's photo
+    hidden: true
+  number_sequence:
+    name: handwritten number sequence
+    aliases:
+    - number sequence
+    - handwritten sequence
+    hidden: true
+  override_codes:
+    name: emergency override codes
+    hidden: true
+  stolen_radio:
+    name: stolen radio
+  gate_status_panel:
+    name: gate-status panel
+    fixed: true
+  portable_archive:
+    name: Portable data case
+    aliases:
+    - data case
+  prisoner_number_record:
+    name: prisoner number record
+    hidden: true
+  service_entrance:
+    name: service entrance
+    fixed: true
+  tire_tracks:
+    name: tire tracks
+    fixed: true
+  air_vents:
+    name: air vents
+    scoped_aliases:
+    - vents
+    fixed: true
+  water_pallets:
+    name: water pallets
+    scoped_aliases:
+    - pallets
+    - pallet
+    fixed: true
+  identification_numbers:
+    name: identification numbers
+    fixed: true
+  overhead_speaker:
+    name: overhead speaker
+    scoped_aliases:
+    - speaker
+    fixed: true
+  hideout_servers:
+    name: hideout servers
+    scoped_aliases:
+    - servers
+    fixed: true
+  inspection_console:
+    name: inspection console
+    aliases:
+    - corridor inspection console
+    - diagnostic console
+    fixed: true
+  cooling_manifold:
+    name: cooling manifold
+    scoped_aliases:
+    - manifold
+    fixed: true
+  inspector_badges:
+    name: inspector badges
+    scoped_aliases:
+    - badges
+    - badge
+    fixed: true
+  alarm_log:
+    name: alarm log
+    scoped_aliases:
+    - log
+    - tablet
+    fixed: true
+  return_line:
+    name: return line
+    fixed: true
+  security_camera:
+    name: security camera
+    scoped_aliases:
+    - camera
+    fixed: true
+  broadcast_uplink:
+    name: broadcast uplink
+    scoped_aliases:
+    - uplink
+    fixed: true
+  transfer_carts:
+    name: transfer carts
+    aliases:
+    - transfer cart
+    fixed: true
+  corridor_camera:
+    name: corridor camera
+    scoped_aliases:
+    - camera
+    fixed: true
+  monitor_light:
+    name: monitor light
+    scoped_aliases:
+    - status light
+    - amber light
+    - light
+    fixed: true
+  cart_tags:
+    name: cart tags
+    scoped_aliases:
+    - tags
+    - tag
+    - cart tag
+    fixed: true
+  wrist_tags:
+    name: wrist tags
+    scoped_aliases:
+    - tags
+    - tag
+    - wrist tag
+    fixed: true
+  checkpoint_reader:
+    name: checkpoint reader
+    scoped_aliases:
+    - reader
+    - card reader
+    fixed: true
+  cooling_service_archive_panel:
+    name: cooling-service archive panel
+    scoped_aliases:
+    - access panel
+    - hidden panel
+    - concealed panel
+    - panel
+    - grille
+    - ventilation grille
+    - seam
+    fixed: true
+    openable: true
+  copied_janus_files:
+    name: copied JANUS files
+    scoped_aliases:
+    - copied files
+    - JANUS files
+    - JANUS evidence
+    disclosure: public
+    owner: kristin
+  archive_terminals:
+    name: archive terminals
+    aliases:
+    - archive terminal
+    fixed: true
+  build_record:
+    name: build record
+    scoped_aliases:
+    - access section
+    - build files
+    fixed: true
+  transfer_queue:
+    name: transfer queue
+    scoped_aliases:
+    - queue
+    - transfers
+    - held transfers
+    fixed: true
+  medical_terminal:
+    name: medical terminal
+    fixed: true
+  detention_medical_records:
+    name: detention medical records
+    scoped_aliases:
+    - medical records
+    - survivor records
+  rebecca_desk:
+    name: executive desk
+    aliases:
+    - Rebecca's executive desk
+    kind: desk
+    owner: rebecca
+  drainage_pump_controls:
+    name: drainage pump controls
+    fixed: true
+  emergency_speakers:
+    name: emergency speakers
+    scoped_aliases:
+    - speakers
+    fixed: true
+  watertight_barrier:
+    name: watertight barrier
+    scoped_aliases:
+    - barrier
+    fixed: true
+  emergency_surface_gates:
+    name: emergency surface gates
+    aliases:
+    - surface gates
+    fixed: true
+kinds:
+  desk:
+    is:
+    - furniture
+    - supporter
+  seat:
+    is:
+    - furniture
+    - supporter
+    enterable: true
+    fixed: false
+props: {}
+connections:
+  house_to_outside:
+    from: mcgehee_home
+    to: outside_house
+    arrival: Kristin steps outside. Her truck is parked at the curb.
+  outside_to_house:
+    from: outside_house
+    to: mcgehee_home
+    arrival: Kristin goes back inside through the forced back door.
+protected_knowledge:
+- janus_selection_system
+- brandon_history
+- janus_phase_two
+disclosure_guards:
+  memory_card_word_guard:
+    terms:
+    - card
+    unlock_fact: memory_card_recovered
+unplaced_facts:
+  false_identities_ready:
+    purpose: Kristin and Brandon have credible technical-inspector identities and a cooling-water/ventilation cover story for entering the facility.
+  facility_perimeter_reached:
+    purpose: Kristin and Brandon have reached the facility perimeter and passed the initial identity checks.
+    on_assert:
+    - move: kristin
+      parent: facility_perimeter
+  national_detention_network_known:
+    purpose: Kristin knows the Los Angeles site is part of a national detention network.
+  architects_strategy_known:
+    purpose: Kristin knows Charles and Rebecca intend to leverage the manufactured catastrophe for political reconstruction/control.
+  brandon_prepared_before_event:
+    purpose: Kristin knows Brandon prepared for the disappearance before it occurred.
+  processing_numbers_used_in_confrontation:
+    purpose: Kristin used the copied prisoner numbers in the supervisor confrontation.
+  service_route_used_in_confrontation:
+    purpose: Kristin used the known service approach in the supervisor confrontation.
+  kristin_deliberately_left_behind:
+    purpose: JANUS records show Kristin was deliberately left behind.
+  identity_scrutiny_visible:
+    purpose: Facility staff are visibly scrutinizing Kristin’s inspector identity.
+  prisoner_records_corrupted:
+    purpose: Michelle's resistance has corrupted prisoner records, triggering Charles's purge order.
+  inspector_cover_under_review:
+    purpose: The facility is checking Kristin and Brandon's inspection cover closely enough that a second mistake will expose them.
+  archive_security_sweep:
+    purpose: Archive security is auditing access and narrowing the time Kristin and Brandon can remain among the records.
+  purge_transfers_underway:
+    purpose: The purge has moved from an announced threat to visible prisoner transfers and killing preparations.

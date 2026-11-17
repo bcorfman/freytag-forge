@@ -1,0 +1,24 @@
+schema: 1
+story: continuity_initiative
+genre: Adventure / Conspiracy Thriller
+protagonist: kristin
+budget_seconds: 7200
+scenes:
+- 1A
+- 1B
+- 1C
+- 2A
+- 2B
+- 2C
+- 3A
+- 3B
+- 3C
+principal_characters:
+- kristin
+- michelle
+- brandon
+- charles
+- rebecca
+- senior_official
+- patrol_officer
+retired_ids: {}

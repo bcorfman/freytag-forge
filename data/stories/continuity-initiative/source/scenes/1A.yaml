@@ -1,0 +1,1216 @@
+schema: 1
+scene: 1A
+location: mcgehee_home
+objective: Find evidence of Michelle's disappearance
+freytag_phase: exposition
+situation: Michelle's home is otherwise untouched, but the back door has been forced. The deadbolt is still thrown. Michelle is missing, and her tablet and work bag are gone. Kristin knows Michelle would not leave her kitchen like this. A drawer on Michelle's workstation has Kristin's initials, KMS, newly carved into it. Kristin did not carve them.
+pressure: Find evidence of Michelle's disappearance
+turns:
+  min: 13
+  nudge: 14
+  handoff: 15
+scripted_opening: true
+companions: []
+participants:
+- kristin
+- michelle
+- patrol_officer
+- walt_pruitt
+items:
+- memory_card
+- michelle_phone
+- kristin_laptop
+- michelle_drawer
+- workstation_chair
+- truck_driver_seat
+- truck_passenger_seat
+- kristin_truck
+- michelle_workstation
+- back_door
+- house_gate
+- michelle_tea_mug
+- michelle_reading_glasses
+- manuscript_pages
+- kitchen_calendar
+- lake_photograph
+- back_door_splinters
+- back_door_deadbolt
+- truck_radio
+setting:
+- Sirens carry from the next street.
+- A dog barks behind the empty house next door.
+- The rest of the house is quiet. Michelle is not in it.
+prop_pool: []
+entry: 'Michelle''s text came in a little after 4:00am, lost among the emergency alerts while Kristin finished a late-night shift. She missed it by minutes. When she read it, her stomach dropped. Every call back failed. Kristin ran for her truck and drove as hard as the streets allowed, past sirens, ambulances, police cars, and intersections blocked for no reason anyone would explain. Was she hurt? Taken? Gone? Not knowing was the worst of it. She found the back door forced and let herself into the kitchen.
+
+
+  The kitchen was wrong at a glance. Michelle''s chair lay tipped over at her workstation across the room, and her tablet and work bag were nowhere in sight. A mug sat on the workstation beside a stack of manuscript pages. The calendar and the lake photograph hung by the refrigerator, where they always had. Kristin was too frantic to read any of it yet. She called Michelle''s name.
+
+
+  '
+entry_additions: []
+entry_claims:
+- claim_id: k_scene_1a_entry
+  says: Michelle is missing.
+  entities:
+  - kristin
+  - michelle
+  - michelle_phone
+  reach: []
+  relevance:
+    entity_ids: []
+    priority: 0
+  audience:
+    kind: public
+    character_ids: []
+    player_visible: true
+  voiceable: true
+  repeatable: false
+brief: '**Setting:** Michelle’s house
+
+
+  **Characters:**
+
+
+  * Kristin Schweitzer
+
+  * Dr. Michelle McGehee
+
+
+  **Plot:** Kristin arrives at Michelle''s house shortly after the mass disappearance and discovers that Michelle is missing. Evidence inside the house suggests that she could have been taken rather than simply vanishing with the others.
+
+
+  **Hidden canon:** Michelle hid a memory card for Kristin, taped beneath the drawer in Michelle''s workstation. It stays hidden until Kristin finds it.
+
+
+  **Established timeline:** Around midnight, once she knew she was being watched, Michelle carved Kristin''s initials into the drawer with her letter opener and taped the card beneath it. At 4:07am she texted Kristin ("Come to the house. Don''t call.") and began a recording. The recording ends when intruders enter. They take her tablet and work bag and miss the card. The break-in was staged from inside. The patrol that arrives later is a second pass for one item their inventory lists as "removable media, not recovered."'
+outline:
+- id: 1A.1
+  anchor: scene-1a1--michelle-is-gone
+  title: Michelle Is Gone
+  details:
+  - missing tablet and work bag
+  - splintered back door frame and thrown deadbolt
+  - lukewarm mug of tea
+  - folded reading glasses on manuscript pages
+  - wall calendar and lake photograph
+  - KMS initials carved in drawer
+  prose: 'Kristin reaches Michelle''s neighborhood after navigating traffic jams, emergency vehicles and frightened people on a wide scale. Kristin takes in the room at a glance on arrival but is too frantic to read it yet. A few turns in, once she steadies herself, she reads the back door properly. Michelle is missing, but the house does not read as a burglary. It reads as a person''s last hour:
+
+
+    * Michelle''s tablet and work bag are missing and not in their normal spots.
+
+    * The chair at Shelly''s workstation has been overturned.
+
+    * A mug of tea sits on the workstation with the bag still in it, faintly warm. Michelle made it near the end.
+
+    * Her reading glasses lie folded on a stack of manuscript pages marked in red pen. She never goes anywhere without them.
+
+    * The wall calendar has Saturday circled in her handwriting: *K — lemon cake.* It is Kristin''s birthday.
+
+    * On the refrigerator, held by a pear-shaped magnet, a photograph of the two of them at a lake.
+
+    * The back door shows signs of forced entry, but the splinters around the frame point outward, away from the house. It was broken from inside. The deadbolt is still thrown. The house is otherwise undisturbed, not burglarized.
+
+
+    The rest of the house is quiet and empty; Michelle is not in it.
+
+
+    Kristin knows Michelle would not leave her kitchen like this.
+
+
+    Kristin notices the drawer on Michelle''s workstation has Kristin''s initials ''KMS'' newly carved into it, making it worth looking at more closely. Kristin did not carve them. In college they hid notes beneath desk drawers, and Michelle has always known where Kristin would look.
+
+
+    When Kristin opens the drawer, it slides out to reveal a stapler, spare batteries, pens, and binder clips. When she closes it again, it rides high in its frame, leaving a thin gap beneath its lower edge wide enough for Kristin''s fingers.'
+- id: 1A.2
+  anchor: scene-1a2--michelles-last-investigation
+  title: Michelle’s Last Investigation
+  details:
+  - Michelle's memory card
+  - Kristin's laptop in her truck
+  - Continuity Initiative files
+  - population stabilization centers
+  - Michelle’s research notes
+  prose: 'Michelle''s phone uses a passcode. Kristin knows it because Michelle is her best friend. Kristin''s own phone unlocks when it recognizes her face. It has no passcode. Kristin''s laptop needs no password.
+
+
+    On Michelle''s phone, Kristin finds the 4:07am text and then her own unanswered calls. If Officer Reyes is in the kitchen, his watching makes her uneasy.
+
+
+    Kristin searches beneath the drawer and finds Michelle''s memory card taped there. She takes the card out to her truck and opens it on her laptop.
+
+
+    The card contains fragments of Michelle’s research into a federal emergency program called the **Continuity Initiative**. Michelle titled the folders after their old dorm, so only Kristin would read them as a message.
+
+
+    The files show that private contractors constructed dozens of enormous “population stabilization centers” before the disappearances. Officially, the centers were designed as shelters for natural disasters and biological attacks.
+
+
+    Michelle’s notes contain one alarming sentence:
+
+
+    > They are not preparing to protect people. They are preparing to choose who remains.'
+- id: 1A.3
+  anchor: scene-1a3--the-interrupted-message
+  title: The Interrupted Message
+  details:
+  - voice recording
+  - government tracking
+  - imminent activation event
+  - someone entering house
+  - Michelle whispers
+  - national catastrophe
+  - radio and looping emergency broadcast
+  prose: 'On the card, Kristin finds a damaged voice recording Michelle attempted to send shortly before she disappeared. In it, Michelle says government officials have been tracking her and that a planned “activation event” is imminent.
+
+
+    Before naming her source, Michelle hears someone enter the house. The recording ends after she whispers:
+
+
+    > Kristin, do not trust the emergency broadcasts.
+
+
+    This becomes the story’s **inciting incident**. Kristin realizes Michelle’s disappearance may be connected to the national catastrophe.
+
+
+    Kristin can test the warning with her own skills. The truck radio carries the same emergency statement every few minutes. If she listens and times two passes, it is the same ninety seconds, word for word. It is a loop, not a live voice. This is optional and costs two turns.'
+- id: 1A.4
+  anchor: scene-1a4--the-first-threat
+  title: The First Threat
+  details:
+  - federal emergency patrol led by Officer Reyes
+  - Michelle’s office search
+  - Michelle's memory card
+  - Walt Pruitt at the fence
+  - marked front gate
+  - reflective tape
+  prose: 'Walt Pruitt, a retired bus driver in his seventies, stands at the fence between the yards. His wife is one of the missing. He saw county vans near 3:40 with no markings Kristin can read, and two men with a clipboard checking the addresses on the street. They skipped the house next door. He is not sure what he saw, and he says so. He will not repeat it to the patrol.
+
+
+    An emergency patrol arrives at Michelle''s home unusually quickly. Officer Reyes, young and polite, works from a printed list. He conducts a quick welfare check and a targeted look at Michelle''s work area, asking specifically about her research and findings. He studies the lake photograph on the refrigerator a beat too long. He does not open the drawer. If Kristin has not taken the card, or takes it out of his sight, he finds nothing. If she takes it while he is watching, he challenges her, and the patrol''s suspicion follows her out of the house.
+
+
+    After the patrol leaves, Kristin notices that one officer has quietly marked the front gate with a strip of reflective tape.
+
+
+    She understands that the authorities intend to return.'
+facts:
+  michelle_abduction_suspicion:
+    purpose: Kristin has enough signs of forced entry and missing work materials to reasonably suspect Michelle might have been abducted.
+  kitchen_last_hour_read:
+    purpose: Kristin has read the kitchen as Michelle's last hour.
+  broadcast_loop_confirmed:
+    purpose: Kristin has timed the emergency broadcast and knows it repeats word for word.
+  neighbor_account_heard:
+    purpose: Kristin has heard what Walt Pruitt saw before dawn.
+  michelle_text_read:
+    purpose: Kristin has read Michelle's 4:07am text on her phone.
+  kristin_calls_read:
+    purpose: Kristin has seen her own unanswered calls to Michelle on the phone.
+  drawer_opened:
+    purpose: Kristin has opened Michelle's workstation drawer.
+  reyes_watched_text:
+    purpose: Kristin has read the text with the officer near.
+  continuity_initiative_known:
+    purpose: Kristin knows Michelle’s research into genetics led her to investigate suspicious secret contracts tied to the Continuity Initiative.
+    delivery:
+      source_kind: message
+      source_entity: michelle
+      fallback_text: Kristin recovers Michelle's memory card from beneath the drawer and reads the files on it. The card identifies the federal emergency program as the Continuity Initiative, which was preparing to choose who remains.
+      cue_text: Kristin's initials, KMS, are carved into a drawer of Michelle's workstation.
+      costs:
+        memory_card_recovered: true
+  michelle_warning_known:
+    purpose: Kristin has recovered Michelle’s warning not to trust emergency broadcasts.
+  memory_card_recovered:
+    purpose: Kristin has recovered Michelle’s memory card.
+    on_assert:
+    - move: memory_card
+      parent: kristin
+      text: with Kristin
+    - reveal: memory_card
+  drawer_gap_pointed_out:
+    purpose: Kristin has been pointed toward the thin gap beneath Michelle’s workstation drawer.
+  drawer_gap_rechecked:
+    purpose: Kristin has looked the drawer over again after finding the gap.
+  official_interest_in_michelle_known:
+    purpose: Kristin knows the welfare patrol was specifically interested in Michelle’s research and findings.
+  house_marked_for_return:
+    purpose: Michelle's house has been marked by the patrol for a likely return.
+  departure_held:
+    purpose: Kristin tried to drive to the park before the street was clear and held back.
+  lemon_cake_calendar_read:
+    purpose: Kristin has read the lemon cake note on the kitchen calendar.
+    on_assert: []
+  michelle_lead_actionable:
+    purpose: Kristin has a concrete, credible lead from Michelle’s research that can be followed away from the house.
+  patrol_return_pressure:
+    purpose: Observable signs indicate the federal patrol is likely to return or intensify scrutiny at Michelle's house.
+  patrol_on_scene:
+    purpose: A federal emergency patrol has arrived at Michelle's house.
+    on_assert:
+    - move: patrol_officer
+      parent: outside_house
+      text: by the front door
+  patrol_in_house:
+    purpose: A patrol officer is inside Michelle's house.
+    on_assert:
+    - move: patrol_officer
+      parent: kitchen
+      text: at Michelle's workstation
+  patrol_departed:
+    purpose: The federal emergency patrol has left Michelle's house.
+    on_assert:
+    - move: patrol_officer
+      parent: patrol_staging
+  card_challenged:
+    purpose: A patrol officer saw Kristin take Michelle's memory card and challenged her.
+  officer_demanded_card:
+    purpose: The officer has demanded the card from Kristin.
+  kristin_marked_by_patrol:
+    purpose: The patrol has Kristin marked as someone to watch.
+  home_search_window_narrowing:
+    purpose: The returning patrol is widening its search around Michelle's house, making a careful exit urgent.
+placements:
+  memory_card:
+    parent: michelle_drawer
+    under: true
+  michelle_phone:
+    parent: kitchen
+    text: on the kitchen floor
+  kristin_laptop:
+    parent: truck_passenger_seat
+    text: on the passenger seat of Kristin's truck
+  truck_driver_seat:
+    parent: kristin_truck
+  truck_passenger_seat:
+    parent: kristin_truck
+  kristin_truck:
+    parent: outside_house
+  michelle_workstation:
+    parent: kitchen
+    text: across the kitchen from the back door
+  back_door:
+    parent: kitchen
+  house_gate:
+    parent: outside_house
+    text: at the front of the house
+  michelle_drawer:
+    parent: michelle_workstation
+    text: in Michelle's workstation
+    part_of: true
+  workstation_chair:
+    parent: kitchen
+    text: at Michelle's workstation
+  michelle_tea_mug:
+    parent: michelle_workstation
+    text: on Michelle's workstation
+  michelle_reading_glasses:
+    parent: michelle_workstation
+    text: folded on her manuscript pages
+  manuscript_pages:
+    parent: michelle_workstation
+    text: marked in red pen
+  kitchen_calendar:
+    parent: kitchen
+    text: a paper calendar hanging on the wall by the refrigerator
+  lake_photograph:
+    parent: kitchen
+    text: held to the refrigerator by a pear-shaped magnet, showing Kristin and Michelle at a lake
+  back_door_splinters:
+    parent: kitchen
+    text: around the back door frame
+  back_door_deadbolt:
+    parent: kitchen
+    text: on the back door
+  truck_radio:
+    parent: kristin_truck
+  kristin:
+    parent: kitchen
+  walt_pruitt:
+    parent: outside_house
+    text: the elderly neighbor from next door, at the fence between the yards
+beats:
+- id: kristin_steadies_1a
+  at_turn: 3
+  sets:
+    michelle_abduction_suspicion: true
+  say:
+  - text: Kristin makes herself stop and look properly. Michelle's phone is still here - damaged a bit but still working. Then she sees the back door. The splinters around the frame point outward, away from the house. A door forced from outside would splinter inward. Someone broke this one from inside to make it look like a break-in. It looks staged.
+    verbatim: true
+  when:
+    michelle_abduction_suspicion: false
+  trailing: true
+- id: patrol_arrives_1a
+  at_turn: 6
+  sets:
+    patrol_on_scene: true
+  say:
+  - text: A federal emergency patrol pulls up outside Michelle's house. Two officers get out. One walks to the front door. The other looks over the street.
+    verbatim: true
+  trailing: true
+- id: patrol_enters_1a
+  at_turn: 7
+  sets:
+    patrol_in_house: true
+  say:
+  - text: The front door opens. An officer walks in and heads straight for Michelle's workstation.
+    verbatim: true
+  when:
+    patrol_on_scene: true
+  trailing: true
+- id: officer_presses_1a
+  at_turn: 7
+  sets:
+    officer_demanded_card: true
+  say:
+  - text: The officer plants himself between her and the front door and holds out a gloved hand. "Whatever you just took from that desk. Let's see it, ma'am. Right now."
+    verbatim: true
+  when:
+    card_challenged: true
+    patrol_in_house: true
+- id: reyes_rams_drawer_1a
+  at_turn: 8
+  sets:
+    drawer_gap_pointed_out: true
+  say:
+  - text: Reyes tugs at the workstation drawer. It sticks. Frustrated, he rams it back into place with the heel of his hand, and it sits high in its frame. A thin gap shows beneath its lower edge, wide enough for Kristin's fingers. Reyes never looks down. Only Kristin sees it.
+    verbatim: true
+  when:
+    patrol_in_house: true
+    drawer_gap_pointed_out: false
+    memory_card_recovered: false
+  trailing: true
+- id: patrol_leaves_1a
+  at_turn: 10
+  sets:
+    patrol_departed: true
+    patrol_on_scene: false
+    patrol_in_house: false
+  say:
+  - when:
+      officer_demanded_card: true
+    text: The officer's radio crackles with a description that is hers. He backs out through the front door, eyes on her the whole way, and the patrol pulls away from the curb.
+    verbatim: true
+  - text: The patrol pulls away from the curb.
+    verbatim: true
+  when:
+    patrol_on_scene: true
+  trailing: true
+- id: patrol_returns_1a
+  at_turn: 13
+  sets:
+    patrol_return_pressure: true
+  say:
+  - when:
+      patrol_departed: true
+    text: The patrol is coming back to the house.
+    verbatim: true
+  - text: A federal emergency patrol turns onto Michelle's street.
+    verbatim: true
+- id: home_search_narrows_1a
+  at_turn: 11
+  sets:
+    home_search_window_narrowing: true
+  say:
+  - text: The patrol is checking parked vehicles and speaking to neighbors. The house is no longer the only place under watch.
+    verbatim: false
+reveals:
+- id: sl_1a_a
+  storylet_id: SL-1A-A
+  title: The House Does Not Look Abandoned
+  guidance:
+    pressure_role: If Kristin searches slowly or treats the disappearance as generic chaos, foreground contradictory physical evidence so curiosity naturally tightens into abduction suspicion.
+    window:
+      earliest_turn: 0
+      target_turn: 2
+      latest_turn: 3
+    available_while:
+      michelle_abduction_suspicion: false
+    boundaries:
+    - janus_selection_system
+    - brandon_history
+    - janus_phase_two
+  from_outline:
+  - 1A.1
+  - 1A.2
+  variants:
+    r1:
+      realization_id: SL-1A-A-R1
+      intent: Connect forced entry, blood, missing work materials, or localized disorder into a credible forced-removal theory.
+      commits:
+        michelle_abduction_suspicion: true
+      helps_exit: []
+      from_outline:
+      - 1A.1
+      claim_id: k_sl_1a_a_r1
+      says: Kristin traces the forced entry, overturned chair, missing tablet and work bag, and Michelle’s undamaged phone to a removal too deliberate to be looting. The splinters point outward, so it looks staged.
+      entities: []
+      reach:
+      - back_door
+      relevance:
+        entity_ids: []
+        priority: 0
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: true
+      repeatable: false
+      text: Kristin makes herself breathe and look. Michelle's phone is still here - damaged a bit but still working. Her tablet and work bag are gone, and her chair is tipped over. Then she sees the back door. The splinters around the frame point outward, away from the house. A door forced from outside would splinter inward. Someone broke this one from inside to make it look like a break-in. It looks staged.
+      earn_when: searches the kitchen or back door for signs of what happened
+- id: sl_1a_g
+  storylet_id: SL-1A-G
+  title: What the Kitchen Kept
+  guidance:
+    pressure_role: Let the kitchen read as a person's last hour so Michelle's disappearance feels like a loss.
+    window:
+      earliest_turn: 0
+      target_turn: 4
+      latest_turn: 11
+    available_while:
+      patrol_in_house: false
+    boundaries:
+    - janus_selection_system
+    - brandon_history
+    - janus_phase_two
+  from_outline:
+  - 1A.1
+  variants:
+    r1:
+      realization_id: SL-1A-G-R1
+      intent: Kristin reads the workstation as Michelle's last hour through the warm tea, glasses, and marked pages.
+      commits:
+        kitchen_last_hour_read: true
+        michelle_abduction_suspicion: true
+      helps_exit: []
+      from_outline:
+      - 1A.1
+      claim_id: k_sl_1a_g_r1
+      says: 'Kristin reads the workstation as Michelle''s last hour: a faintly warm mug of tea and her reading glasses folded on red-penned manuscript pages.'
+      entities:
+      - kristin
+      - michelle_workstation
+      reach:
+      - michelle_workstation
+      relevance:
+        entity_ids:
+        - michelle_workstation
+        priority: -1
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: true
+      repeatable: false
+      when:
+        patrol_in_house: false
+      text: A mug of tea sits on Michelle's workstation, the bag still in it, faintly warm. Her reading glasses lie folded on her manuscript pages, which are marked in red pen. She never goes anywhere without them. Michelle did not plan to be gone.
+      earn_when: looks closely at the workstation, the mug, the reading glasses or the manuscript pages
+    r2:
+      realization_id: SL-1A-G-R2
+      intent: Kristin reads the kitchen walls as a life interrupted through the calendar and lake photograph.
+      commits:
+        kitchen_last_hour_read: true
+        michelle_abduction_suspicion: true
+        lemon_cake_calendar_read: true
+      helps_exit: []
+      from_outline:
+      - 1A.1
+      claim_id: k_sl_1a_g_r2
+      says: 'Kristin reads the kitchen walls as a life interrupted: the calendar with Saturday circled and the photograph of the two of them at a lake.'
+      entities:
+      - kristin
+      - michelle_workstation
+      - kitchen_calendar
+      - lake_photograph
+      reach:
+      - kitchen_calendar
+      - lake_photograph
+      relevance:
+        entity_ids:
+        - michelle_workstation
+        - kitchen_calendar
+        - lake_photograph
+        priority: 0
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: true
+      repeatable: false
+      when:
+        patrol_in_house: false
+      text: 'On the wall calendar Saturday is circled in her handwriting: K, lemon cake. It is Kristin''s birthday. The photograph beside it shows the two of them laughing at a lake.'
+      earn_when: looks closely at the wall calendar, the photograph or the refrigerator
+- id: sl_1a_h
+  storylet_id: SL-1A-H
+  title: The Same Ninety Seconds
+  guidance:
+    pressure_role: Let Kristin test Michelle's warning with her own skills.
+    window:
+      earliest_turn: 2
+      target_turn: 6
+      latest_turn: 11
+    available_while:
+      michelle_warning_known: true
+    boundaries:
+    - janus_selection_system
+    - brandon_history
+    - janus_phase_two
+  from_outline:
+  - 1A.3
+  variants:
+    r1:
+      realization_id: SL-1A-H-R1
+      intent: Kristin times two passes of the emergency broadcast on the truck radio and confirms it is a loop.
+      commits:
+        broadcast_loop_confirmed: true
+      helps_exit: []
+      from_outline:
+      - 1A.3
+      claim_id: k_sl_1a_h_r1
+      says: On the truck radio the emergency broadcast repeats the same ninety seconds word for word; timed twice, it is a loop, not a live voice.
+      entities:
+      - kristin
+      - truck_radio
+      reach: []
+      relevance:
+        entity_ids:
+        - truck_radio
+        priority: 0
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: true
+      repeatable: false
+      when:
+        michelle_warning_known: true
+      text: Kristin turns up the truck radio. The emergency statement ends, and a few minutes later it begins again. She times two passes on her watch. It is the same ninety seconds, word for word, down to the same breath before the last line. This is a recording on a loop, not a live voice. Michelle was right not to trust it.
+- id: sl_1a_i
+  storylet_id: SL-1A-I
+  title: The Neighbor at the Fence
+  guidance:
+    pressure_role: Give the player a human witness who is unsure and frightened, and plant the sense that something went door to door.
+    window:
+      earliest_turn: 4
+      target_turn: 5
+      latest_turn: 10
+    available_while: {}
+    boundaries:
+    - janus_selection_system
+    - brandon_history
+    - janus_phase_two
+  from_outline:
+  - 1A.4
+  variants:
+    r1:
+      realization_id: SL-1A-I-R1
+      intent: Walt Pruitt recounts what he saw when Kristin talks to Walt Pruitt or asks the neighbor, without claiming certainty.
+      commits:
+        neighbor_account_heard: true
+      helps_exit: []
+      from_outline:
+      - 1A.4
+      claim_id: k_sl_1a_i_r1
+      says: Walt Pruitt saw unmarked vans near 3:40 and two men with a clipboard checking the addresses on the street; they skipped the house next door, and he is not sure what he saw.
+      entities:
+      - kristin
+      - walt_pruitt
+      reach: []
+      relevance:
+        entity_ids:
+        - walt_pruitt
+        priority: 0
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: true
+      repeatable: false
+      text: Walt Pruitt stands at the fence with his hands in his jacket. His wife is one of the missing, and he has not slept. Near 3:40 he saw two vans with no markings he could read, and two men with a clipboard checking the addresses up and down the street. They skipped the house next door. He says he is not sure what he saw, and he asks Kristin not to tell the patrol he talked.
+      earn_when: talks to Walt Pruitt or asks the neighbor
+- id: sl_1a_j
+  storylet_id: SL-1A-J
+  title: What Michelle's Phone Kept
+  guidance:
+    pressure_role: Let Michelle's phone preserve a private warning and Kristin's unanswered attempts to reach her, while an officer's watching makes the discovery uneasy.
+    window:
+      earliest_turn: 0
+      target_turn: 5
+      latest_turn: 11
+    available_while: {}
+    boundaries:
+    - janus_selection_system
+    - brandon_history
+    - janus_phase_two
+  from_outline:
+  - 1A.2
+  variants:
+    r1:
+      realization_id: SL-1A-J-R1
+      intent: Kristin enters Michelle's passcode and reads the 4:07am text while the patrol is not in the house.
+      commits:
+        michelle_text_read: true
+      helps_exit: []
+      from_outline:
+      - 1A.2
+      claim_id: k_sl_1a_j_r1
+      says: Kristin read Michelle's 4:07am text.
+      entities:
+      - kristin
+      - michelle_phone
+      reach:
+      - michelle_phone
+      relevance:
+        entity_ids:
+        - michelle_phone
+        priority: -1
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: false
+      repeatable: false
+      when:
+        patrol_in_house: false
+      text: 'Kristin enters Michelle''s passcode, the one she has known for years, and the phone opens on a single text from Michelle, sent at 4:07am: "Come to the house. Don''t call."'
+      earn_when: reads Michelle's text on her phone
+    r2:
+      realization_id: SL-1A-J-R2
+      intent: Kristin enters Michelle's passcode and reads the 4:07am text while Officer Reyes watches from the kitchen.
+      commits:
+        michelle_text_read: true
+        reyes_watched_text: true
+      helps_exit: []
+      from_outline:
+      - 1A.2
+      claim_id: k_sl_1a_j_r2
+      says: Kristin read the text while watched.
+      entities:
+      - kristin
+      - michelle_phone
+      reach:
+      - michelle_phone
+      relevance:
+        entity_ids:
+        - michelle_phone
+        priority: -1
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: false
+      repeatable: false
+      when:
+        patrol_in_house: true
+      text: 'Kristin enters Michelle''s passcode, the one she has known for years, and the phone opens on a single text from Michelle, sent at 4:07am: "Come to the house. Don''t call." Officer Reyes lowers his printed list. His eyes stay on the phone in her hand, and when she looks up he glances away a moment too slowly. Kristin turns the screen toward herself, uneasy.'
+      earn_when: reads Michelle's text on her phone while the patrol is present
+    r3:
+      realization_id: SL-1A-J-R3
+      intent: Kristin scrolls below the text and sees her own unanswered calls to Michelle.
+      commits:
+        kristin_calls_read: true
+      helps_exit: []
+      from_outline:
+      - 1A.2
+      claim_id: k_sl_1a_j_r3
+      says: Kristin saw her unanswered calls.
+      entities:
+      - kristin
+      - michelle_phone
+      reach:
+      - michelle_phone
+      relevance:
+        entity_ids:
+        - michelle_phone
+        priority: -1
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: false
+      repeatable: false
+      when:
+        michelle_text_read: true
+      text: Below the text, Kristin's own calls to Michelle fill the log, one after another, and none of them were answered.
+      earn_when: checks the call log on Michelle's phone
+- id: sl_1a_e
+  storylet_id: SL-1A-E
+  title: The KMS Mark
+  guidance:
+    pressure_role: Let the KMS mark reward a careful search of Michelle's workstation before the patrol closes in.
+    window:
+      earliest_turn: 1
+      target_turn: 3
+      latest_turn: 12
+    available_while:
+      memory_card_recovered: false
+    boundaries:
+    - janus_selection_system
+    - brandon_history
+    - janus_phase_two
+  from_outline:
+  - 1A.1
+  variants:
+    r1:
+      realization_id: SL-1A-E-R1
+      intent: Kristin searches beneath the KMS drawer, finds Michelle's hidden memory card, and keeps it with her.
+      commits:
+        memory_card_recovered: true
+      helps_exit:
+      - t_1a_1b
+      from_outline:
+      - 1A.1
+      claim_id: k_sl_1a_b_r0
+      says: Kristin finds Michelle's memory card taped beneath the drawer and pockets it.
+      entities:
+      - kristin
+      - michelle
+      - memory_card
+      - michelle_drawer
+      reach:
+      - michelle_drawer
+      relevance:
+        entity_ids:
+        - memory_card
+        - michelle_drawer
+        priority: 10
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: false
+      repeatable: false
+      when:
+        patrol_in_house: false
+      text: Kristin's fingers find something taped beneath the drawer. She peels it loose. It is Michelle's memory card, and she pockets it. Her laptop is still out in her truck.
+      earn_when: searches the drawer, the gap in the drawer, or the space beneath it
+    r2:
+      realization_id: SL-1A-E-R2
+      intent: Kristin finds the hidden card while a patrol officer is in the house, and the officer challenges her.
+      commits:
+        memory_card_recovered: true
+        card_challenged: true
+        kristin_marked_by_patrol: true
+      helps_exit:
+      - t_1a_1b
+      from_outline:
+      - 1A.1
+      claim_id: k_sl_1a_b_r0w
+      says: An officer saw Kristin take Michelle's memory card and asked what it is.
+      entities:
+      - kristin
+      - michelle
+      - memory_card
+      - michelle_drawer
+      reach:
+      - michelle_drawer
+      relevance:
+        entity_ids:
+        - memory_card
+        - michelle_drawer
+        priority: 10
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: true
+      repeatable: false
+      when:
+        patrol_in_house: true
+      text: Kristin's fingers find something taped beneath the drawer. She peels it loose. It is Michelle's memory card, and she pockets it. The officer turns at the sound. "What have you got there?" His hand is already out.
+      earn_when: searches the drawer, the gap in the drawer, or the space beneath it
+- id: sl_1a_f
+  storylet_id: SL-1A-F
+  title: The Drawer Points to the Gap
+  guidance:
+    pressure_role: Let opening the drawer or examining its carved initials point Kristin back to the thin gap without recovering the memory card.
+    window:
+      earliest_turn: 0
+      target_turn: 3
+      latest_turn: 12
+    available_while:
+      memory_card_recovered: false
+    boundaries:
+    - janus_selection_system
+    - brandon_history
+    - janus_phase_two
+  from_outline:
+  - 1A.1
+  variants:
+    r1:
+      realization_id: SL-1A-F-R1
+      intent: Kristin pulls or opens the drawer and notices the thin gap beneath its lower edge without finding the memory card.
+      commits:
+        drawer_opened: true
+      helps_exit: []
+      from_outline:
+      - 1A.1
+      claim_id: k_sl_1a_f_r1
+      says: Kristin opens the drawer.
+      entities:
+      - kristin
+      - michelle_drawer
+      reach:
+      - michelle_drawer
+      relevance:
+        entity_ids:
+        - kristin
+        - michelle_drawer
+        priority: 0
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: false
+      repeatable: false
+      when:
+        memory_card_recovered: false
+      text: The drawer slides out. It holds a stapler, spare batteries, pens, and binder clips.
+      earn_when: pulls or opens the drawer
+    r2:
+      realization_id: SL-1A-F-R2
+      intent: Kristin examines the carved initials and notices the thin gap beneath the drawer without finding the memory card.
+      commits:
+        drawer_gap_rechecked: true
+      helps_exit: []
+      from_outline:
+      - 1A.1
+      claim_id: k_sl_1a_f_r2
+      says: Kristin looks over the drawer.
+      entities:
+      - kristin
+      - michelle_drawer
+      reach:
+      - michelle_drawer
+      relevance:
+        entity_ids:
+        - kristin
+        - michelle_drawer
+        priority: 0
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: false
+      repeatable: true
+      when:
+        drawer_gap_pointed_out: true
+        memory_card_recovered: false
+      text: The drawer rides high in its frame. A thin gap beneath its lower edge is wide enough for Kristin's fingers.
+      earn_when: examines, inspects, searches or checks the drawer without going underneath it
+    r3:
+      realization_id: SL-1A-F-R3
+      intent: Kristin closes the drawer after opening it and finds the thin gap beneath its lower edge.
+      commits:
+        drawer_gap_pointed_out: true
+      helps_exit: []
+      from_outline:
+      - 1A.1
+      claim_id: k_sl_1a_f_r3
+      says: Kristin closes the drawer and finds a gap.
+      entities:
+      - kristin
+      - michelle_drawer
+      reach:
+      - michelle_drawer
+      relevance:
+        entity_ids:
+        - kristin
+        - michelle_drawer
+        priority: 0
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: false
+      repeatable: false
+      when:
+        drawer_opened: true
+        memory_card_recovered: false
+      text: Kristin slides the drawer shut. It rides high in its frame. A thin gap beneath its lower edge is wide enough for Kristin's fingers.
+      earn_when: closes or shuts the drawer
+- id: sl_1a_b
+  storylet_id: SL-1A-B
+  title: Michelle Hid Something for Kristin
+  guidance:
+    pressure_role: Once Kristin has the card, let its files or recording reveal Michelle's lead without requiring one fixed command.
+    window:
+      earliest_turn: 2
+      target_turn: 5
+      latest_turn: 6
+    available_while:
+      memory_card_recovered: true
+      continuity_initiative_known: false
+    boundaries:
+    - janus_selection_system
+    - brandon_history
+    - janus_phase_two
+  from_outline:
+  - 1A.2
+  - 1A.3
+  variants:
+    r1:
+      realization_id: SL-1A-B-R1
+      intent: Kristin reads the recovered card's files and damaged recording. They point to a dead drop at a bench in the park.
+      commits:
+        continuity_initiative_known: true
+        michelle_abduction_suspicion: true
+        michelle_warning_known: true
+        michelle_lead_actionable: true
+      helps_exit:
+      - t_1a_1b
+      from_outline:
+      - 1A.2
+      - 1A.3
+      claim_id: k_sl_1a_b_r1
+      says: Kristin reads Michelle's memory card. Its damaged recording warns her not to trust emergency broadcasts, and the Continuity Initiative files point to a dead drop at a bench in the park.
+      entities:
+      - kristin
+      - michelle
+      - memory_card
+      - kristin_laptop
+      - park_bench
+      reach:
+      - kristin_laptop
+      relevance:
+        entity_ids:
+        - memory_card
+        - kristin_laptop
+        priority: 10
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: true
+      repeatable: false
+      when:
+        memory_card_recovered: true
+      text: The card holds Michelle's saved files and a damaged recording. The recording warns, "Do not trust the emergency broadcasts." The files name the Continuity Initiative and point to a dead drop at a bench in the park.
+      earn_when: reads the files on Michelle's recovered memory card
+    r2:
+      realization_id: SL-1A-B-R2
+      intent: Kristin plays the recovered card's damaged warning before reading the remaining files.
+      commits:
+        michelle_warning_known: true
+        michelle_abduction_suspicion: true
+      helps_exit: []
+      from_outline:
+      - 1A.3
+      claim_id: k_sl_1a_b_r2
+      says: Kristin plays the damaged recording on Michelle's memory card. It warns her not to trust emergency broadcasts.
+      entities:
+      - kristin
+      - michelle
+      - memory_card
+      - kristin_laptop
+      reach: []
+      relevance:
+        entity_ids:
+        - memory_card
+        - kristin_laptop
+        priority: 10
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: true
+      repeatable: false
+      when:
+        memory_card_recovered: true
+      text: The card holds a damaged recording. Michelle's voice warns, "Do not trust the emergency broadcasts."
+      earn_when: plays Michelle's damaged recording
+- id: sl_1a_c
+  storylet_id: SL-1A-C
+  title: The Welfare Check Feels Like a Search
+  guidance:
+    pressure_role: If Kristin stalls after finding evidence, official scrutiny raises urgency and makes staying costly without dictating whether she hides, lies, argues, or leaves.
+    window:
+      earliest_turn: 6
+      target_turn: 8
+      latest_turn: 9
+    available_while:
+      michelle_warning_known: true
+    boundaries:
+    - janus_selection_system
+    - brandon_history
+    - janus_phase_two
+  from_outline:
+  - 1A.4
+  variants:
+    r1:
+      realization_id: SL-1A-C-R1
+      intent: Observe that the patrol is specifically interested in Dr. McGehee’s research; this corroborates targeted removal without revealing who ordered it.
+      commits:
+        official_interest_in_michelle_known: true
+        michelle_abduction_suspicion: true
+      helps_exit: []
+      claim_id: k_sl_1a_c_r1
+      says: The patrol’s interest in her research makes Kristin doubt their "welfare check".
+      entities: []
+      reach: []
+      relevance:
+        entity_ids: []
+        priority: 0
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: true
+      repeatable: false
+      when:
+        michelle_warning_known: true
+      text: The officers ask about Michelle's research and what she found. Officer Reyes studies the lake photograph on the refrigerator a moment too long before he asks about her research. This is not a normal welfare check.
+    r2:
+      realization_id: SL-1A-C-R2
+      intent: Notice the gate marker after the patrol leaves, establishing a concrete return threat and a reason to move on.
+      commits:
+        house_marked_for_return: true
+        patrol_return_pressure: true
+      helps_exit: []
+      claim_id: k_sl_1a_c_r2
+      says: After the patrol leaves, Kristin finds reflective tape on the gate, a warning that the house will be watched.
+      entities: []
+      reach: []
+      relevance:
+        entity_ids: []
+        priority: 0
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: true
+      repeatable: false
+      when:
+        michelle_warning_known: true
+      text: After the patrol leaves, Kristin finds a strip of reflective tape on the front gate. The officers marked the house. They plan to come back.
+- id: sl_1a_k
+  storylet_id: SL-1A-K
+  title: The Street Is Not Clear
+  guidance:
+    pressure_role: If Kristin tries to leave for the park before the street is clear, the story holds her for a moment without ending the scene.
+    window:
+      earliest_turn: 4
+      target_turn: 10
+      latest_turn: 12
+    available_while:
+      michelle_lead_actionable: true
+    boundaries:
+    - janus_selection_system
+    - brandon_history
+    - janus_phase_two
+  from_outline:
+  - 1A.4
+  variants:
+    r1:
+      realization_id: SL-1A-K-R1
+      intent: Kristin tries to drive to the park before the street is clear and holds back.
+      commits:
+        departure_held: true
+      helps_exit: []
+      claim_id: k_sl_1a_k_r1
+      says: Kristin tries to drive to the park before the street is clear and holds back.
+      entities:
+      - kristin
+      - kristin_truck
+      - park_bench
+      reach:
+      - kristin_truck
+      relevance:
+        entity_ids:
+        - kristin
+        - kristin_truck
+        - park_bench
+        priority: 0
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: false
+      repeatable: true
+      when:
+        michelle_lead_actionable: true
+      text: Kristin does not pull away yet. If anyone is watching the street, driving to the park now would lead them straight to the bench. She waits to see what the street does.
+      text_when:
+      - when:
+        - patrol_on_scene
+        text: Kristin does not pull away yet. The patrol is still at the house, and the truck would be the first thing they follow. If she drives to the park now, she leads them straight to the bench. She waits to see what the patrol does.
+      - when:
+        - patrol_departed
+        text: Kristin does not pull away yet. The patrol has only just left, and it could be waiting around the corner. If she drives to the park now, she may lead it straight to the bench. She waits to see what the street does.
+      earn_when: tries to drive or head to the park before the street is clear
+- id: sl_1a_d
+  storylet_id: SL-1A-D
+  title: The Rest of Michelle's Files
+  guidance:
+    pressure_role: When Kristin reaches the damaged recording before the files, let her read the remaining files on the memory card she is already carrying; the warning tells her Michelle hid something deliberately, so the files can reveal what it points to without repeating the recovery.
+    window:
+      earliest_turn: 0
+      target_turn: 8
+      latest_turn: 9
+    available_while:
+      continuity_initiative_known: false
+      michelle_warning_known: true
+      memory_card_recovered: true
+    boundaries:
+    - janus_selection_system
+    - brandon_history
+    - janus_phase_two
+  from_outline:
+  - 1A.2
+  variants:
+    r1:
+      realization_id: SL-1A-D-R1
+      intent: Kristin reads the remaining files on the memory card she is already carrying and learns where Michelle was pointing her.
+      commits:
+        continuity_initiative_known: true
+        michelle_abduction_suspicion: true
+        michelle_lead_actionable: true
+      helps_exit:
+      - t_1a_1b
+      claim_id: k_sl_1a_d_r1
+      says: Kristin reads the remaining files on Michelle's recovered memory card and learns the place she used to trade information.
+      entities:
+      - kristin
+      - michelle
+      - memory_card
+      reach: []
+      relevance:
+        entity_ids:
+        - memory_card
+        priority: 10
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: true
+      repeatable: false
+      when:
+        memory_card_recovered: true
+      text: The rest of the files on Michelle's memory card hold her research. They name the exchange point where she traded information.
+bridge:
+- id: bridge_1a_actionable_lead
+  kind: bridge
+  when:
+  - continuity_initiative_known
+  commits:
+    michelle_lead_actionable: true
+  realized_by:
+  - sl_1a_b
+  - sl_1a_d
+incidents: []
+exit:
+  id: t_1a_1b
+  to: 1B
+  priority: 10
+  when_all:
+  - michelle_lead_actionable
+  - patrol_return_pressure
+  - memory_card_recovered
+  needs:
+  - item: memory_card
+    relation: exists
+  bridge: Kristin starts the truck and heads for the park, avoiding checkpoints and emergency patrols.

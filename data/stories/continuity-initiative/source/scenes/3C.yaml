@@ -1,0 +1,1056 @@
+schema: 1
+scene: 3C
+location: facility_escape
+objective: Expose the network and escape
+freytag_phase: resolution
+situation: ''
+pressure: Expose the network and escape
+turns:
+  min: 10
+  nudge: 11
+  handoff: 14
+scripted_opening: false
+companions:
+- michelle
+participants:
+- kristin
+- michelle
+- rebecca
+- brandon
+items:
+- copied_janus_files
+- portable_archive
+- drainage_pump_controls
+- emergency_surface_gates
+- emergency_speakers
+- watertight_barrier
+setting: []
+prop_pool: []
+entry: 'The broadcast chamber lights are steady. Brandon''s relay is open. Michelle''s evidence package is ready to send. Water is entering the outer access level.
+
+
+  '
+entry_additions: []
+entry_claims:
+- claim_id: k_scene_3c_entry
+  says: Exposure and escape are both immediate under the collapsing operation.
+  entities:
+  - kristin
+  - facility_escape
+  reach: []
+  relevance:
+    entity_ids: []
+    priority: 0
+  audience:
+    kind: public
+    character_ids: []
+    player_visible: true
+  voiceable: true
+  repeatable: false
+brief: '**Setting:** Rebecca’s office, the collapsing facility, and the surface of post-disappearance Los Angeles
+
+
+  **Characters:**
+
+
+  * Kristin Schweitzer
+
+  * Dr. Michelle McGehee
+
+  * Brandon Corfman
+
+  * Rebecca Jenkins
+
+  * Charles Jenkins
+
+
+  **Plot:** The conspiracy is exposed, the captives escape, and the protagonists achieve a meaningful but incomplete victory.'
+outline:
+- id: 3C.1
+  anchor: scene-3c1--the-national-transmission
+  title: The National Transmission
+  details:
+  - national broadcast controls
+  - JANUS selection records
+  - detention network locations
+  - behavioral-experiment records
+  - Brandon’s confession
+  prose: 'A portable data case holding the archive is with Rebecca in the executive office.
+
+
+    Michelle has the evidence package ready at the national broadcast controls.
+
+
+    Michelle broadcasts:
+
+
+    * Video of the captives
+
+    * JANUS selection records
+
+    * Locations of the national detention network
+
+    * Charles and Rebecca’s planning sessions
+
+    * Evidence of the behavioral experiments
+
+    * Brandon’s confession
+
+    * Instructions for local authorities to verify nearby facilities
+
+
+    Charles interrupts the transmission and claims Michelle is part of a terrorist organization.
+
+
+    Michelle counters by displaying live images from multiple facilities where prisoners and sympathetic workers have begun revolting.
+
+
+    The truth can no longer be contained by controlling a single broadcast.'
+- id: 3C.2
+  anchor: scene-3c2--the-final-confrontation
+  title: The Final Confrontation
+  details:
+  - portable archive
+  - corporate conspirators
+  - prisoner locations
+  - independent networks
+  - captured Rebecca
+  - remote command site
+  prose: 'Rebecca attempts to escape with a portable archive containing the identities of corporate and political conspirators.
+
+
+    Rebecca leaves the executive office with the portable data case in her hands.
+
+
+    Kristin stops her, but she warns that destroying or surrendering the archive may leave innocent people trapped because it also contains prisoner locations.
+
+
+    Rather than destroy it, Michelle transmits copies to several independent networks.
+
+
+    Rebecca is captured by the prisoners she authorized for experimentation.
+
+
+    Charles escapes from his remote command site before authorities can locate him, preserving an ongoing threat.'
+- id: 3C.3
+  anchor: scene-3c3--the-deluge
+  title: The Deluge
+  details:
+  - emergency deluge
+  - sealed public exits
+  - rising water
+  - pump controls
+  - maintenance tunnel
+  - surface-gate codes
+  prose: 'Charles''s deluge is already running, and water is forcing people out of the outer access level. Kristin uses the same inspection access that created the false alarms to restore power to the drainage pumps and hold one watertight barrier long enough for the captives to pass. She cannot keep every route open.
+
+
+    Water rises around the drainage pump controls.
+
+
+    Michelle leads the prisoners through the maintenance tunnel while Kristin keeps the pumps and barrier working.
+
+
+    This is the last hard thing the night asks of Kristin, and it is finite. If she restores the pump power and holds the barrier until the last captive is through, everyone reaches the surface gates and the lower levels still stand. If she cannot hold both, she gives up the lower levels to the water so the captives can pass. Everyone still gets out, but the lower levels are lost. If she does nothing in time, the surge pushes the captives to the surface without her hand on the barrier, the lower levels are lost, and she has earned nothing. The evacuation is complete when the last captive is through the gates, and the story goes straight to dawn.
+
+
+    The surface gates remain shut above the waiting captives as the senior official''s authorization nears expiry.
+
+
+    From Rebecca''s office, Michelle uses the senior official''s expiring authorization to release the emergency surface gates once. Brandon remains at the relay so the broadcast stays live. His fate is initially uncertain.
+
+
+    Thousands of captives emerge into Los Angeles as news drones, civilians, and local responders begin arriving.'
+- id: 3C.4
+  anchor: scene-3c4--resolution-and-new-direction
+  title: Resolution and New Direction
+  details:
+  - surrendered facilities
+  - released prisoners
+  - Charles’s control
+  - rogue officials
+  - rescue efforts
+  - partially recovered JANUS file
+  prose: 'The story ends at dawn, as soon as the evacuation is complete. The ending says plainly what is known. Michelle is alive, the captives are out, and Brandon''s fate is uncertain; he was last seen holding the relay. It changes with what Kristin did: whether she held the barrier or gave up the lower levels, whether Rebecca was captured, whether the archive copies went out, and whether Brandon''s name was kept or erased from the build record. Charles is still out there, and the ending says so before it teases anything else.
+
+
+    The national detention network begins to fracture:
+
+
+    * Some facilities surrender.
+
+    * Others release their prisoners.
+
+    * Several remain under Charles’s control.
+
+    * Government agencies deny involvement and blame rogue officials.
+
+    * Communities begin organizing independent rescue efforts.
+
+    * Families learn that many of the missing may still be alive.
+
+
+    Reports from other detention sites reach the broadcast chamber as families of the missing call for news.
+
+
+    Kristin’s personal goal is fulfilled when she and Michelle are reunited, but neither can return to their former life.
+
+
+    Michelle begins publishing the complete Continuity Initiative archive. Kristin joins teams locating and opening the remaining facilities. Charles''s last remote channel still carries a signal.
+
+
+    One recovered document in the archive remains unopened.
+
+
+    If Kristin opens it, the final revelation comes from a partially recovered JANUS file. This is an optional epilogue. It never decides whether the rescue counts as finished. The disappearance operation was labeled **Phase One**.
+
+
+    Phase Two was designed not to remove people, but to provoke conflict among those who remained.
+
+
+    The story closes with Charles observing the growing unrest from an unknown location. Although his conspiracy has been exposed, he believes the country is still moving toward the collapse he intended—and that frightened people may yet ask him to restore order.
+
+
+    # Freytag Structure Summary
+
+
+    ## Exposition
+
+
+    Kristin and Michelle’s relationship, the post-disappearance crisis, Michelle’s investigation, and the unstable condition of Los Angeles are established.
+
+
+    ## Inciting Incident
+
+
+    Kristin discovers evidence that Michelle was abducted and that her disappearance is connected to the Continuity Initiative.
+
+
+    ## Rising Action
+
+
+    Kristin meets Brandon, discovers the secret facility, learns the missing are alive, infiltrates the installation, uncovers JANUS, and discovers both Brandon’s guilt and Michelle’s resistance network.
+
+
+    ## Crisis
+
+
+    Kristin must seemingly choose between transmitting evidence and rescuing the captives. Michelle reveals a dangerous plan capable of accomplishing both.
+
+
+    ## Climax
+
+
+    Kristin, Michelle, and Brandon seize the emergency broadcast system while the prisoners revolt. Kristin defeats the facility’s predictive security system, Brandon holds open the communications relay, and Michelle begins the national exposure of the conspiracy; the transmission’s public contest and consequences continue into Scene 3C.
+
+
+    ## Falling Action
+
+
+    The captives escape, Rebecca is captured, the flooded Los Angeles facility is exposed, and detention centers across the country begin responding to the broadcast.
+
+
+    ## Resolution
+
+
+    Kristin and Michelle reunite and commit themselves to freeing the remaining captives. Charles escapes, while the discovery of “Phase Two” creates a larger unresolved threat.'
+facts:
+  truth_no_longer_containable:
+    purpose: Enough independently verifiable evidence is public that Charles cannot contain the conspiracy by controlling one channel.
+    delivery:
+      source_kind: broadcast
+      fallback_text: The national broadcast stays live while Charles speaks over Michelle.
+      cue_text: The national broadcast is live. Charles speaks over Michelle while her evidence package waits to be sent.
+  portable_archive_secured:
+    purpose: The portable archive has been recovered from Rebecca’s sole control.
+    on_assert:
+    - move: portable_archive
+      parent: kristin
+  archive_contains_prisoner_locations:
+    purpose: The recovered archive is known to contain prisoner locations as well as conspirator identities.
+  archive_copies_distributed:
+    purpose: Copies of the archive have been distributed to independent networks.
+  evacuation_route_open:
+    purpose: A viable evacuation path from the collapsing facility is open.
+    delivery:
+      source_kind: observation
+      source_entity: kristin
+      fallback_text: Water rises around the drainage pump controls.
+      cue_text: Water rises around the drainage pump controls.
+  evacuation_complete:
+    purpose: The last captive has passed through the surface gates.
+  barrier_held:
+    purpose: Kristin held the watertight barrier until the last captive passed.
+  captives_out_costly:
+    purpose: The captives passed through after Kristin gave up the lower levels.
+  lower_levels_lost:
+    purpose: The lower levels were lost so the captives could pass.
+  surge_forced_evacuation:
+    purpose: The surge carried the captives out without Kristin directing the barrier.
+  evacuation_recovery_ready:
+    purpose: The missed evacuation window has lasted long enough for the neutral route recovery to carry the captives out.
+  evacuation_window_missed:
+    purpose: The final evacuation window closed before Kristin resolved the incident.
+  evacuation_surge_building:
+    purpose: The surge is building around the barrier and drainage pumps.
+  captives_reaching_surface:
+    purpose: Surviving captives are reaching the surface.
+  los_angeles_facility_lost:
+    purpose: The Los Angeles facility is no longer a viable concealed Continuity operation.
+  national_network_fragmenting:
+    purpose: Public reports show the national detention network is fragmenting.
+    delivery:
+      source_kind: observation
+      source_entity: kristin
+      fallback_text: Reports from other detention sites reach the broadcast chamber. Detention sites surrender or release prisoners as the national network breaks apart.
+      cue_text: Reports from other detention sites reach the broadcast chamber.
+  community_rescue_efforts_begun:
+    purpose: Communities/families have begun independent rescue efforts.
+    delivery:
+      source_kind: observation
+      source_entity: kristin
+      fallback_text: Families of the missing call the broadcast chamber for word. Families and communities organize independent rescue efforts. Many of the missing are still alive.
+      cue_text: Families of the missing call the broadcast chamber for word. Kristin can answer the families with news of the captives.
+  phase_one_label_known:
+    purpose: The disappearance operation is known to have been labeled Phase One.
+  phase_two_conflict_plan_known:
+    purpose: The recovered JANUS material states Phase Two was designed to provoke conflict among those who remained.
+    delivery:
+      source_kind: observation
+      source_entity: kristin
+      fallback_text: A recovered document remains closed while Charles's signal runs through his last remote channel.
+      cue_text: A recovered document remains closed. Charles's signal still runs through his last remote channel.
+  charles_at_large:
+    purpose: Charles remains at large after the Los Angeles exposure.
+  facility_collapse_escalating:
+    purpose: Charles's emergency deluge is visibly spreading through the outer access level toward the escape route.
+  rebecca_captured:
+    purpose: Rebecca has been captured and no longer controls the portable archive or the local operation.
+    delivery:
+      source_kind: observation
+      source_entity: kristin
+      fallback_text: Rebecca leaves the executive office with the Portable data case.
+      cue_text: Rebecca is leaving the executive office with the Portable data case in her hands.
+  michelle_publishing_archive:
+    purpose: Michelle has begun distributing/publishing the Continuity Initiative archive after the exposure.
+  kristin_joined_rescue_efforts:
+    purpose: Kristin has committed to helping locate and open remaining detention facilities.
+  national_facility_locations_broadcast:
+    purpose: National detention-site locations have been broadcast to enable distributed rescue responses.
+  escape_routes_collapsing:
+    purpose: Rising water and sealed bulkheads are closing maintenance routes through the facility.
+placements:
+  copied_janus_files:
+    parent: kristin
+  portable_archive:
+    parent: rebecca
+    text: with Rebecca in her hands
+  drainage_pump_controls:
+    parent: maintenance_network
+  emergency_surface_gates:
+    parent: facility_escape
+  emergency_speakers:
+    parent: maintenance_network
+  watertight_barrier:
+    parent: maintenance_network
+  kristin:
+    parent: broadcast_chamber
+  rebecca:
+    parent: executive_office
+  brandon:
+    parent: broadcast_relay
+  captives:
+    parent: maintenance_network
+beats:
+- id: collapse_3c
+  at_turn: 4
+  sets:
+    facility_collapse_escalating: true
+  say:
+  - when:
+      evidence_gap_processing_numbers: true
+    text: Water seeps under the outer doors. Kristin could not copy the full set of prisoner numbers from the processing line.
+    verbatim: true
+  - when:
+      evidence_gap_development_record: true
+    text: Water seeps under the outer doors. Kristin left without a copy of the development record bearing Brandon's name.
+    verbatim: true
+  - text: Water seeps under the outer doors. Charles's emergency deluge is becoming real.
+    verbatim: false
+- id: evacuation_window_3c
+  at_turn: 9
+  sets:
+    evacuation_window_missed: true
+  say:
+  - text: The surge is on them.
+    verbatim: false
+- id: evacuation_recovery_3c
+  at_turn: 10
+  sets:
+    evacuation_complete: true
+    surge_forced_evacuation: true
+  when:
+    evacuation_window_missed: true
+    evacuation_surge_building: true
+    evacuation_recovery_ready: true
+- id: evacuation_nudge_3c
+  at_turn: 10
+  sets:
+    evacuation_surge_building: true
+    evacuation_recovery_ready: true
+  say:
+  - text: The surge is building at the barrier and the pumps.
+    verbatim: false
+  when:
+    evacuation_window_missed: true
+    barrier_held: false
+    captives_out_costly: false
+- id: routes_collapse_3c
+  at_turn: 10
+  sets:
+    escape_routes_collapsing: true
+  say:
+  - when:
+      evidence_gap_marked_site_list: true
+    text: Rising water is closing routes through the facility. Rebecca gave Kristin the locations, but Kristin left without a copy of her marked site list.
+    verbatim: true
+  - text: Rising water is closing routes through the facility. The remaining routes are narrowing fast.
+    verbatim: false
+reveals:
+- id: sl_3c_a
+  storylet_id: SL-3C-A
+  title: Charles Tries to Reframe the Broadcast
+  guidance:
+    pressure_role: 'Once transmission begins, prevent the climax from becoming a passive upload: Charles contests credibility, and accumulated verifiable evidence lets Michelle answer him.'
+    window:
+      earliest_turn: 0
+      target_turn: 3
+      latest_turn: 4
+    available_while:
+      broadcast_started: true
+    boundaries:
+    - janus_phase_two
+  from_outline:
+  - 3C.1
+  variants:
+    r1:
+      realization_id: SL-3C-A-R1
+      intent: Use the already-running national transmission to publish verifiable evidence until the conspiracy can no longer be contained by controlling one channel.
+      commits:
+        national_facility_locations_broadcast: true
+        truth_no_longer_containable: true
+      helps_exit: []
+      claim_id: k_sl_3c_a_r1
+      says: Michelle broadcasts captives, JANUS records, planning sessions, and detention locations to independent networks.
+      entities: []
+      reach: []
+      relevance:
+        entity_ids: []
+        priority: 0
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: true
+      repeatable: false
+      when:
+        broadcast_started: true
+      text: Michelle broadcasts video of the captives, JANUS records, planning sessions, and detention locations to independent networks. Rebecca is leaving the executive office with the Portable data case.
+      earn_when: sends the evidence to networks
+    r2:
+      realization_id: SL-3C-A-R2
+      intent: Counter Charles’s terrorist claim with live or independently checkable facility evidence until suppression by a single channel is no longer plausible.
+      commits:
+        truth_no_longer_containable: true
+      helps_exit: []
+      claim_id: k_sl_3c_a_r2
+      says: When Charles calls her a terrorist, Michelle answers with live revolts that make the truth impossible to contain.
+      entities: []
+      reach: []
+      relevance:
+        entity_ids: []
+        priority: 0
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: true
+      repeatable: false
+      when:
+        broadcast_started: true
+      text: When Charles calls Michelle a terrorist, she answers with live revolts. The truth is impossible to contain. Rebecca still holds the Portable data case in her hands.
+      earn_when: answers Charles's terrorist claim
+- id: sl_3c_b
+  storylet_id: SL-3C-B
+  title: Rebecca’s Archive Cannot Simply Be Destroyed
+  guidance:
+    pressure_role: Turn Rebecca’s attempted escape into an information-custody dilemma so disposal is not an easy moral shortcut.
+    window:
+      earliest_turn: 0
+      target_turn: 7
+      latest_turn: 8
+    available_while:
+      truth_no_longer_containable: true
+    boundaries:
+    - janus_phase_two
+  from_outline:
+  - 3C.2
+  variants:
+    r1:
+      realization_id: SL-3C-B-R1
+      intent: Secure the portable archive and establish that it contains prisoner locations as well as conspirator identities.
+      commits:
+        portable_archive_secured: true
+        archive_contains_prisoner_locations: true
+        archive_copies_distributed: true
+        rebecca_captured: true
+      helps_exit: []
+      claim_id: k_sl_3c_b_r1
+      says: Kristin stops Rebecca fleeing with the archive, and Michelle sends its prisoner locations to independent networks.
+      entities: []
+      reach: []
+      relevance:
+        entity_ids: []
+        priority: 0
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: true
+      repeatable: false
+      when:
+        truth_no_longer_containable: true
+      text: Kristin takes the Portable data case from Rebecca. Michelle sends its prisoner locations to independent networks. The drainage pumps need power. Water rises around the drainage pump controls.
+      earn_when: takes the data case from Rebecca
+    r2:
+      realization_id: SL-3C-B-R2
+      intent: Duplicate the archive to independent networks rather than leave sole custody with either Rebecca or the protagonists.
+      commits:
+        portable_archive_secured: true
+        archive_copies_distributed: true
+        archive_contains_prisoner_locations: true
+        rebecca_captured: true
+      helps_exit: []
+      claim_id: k_sl_3c_b_r2
+      says: The prisoners capture Rebecca after her archive is copied beyond her reach, while Charles escapes his remote command site.
+      entities: []
+      reach: []
+      relevance:
+        entity_ids: []
+        priority: 0
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: true
+      repeatable: false
+      when:
+        truth_no_longer_containable: true
+      text: The prisoners capture Rebecca after the archive is copied beyond her reach. Charles escapes his remote command site.
+      earn_when: copies the archive beyond Rebecca's reach
+- id: sl_3c_c
+  storylet_id: SL-3C-C
+  title: Escape While the Facility Comes Apart
+  guidance:
+    pressure_role: 'Keep falling action dangerous: Kristin’s Army infrastructure and operations choices preserve routes while Michelle moves people, but no single maneuver guarantees every section survives.'
+    window:
+      earliest_turn: 0
+      target_turn: 11
+      latest_turn: 12
+    available_while:
+      truth_no_longer_containable: true
+      rebecca_captured: true
+    boundaries:
+    - janus_phase_two
+  from_outline:
+  - 3C.3
+  - 3C.4
+  variants:
+    r1:
+      realization_id: SL-3C-C-R1
+      intent: Restore pump power and hold the watertight barrier until the last captive passes.
+      commits:
+        evacuation_route_open: true
+        evacuation_complete: true
+        barrier_held: true
+      helps_exit: []
+      from_outline:
+      - 3C.3
+      outcome:
+        id: evacuation_clean
+        advantages:
+        - barrier_held
+      claim_id: k_sl_3c_c_r1
+      says: Kristin restores the pumps and holds the watertight barrier until the last captive passes.
+      entities: []
+      reach: []
+      relevance:
+        entity_ids: []
+        priority: 0
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: true
+      repeatable: false
+      when:
+        truth_no_longer_containable: true
+        rebecca_captured: true
+      text: Kristin restores the pumps and holds the barrier until the last captive is through. The lower levels still stand.
+      earn_when: restores the pumps and braces the watertight barrier
+    r2:
+      realization_id: SL-3C-C-R2
+      intent: Give up the lower levels so the captives can pass, then release the surface gates.
+      commits:
+        evacuation_route_open: true
+        evacuation_complete: true
+        captives_out_costly: true
+        lower_levels_lost: true
+      helps_exit: []
+      from_outline:
+      - 3C.3
+      outcome:
+        id: evacuation_costly
+        advantages:
+        - captives_out_costly
+        costs:
+        - lower_levels_lost
+      claim_id: k_sl_3c_c_r2
+      says: Kristin gives the lower levels to the water so the captives can pass.
+      entities: []
+      reach: []
+      relevance:
+        entity_ids: []
+        priority: 0
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: true
+      repeatable: false
+      when:
+        truth_no_longer_containable: true
+        rebecca_captured: true
+      text: Kristin gives the lower levels to the water so the captives can pass. Michelle uses the authorization to release the surface gates. Brandon remains at the relay.
+      earn_when: gives up the lower levels so the captives can pass
+- id: sl_3c_h
+  storylet_id: SL-3C-H
+  title: The Surge Takes the Choice
+  guidance:
+    pressure_role: Let the surge carry the captives out after Kristin misses the final intervention window.
+    window:
+      earliest_turn: 9
+      target_turn: 10
+      latest_turn: 13
+    available_while:
+      evacuation_window_missed: true
+    boundaries:
+    - janus_phase_two
+  from_outline:
+  - 3C.3
+  variants:
+    r1:
+      realization_id: SL-3C-H-R1
+      intent: Let the surge push the captives through the gates without awarding Kristin an outcome or a cost.
+      commits:
+        evacuation_recovery_ready: true
+        evacuation_complete: true
+        surge_forced_evacuation: true
+      helps_exit: []
+      from_outline:
+      - 3C.3
+      claim_id: k_evacuation_recovery_ready
+      says: The missed evacuation window is ready for the neutral route recovery.
+      entities: []
+      reach: []
+      relevance:
+        entity_ids: []
+        priority: 0
+      audience:
+        kind: world_only
+        character_ids: []
+        player_visible: false
+      voiceable: true
+      repeatable: false
+      commits_subset:
+        evacuation_recovery_ready: true
+      extra_claims:
+      - claim_id: k_sl_3c_h_route_effects
+        says: The missed-window evacuation recovery carries its route effects.
+        entities: []
+        reach: []
+        relevance:
+          entity_ids: []
+          priority: 0
+        audience:
+          kind: characters
+          character_ids:
+          - charles
+          player_visible: false
+        voiceable: true
+        repeatable: false
+        when:
+          evacuation_window_missed: true
+        commits_subset:
+          evacuation_complete: true
+          surge_forced_evacuation: true
+- id: sl_3c_f
+  storylet_id: SL-3C-F
+  title: Open the Surface Gates
+  guidance:
+    pressure_role: 'Keep falling action dangerous: Kristin’s Army infrastructure and operations choices preserve routes while Michelle moves people, but no single maneuver guarantees every section survives.'
+    window:
+      earliest_turn: 0
+      target_turn: 11
+      latest_turn: 12
+    available_while:
+      truth_no_longer_containable: true
+      rebecca_captured: true
+    boundaries:
+    - janus_phase_two
+  from_outline:
+  - 3C.3
+  - 3C.4
+  variants:
+    r1:
+      realization_id: SL-3C-F-R1
+      intent: Use maintenance tunnels and the opened gates to get captives out while accepting loss of the Los Angeles facility.
+      commits:
+        los_angeles_facility_lost: true
+      helps_exit: []
+      from_outline:
+      - 3C.3
+      - 3C.4
+- id: sl_3c_d
+  storylet_id: SL-3C-D
+  title: The Network Fractures
+  guidance:
+    pressure_role: After the canonical resolution conditions land, provide optional distributed consequence color without creating a new playable scene or new ending.
+    window:
+      earliest_turn: 0
+      target_turn: 13
+      latest_turn: 13
+    available_while:
+      truth_no_longer_containable: true
+      captives_reaching_surface: true
+    boundaries:
+    - janus_phase_two
+  from_outline:
+  - 3C.4
+  variants:
+    r1:
+      realization_id: SL-3C-D-R1
+      intent: Public reports establish that some sites surrender or release prisoners while others remain contested.
+      commits:
+        national_network_fragmenting: true
+      helps_exit: []
+      claim_id: k_sl_3c_d_r1
+      says: Across the country, detention sites begin to surrender or release prisoners as the national network fractures.
+      entities: []
+      reach: []
+      relevance:
+        entity_ids: []
+        priority: 0
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: true
+      repeatable: false
+      when:
+        truth_no_longer_containable: true
+        captives_reaching_surface: true
+      text: Across the country, detention sites begin to surrender or release prisoners. The national network fractures.
+      earn_when: checks reports from detention sites
+- id: sl_3c_g
+  storylet_id: SL-3C-G
+  title: Families Begin the Rescue
+  guidance:
+    pressure_role: After the canonical resolution conditions land, provide optional distributed consequence color without creating a new playable scene or new ending.
+    window:
+      earliest_turn: 0
+      target_turn: 13
+      latest_turn: 13
+    available_while:
+      truth_no_longer_containable: true
+      captives_reaching_surface: true
+    boundaries:
+    - janus_phase_two
+  from_outline:
+  - 3C.4
+  variants:
+    r1:
+      realization_id: SL-3C-G-R1
+      intent: Reports establish that families and communities begin independent rescue efforts.
+      commits:
+        community_rescue_efforts_begun: true
+      helps_exit: []
+      claim_id: k_sl_3c_d_r2
+      says: Families and communities organize independent rescue efforts after learning that many of the missing are still alive.
+      entities: []
+      reach: []
+      relevance:
+        entity_ids: []
+        priority: 0
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: true
+      repeatable: false
+      when:
+        truth_no_longer_containable: true
+        captives_reaching_surface: true
+      text: Families and communities organize independent rescue efforts. Many of the missing are still alive.
+      earn_when: calls the families of the missing
+- id: sl_3c_e
+  storylet_id: SL-3C-E
+  title: Phase One
+  guidance:
+    pressure_role: Offer the recovered JANUS file as an optional clue after the archive copies spread.
+    window:
+      earliest_turn: 0
+      target_turn: 8
+      latest_turn: 13
+    available_while:
+      archive_copies_distributed: true
+    boundaries: []
+  from_outline:
+  - 3C.4
+  variants:
+    r1:
+      realization_id: SL-3C-E-R1
+      intent: Recover the “Phase One” label and the authored statement that Phase Two was designed to provoke conflict among those who remained.
+      commits:
+        phase_one_label_known: true
+        phase_two_conflict_plan_known: true
+      helps_exit: []
+      claim_id: k_sl_3c_e_r1
+      says: A recovered JANUS file names the disappearances Phase One and reveals that Phase Two was meant to provoke conflict among survivors.
+      entities: []
+      reach: []
+      relevance:
+        entity_ids: []
+        priority: 0
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: true
+      repeatable: false
+      when:
+        truth_no_longer_containable: true
+        captives_reaching_surface: true
+        national_network_fragmenting: true
+        charles_at_large: true
+      text: A recovered JANUS file calls the disappearances Phase One. It names a second plan to provoke conflict among survivors.
+      earn_when: opens the recovered JANUS file
+    r2:
+      realization_id: SL-3C-E-R2
+      intent: Reveal the Phase One label and the Phase Two plan through the partially recovered JANUS file. Show Charles watching the unrest from an unknown location, hoping frightened people will ask him to restore order.
+      commits:
+        phase_one_label_known: true
+        phase_two_conflict_plan_known: true
+      helps_exit: []
+      claim_id: k_sl_3c_e_r2
+      says: From an unknown location, Charles watches the unrest and believes frightened people may still ask him to restore order.
+      entities: []
+      reach: []
+      relevance:
+        entity_ids: []
+        priority: 0
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: true
+      repeatable: false
+      when:
+        truth_no_longer_containable: true
+        captives_reaching_surface: true
+        national_network_fragmenting: true
+        charles_at_large: true
+      text: A partially recovered JANUS file labels the disappearances Phase One. Phase Two was designed to provoke conflict among those who remained. From an unknown location, Charles watches the unrest, believing frightened people may yet ask him to restore order.
+      earn_when: traces Charles's unknown location
+bridge:
+- id: resolution_exposure_holds
+  kind: resolution
+  when:
+  - broadcast_started
+  - brandon_confession_available
+  - detention_locations_secured
+  commits:
+    truth_no_longer_containable: true
+  realized_by:
+  - sl_3c_a
+  fallback_text: Michelle's broadcast carries the evidence, detention locations, and Brandon's confession across the country. Charles can no longer contain the truth through one channel.
+- id: resolution_archive_and_rebecca
+  kind: resolution
+  when:
+  - truth_no_longer_containable
+  commits:
+    portable_archive_secured: true
+    archive_copies_distributed: true
+    rebecca_captured: true
+  realized_by:
+  - sl_3c_b
+  fallback_text: Kristin stops Rebecca from escaping with the portable data case. Michelle sends copies to independent networks, and the prisoners capture Rebecca.
+- id: resolution_escape
+  kind: resolution
+  when:
+  - truth_no_longer_containable
+  commits:
+    captives_reaching_surface: true
+    los_angeles_facility_lost: true
+  realized_by:
+  - sl_3c_c
+  - sl_3c_f
+  fallback_text: Michelle leads the captives through the maintenance tunnel. Kristin keeps the drainage pumps and one barrier working. Michelle uses the gate authorization, and the flooded Los Angeles facility is lost.
+  delivery_text: The captives have emerged into Los Angeles. News drones, civilians, and local responders begin arriving. Brandon’s voice comes through the emergency speakers. “Reports from other detention sites are reaching the broadcast chamber. Families of the missing are calling there for news.” Then his voice falls silent. Your barrier holds the way from the maintenance network to Rebecca's executive office open for now. The broadcast chamber remains reachable while the barrier holds.
+  claim:
+    claim_id: k_resolution_escape
+    says: Surviving captives reach the surface after the evacuation route opens.
+    entities:
+    - facility_escape
+    reach: []
+    relevance:
+      entity_ids: []
+      priority: 0
+    audience:
+      kind: world_only
+      character_ids: []
+      player_visible: false
+    voiceable: true
+    repeatable: false
+    commits_subset:
+      captives_reaching_surface: true
+- id: resolution_network_consequences
+  kind: resolution
+  when: &id001
+  - truth_no_longer_containable
+  - captives_reaching_surface
+  commits: &id002
+    national_network_fragmenting: true
+    community_rescue_efforts_begun: true
+    michelle_publishing_archive: true
+    kristin_joined_rescue_efforts: true
+    charles_at_large: true
+  realized_by: &id003
+  - sl_3c_d
+  - sl_3c_g
+  fallback_text: Detention sites surrender or release prisoners as the national network breaks apart. Communities begin rescue efforts. Michelle publishes the archive, Kristin joins the rescue work, and Charles escapes.
+  claim:
+    claim_id: k_resolution_michelle_publishing
+    says: Michelle has begun publishing the recovered archive.
+    entities:
+    - michelle
+    - janus_archive
+    reach: []
+    relevance:
+      entity_ids: []
+      priority: 0
+    audience:
+      kind: public
+      character_ids: []
+      player_visible: true
+    voiceable: true
+    repeatable: false
+    commits_subset:
+      michelle_publishing_archive: true
+- id: resolution_network_consequences_claim_k_resolution_charles_at_large
+  kind: resolution
+  when: *id001
+  commits: *id002
+  realized_by: *id003
+  fallback_text: Detention sites surrender or release prisoners as the national network breaks apart. Communities begin rescue efforts. Michelle publishes the archive, Kristin joins the rescue work, and Charles escapes.
+  claim:
+    claim_id: k_resolution_charles_at_large
+    says: Charles remains at large after the national network consequences land.
+    entities: []
+    reach: []
+    relevance:
+      entity_ids: []
+      priority: 0
+    audience:
+      kind: world_only
+      character_ids: []
+      player_visible: false
+    voiceable: true
+    repeatable: false
+    commits_subset:
+      charles_at_large: true
+- id: resolution_network_consequences_claim_k_resolution_kristin_rescue
+  kind: resolution
+  when: *id001
+  commits: *id002
+  realized_by: *id003
+  fallback_text: Detention sites surrender or release prisoners as the national network breaks apart. Communities begin rescue efforts. Michelle publishes the archive, Kristin joins the rescue work, and Charles escapes.
+  claim:
+    claim_id: k_resolution_kristin_rescue
+    says: Kristin has joined the wider rescue effort to find remaining detention sites.
+    entities:
+    - kristin
+    reach: []
+    relevance:
+      entity_ids: []
+      priority: 0
+    audience:
+      kind: public
+      character_ids: []
+      player_visible: true
+    voiceable: true
+    repeatable: false
+    commits_subset:
+      kristin_joined_rescue_efforts: true
+- id: resolution_phase_two
+  kind: resolution
+  when:
+  - national_network_fragmenting
+  - charles_at_large
+  commits:
+    phase_one_label_known: true
+    phase_two_conflict_plan_known: true
+  realized_by:
+  - sl_3c_e
+  fallback_text: A recovered JANUS file labels the operation Phase One and reveals that Phase Two was meant to provoke conflict among survivors.
+incidents:
+- id: i_3c_evacuation
+  reveal: sl_3c_c
+  outcomes:
+  - r1
+  - r2
+  recovery: sl_3c_h
+  missed_window: evacuation_window_3c
+  observed_by:
+  - k_sl_3c_c_r1
+  - k_sl_3c_c_r2
+  - k_evacuation_recovery_ready
+  - k_sl_3c_h_route_effects
+ending:
+  when:
+    evacuation_complete: true
+  text: Dawn finds Michelle alive and Kristin reunited with her. The captives are out. Brandon was last seen holding the relay, and no one knows what happened to him. Charles is still out there. Their old lives are gone.
+  additions:
+  - when:
+    - barrier_held
+    text: The lower levels stand, and every cart came through.
+  - when:
+    - lower_levels_lost
+    text: The lower levels went under. Everyone who reached the surface lived.
+  - when:
+    - surge_forced_evacuation
+    text: The surge, not a plan, carried the captives out. No one yet knows how many.
+  - when:
+    - archive_copies_distributed
+    - rebecca_captured
+    text: Copies are with independent networks. The prisoners hold Rebecca.
+  - when:
+    - brandon_name_kept
+    text: Brandon's confession stood beside the record.
+  - when:
+    - brandon_name_erased
+    text: Brandon's confession was the only proof.
+  - when:
+    - phase_two_conflict_plan_known
+    text: The recovered file labels the operation Phase One and shows Phase Two.
+  marker: The story ends here.

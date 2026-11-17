@@ -1,0 +1,706 @@
+schema: 1
+scene: 1C
+location: freight_terminal
+objective: Observe the transfer and choose what to secure
+freytag_phase: rising_action
+situation: The freight terminal has loading docks above a service level. The observation shaft overlooks the processing line. The service entrance is at the freight terminal.
+pressure: Observe the transfer and choose what to secure
+turns:
+  min: 8
+  nudge: 8
+  handoff: 11
+scripted_opening: false
+companions:
+- brandon
+participants:
+- kristin
+- brandon
+- michelle
+items:
+- transit_card
+- kristin_truck
+- service_entrance
+- prisoner_number_record
+- tire_tracks
+- air_vents
+- water_pallets
+- identification_numbers
+- overhead_speaker
+setting: []
+prop_pool: []
+entry: Michelle's lead brought Kristin and Brandon to the freight terminal. It was supposed to be abandoned. Fresh tire tracks crossed the loading docks. The air vents hummed. Brandon said, "Check the loading docks for signs of activity. The observation shaft gives us a view below. Let's find out what is happening before we try to get inside."
+entry_additions: []
+entry_claims:
+- claim_id: k_scene_1c_entry
+  says: The regional facility is the immediate, dangerous destination.
+  entities:
+  - kristin
+  - regional_facility
+  reach: []
+  relevance:
+    entity_ids: []
+    priority: 0
+  audience:
+    kind: public
+    character_ids: []
+    player_visible: true
+  voiceable: true
+  repeatable: false
+brief: '**Setting:** The freight terminal, its loading docks, and the observation shaft above the processing line
+
+
+  **Characters:**
+
+
+  * Kristin Schweitzer
+
+  * Brandon Corfman
+
+  **Plot:** Kristin and Brandon investigate an active freight terminal. Brandon points Kristin toward the observation shaft. Once she has studied the captives, he offers a choice: copy their numbers or ask him about the transfer route. If the transfer leaves first, he offers a riskier attempt through the service entrance.'
+outline:
+- id: 1C.1
+  anchor: scene-1c1--following-the-transport-route
+  title: Following the Transport Route
+  details:
+  - abandoned freight terminal
+  - structural modifications
+  - fresh tire tracks
+  - humming air vents
+  - heavy electrical service
+  - water pallets by the loading doors
+  - the park's emergency statement from below
+  prose: 'Michelle’s lead brings Kristin and Brandon to a supposedly abandoned freight terminal. Kristin recognizes that recent structural modifications conceal something larger below.
+
+
+    Fresh tire tracks, air vents, and unusually heavy electrical service confirm that the site remains active.
+
+
+    Pallets of bottled emergency water stand shrink-wrapped by the loading doors. If Kristin read the thermos in the park, the lot numbers match: the water in the park came from here. Under the hum of the vents a speaker below plays the same emergency statement as the park loudspeaker, word for word. Nothing here is proof yet. It ties the park to the terminal.
+
+
+    Brandon points Kristin toward the observation shaft. He asks her to study the people on the processing line before they try to enter.'
+- id: 1C.2
+  anchor: scene-1c2--proof-of-the-captives
+  title: Proof of the Captives
+  details:
+  - observation shaft
+  - sedated prisoners
+  - processing line
+  - identification numbers
+  - woman resembling Michelle
+  - service entrance
+  - Brandon at the top of the stairs with his back to the processing line, watching the door
+  prose: 'Through the observation shaft, Kristin can study the sedated prisoners moving along the processing line. Studying them confirms that they are alive. If she looks for Michelle, she spots someone in the line who looks like Michelle, but she can''t be sure. The woman goes around the corner out of sight before Kristin can be certain, and guards standing over the prisoners block her from investigating further. The transfer is still moving.
+
+
+    While Kristin studies the line, Brandon stays at the top of the stairs with his back to it. He watches the door. If she looks at him, he says only, "Somebody has to watch the door." He does not say what he knows about the line.
+
+
+    Brandon offers two ways to use the remaining time. Kristin can copy the prisoner numbers for stronger proof. She can instead ask him about the transfer route. His help gives them a service approach, but costs Kristin the chance to copy the full number set. There is time for one choice.
+
+
+    Copying the numbers produces the prisoner number record. Asking Brandon earns the service approach. Either choice gives them a reason to pull back and prepare their entry into the facility.
+
+
+    If the window closes first, the view down the observation shaft goes dark. Brandon offers to lead Kristin through the service entrance at greater risk. His offer does not open the entrance, establish the route, or move Kristin. Following him earns the service approach. Kristin loses the number set. The sweep closes in. They then withdraw to prepare their entry.
+
+
+    If Kristin still does not act, Brandon urges her to take the service entrance. If she waits three turns after the window closes, the sweep reaches the loading docks and Brandon pulls her out. They leave with no numbers and no route, and they must find another way in. The withdrawal grants no proof, copied numbers, route or trust.
+
+
+    The closure alone grants no proof, confirmed sighting, copied numbers, route, or decision to infiltrate. Michelle''s identity remains uncertain. Brandon says nothing about his past work or the wider conspiracy.'
+- id: 1C.3
+  anchor: scene-1c3--relocated
+  title: Relocated
+  details:
+  - transfer window
+  - empty processing line
+  - later-scene evidence
+  prose: 'Scenes 1C.3 and 1C.4 await relocation to a later scene. Candidate homes are 2C.1 and 3B.2.
+
+
+    # Scene 2 — The Infiltration
+
+
+    **Freytag Function:** Rising action, progressive complications, midpoint revelation, and crisis
+
+
+    **Central Plot:** Kristin and Brandon prepare to enter the facility, gather evidence, and locate Michelle. Their alliance is strained when Kristin discovers Brandon’s connection to the conspiracy.
+
+
+    **Primary Characters:**
+
+
+    * Kristin Schweitzer
+
+    * Brandon Corfman
+
+    * Charles Jenkins
+
+    * Rebecca Jenkins
+
+    * Dr. Michelle McGehee'
+facts:
+  facility_proof:
+    purpose: Kristin has confirmed that the supposedly abandoned terminal conceals an active underground detention facility.
+    delivery:
+      source_kind: observation
+      source_entity: kristin
+      fallback_text: Fresh tire tracks, humming air vents, and heavy electrical service prove that the supposedly abandoned terminal hides an active facility. The signs point to an underground complex beneath the loading docks.
+      cue_text: Brandon says, "Check the loading docks for signs of activity."
+  processing_numbers_copied:
+    purpose: Kristin copied the visible prisoner numbers from the processing line.
+    on_assert:
+    - move: prisoner_number_record
+      parent: kristin
+      text: with Kristin
+    - reveal: prisoner_number_record
+    delivery:
+      scene: 2A
+      source_kind: observation
+      source_entity: kristin
+      fallback_text: Kristin copies the prisoner numbers and matches them to missing-person records.
+  service_level_access_known:
+    purpose: Kristin and Brandon know a credible service-level route into the regional facility.
+    delivery:
+      scene: 2A
+      source_kind: npc
+      source_entity: brandon
+      fallback_text: Brandon explains the transfer route and opens the service entrance.
+  captives_confirmed_alive:
+    purpose: Kristin has directly confirmed living captives inside the regional facility.
+    delivery:
+      source_kind: observation
+      source_entity: kristin
+      fallback_text: From the observation shaft, Kristin sees sedated prisoners moving through the processing area. The captives are alive, even if the view is too brief to confirm whether Michelle is among them.
+      cue_text: Brandon says, "Study the people through the observation shaft."
+  transfer_window_missed:
+    purpose: The transfer window closed before Kristin resolved the incident.
+  brandon_urges_retreat:
+    purpose: Brandon urged Kristin to take the service entrance before the sweep closed in.
+  michelle_possible_sighting:
+    purpose: Kristin has an obscured, unconfirmed possible sighting of Michelle inside the facility.
+  evidence_gap_processing_numbers:
+    purpose: Kristin missed copying the full set of prisoner numbers from the processing line when time ran out.
+  facility_infiltration_needed:
+    purpose: Kristin and Brandon understand that direct rescue or observation is insufficient and that controlled deeper access to the facility is necessary.
+  dock_water_matched:
+    purpose: Kristin has matched the dock's water pallets to the lot number on the thermos from the park.
+    on_assert: []
+  brandon_watches_door:
+    purpose: Kristin has noticed Brandon watching the door and not the processing line.
+    on_assert: []
+  line_broadcast_heard:
+    purpose: Kristin has heard the park's emergency statement played over the processing line.
+    on_assert: []
+  terminal_sweep_closing:
+    purpose: The terminal sweep is reaching the upper level.
+placements:
+  kristin_truck:
+    parent: freight_terminal
+  service_entrance:
+    parent: freight_terminal
+  prisoner_number_record:
+    parent: processing_line
+  tire_tracks:
+    parent: loading_docks
+    text: crossing the loading docks
+  air_vents:
+    parent: loading_docks
+    text: humming along the dock wall
+  water_pallets:
+    parent: loading_docks
+    text: shrink-wrapped by the loading doors
+  identification_numbers:
+    parent: processing_line
+    text: inked on each forearm
+  overhead_speaker:
+    parent: processing_line
+    text: on a bracket above the line
+  captives:
+    parent: processing_line
+    text: moving through the processing line below
+beats:
+- id: transfer_window_1c
+  at_turn: 5
+  sets:
+    transfer_window_missed: true
+  say:
+  - text: The view down the observation shaft goes dark. Brandon says, "That chance is gone. We can still try the service entrance. Follow me through it if you want to try. We will have to risk the sweep."
+    verbatim: true
+- id: transfer_nudge_1c
+  at_turn: 6
+  sets:
+    brandon_urges_retreat: true
+  say:
+  - text: A siren sounds somewhere below. The sweep is coming closer. Brandon grabs Kristin's arm. "We are almost out of time," he says. "The service entrance is still open. Follow me through it, or we leave with nothing."
+    verbatim: true
+  when:
+    transfer_window_missed: true
+    facility_infiltration_needed: false
+- id: transfer_withdrawal_1c
+  at_turn: 8
+  sets:
+    facility_infiltration_needed: true
+  say:
+  - text: The sweep reaches the loading docks. Brandon pulls Kristin away from the observation shaft. "We are leaving. Now," he says. They slip out the way they came, with no numbers and no route. Brandon says, "We will have to find another way in."
+    verbatim: true
+  when:
+    transfer_window_missed: true
+    facility_infiltration_needed: false
+reveals:
+- id: sl_1c_a
+  storylet_id: SL-1C-A
+  title: The “Abandoned” Terminal Is Working Too Hard
+  guidance:
+    pressure_role: Use Kristin’s Army infrastructure and operations background to reward free-form inspection and turn hesitation into accumulating physical proof of an active hidden installation.
+    window:
+      earliest_turn: 0
+      target_turn: 2
+      latest_turn: 3
+    available_while:
+      transfer_window_missed: false
+    boundaries:
+    - janus_selection_system
+    - brandon_history
+    - janus_phase_two
+  from_outline:
+  - 1C.1
+  variants:
+    r1:
+      realization_id: SL-1C-A-R1
+      intent: Infer an active underground complex from power draw, ventilation, tire tracks, and recent structural work.
+      commits:
+        facility_proof: true
+      helps_exit:
+      - t_1c_2a
+      claim_id: k_sl_1c_a_r1
+      says: Kristin finds electrical load, fresh ventilation, and recent work that prove the abandoned terminal is still operating.
+      entities: []
+      reach: []
+      relevance:
+        entity_ids: []
+        priority: 0
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: false
+      repeatable: false
+      when:
+        transfer_window_missed: false
+      text: Kristin finds electrical load, fresh air from the vents, and signs of recent work. The freight terminal is still running. Brandon says, "Study the people through the observation shaft. We need to know what is happening on the processing line."
+      earn_when: inspects signs of activity at the loading docks
+- id: sl_1c_b
+  storylet_id: SL-1C-B
+  title: One Face in the Processing Line
+  guidance:
+    pressure_role: Show living captives when Kristin studies the processing line. Brandon offers a choice between copying their numbers and asking him about the transfer route.
+    window:
+      earliest_turn: 0
+      target_turn: 2
+      latest_turn: 3
+    available_while:
+      facility_proof: true
+      transfer_window_missed: false
+    boundaries:
+    - janus_selection_system
+    - brandon_history
+    - janus_phase_two
+  from_outline:
+  - 1C.2
+  variants:
+    r1:
+      realization_id: SL-1C-B-R1
+      intent: Confirm that the sedated prisoners are alive.
+      commits:
+        captives_confirmed_alive: true
+      helps_exit:
+      - t_1c_2a
+      claim_id: k_sl_1c_b_r1
+      says: From the processing area, Kristin matches sedated prisoners to missing-person records and knows they are alive.
+      entities: []
+      reach: []
+      relevance:
+        entity_ids: []
+        priority: 0
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: false
+      repeatable: false
+      when:
+        facility_proof: true
+        transfer_window_missed: false
+      text: Kristin studies the sedated prisoners through the observation shaft. They are alive. Brandon says, "Copy the prisoner numbers if you want stronger proof. Or ask me about the transfer route. I can help with the service entrance. That will cost us the chance to copy the full set of numbers. There is time for one choice before the transfer leaves."
+      earn_when: studies the prisoners and watches the shaft view
+    r2:
+      realization_id: SL-1C-B-R2
+      intent: Confirm the sedated captives are alive and catch an obscured possible glimpse of Michelle without converting uncertainty into confirmed location.
+      commits:
+        captives_confirmed_alive: true
+        michelle_possible_sighting: true
+      helps_exit:
+      - t_1c_2a
+      claim_id: k_sl_1c_b_r2
+      says: Kristin sees living captives in the processing line. She spots someone who looks like Michelle but cannot be sure.
+      entities: []
+      reach: []
+      relevance:
+        entity_ids: []
+        priority: 0
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: false
+      repeatable: false
+      when:
+        facility_proof: true
+        transfer_window_missed: false
+      text: Kristin watches the sedated captives in the processing line. They are alive. She spots someone in the line who looks like Michelle, but she can't be sure. The woman goes around the corner out of sight before Kristin can be certain, and guards standing over the prisoners block her from investigating further. The transfer is still moving. Brandon says, "Copy the prisoner numbers if you want stronger proof. Or ask me about the transfer route. I can help with the service entrance. That will cost us the chance to copy the full set of numbers. There is time for one choice before the transfer leaves."
+      earn_when: watches the processing line for Michelle
+- id: sl_1c_c
+  storylet_id: SL-1C-C
+  title: The Transfer Window
+  guidance:
+    pressure_role: Put the player under a moving transfer window and let a deliberate choice shape the next phase.
+    window:
+      earliest_turn: 0
+      target_turn: 3
+      latest_turn: 4
+    available_while:
+      facility_proof: true
+      captives_confirmed_alive: true
+    boundaries:
+    - janus_selection_system
+    - brandon_history
+    - janus_phase_two
+  from_outline:
+  - 1C.2
+  variants:
+    r1:
+      realization_id: SL-1C-C-R1
+      intent: Copy the visible prisoner numbers and match them to missing-person records.
+      commits:
+        processing_numbers_copied: true
+        facility_infiltration_needed: true
+      helps_exit:
+      - t_1c_2a
+      from_outline:
+      - 1C.2
+      outcome:
+        id: copy_numbers
+        advantages:
+        - processing_numbers_copied
+      claim_id: k_sl_1c_c_copy_numbers
+      says: Kristin copies the visible prisoner numbers and matches them to missing-person records.
+      entities:
+      - prisoner_number_record
+      reach: []
+      relevance:
+        entity_ids: []
+        priority: 0
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: false
+      repeatable: false
+      when:
+        facility_proof: true
+        captives_confirmed_alive: true
+      text: Kristin copies the visible prisoner numbers and matches them to missing-person records. Brandon says, "That gives us stronger proof. We still need a way inside."
+      earn_when: copies the prisoner numbers
+    r2:
+      realization_id: SL-1C-C-R2
+      intent: Ask Brandon about the transfer route or have him open the service entrance with the transit token.
+      commits:
+        service_level_access_known: true
+        evidence_gap_processing_numbers: true
+        facility_infiltration_needed: true
+        trust_brandon: true
+      helps_exit:
+      - t_1c_2a
+      from_outline:
+      - 1C.2
+      outcome:
+        id: secure_route
+        advantages:
+        - service_level_access_known
+        costs:
+        - evidence_gap_processing_numbers
+      claim_id: k_sl_1c_c_secure_route
+      says: Brandon explains the transfer route and opens the service entrance with the transit token.
+      entities: []
+      reach: []
+      relevance:
+        entity_ids:
+        - brandon
+        - service_entrance
+        priority: 0
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: true
+      repeatable: false
+      when:
+        facility_proof: true
+        captives_confirmed_alive: true
+      text: Brandon explains the transfer route and opens the service entrance with the transit token. Kristin loses the chance to copy the full set of prisoner numbers. Brandon says, "We have an approach. Now we need to prepare."
+      earn_when: asks Brandon about the transfer route or opens the service entrance with the transit token
+- id: sl_1c_d
+  storylet_id: SL-1C-D
+  title: The Sweep Closes In
+  guidance:
+    pressure_role: Let a missed transfer window create one last dangerous chance to enter through Brandon's route.
+    window:
+      earliest_turn: 0
+      target_turn: 6
+      latest_turn: 10
+    available_while:
+      transfer_window_missed: true
+    boundaries:
+    - janus_selection_system
+    - brandon_history
+    - janus_phase_two
+  from_outline:
+  - 1C.2
+  variants:
+    r1:
+      realization_id: SL-1C-D-R1
+      intent: Brandon leads Kristin through the service entrance while the sweep closes in.
+      commits:
+        service_level_access_known: true
+        evidence_gap_processing_numbers: true
+        facility_infiltration_needed: true
+        trust_brandon: true
+        terminal_sweep_closing: true
+      helps_exit:
+      - t_1c_2a
+      from_outline:
+      - 1C.2
+      claim_id: k_sl_1c_d_r1
+      says: Brandon leads Kristin through the service entrance while the sweep closes in.
+      entities: []
+      reach: []
+      relevance:
+        entity_ids:
+        - brandon
+        - service_entrance
+        priority: 0
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: true
+      repeatable: false
+      text: Brandon leads Kristin through the service entrance. He shows her the service approach. The full set of prisoner numbers is lost. The sweep closes in. Brandon says, "We have to pull back. We can prepare now that we know the approach."
+      earn_when: follows Brandon through the service entrance as the sweep closes in
+- id: sl_1c_e
+  storylet_id: SL-1C-E
+  title: Water at the Dock
+  guidance:
+    pressure_role: Tie the park's emergency water to the active terminal.
+    window:
+      earliest_turn: 0
+      target_turn: 2
+      latest_turn: 4
+    available_while:
+      transfer_window_missed: false
+      emergency_water_label_read: true
+    boundaries:
+    - janus_selection_system
+    - brandon_history
+    - janus_phase_two
+  from_outline:
+  - 1C.1
+  variants:
+    r1:
+      realization_id: SL-1C-E-R1
+      intent: Match the dock's water pallets to the lot number on the thermos from the park.
+      commits:
+        dock_water_matched: true
+      helps_exit: []
+      from_outline:
+      - 1C.1
+      claim_id: k_sl_1c_e_r1
+      says: Pallets of county emergency water stand by the loading doors.
+      entities:
+      - kristin
+      - water_pallets
+      reach:
+      - water_pallets
+      relevance:
+        entity_ids:
+        - water_pallets
+        priority: -1
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: false
+      repeatable: false
+      when:
+        transfer_window_missed: false
+        emergency_water_label_read: true
+      text: The pallets carry the county label on every bottle, and the lot number matches the one on the thermos in the park.
+      earn_when: inspects the water pallets, their bottles or their label
+- id: sl_1c_f
+  storylet_id: SL-1C-F
+  title: He Watches the Door
+  guidance:
+    pressure_role: Show Brandon keeping watch while Kristin studies the processing line.
+    window:
+      earliest_turn: 0
+      target_turn: 2
+      latest_turn: 4
+    available_while:
+      facility_proof: true
+      transfer_window_missed: false
+    boundaries:
+    - janus_selection_system
+    - brandon_history
+    - janus_phase_two
+  from_outline:
+  - 1C.2
+  variants:
+    r1:
+      realization_id: SL-1C-F-R1
+      intent: Notice Brandon watching the door instead of the processing line.
+      commits:
+        brandon_watches_door: true
+      helps_exit: []
+      from_outline:
+      - 1C.2
+      claim_id: k_sl_1c_f_r1
+      says: Brandon keeps his back to the processing line and watches the door.
+      entities:
+      - kristin
+      - brandon
+      reach:
+      - brandon
+      relevance:
+        entity_ids:
+        - brandon
+        priority: -1
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: false
+      repeatable: false
+      when:
+        facility_proof: true
+        transfer_window_missed: false
+      text: Brandon says only, "Somebody has to watch the door."
+      earn_when: watches Brandon while the shaft view is open
+- id: sl_1c_g
+  storylet_id: SL-1C-G
+  title: The Same Statement
+  guidance:
+    pressure_role: Connect the terminal's broadcast to the park's emergency statement.
+    window:
+      earliest_turn: 0
+      target_turn: 2
+      latest_turn: 4
+    available_while:
+      transfer_window_missed: false
+    boundaries:
+    - janus_selection_system
+    - brandon_history
+    - janus_phase_two
+  from_outline:
+  - 1C.1
+  variants:
+    r1:
+      realization_id: SL-1C-G-R1
+      intent: Hear the park's emergency statement played over the processing line.
+      commits:
+        line_broadcast_heard: true
+      helps_exit: []
+      from_outline:
+      - 1C.1
+      claim_id: k_sl_1c_g_r1
+      says: A speaker below plays the park's emergency statement.
+      entities:
+      - kristin
+      - overhead_speaker
+      - air_vents
+      reach:
+      - overhead_speaker
+      - air_vents
+      relevance:
+        entity_ids:
+        - overhead_speaker
+        - air_vents
+        priority: -1
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: false
+      repeatable: false
+      when:
+        transfer_window_missed: false
+      text: Under the hum of the vents, a speaker below plays the emergency statement from the park, word for word. Nobody on the line looks up at it.
+      earn_when: listens to the air vents, the speaker or the sound from below
+bridge:
+- id: bridge_1c_infiltration_needed
+  kind: bridge
+  when:
+  - facility_proof
+  - captives_confirmed_alive
+  commits:
+    facility_infiltration_needed: true
+  realized_by:
+  - sl_1c_a
+  - sl_1c_b
+  - sl_1c_c
+  when_any:
+  - processing_numbers_copied
+  - service_level_access_known
+  at_least: 1
+  claim:
+    claim_id: k_bridge_1c_infiltration
+    says: Direct observation is no longer enough; the facility must be entered.
+    entities:
+    - kristin
+    - brandon
+    - regional_facility
+    reach: []
+    relevance:
+      entity_ids: []
+      priority: 0
+    audience:
+      kind: public
+      character_ids: []
+      player_visible: true
+    voiceable: true
+    repeatable: false
+    commits_subset:
+      facility_infiltration_needed: true
+incidents:
+- id: i_1c_freight_transfer
+  reveal: sl_1c_c
+  outcomes:
+  - r1
+  - r2
+  recovery: sl_1c_d
+  missed_window: transfer_window_1c
+  observed_by:
+  - k_sl_1c_b_r1
+  - k_sl_1c_b_r2
+  - k_sl_1c_c_copy_numbers
+  - k_sl_1c_c_secure_route
+  successor: t_1c_2a
+exit:
+  id: t_1c_2a
+  to: 2A
+  priority: 10
+  when_all:
+  - facility_infiltration_needed
+  needs: []
+  bridge: Kristin and Brandon withdraw from the terminal to prepare a way inside.

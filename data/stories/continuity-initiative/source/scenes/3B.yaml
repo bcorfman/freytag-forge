@@ -1,0 +1,592 @@
+schema: 1
+scene: 3B
+location: broadcast_relay
+objective: Reach the broadcast controls
+freytag_phase: climax
+situation: JANUS is tracking Kristin's moves.
+pressure: Reach the broadcast controls
+turns:
+  min: 9
+  nudge: 10
+  handoff: 14
+scripted_opening: false
+companions:
+- brandon
+- michelle
+participants:
+- kristin
+- michelle
+- brandon
+- rebecca
+- charles
+items:
+- copied_janus_files
+- rebecca_desk
+- inspection_console
+- emergency_surface_gates
+setting: []
+prop_pool: []
+entry: 'Alarms layered over alarms as the facility fought to predict its attackers. Water-pressure warnings flashed on the inspection console while doors opened and closed in empty service corridors that JANUS watched move by move.
+
+
+  '
+entry_additions:
+- when:
+  - brandon_name_erased
+  text: Brandon had deleted his name from the build record in the archive. Now only his own word could show what he had built, and he knew it.
+- when:
+  - evidence_not_transmitted
+  text: The evidence had never been sent. It was still with Kristin, and the broadcast was the first chance to get it out.
+entry_claims:
+- claim_id: k_scene_3b_entry
+  says: JANUS is tracking Kristin's group through the security corridors.
+  entities:
+  - kristin
+  - security_corridors
+  reach: []
+  relevance:
+    entity_ids: []
+    priority: 0
+  audience:
+    kind: public
+    character_ids: []
+    player_visible: true
+  voiceable: true
+  repeatable: false
+brief: '**Setting:** Security corridors, command center, and Rebecca Jenkins’s executive office
+
+
+  **Characters:**
+
+
+  * Kristin Schweitzer
+
+  * Dr. Michelle McGehee
+
+  * Brandon Corfman
+
+  * Rebecca Jenkins
+
+  * Charles Jenkins
+
+
+  **Plot:** The protagonists attempt to transmit the evidence while Charles and Rebecca turn against one another.'
+outline:
+- id: 3B.1
+  anchor: scene-3b1--the-facility-fights-back
+  title: The Facility Fights Back
+  details:
+  - JANUS movement predictions
+  - security corridors
+  - cameras
+  - doors
+  - limited inspection console
+  prose: 'JANUS begins predicting the resistance group’s movements by analyzing doors opened, cameras disabled, and power systems disrupted.
+
+
+    Kristin realizes the only way to defeat the system is to feed it a convincing lie. Using the inspection console she accessed under the false cover, she creates false water-pressure and ventilation alarms in empty outer service corridors, then cycles unused doors and lights to support the deception. She does not damage the detention levels or the escape path.
+
+
+    These actions overload JANUS with conflicting emergencies and force human operators to take control. Rebecca’s executive office waits beyond the security corridors.'
+- id: 3B.2
+  anchor: scene-3b2--rebeccas-office
+  title: Rebecca’s Office
+  details:
+  - Rebecca’s office
+  - security forces
+  - false emergency reports
+  - approved experiments
+  - detention site locations
+  prose: 'Kristin and Michelle enter Rebecca’s office while Brandon holds off security forces.
+
+
+    Rebecca claims that she never supported Charles’s plan to kill the captives. She argues that surrendering to her is the only way to regain control before the false emergency exposes the breach.
+
+
+    Michelle reveals that Rebecca personally approved the experiments and selected which prisoners would be used.
+
+
+    Rebecca attempts to bargain by offering the locations of every detention site. Rebecca’s experiment approvals lie near the marked site list. The executive screen carries a remote channel marked Charles.'
+- id: 3B.3
+  anchor: scene-3b3--charless-betrayal
+  title: Charles’s Betrayal
+  details:
+  - Charles appears
+  - locked office
+  - national network
+  - emergency deluge
+  - anti-government terrorists
+  - remote command site
+  prose: 'Charles appears remotely and locks down Rebecca’s office. He reveals that he has already transferred control of the national network away from her.
+
+
+    He has already transferred national control away from Los Angeles. He intends to drown the local witnesses, captives, Rebecca, and infiltrators, then blame the catastrophe on anti-government terrorists who sabotaged the water system.
+
+
+    He turns Kristin''s false emergency into a real one, opening the emergency deluge into the outer access level and sealing the public exits. Water begins to force its way toward the command and detention routes.
+
+
+    Rebecca finally understands that Charles always considered her expendable.'
+- id: 3B.4
+  anchor: scene-3b4--brandons-sacrifice
+  title: Brandon’s Sacrifice
+  details:
+  - broadcast system
+  - communications relay
+  - relay chamber
+  - security lockdown
+  - JANUS confession
+  - manual bypass
+  prose: 'The broadcast system cannot operate while Charles controls the external communications relay. Brandon reaches the relay chamber and manually disconnects it from JANUS.
+
+
+    Doing so leaves him isolated in a relay chamber that security can lock down and flood once Charles understands what he has done.
+
+
+    Before completing the override, Brandon transmits a confession describing his role in creating JANUS. His statement authenticates Michelle’s evidence and prevents Charles from dismissing it as fabricated.
+
+
+    Kristin''s choice in 2B shapes this moment. If she refused to let him erase his name, the build record already proves his role, and his confession confirms it; he tells her she was right not to let him hide. If she let him erase it, his confession is the only proof of his role, and he tells her he is giving back what she let him take.
+
+
+    Brandon remains behind to keep the relay open while Kristin and Michelle begin the broadcast. Brandon waits beside the broadcast controls.'
+facts:
+  relay_open:
+    purpose: Brandon has manually disconnected the external communications relay from JANUS so the emergency broadcast can proceed.
+    on_assert:
+    - move: brandon
+      parent: broadcast_relay
+    delivery:
+      source_kind: observation
+      source_entity: brandon
+      fallback_text: Brandon reaches the external communications relay and disconnects it from JANUS. Brandon holds the relay open so the broadcast connection can carry Michelle's evidence.
+      cue_text: The relay chamber lies beyond the broadcast controls. Its access panel shows fresh tool marks.
+  broadcast_started:
+    purpose: Kristin and Michelle have begun transmitting evidence of the detention network through the opened emergency broadcast system.
+  human_security_control:
+    purpose: JANUS can no longer reliably predict the group’s route and human operators have taken direct control.
+    delivery:
+      source_kind: observation
+      source_entity: kristin
+      fallback_text: Kristin overloads JANUS with conflicting emergencies until human operators take control. Human security control replaces the system's predictions in the corridors.
+      cue_text: The cameras track Kristin move by move. The inspection console can send false water-pressure alarms into empty service corridors.
+  rebecca_office_reached:
+    purpose: Kristin and Michelle have reached Rebecca’s office.
+    on_assert:
+    - move: kristin
+      parent: executive_office
+    - move: brandon
+      parent: security_corridors
+  detention_locations_offer_known:
+    purpose: Rebecca has offered detention-site location information as leverage.
+  charles_abandoned_rebecca:
+    purpose: Charles has stripped Rebecca of local control and treated her as expendable.
+    delivery:
+      source_kind: message
+      source_entity: rebecca
+      fallback_text: Charles locks down Rebecca's office and abandons Rebecca while he transfers control of the national network. Rebecca finally understands that she was expendable to him.
+      cue_text: The executive screen still carries a remote channel marked Charles. Security doors are sealing around the room.
+  brandon_confession_available:
+    purpose: Brandon’s confession authenticating his JANUS role is available for the broadcast.
+    delivery:
+      source_kind: message
+      source_entity: brandon
+      fallback_text: Brandon transmits a confession before security can lock down the relay chamber. He admits his role in creating JANUS, and the statement helps authenticate Michelle's evidence.
+      cue_text: A voice channel marked Brandon is queued beside the broadcast controls.
+  evidence_gap_marked_site_list:
+    purpose: Kristin missed copying Rebecca's marked site list when time ran out.
+  detention_locations_secured:
+    purpose: The protagonists have secured exact detention-site location information for the national broadcast without treating Rebecca’s claims as trusted merely because she offered them.
+    delivery:
+      source_kind: message
+      source_entity: rebecca
+      fallback_text: Rebecca offers the locations of every detention site in exchange for a chance to save herself. Her location data gives Kristin and Michelle the detention locations they need for the broadcast. Time runs out before Kristin can copy Rebecca's marked site list.
+      cue_text: A marked site list lies beside Rebecca's national network controls.
+      costs:
+        evidence_gap_marked_site_list: true
+  facility_destruction_threat:
+    purpose: Charles has turned Kristin's false water emergency into a real deluge, making escape urgent.
+  rebecca_experiment_approval_confronted:
+    purpose: Rebecca's personal approval of the experiments has been confronted before her capture.
+  relay_power_failing:
+    purpose: The relay's power path is failing under Charles's countermeasures, shortening the time available to begin the broadcast.
+placements:
+  copied_janus_files:
+    parent: kristin
+  rebecca_desk:
+    parent: executive_office
+  inspection_console:
+    parent: infrastructure_corridors
+  emergency_surface_gates:
+    parent: facility_escape
+  kristin:
+    parent: security_corridors
+  rebecca:
+    parent: executive_office
+beats:
+- id: destruction_3b
+  at_turn: 9
+  sets:
+    facility_destruction_threat: true
+  say:
+  - text: Charles has opened the emergency deluge in the outer access level. Water is spreading toward the command routes.
+    verbatim: false
+  when:
+    charles_abandoned_rebecca: true
+- id: relay_power_3b
+  at_turn: 9
+  sets:
+    relay_power_failing: true
+  say:
+  - text: Charles's countermeasures make the relay lights flicker. The open connection will not hold much longer.
+    verbatim: false
+reveals:
+- id: sl_3b_a
+  storylet_id: SL-3B-A
+  title: Give JANUS Too Many Emergencies
+  guidance:
+    pressure_role: When predictive security blocks obvious routes, reward Kristin for feeding it harmless but convincing utility alarms; failed attempts can worsen local pressure without prescribing a single puzzle answer.
+    window:
+      earliest_turn: 0
+      target_turn: 3
+      latest_turn: 4
+    available_while: {}
+    boundaries:
+    - janus_phase_two
+  from_outline:
+  - 3B.1
+  variants:
+    r1:
+      realization_id: SL-3B-A-R1
+      intent: Feed JANUS false water-pressure and ventilation readings in empty service corridors until humans must take control.
+      commits:
+        human_security_control: true
+      helps_exit: []
+      claim_id: k_sl_3b_a_r1
+      says: Kristin feeds JANUS false water-pressure and ventilation alarms in empty service corridors until human operators must take control.
+      entities: []
+      reach: []
+      relevance:
+        entity_ids: []
+        priority: 0
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: true
+      repeatable: false
+      text: Kristin feeds JANUS false alarms. Human operators take control. Rebecca's executive office waits beyond the security corridors.
+      earn_when: feeds JANUS false alarms, uses the inspection console, or traces, follows, or inspects water-pressure warnings
+    r2:
+      realization_id: SL-3B-A-R2
+      intent: Pair deliberately irrational movement with harmless door and light cycles to reach the same human-control threshold.
+      commits:
+        human_security_control: true
+      helps_exit: []
+      claim_id: k_sl_3b_a_r2
+      says: By making the facility’s emergencies impossible to predict, Kristin forces security to abandon JANUS’s guidance.
+      entities: []
+      reach: []
+      relevance:
+        entity_ids: []
+        priority: 0
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: true
+      repeatable: false
+      text: Kristin makes the emergencies impossible to predict. Security leaves JANUS's guidance. Rebecca's executive office waits beyond the security corridors.
+      earn_when: makes JANUS guidance useless
+- id: sl_3b_e
+  storylet_id: SL-3B-E
+  title: Reach Rebecca’s Office
+  guidance:
+    pressure_role: If the player stalls in the corridors, bring Kristin and Michelle into Rebecca’s office while Brandon holds off security forces.
+    window:
+      earliest_turn: 0
+      target_turn: 5
+      latest_turn: 6
+    available_while:
+      human_security_control: true
+    boundaries:
+    - janus_phase_two
+  from_outline:
+  - 3B.2
+  variants:
+    r1:
+      realization_id: SL-3B-E-R1
+      intent: Kristin and Michelle enter Rebecca’s office while Brandon holds off security forces.
+      commits:
+        rebecca_office_reached: true
+      helps_exit: []
+      claim_id: k_sl_3b_e_r1
+      says: Kristin and Michelle are in the executive office. Brandon stays in the security corridors and holds off the security forces.
+      entities: []
+      reach: []
+      relevance:
+        entity_ids: []
+        priority: 0
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: true
+      repeatable: false
+      when:
+        human_security_control: true
+      text: Kristin and Michelle enter the executive office. Brandon stays behind in the corridors and holds off the security forces. Rebecca's experiment approvals lie near the marked site list.
+      earn_when: enters, reaches, goes or proceeds to, or makes their way to the executive office
+- id: sl_3b_b
+  storylet_id: SL-3B-B
+  title: Rebecca Bargains With the Only Thing She Still Has
+  guidance:
+    pressure_role: If the player stalls in Rebecca’s office, force the confrontation and her bargain into the open before Charles makes the facility emergency real.
+    window:
+      earliest_turn: 0
+      target_turn: 7
+      latest_turn: 8
+    available_while:
+      human_security_control: true
+      rebecca_office_reached: true
+    boundaries:
+    - janus_phase_two
+  from_outline:
+  - 3B.2
+  variants:
+    r1:
+      realization_id: SL-3B-B-R1
+      intent: Michelle confronts Rebecca with experiment approvals; Rebecca yields exact detention-site locations as leverage, leaving the group to decide whether her information is usable.
+      commits:
+        rebecca_experiment_approval_confronted: true
+        detention_locations_offer_known: true
+        detention_locations_secured: true
+      helps_exit: []
+      claim_id: k_sl_3b_b_r1
+      says: Michelle confronts Rebecca with the experiment approvals, and Rebecca offers every detention-site location as leverage.
+      entities: []
+      reach: []
+      relevance:
+        entity_ids: []
+        priority: 0
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: true
+      repeatable: false
+      when:
+        human_security_control: true
+        rebecca_office_reached: true
+      text: Michelle confronts Rebecca with the experiment approvals. Rebecca offers the detention-site locations as leverage. The executive screen carries a remote channel marked Charles.
+      earn_when: confronts Rebecca with approvals
+    r2:
+      realization_id: SL-3B-B-R2
+      intent: Rebecca tries to bargain before the confrontation is complete, offering the national detention-site locations; Michelle secures them without treating Rebecca as trustworthy.
+      commits:
+        detention_locations_offer_known: true
+        detention_locations_secured: true
+      helps_exit: []
+      claim_id: k_sl_3b_b_r2
+      says: Rebecca offers the detention-site locations before the confrontation is complete, and Michelle secures them without treating Rebecca as trustworthy.
+      entities: []
+      reach: []
+      relevance:
+        entity_ids: []
+        priority: 0
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: true
+      repeatable: false
+      when:
+        human_security_control: true
+        rebecca_office_reached: true
+      text: Rebecca offers the detention-site locations. Michelle secures them without trusting Rebecca. The executive screen carries a remote channel marked Charles.
+      earn_when: examines, inspects, reads, checks, studies, or secures the marked site list
+- id: sl_3b_d
+  storylet_id: SL-3B-D
+  title: Charles Makes the Deluge Real
+  guidance:
+    pressure_role: Give the group a beat to absorb Rebecca's exposure before Charles answers it by sacrificing the local facility and her with it.
+    window:
+      earliest_turn: 0
+      target_turn: 9
+      latest_turn: 10
+    available_while:
+      human_security_control: true
+      detention_locations_secured: true
+    boundaries:
+    - janus_phase_two
+  from_outline:
+  - 3B.3
+  variants:
+    r1:
+      realization_id: SL-3B-D-R1
+      intent: Charles locks down Rebecca's office, abandons her, and turns the harmless water emergency into a real deluge through the outer access level.
+      commits:
+        charles_abandoned_rebecca: true
+        facility_destruction_threat: true
+      helps_exit: []
+      claim_id: k_sl_3b_d_r1
+      says: Charles locks down Rebecca's office, abandons her, and turns the harmless water emergency into a real deluge through the outer access level.
+      entities: []
+      reach: []
+      relevance:
+        entity_ids: []
+        priority: 0
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: true
+      repeatable: false
+      when:
+        human_security_control: true
+        detention_locations_secured: true
+      text: Charles locks down Rebecca's office. He turns the harmless water emergency into a real deluge through the outer access level.
+      earn_when: accesses, examines, inspects, reads, or checks Charles's remote channel or executive screen and learns he abandons Rebecca
+    r2:
+      realization_id: SL-3B-D-R2
+      intent: A remote order proves Charles has chosen to flood the access level rather than lose control of the evidence, leaving Rebecca trapped with the people she endangered.
+      commits:
+        charles_abandoned_rebecca: true
+        facility_destruction_threat: true
+      helps_exit: []
+      claim_id: k_sl_3b_d_r2
+      says: A remote order shows Charles has chosen to flood the outer access level rather than lose control of the evidence, trapping Rebecca with the people she endangered.
+      entities: []
+      reach: []
+      relevance:
+        entity_ids: []
+        priority: 0
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: true
+      repeatable: false
+      when:
+        human_security_control: true
+        detention_locations_secured: true
+      text: Charles orders the outer access level flooded rather than lose control of the evidence. This traps Rebecca with the people she endangered.
+      earn_when: finds Charles's flood order
+- id: sl_3b_c
+  storylet_id: SL-3B-C
+  title: Brandon Holds the Relay Open
+  guidance:
+    pressure_role: When the broadcast is otherwise ready, make the relay the concrete final bottleneck; Brandon’s accountability and danger create climax pressure without scripting Kristin’s response.
+    window:
+      earliest_turn: 0
+      target_turn: 11
+      latest_turn: 12
+    available_while:
+      human_security_control: true
+      charles_abandoned_rebecca: true
+      detention_locations_secured: true
+    boundaries:
+    - janus_phase_two
+  from_outline:
+  - 3B.4
+  variants:
+    r1:
+      realization_id: SL-3B-C-R1
+      intent: Brandon disconnects the external relay from JANUS and holds it open; Michelle and Kristin use the opening to activate the national transmission.
+      commits:
+        relay_open: true
+        brandon_confession_available: true
+      helps_exit:
+      - t_3b_3c
+      claim_id: k_sl_3b_c_r1
+      says: Brandon disconnects the external relay from JANUS and sends a confession that authenticates Michelle’s evidence.
+      entities: []
+      reach: []
+      relevance:
+        entity_ids: []
+        priority: 0
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: true
+      repeatable: false
+      when:
+        human_security_control: true
+        charles_abandoned_rebecca: true
+        detention_locations_secured: true
+      text: Brandon disconnects the external relay from JANUS. He sends a confession that authenticates Michelle's evidence.
+      earn_when: accesses, opens, activates, or uses Brandon's voice channel to have Brandon send a confession
+    r2:
+      realization_id: SL-3B-C-R2
+      intent: Brandon opens the relay and transmits his confession as authentication; Michelle and Kristin immediately begin the broadcast while he keeps the path open.
+      commits:
+        relay_open: true
+        brandon_confession_available: true
+      helps_exit:
+      - t_3b_3c
+      claim_id: k_sl_3b_c_r2
+      says: Brandon holds the relay open against the security lockdown so Kristin and Michelle can begin the broadcast.
+      entities: []
+      reach: []
+      relevance:
+        entity_ids: []
+        priority: 0
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: true
+      repeatable: false
+      when:
+        human_security_control: true
+        charles_abandoned_rebecca: true
+        detention_locations_secured: true
+      text: Brandon holds the relay open against the security lockdown. Kristin and Michelle can begin the broadcast.
+      earn_when: begins the public broadcast
+bridge:
+- id: bridge_3b_broadcast
+  kind: bridge
+  when:
+  - relay_open
+  - brandon_confession_available
+  - detention_locations_secured
+  commits:
+    broadcast_started: true
+  realized_by:
+  - sl_3b_a
+  - sl_3b_b
+  - sl_3b_d
+  - sl_3b_c
+  when_any:
+  - human_security_control
+  - charles_abandoned_rebecca
+  at_least: 1
+  claim:
+    claim_id: k_bridge_3b_broadcast
+    says: The national broadcast has begun.
+    entities:
+    - kristin
+    - michelle
+    - broadcast_relay
+    reach: []
+    relevance:
+      entity_ids: []
+      priority: 0
+    audience:
+      kind: public
+      character_ids: []
+      player_visible: true
+    voiceable: true
+    repeatable: false
+    commits_subset:
+      broadcast_started: true
+incidents: []
+exit:
+  id: t_3b_3c
+  to: 3C
+  priority: 10
+  when_all:
+  - broadcast_started
+  needs: []
+  bridge: Brandon disconnected the relay from JANUS and held it open while Kristin and Michelle began the broadcast. The evidence was moving beyond Charles's control as water rose through the outer access level.

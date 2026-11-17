@@ -1,0 +1,788 @@
+schema: 1
+scene: 2A
+location: facility_perimeter
+objective: Get inside by proving the cooling system is failing
+freytag_phase: rising_action
+situation: The facility gate at night. A shift supervisor has come out to meet two unscheduled inspectors. The facility's strained cooling-water and ventilation systems are the only pretext for the visit, and the fault is real.
+pressure: Prove the cooling system is failing to get inside
+turns:
+  min: 7
+  nudge: 8
+  handoff: 11
+scripted_opening: false
+companions:
+- brandon
+participants:
+- kristin
+- brandon
+- shift_supervisor
+items:
+- transit_card
+- hideout_servers
+- inspection_console
+- facility_gate
+- cooling_manifold
+- cooling_service_archive_panel
+- inspector_badges
+- alarm_log
+- return_line
+- security_camera
+setting:
+- The cooling-service archive panel has a slotted face.
+- The cooling-service archive panel leads directly from the infrastructure corridors into the records archive.
+- The cooling-service archive panel opens with a push.
+- The cooling-service archive panel has no lock.
+- The cooling-service archive panel has no keypad.
+- The cooling-service archive panel has no screen.
+- Using the cooling-service archive panel requires no further credentials.
+prop_pool: []
+entry: 'One night in Brandon''s hideout had turned years of leaked Continuity Initiative documents into two inspector badges and a work order for a cooling-water fault. Now the badges had to work. Kristin and Brandon stood at the facility gate while a shift supervisor walked out to meet them, reading the work order with a frown. "Nobody scheduled you," he said. "If there is a fault, show me. The cooling manifold is just inside the gate. Put your hands on the lines, read the gauge, trace the vent, and tell me exactly what is failing." Brandon murmured, "This is your field, Kristin. Be precise."
+
+
+  '
+entry_additions:
+- when:
+  - processing_numbers_copied
+  text: Kristin still has the copied prisoner numbers. The codes on the supervisor's work orders look like the same system.
+- when:
+  - service_level_access_known
+  text: Brandon knows the service approach. If they get past this man, he can take them around the second checkpoint.
+entry_claims:
+- claim_id: k_scene_2a_entry
+  says: Kristin and Brandon are at the facility gate and must prove the cooling system is failing to get inside.
+  entities:
+  - kristin
+  - regional_facility
+  reach: []
+  relevance:
+    entity_ids: []
+    priority: 0
+  audience:
+    kind: public
+    character_ids: []
+    player_visible: true
+  voiceable: true
+  repeatable: false
+brief: '**Setting:** The facility gate, its cooling manifold, and the infrastructure corridors beyond
+
+
+  **Characters:**
+
+
+  * Kristin Schweitzer
+
+  * Brandon Corfman
+
+  * The shift supervisor
+
+
+  **Plot:** Kristin and Brandon arrive at the facility as outside cooling-water inspectors. A doubtful shift supervisor will not accept their paperwork and makes Kristin prove the fault. The fault is real. Kristin''s Army infrastructure experience, not the forged credentials, gets them inside. Unknown to them, a camera has already marked Brandon.'
+outline:
+- id: 2A.1
+  anchor: scene-2a1--brandons-hideout
+  title: Brandon’s Hideout
+  details:
+  - abandoned communications center
+  - leaked documents
+  - inspector badges
+  - forged work order
+  - one night
+  prose: 'The scene does not play in the hideout. Brandon''s hideout sits inside an abandoned communications center, full of servers, salvaged hardware and years of leaked Continuity Initiative documents. He was preparing for this long before the disappearances, after he tried to expose the program and was dismissed as unstable. In one night there, he and Kristin built two inspector badges and a work order for a cooling-water fault.
+
+
+    The hideout is backstory Kristin can ask Brandon about. It is not a place the player must work through.'
+- id: 2A.2
+  anchor: scene-2a2--the-infiltration-plan
+  title: The Infiltration Plan
+  details:
+  - facility gate
+  - shift supervisor
+  - unscheduled inspection
+  - cooling-water readings
+  - ventilation readings
+  - inspector badges
+  - alarm log
+  prose: 'The scene opens at the facility gate. The facility''s cooling-water and ventilation readings have been unstable for weeks, which is why an outside inspection is believable. The plan is simple: get past the gate, reach the infrastructure corridors, and find the records.
+
+
+    A shift supervisor comes out to meet them. He has no record of the inspection and does not trust paperwork he did not ask for. He is the person in the way.
+
+
+    The badges are good work. If Kristin asks how they got them right in one night, Brandon says, "The readers only check three things. I know which three." He says it too easily, and he does not say how he knows.
+
+
+    The supervisor carries a tablet with the alarm log. If Kristin reads it, the cooling alarm has fired forty times in three weeks, and every one was closed from upstairs as a sensor fault. None carries his name. He reset the gauge himself each time, and each time the pressure came back down. That is why he is angry, and why he wants proof and not paperwork.'
+- id: 2A.3
+  anchor: scene-2a3--entering-the-facility
+  title: Entering the Facility
+  details:
+  - cooling manifold
+  - real fault
+  - Kristin's expertise
+  - supervisor's test
+  - pumps and the heavy door
+  - infrastructure corridors
+  - inspection console
+  prose: 'The supervisor will not argue at the gate. He walks them to the cooling manifold and says, "Show me."
+
+
+    The fault is real. A pressure problem in the cooling water is getting worse, and the ventilation is masking it. Kristin finds it the way she would have in the Army, by feel, by gauge and by tracing the lines, and she explains in her own words what will fail if nobody fixes it. The supervisor has been blamed for alarms he could not explain. Hearing the real cause changes his manner.
+
+
+    The return line carries water back from the corridors into the manifold. Tracing it upstream shows where it comes from. It shares its feed with the pumps that keep the lower levels dry, and a heavy door across the corridor beyond holds water back. If the pressure fails, the pumps lose power first. This is a fact about the building and not a plan. Nothing here lets her touch either one.
+
+
+    If Kristin has the copied prisoner numbers, she recognizes the processing-line codes on his work orders. If she knows the service approach, Brandon steers them around the second checkpoint, and the supervisor notices the shortcut.
+
+
+    A convincing explanation earns them restricted access to the infrastructure corridors. A vague or overlong one still gets them in, but the supervisor logs them for a follow-up audit and keeps an eye on them. If Kristin stalls, his patience runs out and he escorts them in himself, to watch. Every path reaches the corridors.
+
+
+    The corridor inspection console accepts their temporary credentials long enough to show water-pressure, ventilation, door and lighting diagnostics. Kristin notes its limits before they move on: it can report faults and cycle noncritical systems, but it cannot open detention cells or change the main flood controls.'
+- id: 2A.4
+  anchor: scene-2a4--the-first-complication
+  title: The First Complication
+  details:
+  - security camera
+  - facial recognition
+  - former developer
+  - quiet alert
+  - Rebecca Jenkins
+  prose: 'While Kristin works the manifold, a security camera turns toward Brandon and stays on him. The narration may show the camera. Neither Kristin nor Brandon remarks on it.
+
+
+    If Kristin looks at the camera, she sees only that it has turned and stays on Brandon. Brandon does not look up. She learns nothing she can use from it.
+
+
+    Facial recognition has identified Brandon as a former Continuity Initiative developer and contractor. Instead of raising a general alarm, the system quietly alerts Rebecca Jenkins. Rebecca orders security to watch Brandon rather than arrest him. She wants to know why he has returned and whom he has brought.
+
+
+    Kristin and Brandon do not know their infiltration has been compromised.'
+facts:
+  manifold_fault_found:
+    purpose: Kristin has found the cooling-water pressure fault at the manifold.
+  badge_craft_noted:
+    purpose: Kristin has noticed how easily Brandon knows what the badge readers check.
+    on_assert: []
+  alarm_log_read:
+    purpose: Kristin has read the cooling alarm log on the supervisor's tablet.
+    on_assert: []
+  return_line_traced:
+    purpose: Kristin has traced the return line to the pumps and the heavy door.
+    on_assert: []
+  camera_on_brandon_seen:
+    purpose: Kristin has seen the security camera turn and stay on Brandon.
+    on_assert: []
+  restricted_corridor_access:
+    purpose: Kristin and Brandon have access to restricted infrastructure corridors and the limited diagnostic console assigned to the inspection cover.
+    delivery:
+      source_kind: npc
+      source_entity: shift_supervisor
+      fallback_text: The shift supervisor walks Kristin and Brandon to the cooling manifold. The real cooling-water pressure fault is present. The cooling-water pressure fault is real. A ventilation fault is present. He grants them access to the restricted infrastructure corridors.
+  rebecca_observing_infiltrators:
+    purpose: Rebecca has quietly ordered the infiltrators observed; this fact is not automatically known to Kristin.
+    delivery:
+      source_kind: inference
+      fallback_text: A camera keeps watching Brandon while the shift supervisor keeps the inspection team under scrutiny.
+  cover_suspected:
+    purpose: The doubtful inspection has put Kristin and Brandon under closer watch for the archive audit.
+    delivery:
+      source_kind: npc
+      source_entity: shift_supervisor
+      fallback_text: The shift supervisor logs them for a follow-up audit. He lets them enter under closer watch.
+  supervisor_convinced:
+    purpose: The shift supervisor accepts Kristin's diagnosis of the real cooling fault.
+    delivery:
+      source_kind: npc
+      source_entity: shift_supervisor
+      fallback_text: The shift supervisor is convinced that Kristin's cooling diagnosis is genuine. He grants them clean access to the restricted infrastructure corridors.
+  inspection_console_used:
+    purpose: Kristin has used the limited inspection console during the real fault diagnosis.
+    delivery:
+      source_kind: observation
+      source_entity: kristin
+      fallback_text: Kristin uses the limited inspection console. It can report faults and cycle noncritical systems. It cannot open detention cells or change the main flood controls.
+  inspection_window_missed:
+    purpose: The supervisor's inspection window closed before Kristin resolved the incident.
+    delivery:
+      source_kind: observation
+      source_entity: shift_supervisor
+      fallback_text: The shift supervisor's patience ends, and the inspection window closes.
+  supervisor_escorting:
+    purpose: The shift supervisor is escorting Kristin and Brandon into the inspection under watch.
+    delivery:
+      source_kind: observation
+      source_entity: shift_supervisor
+      fallback_text: The shift supervisor escorts the inspection team and remains nearby for inspection oversight.
+  inspection_recovery_ready:
+    purpose: The escorted inspection has lasted long enough for the missed-window recovery to carry them into the corridors.
+placements:
+  hideout_servers:
+    parent: brandon_hideout
+  inspection_console:
+    parent: infrastructure_corridors
+  facility_gate:
+    parent: facility_perimeter
+    text: at the facility perimeter
+  cooling_manifold:
+    parent: facility_perimeter
+    text: just inside the facility gate
+  inspector_badges:
+    parent: kristin
+    text: clipped to the front of each jacket
+  alarm_log:
+    parent: facility_perimeter
+    text: on the tablet the supervisor carries
+  return_line:
+    parent: facility_perimeter
+    text: carrying water back from the corridors into the cooling manifold
+  security_camera:
+    parent: facility_perimeter
+    text: on a pole above the cooling manifold with its lens turned toward the gate
+  cooling_service_archive_panel:
+    parent: infrastructure_corridors
+    text: beside the inspection console in the infrastructure corridors
+  kristin:
+    parent: facility_perimeter
+  brandon:
+    parent: facility_perimeter
+  shift_supervisor:
+    parent: facility_perimeter
+    text: walking out from the facility gate with a tablet and the work order
+beats:
+- id: inspection_window_2a
+  at_turn: 5
+  sets:
+    inspection_window_missed: true
+  say:
+  - text: The shift supervisor's patience ends. He escorts Kristin and Brandon in to watch the inspection.
+    verbatim: false
+- id: inspection_nudge_2a
+  at_turn: 6
+  sets:
+    supervisor_escorting: true
+  say:
+  - text: The shift supervisor stays close. He tells Kristin to prove what is wrong with the cooling water.
+    verbatim: false
+  when:
+    inspection_window_missed: true
+    restricted_corridor_access: false
+- id: inspection_recovery_2a
+  at_turn: 7
+  sets:
+    inspection_recovery_ready: true
+  when:
+    inspection_window_missed: true
+    supervisor_escorting: true
+    restricted_corridor_access: false
+reveals:
+- id: sl_2a_b
+  storylet_id: SL-2A-B
+  title: The Manifold Shows the Fault
+  guidance:
+    pressure_role: Let the supervisor's challenge turn a direct manifold inspection into a diagnosis choice.
+    window:
+      earliest_turn: 0
+      target_turn: 1
+      latest_turn: 2
+    available_while:
+      inspection_window_missed: false
+    boundaries:
+    - janus_selection_system
+    - brandon_history
+    - janus_phase_two
+  from_outline:
+  - 2A.3
+  - 2A.4
+  variants:
+    r1:
+      realization_id: SL-2A-B-R1
+      intent: Kristin finds the cooling-water pressure fault at the manifold.
+      commits:
+        manifold_fault_found: true
+      helps_exit: []
+      from_outline:
+      - 2A.3
+      - 2A.4
+      claim_id: k_sl_2a_b_r1
+      says: Kristin finds the cooling-water pressure fault at the manifold.
+      entities:
+      - kristin
+      - shift_supervisor
+      - regional_facility
+      - infrastructure_corridors
+      reach: []
+      relevance:
+        entity_ids:
+        - shift_supervisor
+        - regional_facility
+        priority: 10
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: true
+      repeatable: false
+      when:
+        inspection_window_missed: false
+      text: Kristin feels the cooling lines, reads the gauge and traces the vent. The water pressure is falling on the return line, and the ventilation is hiding the drop. The shift supervisor says, "Well? What is failing, and what happens if nobody fixes it?"
+      earn_when: feels the cooling lines, reads the gauge or traces the vent at the cooling manifold
+- id: sl_2a_c
+  storylet_id: SL-2A-C
+  title: The Supervisor Needs a Reason
+  guidance:
+    pressure_role: If the player hesitates at security or challenges the cover, make the supervisor a free-form social/technical pressure test rather than a fixed dialogue puzzle.
+    window:
+      earliest_turn: 0
+      target_turn: 3
+      latest_turn: 5
+    available_while:
+      manifold_fault_found: true
+    boundaries:
+    - janus_selection_system
+    - brandon_history
+    - janus_phase_two
+  from_outline:
+  - 2A.3
+  - 2A.4
+  variants:
+    r5:
+      realization_id: SL-2A-C-R5
+      intent: Kristin gives a convincing diagnosis of the real cooling fault and earns clean restricted corridor access.
+      commits:
+        supervisor_convinced: true
+        restricted_corridor_access: true
+        rebecca_observing_infiltrators: true
+        inspection_console_used: true
+      helps_exit:
+      - t_2a_2b
+      from_outline:
+      - 2A.3
+      - 2A.4
+      outcome:
+        id: inspection_convincing
+        advantages:
+        - supervisor_convinced
+      claim_id: k_sl_2a_c_r5
+      says: Kristin proves that the cooling fault is real and gains access to the restricted infrastructure corridors.
+      entities:
+      - kristin
+      - brandon
+      - shift_supervisor
+      - regional_facility
+      - infrastructure_corridors
+      - inspection_console
+      reach: []
+      relevance:
+        entity_ids:
+        - shift_supervisor
+        - regional_facility
+        - infrastructure_corridors
+        - inspection_console
+        priority: 10
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: true
+      repeatable: false
+      when:
+        manifold_fault_found: true
+      text: Kristin proves that the genuine cooling-water pressure fault is real. She finds a ventilation fault. The shift supervisor grants access to the restricted infrastructure corridors. The limited console can report faults and cycle noncritical systems. It cannot open detention cells or change the main flood controls.
+      earn_when: diagnoses the cooling fault at the manifold and explains the pressure and ventilation problem to the shift supervisor
+    r6:
+      realization_id: SL-2A-C-R6
+      intent: Kristin gives a vague or overlong diagnosis and reaches the corridors under a follow-up watch.
+      commits:
+        restricted_corridor_access: true
+        rebecca_observing_infiltrators: true
+        inspection_console_used: true
+        cover_suspected: true
+      helps_exit:
+      - t_2a_2b
+      from_outline:
+      - 2A.3
+      - 2A.4
+      outcome:
+        id: inspection_doubted
+        advantages:
+        - restricted_corridor_access
+        costs:
+        - cover_suspected
+      claim_id: k_sl_2a_c_r6
+      says: Kristin gives a vague or overlong diagnosis, and the shift supervisor lets them in under closer watch.
+      entities:
+      - kristin
+      - brandon
+      - shift_supervisor
+      - regional_facility
+      - infrastructure_corridors
+      - inspection_console
+      reach: []
+      relevance:
+        entity_ids:
+        - shift_supervisor
+        - regional_facility
+        - infrastructure_corridors
+        - inspection_console
+        priority: 10
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: true
+      repeatable: false
+      when:
+        manifold_fault_found: true
+      text: Kristin gives a vague account of the cooling-water pressure fault and the ventilation fault. The shift supervisor logs them for a follow-up audit. He lets them enter the restricted infrastructure corridors under closer watch. The limited console can report faults and cycle noncritical systems. It cannot open detention cells or change the main flood controls.
+      earn_when: gives a vague or overlong explanation of the cooling and ventilation faults to the shift supervisor
+- id: sl_2a_e
+  storylet_id: SL-2A-E
+  title: The Badge Readers
+  guidance:
+    pressure_role: Let Kristin notice Brandon's precise knowledge of the inspector badges.
+    window:
+      earliest_turn: 0
+      target_turn: 2
+      latest_turn: 4
+    available_while:
+      inspection_window_missed: false
+    boundaries:
+    - janus_selection_system
+    - brandon_history
+    - janus_phase_two
+  from_outline:
+  - 2A.2
+  variants:
+    r1:
+      realization_id: SL-2A-E-R1
+      intent: Brandon knows exactly what the badge readers check.
+      commits:
+        badge_craft_noted: true
+      helps_exit: []
+      from_outline:
+      - 2A.2
+      claim_id: k_sl_2a_e_r1
+      says: Brandon knows exactly what the badge readers check.
+      entities:
+      - kristin
+      - brandon
+      - inspector_badges
+      reach:
+      - inspector_badges
+      - brandon
+      relevance:
+        entity_ids:
+        - inspector_badges
+        - brandon
+        priority: -1
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: false
+      repeatable: false
+      when:
+        inspection_window_missed: false
+      text: The badges are good work. Brandon says, "The readers only check three things. I know which three." He says it easily, and he does not say how he knows.
+      earn_when: asks Brandon how the badges were made or checks the badges
+- id: sl_2a_f
+  storylet_id: SL-2A-F
+  title: The Alarm Log
+  guidance:
+    pressure_role: Let Kristin read the alarm history on the supervisor's tablet.
+    window:
+      earliest_turn: 0
+      target_turn: 2
+      latest_turn: 4
+    available_while:
+      inspection_window_missed: false
+    boundaries:
+    - janus_selection_system
+    - brandon_history
+    - janus_phase_two
+  from_outline:
+  - 2A.2
+  variants:
+    r1:
+      realization_id: SL-2A-F-R1
+      intent: Kristin reads the cooling alarm log on the supervisor's tablet.
+      commits:
+        alarm_log_read: true
+      helps_exit: []
+      from_outline:
+      - 2A.2
+      claim_id: k_sl_2a_f_r1
+      says: The cooling alarm has fired forty times in three weeks.
+      entities:
+      - kristin
+      - shift_supervisor
+      - alarm_log
+      reach:
+      - alarm_log
+      - shift_supervisor
+      relevance:
+        entity_ids:
+        - alarm_log
+        - shift_supervisor
+        priority: -1
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: false
+      repeatable: false
+      when:
+        inspection_window_missed: false
+      text: On the tablet, the alarm log shows the cooling alarm firing forty times in three weeks. Every one was closed from upstairs as a sensor fault. None carries the supervisor's name, and he holds the tablet a little tighter while she reads.
+      earn_when: reads or checks the alarm log on the supervisor's tablet
+- id: sl_2a_g
+  storylet_id: SL-2A-G
+  title: The Return Line
+  guidance:
+    pressure_role: Let Kristin trace the building consequence of the manifold fault.
+    window:
+      earliest_turn: 0
+      target_turn: 2
+      latest_turn: 4
+    available_while:
+      inspection_window_missed: false
+      manifold_fault_found: true
+    boundaries:
+    - janus_selection_system
+    - brandon_history
+    - janus_phase_two
+  from_outline:
+  - 2A.3
+  variants:
+    r1:
+      realization_id: SL-2A-G-R1
+      intent: Kristin traces the return line from the manifold.
+      commits:
+        return_line_traced: true
+      helps_exit: []
+      from_outline:
+      - 2A.3
+      claim_id: k_sl_2a_g_r1
+      says: The return line feeds the pumps that keep the lower levels dry.
+      entities:
+      - kristin
+      - return_line
+      reach:
+      - return_line
+      relevance:
+        entity_ids:
+        - return_line
+        priority: -1
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: false
+      repeatable: false
+      when:
+        inspection_window_missed: false
+        manifold_fault_found: true
+      text: Kristin follows the return line upstream, away from the manifold. It shares its feed with the pumps that keep the lower levels dry, and a heavy door across the corridor beyond holds water back. If the pressure fails, the pumps lose power first. She touches neither.
+      earn_when: traces or follows the return line from the manifold
+- id: sl_2a_h
+  storylet_id: SL-2A-H
+  title: The Camera
+  guidance:
+    pressure_role: Let Kristin observe the camera's attention without explaining it.
+    window:
+      earliest_turn: 0
+      target_turn: 2
+      latest_turn: 4
+    available_while:
+      inspection_window_missed: false
+      manifold_fault_found: true
+    boundaries:
+    - janus_selection_system
+    - brandon_history
+    - janus_phase_two
+  from_outline:
+  - 2A.4
+  variants:
+    r1:
+      realization_id: SL-2A-H-R1
+      intent: The security camera has turned toward Brandon.
+      commits:
+        camera_on_brandon_seen: true
+      helps_exit: []
+      from_outline:
+      - 2A.4
+      claim_id: k_sl_2a_h_r1
+      says: The security camera has turned toward Brandon.
+      entities:
+      - kristin
+      - brandon
+      - security_camera
+      reach:
+      - security_camera
+      - brandon
+      relevance:
+        entity_ids:
+        - security_camera
+        - brandon
+        priority: -1
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: false
+      repeatable: false
+      when:
+        inspection_window_missed: false
+        manifold_fault_found: true
+      text: The camera holds Brandon in its view. Brandon does not look up.
+      earn_when: looks at or watches the security camera
+- id: sl_2a_d
+  storylet_id: SL-2A-D
+  title: The Supervisor Takes Them In
+  guidance:
+    pressure_role: Let the missed inspection window carry Kristin and Brandon into the corridors under watch.
+    window:
+      earliest_turn: 5
+      target_turn: 6
+      latest_turn: 10
+    available_while:
+      inspection_window_missed: true
+    boundaries:
+    - janus_selection_system
+    - brandon_history
+    - janus_phase_two
+  from_outline:
+  - 2A.3
+  - 2A.4
+  variants:
+    r1:
+      realization_id: SL-2A-D-R1
+      intent: The supervisor escorts Kristin and Brandon to the manifold, watches the test, and logs the inspection.
+      commits:
+        restricted_corridor_access: true
+        rebecca_observing_infiltrators: true
+        inspection_console_used: true
+        cover_suspected: true
+        supervisor_escorting: true
+        inspection_recovery_ready: true
+      helps_exit:
+      - t_2a_2b
+      from_outline:
+      - 2A.3
+      - 2A.4
+      claim_id: k_supervisor_escorting
+      says: The shift supervisor escorts Kristin and Brandon into the inspection under watch.
+      entities: []
+      reach: []
+      relevance:
+        entity_ids: []
+        priority: 0
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: true
+      repeatable: false
+      commits_subset:
+        supervisor_escorting: true
+      extra_claims:
+      - claim_id: k_inspection_recovery_ready
+        says: The escorted inspection is ready to carry Kristin and Brandon into the corridors.
+        entities:
+        - shift_supervisor
+        - regional_facility
+        - infrastructure_corridors
+        reach: []
+        relevance:
+          entity_ids: []
+          priority: 0
+        audience:
+          kind: world_only
+          character_ids: []
+          player_visible: false
+        voiceable: true
+        repeatable: false
+        commits_subset:
+          inspection_recovery_ready: true
+      - claim_id: k_sl_2a_d_route_effects
+        says: The missed-window inspection recovery carries its route effects.
+        entities: []
+        reach: []
+        relevance:
+          entity_ids: []
+          priority: 0
+        audience:
+          kind: characters
+          character_ids:
+          - charles
+          player_visible: false
+        voiceable: true
+        repeatable: false
+        commits_subset:
+          restricted_corridor_access: true
+          rebecca_observing_infiltrators: true
+          inspection_console_used: true
+          cover_suspected: true
+bridge:
+- id: bridge_2a_restricted_access
+  kind: bridge
+  when:
+  - inspection_console_used
+  - rebecca_observing_infiltrators
+  commits:
+    restricted_corridor_access: true
+  realized_by:
+  - sl_2a_c
+  - sl_2a_b
+  - sl_2a_d
+- id: bridge_2a_missed_window_recovery
+  kind: bridge
+  when:
+  - inspection_window_missed
+  - inspection_recovery_ready
+  commits:
+    inspection_window_missed: true
+    restricted_corridor_access: true
+    rebecca_observing_infiltrators: true
+    inspection_console_used: true
+    cover_suspected: true
+  realized_by:
+  - sl_2a_d
+  claim:
+    claim_id: k_inspection_window_missed
+    says: The supervisor's inspection window closed before Kristin resolved the facility-gate incident.
+    entities: []
+    reach: []
+    relevance:
+      entity_ids: []
+      priority: 0
+    audience:
+      kind: public
+      character_ids: []
+      player_visible: true
+    voiceable: true
+    repeatable: false
+    commits_subset:
+      inspection_window_missed: true
+incidents:
+- id: i_2a_real_leak
+  reveal: sl_2a_c
+  outcomes:
+  - r5
+  - r6
+  recovery: sl_2a_d
+  missed_window: inspection_window_2a
+  observed_by:
+  - k_sl_2a_b_r1
+  - k_sl_2a_c_r5
+  - k_sl_2a_c_r6
+  successor: t_2a_2b
+exit:
+  id: t_2a_2b
+  to: 2B
+  priority: 10
+  when_all:
+  - restricted_corridor_access
+  needs: []
+  bridge: The supervisor left them at the inspection console in the infrastructure corridors. Behind it, the cooling-service panel led into the records archive.

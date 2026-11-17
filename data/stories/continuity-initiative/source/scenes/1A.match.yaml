@@ -1,0 +1,572 @@
+schema: 1
+scene: 1A
+claims:
+  k_sl_1a_a_r1:
+    aliases:
+    - michelle abduction suspicion
+    action_evidence:
+    - - search
+      - examine
+      - inspect
+      - check
+    - - kitchen
+      - back door
+      - forced lock
+      - overturned chair
+    must_convey:
+    - - phone
+    - - tablet
+    - - chair
+    - - door
+      - forced entry
+    - - outward
+      - from inside
+    leak_terms:
+    - michelle abduction suspicion
+  k_sl_1a_g_r1:
+    aliases:
+    - kitchen last hour read
+    action_evidence:
+    - - look
+      - examine
+      - inspect
+      - search
+      - study
+    - - workstation
+      - mug
+      - tea
+      - glasses
+      - manuscript
+      - pages
+    must_convey:
+    - - tea
+      - mug
+    - - glasses
+  k_sl_1a_g_r2:
+    aliases:
+    - kitchen last hour read
+    action_evidence:
+    - - look
+      - examine
+      - inspect
+      - study
+    - - calendar
+      - photograph
+      - photo
+      - refrigerator
+    must_convey:
+    - - calendar
+      - lemon cake
+    - - photograph
+      - photo
+      - picture
+  k_sl_1a_h_r1:
+    aliases:
+    - broadcast loop confirmed
+    action_evidence:
+    - - listen
+      - hear
+      - turn up
+    - - radio
+      - broadcast
+    - - time
+      - timed
+      - watch
+      - repeat
+      - second pass
+      - two passes
+    must_convey:
+    - - radio
+      - broadcast
+    - - ninety seconds
+      - same
+      - word for word
+    - - loop
+      - recording
+      - repeats
+  k_sl_1a_i_r1:
+    aliases:
+    - neighbor account heard
+    action_evidence:
+    - - talk
+      - ask
+      - speak
+      - tell
+    - - Walt
+      - neighbor
+      - Pruitt
+    must_convey:
+    - - Walt
+      - neighbor
+      - Pruitt
+    - - vans
+      - van
+    - - clipboard
+    - - skipped
+      - did not stop
+      - passed
+  k_sl_1a_j_r1:
+    aliases:
+    - Michelle's 4:07am text
+    - phone text read
+    action_evidence:
+    - - unlock
+      - enter
+      - type
+      - read
+      - open
+      - check
+      - view
+      - scroll
+      - look at
+    - - phone
+      - phone's
+      - message
+      - messages
+      - text
+      - texts
+      - thread
+      - passcode
+      - password
+    must_convey:
+    - - passcode
+    - - phone
+    - - single text
+      - text
+    - - Michelle
+    - - 4:07am
+    - - Come to the house. Don't call.
+  k_sl_1a_j_r2:
+    aliases:
+    - Michelle's 4:07am text with the patrol present
+    - officer watches phone
+    action_evidence:
+    - - unlock
+      - enter
+      - type
+      - read
+      - open
+      - check
+      - view
+      - scroll
+      - look at
+    - - phone
+      - phone's
+      - message
+      - messages
+      - text
+      - texts
+      - thread
+      - passcode
+      - password
+    must_convey:
+    - - passcode
+    - - phone
+    - - single text
+      - text
+    - - Michelle
+    - - 4:07am
+    - - Come to the house. Don't call.
+    - - Officer Reyes
+      - officer
+    - - printed list
+    - - watching
+      - eyes stay
+    - - uneasy
+  k_sl_1a_j_r3:
+    aliases:
+    - Kristin's unanswered calls
+    - calls to Michelle read
+    action_evidence:
+    - - check
+      - look at
+      - open
+      - read
+      - view
+      - scroll
+      - see
+    - - calls
+      - call
+      - call log
+      - call history
+      - missed calls
+      - recent calls
+    must_convey:
+    - - below the text
+    - - Kristin's own calls
+      - calls
+    - - Michelle
+    - - fill the log
+      - log
+    - - one after another
+    - - none of them were answered
+      - unanswered
+  k_sl_1a_b_r0:
+    aliases:
+    - memory card recovered
+    action_evidence:
+    - - look
+      - search
+      - inspect
+      - check
+    - - under
+      - beneath
+      - underside
+      - gap
+      - lower edge
+      - bottom edge
+    - - drawer
+      - KMS
+      - workstation
+      - drawer's
+    must_convey:
+    - - memory card
+      - card
+      - Michelle's card
+      - the card
+      - hidden card
+      - hidden memory card
+    - - taped
+    - - beneath the KMS drawer
+      - under the KMS drawer
+      - beneath the drawer
+    - - Michelle
+      - Michelle's
+      - Dr. McGehee
+      - Michelle McGehee
+      - Shelly
+    leak_terms:
+    - memory card
+    - hidden memory card
+    - hidden card
+    - Michelle's card
+    - the card
+    - taped beneath the drawer
+    - taped under the drawer
+    - taped to the drawer
+    - memory card recovered
+  k_sl_1a_b_r0w:
+    aliases:
+    - memory card recovered in sight of the patrol
+    action_evidence:
+    - - look
+      - search
+      - inspect
+      - check
+    - - under
+      - beneath
+      - underside
+      - gap
+      - lower edge
+      - bottom edge
+    - - drawer
+      - KMS
+      - workstation
+      - drawer's
+    must_convey:
+    - - memory card
+      - card
+      - Michelle's card
+      - the card
+      - hidden card
+      - hidden memory card
+    - - taped
+    - - beneath the KMS drawer
+      - under the KMS drawer
+      - beneath the drawer
+    - - Michelle
+      - Michelle's
+      - Dr. McGehee
+      - Michelle McGehee
+      - Shelly
+    leak_terms:
+    - memory card
+    - hidden memory card
+    - hidden card
+    - Michelle's card
+    - the card
+    - taped beneath the drawer
+    - taped under the drawer
+    - taped to the drawer
+    - memory card recovered
+  k_sl_1a_f_r1:
+    aliases:
+    - drawer gap pointed out
+    action_evidence:
+    - - pull open
+      - pull out
+      - pull the
+      - pull my
+      - pull michelle
+      - pull michelle's
+      - slide open
+      - slide out
+      - tug
+      - yank
+      - open the
+      - open my
+      - open michelle
+      - open her
+    - - drawer
+    must_convey: []
+  k_sl_1a_f_r2:
+    aliases:
+    - drawer gap pointed out
+    action_evidence:
+    - - examine
+      - inspect
+      - search
+      - check
+      - look
+      - study
+      - read
+      - trace
+      - run my fingers
+    - - drawer
+      - drawer's
+      - KMS
+      - initials
+      - carved initials
+      - carving
+      - my initials
+    must_convey: []
+  k_sl_1a_f_r3:
+    aliases:
+    - drawer gap found by closing
+    action_evidence:
+    - - close
+      - shut
+      - push in
+      - push back
+      - slide in
+      - slide shut
+      - push closed
+      - push it closed
+      - push the drawer closed
+    - - drawer
+    must_convey: []
+  k_sl_1a_b_r1:
+    aliases:
+    - continuity initiative known
+    - michelle warning known
+    - michelle abduction suspicion
+    - michelle lead actionable
+    action_evidence:
+    - - read
+      - inspect
+      - open
+      - check
+      - review
+      - plug
+      - insert
+      - connect
+    - - memory card
+      - card
+    - - file
+      - files
+      - saved file
+      - saved files
+      - card file
+      - card files
+      - laptop
+    must_convey:
+    - - memory card
+      - card
+    - - Michelle
+      - Michelle's
+      - Dr. McGehee
+      - Michelle McGehee
+      - Shelly
+    - - damaged recording
+      - voice recording
+      - recording
+    - - emergency broadcasts
+      - broadcast
+    - - dead drop
+      - exchange point
+    - - bench in the park
+      - park bench
+    leak_terms:
+    - damaged recording
+    - voice recording
+    - emergency broadcasts
+    - dead drop
+    - exchange point
+  k_sl_1a_b_r2:
+    aliases:
+    - michelle warning known
+    - michelle abduction suspicion
+    action_evidence:
+    - - listen
+      - play
+      - hear
+    - - damaged recording
+      - interrupted message
+      - recording
+      - message
+    - - memory card
+      - card
+    must_convey:
+    - - memory card
+      - card
+    - - Michelle
+      - Michelle's
+      - Dr. McGehee
+      - Michelle McGehee
+      - Shelly
+    - - damaged recording
+      - voice recording
+      - recording
+    - - emergency broadcasts
+      - broadcast
+  k_sl_1a_d_r1:
+    aliases:
+    - information drop
+    action_evidence:
+    - - read
+      - open
+      - inspect
+      - check
+      - go through
+    - - files
+      - rest of the files
+      - remaining files
+      - research files
+      - fragments
+    must_convey:
+    - - memory card
+      - recovered card
+      - card
+      - the memory card
+      - Michelle's card
+      - card she is carrying
+    - - research
+      - research files
+      - files
+      - research material
+      - Michelle's files
+      - work files
+    - - Michelle
+      - Michelle's
+      - Dr. McGehee
+      - Michelle McGehee
+      - Dr. Michelle
+      - Shelly
+    - - place she used to trade information
+      - exchange point
+      - place to trade
+      - the exchange point
+      - her information drop
+      - where she traded information
+  k_sl_1a_c_r1:
+    aliases:
+    - official interest in michelle known
+    - michelle abduction suspicion
+    action_evidence:
+    - - listen
+      - watch
+      - notice
+      - hear
+    - - officers
+      - officer
+      - official
+      - officials
+      - patrol
+    - - research
+      - questions
+      - ask about
+      - asking about
+    must_convey:
+    - - officers
+      - patrol
+      - patrol's
+    - - research
+    - - Michelle
+      - Michelle's
+      - Dr. McGehee
+  k_sl_1a_c_r2:
+    aliases:
+    - house marked for return
+    - patrol return pressure
+    action_evidence:
+    - - watch
+      - check
+      - inspect
+      - examine
+      - look at
+    - - gate
+      - front gate
+      - reflective tape
+    must_convey:
+    - - reflective tape
+      - gate marker
+      - marker
+      - reflective gate tape
+      - tape marker
+      - strip of reflective tape
+    - - gate
+      - house
+      - home
+      - front gate
+      - the house gate
+      - marked home
+    - - patrol
+      - officers
+      - federal emergency patrol
+      - welfare patrol
+      - emergency officers
+      - federal patrol
+    leak_terms:
+    - reflective tape
+    - gate marker
+    - reflective gate tape
+    - tape marker
+    - strip of reflective tape
+    - marked home
+    - federal emergency patrol
+    - welfare patrol
+    - emergency officers
+    - federal patrol
+  k_sl_1a_k_r1:
+    aliases:
+    - departure held
+    action_evidence:
+    - - drive
+      - head
+      - ride
+      - go
+      - leave
+      - pull out
+      - pull away
+      - set off
+      - take the truck
+      - get to
+    - - park
+      - bench
+    must_convey:
+    - - pull away
+      - drive
+    - - park
+    - - bench
+    - - waits
+      - wait
+  k_scene_1a_entry:
+    aliases:
+    - Michelle's phone
+    - kitchen floor
+    - empty house
+deliveries:
+  continuity_initiative_known:
+    must_convey:
+    - - Michelle's memory card
+      - Michelle's files
+      - Michelle's notes
+      - Michelle's card
+      - memory card
+      - research files
+    - - Continuity Initiative
+      - federal emergency program
+      - Continuity program
+      - federal Continuity program
+      - Continuity project
+      - population-selection program
