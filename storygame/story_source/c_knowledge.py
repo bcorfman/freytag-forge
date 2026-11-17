@@ -87,7 +87,7 @@ def _route_and_storylet(context: SceneContext, reveal: Mapping[str, Any]) -> tup
         id=reveal["storylet_id"],
         scene_id=context.scene["scene"],
         title=reveal["title"],
-        source_links=tuple(reveal["from_outline"]),
+        source_links=tuple(_anchor(context.scene, beat_id) for beat_id in reveal["from_outline"]),
         sections=sections,
         earliest_turn=window["earliest_turn"],
         target_turn=window["target_turn"],
@@ -105,7 +105,7 @@ def _route_realization(
     return RouteRealization(
         id=variant["realization_id"],
         dramatic_intent=variant["intent"],
-        source_beats=tuple(variant.get("from_outline", ())),
+        source_beats=tuple(_anchor(context.scene, beat_id) for beat_id in variant.get("from_outline", ())),
         operations=operations(commits),
         helps_transition_triggers=tuple(variant.get("helps_exit", reveal.get("helps_exit", ()))),
         protected_knowledge_boundaries=tuple(reveal["guidance"].get("boundaries", ())),
@@ -182,7 +182,6 @@ def _attach_delivery_facts(
         if any(
             delivery.fact_id in {effect.fact_id for effect in claim.establishes} and claim.audience.player_visible
             for claim in claims
-            if claim.available_in_scenes == (delivery.scene_id,)
         ):
             continue
         target = next(
@@ -229,7 +228,7 @@ def _claim_specs(scene: Mapping[str, Any]) -> dict[str, tuple[Mapping[str, Any],
     for bridge in scene.get("bridge", ()):
         claim = bridge.get("claim")
         if isinstance(claim, Mapping):
-            result[claim["claim_id"]] = (claim, bridge, bridge["id"])
+            result[claim["claim_id"]] = (claim, bridge, _canonical_event_id(bridge["id"]))
     return result
 
 
@@ -246,7 +245,7 @@ def _claim(
         return _entry_claim(context, claim)
     if "storylet_id" in owner:
         return _variant_claim(context, claim_id, claim, owner, source_id, routes)
-    return _event_claim(context, claim_id, claim, owner)
+    return _event_claim(context, claim_id, claim, owner, source_id)
 
 
 def _entry_claim(context: SceneContext, claim: Mapping[str, Any]) -> KnowledgeDefinition:
@@ -314,14 +313,18 @@ def _claim_commits(reveal: Mapping[str, Any], claim: Mapping[str, Any], realizat
 
 
 def _event_claim(
-    context: SceneContext, claim_id: str, claim: Mapping[str, Any], event: Mapping[str, Any]
+    context: SceneContext,
+    claim_id: str,
+    claim: Mapping[str, Any],
+    event: Mapping[str, Any],
+    canonical_event_id: str,
 ) -> KnowledgeDefinition:
     """Compile a claim sourced by a canonical bridge or resolution event."""
 
     return _definition(
         context,
         claim,
-        source=RevealSource(kind="canonical_route_event", canonical_event_id=event["id"]),
+        source=RevealSource(kind="canonical_route_event", canonical_event_id=canonical_event_id),
         establishes=operations(claim.get("commits_subset", event["commits"])),
         requires=(),
         source_beats=(),
@@ -460,7 +463,13 @@ def build_events(
     bridges: list[CanonicalRouteEvent] = []
     resolutions: list[CanonicalRouteEvent] = []
     for context in contexts:
+        storylet_ids = {reveal["id"]: reveal["storylet_id"] for reveal in context.scene.get("reveals", ())}
+        seen: set[str] = set()
         for record in context.scene.get("bridge", ()):
+            event_id = _canonical_event_id(record["id"])
+            if event_id in seen:
+                continue
+            seen.add(event_id)
             if _skip_vacuous_bridge(record):
                 continue
             activation = ActivationRule(
@@ -473,12 +482,19 @@ def build_events(
                 scene_id=context.scene["scene"],
                 activation=activation,
                 operations=operations(record["commits"]),
-                realization_storylets=tuple(record.get("realized_by", ())),
+                realization_storylets=tuple(storylet_ids[handle] for handle in record.get("realized_by", ())),
                 fallback_text=record.get("fallback_text"),
                 delivery_text=record.get("delivery_text"),
             )
             (resolutions if record.get("kind") == "resolution" else bridges).append(event)
     return tuple(bridges), tuple(resolutions)
+
+
+def _canonical_event_id(event_id: str) -> str:
+    """Return the canonical event ID from a claim-expanded source record."""
+
+    marker = "_claim_"
+    return event_id.split(marker, 1)[0]
 
 
 def _skip_vacuous_bridge(record: Mapping[str, Any]) -> bool:
@@ -498,6 +514,10 @@ def build_incidents(contexts: Sequence[SceneContext], routes: Sequence[StoryletR
             route = route_by_storylet[reveal["storylet_id"]]
             variants = reveal["variants"]
             outcomes = tuple(_outcome(variants[key], route.id) for key in record["outcomes"])
+            observed_by = tuple(record.get("observed_by", ()))
+            if _has_cross_scene_delivery(context.scene, outcomes):
+                outcome_claim_ids = {variants[key].get("claim_id") for key in record["outcomes"]}
+                observed_by = tuple(claim_id for claim_id in observed_by if claim_id not in outcome_claim_ids)
             result.append(
                 Incident(
                     id=record["id"],
@@ -508,11 +528,22 @@ def build_incidents(contexts: Sequence[SceneContext], routes: Sequence[StoryletR
                     ),
                     missed_window_event_id=record["missed_window"],
                     successor_transition_id=record.get("successor"),
-                    observation_knowledge_ids=tuple(record.get("observed_by", ())),
+                    observation_knowledge_ids=observed_by,
                     completes_scene=record.get("completes_scene", True),
                 )
             )
     return tuple(result)
+
+
+def _has_cross_scene_delivery(scene: Mapping[str, Any], outcomes: Sequence[IncidentOutcome]) -> bool:
+    """Detect the legacy package's cross-scene fact-delivery projection."""
+
+    cross_scene_facts = {
+        fact_id
+        for fact_id, declaration in (scene.get("facts", {}) or {}).items()
+        if isinstance(declaration.get("delivery"), Mapping) and declaration["delivery"].get("scene") is not None
+    }
+    return bool(cross_scene_facts & {fact_id for outcome in outcomes for fact_id in outcome.advantages + outcome.costs})
 
 
 def _outcome(variant: Mapping[str, Any], storylet_id: str) -> IncidentOutcome:

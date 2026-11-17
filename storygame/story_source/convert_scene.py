@@ -50,6 +50,14 @@ def _outline(scene: Any) -> list[dict[str, Any]]:
     ]
 
 
+def _brief(scene: Any) -> str:
+    """Copy the plot prose before the first beat heading for exact rendering."""
+
+    marker = f"### Scene {scene.opening_beat.id} — {scene.opening_beat.title}"
+    brief, separator, _ = scene.prose.partition(marker)
+    return brief.rstrip() if separator else scene.prose
+
+
 def _entry_additions(scene: Any) -> list[dict[str, Any]]:
     """Copy entry text additions as compiler predicates and text."""
 
@@ -288,6 +296,7 @@ def _scene_doc(
         "prop_pool": list(scene.metadata.prop_pool),
         "entry": scene.metadata.entry_text,
         "entry_additions": _entry_additions(scene),
+        "brief": _brief(scene),
         "outline": _outline(scene),
         "beats": [_pacing_beat(event) for event in package.pacing.events if event.scene_id == scene_id],
         "bridge": bridges,

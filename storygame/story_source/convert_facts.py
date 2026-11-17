@@ -102,12 +102,13 @@ def _fact_effects(package: StoryPackage, fact_ids: Iterable[str]) -> dict[str, d
 
     result: dict[str, dict[str, Any]] = {}
     for fact_id in fact_ids:
+        if fact_id not in package.world.fact_effects:
+            continue
         effects = package.world.fact_effects.get(fact_id, ())
-        if effects:
-            result[fact_id] = {
-                "purpose": _purpose(package, fact_id),
-                "on_assert": [_model_dict(item) for item in effects],
-            }
+        result[fact_id] = {
+            "purpose": _purpose(package, fact_id),
+            "on_assert": [_model_dict(item) for item in effects],
+        }
     return result
 
 
