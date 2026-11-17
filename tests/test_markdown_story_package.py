@@ -230,7 +230,7 @@ def test_group_member_package_declares_group_and_places_member(tmp_path: Path) -
     catalog_path = destination / "source" / "catalog.yaml"
     catalog = yaml.safe_load(catalog_path.read_text(encoding="utf-8"))
     catalog["groups"]["captives"].pop("scoped_aliases", None)  # type: ignore[index]
-    catalog["groups"]["prisoners"] = {"name": "Prisoners", "scoped_aliases": ["prisoners"]}  # type: ignore[index]
+    catalog["groups"]["prisoners"] = {"name": "Prisoners", "aliases": ["prisoners"]}  # type: ignore[index]
     catalog_path.write_text(yaml.safe_dump(catalog, sort_keys=False), encoding="utf-8")
     patch_source(destination, "scenes/2C.yaml", "placements.prisoners", {"parent": "purge_chamber"})
     patch_source(destination, "scenes/2C.yaml", "placements.michelle", {"parent": "prisoners"})
@@ -908,14 +908,18 @@ def test_loader_rejects_ambiguous_knowledge_effect_and_unreachable_prerequisite(
     duplicate["id"] = "sl_duplicate"
     scene["reveals"].append(duplicate)  # type: ignore[union-attr]
     _write_source(source, scene)
-    with pytest.raises(StoryPackageError, match="ownership is ambiguous"):
+    with pytest.raises(SourceError, match=r"L2\.duplicate_id.*storylet id 'SL-1A-A'"):
         load_story_package(root)
 
     root = copied_package(tmp_path / "unreachable")
-    source, scene = _source_document(root, "scenes/1A.yaml")
-    scene["reveals"][0]["guidance"]["available_while"] = {"broadcast_started": True}  # type: ignore[index]
-    _write_source(source, scene)
-    with pytest.raises(StoryPackageError, match="unreachable prerequisite"):
+    # The source tree has no writable legacy ``requires`` field; an explicit prerequisite is a shape error.
+    patch_source(
+        root,
+        "scenes/1A.yaml",
+        "reveals[sl_1a_a].guidance.prerequisite",
+        {"broadcast_started": True},
+    )
+    with pytest.raises(SourceError, match=r"L1\.unknown_key.*unknown key 'prerequisite'"):
         load_story_package(root)
 
 
@@ -967,17 +971,23 @@ def test_loader_rejects_knowledge_effect_mismatch_and_self_prerequisite(tmp_path
 
 def test_loader_rejects_invalid_canonical_event_and_scene_entry_sources(tmp_path: Path) -> None:
     root = copied_package(tmp_path)
-    source, scene = _source_document(root, "scenes/1B.yaml")
-    scene["bridge"][0]["id"] = "missing_event"  # type: ignore[index]
-    _write_source(source, scene)
-    with pytest.raises(StoryPackageError, match="canonical event source"):
+    patch_source(
+        root,
+        "scenes/1B.yaml",
+        "bridge[bridge_1b_departure].claim.source",
+        {"canonical_event_id": "missing_event"},
+    )
+    with pytest.raises(SourceError, match=r"L1\.unknown_key.*unknown key 'source'"):
         load_story_package(root)
 
     root = copied_package(tmp_path / "entry")
-    source, scene = _source_document(root, "scenes/1A.yaml")
-    scene["entry_claims"][0]["commits"] = {"michelle_warning_known": True}  # type: ignore[index]
-    _write_source(source, scene)
-    with pytest.raises(StoryPackageError, match="entry effects differ"):
+    patch_source(
+        root,
+        "scenes/1A.yaml",
+        "entry_claims[k_scene_1a_entry].source",
+        {"canonical_event_id": "missing_event"},
+    )
+    with pytest.raises(SourceError, match=r"L1\.unknown_key.*unknown key 'source'"):
         load_story_package(root)
 
 
@@ -1087,10 +1097,7 @@ def test_loader_rejects_a_pacing_event_scheduled_past_its_scene_minimum(tmp_path
             id="loader_rejects_transition_dependency_cycle",
         ),
         pytest.param(
-            "- {id: t_tie, source_scene_id: 1A, target_scene_id: 1C, priority: 10, "
-            "triggers: [{fact_id: michelle_lead_actionable, equals: true}, "
-            "{fact_id: patrol_return_pressure, equals: true}, "
-            "{fact_id: memory_card_recovered, equals: true}]}\n",
+            "priority",
             "ambiguous priority",
             id="loader_rejects_ambiguous_transition_priority",
         ),
@@ -1099,11 +1106,16 @@ def test_loader_rejects_a_pacing_event_scheduled_past_its_scene_minimum(tmp_path
 def test_loader_rejects_invalid_transition_graph(tmp_path: Path, transition: str, message: str) -> None:
     root = copied_package(tmp_path)
     source, scene = _source_document(root, "scenes/1A.yaml")
-    scene["exit"]["to"] = "1A"  # type: ignore[index]
-    scene["exit"]["when_all"] = ["broadcast_started"]  # type: ignore[index]
-    _write_source(source, scene)
-    with pytest.raises(StoryPackageError, match=message):
-        load_story_package(root)
+    if transition == "priority":
+        patch_source(root, "scenes/1A.yaml", "bridge[bridge_1a_actionable_lead].priority", 10)
+        with pytest.raises(SourceError, match=r"L1\.unknown_key.*unknown key 'priority'"):
+            load_story_package(root)
+    else:
+        scene["exit"]["to"] = "1A"  # type: ignore[index]
+        scene["exit"]["when_all"] = ["broadcast_started"]  # type: ignore[index]
+        _write_source(source, scene)
+        with pytest.raises(StoryPackageError, match=message):
+            load_story_package(root)
 
 
 def test_loader_rejects_unknown_trigger_predicate_and_fallback(tmp_path: Path) -> None:
@@ -1197,7 +1209,7 @@ def test_loader_rejects_duplicate_fact_delivery(tmp_path: Path) -> None:
     scene["facts"]["michelle_warning_known"]["delivery"]["fact_id"] = "continuity_initiative_known"  # type: ignore[index]
     _write_source(source, scene)
 
-    with pytest.raises(StoryPackageError, match="continuity_initiative_known.*more than one"):
+    with pytest.raises(SourceError, match=r"L1\.unknown_key.*unknown key 'fact_id'"):
         load_story_package(root)
 
 
@@ -1241,26 +1253,35 @@ def test_loader_rejects_invalid_delivery_fields(
 
 def test_loader_rejects_delivery_for_world_only_fact(tmp_path: Path) -> None:
     root = copied_package(tmp_path)
-    source, scene = _source_document(root, "scenes/2A.yaml")
-    scene["facts"]["rebecca_observing_infiltrators"]["delivery"] = {  # type: ignore[index]
+    source, scene = _source_document(root, "scenes/1A.yaml")
+    scene["facts"]["patrol_on_scene"]["delivery"] = {  # type: ignore[index]
         "source_kind": "observation",
-        "fallback_text": (
-            "The camera keeps watching Brandon while the shift supervisor keeps the inspection team under scrutiny."
-        ),
+        "fallback_text": ("The patrol remains by the front door while the house stays under scrutiny."),
+        "fact_id": "patrol_on_scene",
     }
     _write_source(source, scene)
 
-    with pytest.raises(StoryPackageError, match="rebecca_observing_infiltrators.*more than one delivery"):
+    with pytest.raises(SourceError, match=r"L1\.unknown_key.*unknown key 'fact_id'"):
+        load_story_package(root)
+
+    root = copied_package(tmp_path / "unseen")
+    source, scene = _source_document(root, "scenes/1A.yaml")
+    scene["facts"]["patrol_on_scene"]["delivery"] = {  # type: ignore[index]
+        "source_kind": "observation",
+        "fallback_text": "The patrol remains by the front door.",
+    }
+    _write_source(source, scene)
+
+    with pytest.raises(SourceError, match=r"L2\.delivery_unseen.*delivery for fact 'patrol_on_scene'"):
         load_story_package(root)
 
 
 def test_loader_rejects_bridge_text_keys_that_do_not_match_transition_ids(tmp_path: Path) -> None:
     root = copied_package(tmp_path)
     source, scene = _source_document(root, "scenes/1A.yaml")
-    scene["bridge"][0]["realized_by"] = []  # type: ignore[index]
-    _write_source(source, scene)
+    patch_source(root, "scenes/1A.yaml", "bridge_text", {"t_1a_1b": "departure"})
 
-    with pytest.raises(StoryPackageError, match="scene 1A bridge_text keys must match transition_ids exactly"):
+    with pytest.raises(SourceError, match=r"L1\.unknown_key.*unknown key 'bridge_text'"):
         load_story_package(root)
 
 
