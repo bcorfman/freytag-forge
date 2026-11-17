@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import copy
 import re
-import shutil
 from pathlib import Path
 
 import pytest
@@ -11,7 +10,9 @@ import yaml
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.world_model import world_for
-from storygame.story_package import StoryPackageError, load_story_package
+from storygame.story_package import load_story_package
+from storygame.story_source.compiler import SourceError
+from tests.story_source.helpers import compiled_story_copy, load_compiled_copy
 
 PACKAGE = Path("data/stories/continuity-initiative")
 
@@ -112,32 +113,28 @@ def test_2b_outcome_blocks_late_audit_recovery(selection: str, expected_fact: st
 
 
 def test_loader_documents_unproducible_positive_ledger_gate(tmp_path: Path) -> None:
-    root = tmp_path / "package"
-    shutil.copytree(PACKAGE, root)
+    root = compiled_story_copy(tmp_path)
 
-    knowledge_source = root / "knowledge.yaml"
-    catalog = yaml.safe_load(knowledge_source.read_text(encoding="utf-8"))
-    original = next(item for item in catalog["knowledge"] if item["id"] == "k_sl_2c_c_r1")
-    sibling = copy.deepcopy(original)
-    sibling["id"] = "k_sl_2c_c_r2"
-    sibling["requires"] = [*sibling["requires"], {"fact_id": "brandon_name_erased", "equals": True}]
-    sibling["source"]["realization_id"] = "SL-2C-C-R2"
-    catalog["knowledge"].append(sibling)
-    knowledge_source.write_text(yaml.safe_dump(catalog, sort_keys=False, allow_unicode=True), encoding="utf-8")
+    scene_source = root / "source" / "scenes" / "2C.yaml"
+    scene = yaml.safe_load(scene_source.read_text(encoding="utf-8"))
+    reveal = next(item for item in scene["reveals"] if item["storylet_id"] == "SL-2C-C")
+    sibling = copy.deepcopy(reveal["variants"]["r1"])
+    sibling["realization_id"] = "SL-2C-C-R2"
+    sibling["claim_id"] = "k_sl_2c_c_r2"
+    sibling["when"] = {**sibling["when"], "brandon_name_erased": True}
+    reveal["variants"]["r2"] = sibling
+    scene_source.write_text(yaml.safe_dump(scene, sort_keys=False, allow_unicode=True), encoding="utf-8")
 
-    routes_source = root / "storylet-routes.yaml"
-    routes = yaml.safe_load(routes_source.read_text(encoding="utf-8"))
-    route = next(route for route in routes["storylets"] if route["id"] == "SL-2C-C")
-    realization = copy.deepcopy(route["realization_options"][0])
-    realization["id"] = "SL-2C-C-R2"
-    route["realization_options"].append(realization)
-    routes_source.write_text(yaml.safe_dump(routes, sort_keys=False, allow_unicode=True), encoding="utf-8")
+    match_source = root / "source" / "scenes" / "2C.match.yaml"
+    match = yaml.safe_load(match_source.read_text(encoding="utf-8"))
+    match["claims"]["k_sl_2c_c_r2"] = copy.deepcopy(match["claims"]["k_sl_2c_c_r1"])
+    match_source.write_text(yaml.safe_dump(match, sort_keys=False, allow_unicode=True), encoding="utf-8")
 
     with pytest.raises(
-        StoryPackageError,
+        SourceError,
         match=re.escape(
             "scene 2C reveal 'k_sl_2c_c_r2' requires 'brandon_name_erased', which scene entry does not guarantee "
             "and the scene cannot produce"
         ),
     ):
-        load_story_package(root)
+        load_compiled_copy(root)

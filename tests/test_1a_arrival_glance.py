@@ -3,8 +3,6 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-import yaml
-
 from storygame.runtime.cloudflare import CloudflareTurnProvider
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
@@ -125,12 +123,9 @@ def test_kristin_steadies_event_is_declared() -> None:
     assert len(event.realizations) == 1
     assert event.realizations[0].verbatim is True
     assert event.realizations[0].text == STEADY
-    routes = yaml.safe_load(Path("data/stories/continuity-initiative/storylet-routes.yaml").read_text(encoding="utf-8"))
-    review = next(item for item in routes["pacing_event_review"] if item["event_id"] == event.id)
-    assert review["scene_id"] == "1A"
-    assert review["at_turn"] == 3
-    assert review["effect"] == {"op": "assert", "fact_id": "michelle_abduction_suspicion", "value": True}
-    assert review["status"] == "approved"
+    assert event.scene_id == "1A"
+    assert event.at_turn == 3
+    assert [(effect.fact_id, effect.equals) for effect in event.effects] == [("michelle_abduction_suspicion", True)]
 
 
 def test_kristin_steadies_at_turn_three_when_nothing_earned_it(monkeypatch) -> None:
