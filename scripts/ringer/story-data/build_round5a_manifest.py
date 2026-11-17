@@ -1,0 +1,96 @@
+# ruff: noqa: E501  (spec strings are prose briefs for a worker)
+"""Build the Ringer manifest for round 5a: the legacy-package to source-tree converter pieces (4 tasks)."""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+REPO = "/home/bcorfman/dev/freytag-forge"
+WORK = "/home/bcorfman/dev/ringer-work/story-data-round5a"
+
+PREAMBLE = f"""You are a Python engineer. Your current working directory IS a git worktree of {REPO} (detached at HEAD). Edit files here directly. NEVER git commit, never touch {REPO} itself, never run `uv`, never call a billed model or the network. FIRST run: [ -e .venv ] || ln -s {REPO}/.venv .venv ; run tests as `PYTHONPATH=$PWD:$PWD/packages/worldkeeper/src TMPDIR=/tmp .venv/bin/python -m pytest -q -p no:cacheprovider -n 0 <files>` (never pass --cov); ruff as `.venv/bin/python -m ruff check <files>` and `.venv/bin/python -m ruff format <files>` (line length 120, double quotes, Python 3.12, PyYAML and pydantic only, no new dependencies).
+
+BACKGROUND. The game's story data is moving from nine legacy files per story to a declarative source tree that `storygame.story_source.compile_source_tree` compiles to the same `StoryPackage` (storygame/story_package/models.py). The format is fixed by the contract .plans/story-data-schema-contract.md (read the sections named in YOUR JOB; never edit it); `.plans/story-data-1a-draft-edited.md` is a hand-written sample. The package `storygame/story_source/` already holds the reader, validator (`check_source_tree`), compiler (`compile_source_tree`), parity checker and lookup; read them to learn exactly which keys the compiler consumes and how, but never edit any of them. You are building one piece of a CONVERTER that goes the other way: from the legacy-loaded `StoryPackage` (`from storygame.story_package.loader import load_story_package`; read how the repo's tests load the default package, root `data/stories/continuity-initiative`) to the source documents. The converter is mechanical and lossless for everything the runtime reads: matcher lists are written out in full (no lexicon, no `use`, no `{{parts}}`, no `shared`; plain complete strings everywhere), every id is written explicitly, and values are copied exactly. Reader-only material that is not in the package (titles, outline, notes, plot front matter) may be left out; do not invent prose. FOUR workers build four modules in parallel; yours is named below and all share this interface: each module function takes the `StoryPackage` and returns plain Python dicts/lists/strings (ordered dicts are plain dicts; use the contract's key order), never writes files, and never imports a sibling module. The assembler (a later round) merges the pieces: top-level scene-file keys are disjoint between pieces, so return ONLY the keys your piece owns. Correctness bar: when the assembler writes all pieces as YAML, `check_source_tree` must report nothing and `compile_source_tree` must rebuild the same records; so for every legacy record of the kinds you own, your output must carry every field the compiler needs to rebuild it exactly. Prove completeness in your tests by asserting that every legacy record id of your kinds appears exactly once in your output, and spot-check field values for at least three records of each kind against the package. Never edit existing tests, tests/shard_durations.json or docs/. Each module has a docstring, no function is longer than about 60 lines, no story names in code (story-agnostic engine; tests may use the default package). If the contract is ambiguous or contradicts the compiler, the compiler's behaviour wins; list each such point in `# NOTE:` comments at the top of your test file. If something the compiler needs cannot be derived from the package, say so in NOTES_<key>.txt in the worktree root (never committed) and leave it out rather than guessing.
+"""
+
+TASKS = {
+    "r5a-catalog": dict(
+        owned=["storygame/story_source/convert_catalog.py", "tests/story_source/test_convert_catalog.py"],
+        gate=["test_convert_catalog.py"],
+        spec="""YOUR JOB: write `storygame/story_source/convert_catalog.py` with `convert_story(package) -> dict` (the content of story.yaml, contract section 4.1: schema, story, title omitted, genre, protagonist, budget_seconds, scenes in canonical chain order, principal_characters in package character order, retired_ids empty) and `convert_catalog(package, unplaced_facts: dict) -> dict` (catalog.yaml, section 4.2: places, characters with narrator_bio, groups, items, kinds, props, connections, protected_knowledge, disclosure_guards, and `unplaced_facts` set to the given argument unchanged). Read contract sections 4.1 and 4.2 and the compiler files `storygame/story_source/c_world.py` and `c_knowledge.py` for how each key is consumed. Entity maps keep package order (map order is list order). Omit keys equal to the model default only where the compiler treats a missing key the same as the default (verify in the compiler); otherwise write them. Tests: build the package, call both functions, and assert every location, npc, group, item, kind, connection, disclosure guard and character id appears once with its fields equal to the package record.""",
+    ),
+    "r5a-facts": dict(
+        owned=["storygame/story_source/convert_facts.py", "tests/story_source/test_convert_facts.py"],
+        gate=["test_convert_facts.py"],
+        spec="""YOUR JOB: write `storygame/story_source/convert_facts.py` with `convert_facts(package) -> FactsResult`, a dataclass with `scene_docs: dict[str, dict]` (scene id to a dict holding ONLY the keys `facts` and `placements`) and `unplaced_facts: dict` (the catalog map for facts nothing sets and nothing reads). Read contract sections 4.5 and 4.6 and section 5 rules 5 to 9 and 13, and read how the compiler consumes them (`storygame/story_source/c_world.py`, `c_knowledge.py`, `c_scene.py`) plus the layer 2 rules in `l2_facts.py` (fact one owner, declaring scene = the first scene in story order that sets the fact, else the first that reads it, else unplaced). Every distinct fact id in `package.world.facts` / `package.knowledge` appears exactly once, in its declaring scene's `facts` block (or in `unplaced_facts`), with purpose, `on_assert` effects (`fact_effects`), delivery text and cues, and the optional `delivery.scene` when the delivery scene differs from the declaring scene (section 5 rule 7), exactly as section 4.5 specifies. Entry facts and their purpose follow rule 9. `placements` per scene come from the package's item placements and entity routing by kind (rule 13, section 4.6). Determine setters and readers the way l2_facts.py does, by reusing its helper functions if they are importable (import read-only), else by implementing the same computation. Tests: assert every distinct fact id appears exactly once across all scene docs plus unplaced_facts, that unplaced_facts equals the 13 facts the contract names (derive the count from the package; the contract says 13), that a fact set in two scenes is declared in the first, and that `convert_facts` output survives `yaml.safe_dump`.""",
+    ),
+    "r5a-reveals": dict(
+        owned=["storygame/story_source/convert_reveals.py", "tests/story_source/test_convert_reveals.py"],
+        gate=["test_convert_reveals.py"],
+        spec="""YOUR JOB: write `storygame/story_source/convert_reveals.py` with `convert_reveals(package) -> RevealsResult`, a dataclass with `scene_docs: dict[str, dict]` (scene id to a dict holding ONLY the key `reveals`) and `match_docs: dict[str, dict]` (scene id to the full content of that scene's `<scene>.match.yaml`). Read contract sections 4.8 and 4.9 and section 5 rules 1 to 4, 11, 12, then the compiler files `storygame/story_source/c_scene.py`, `c_passages.py`, `c_knowledge.py` and `compiler.py` to learn exactly what the compiler rebuilds from `reveals` and the match file: the package's `Storylet` and `StoryletRoute` realizations (route windows, activation, operations, each realization's `commits`), the `KnowledgeDefinition` claims (id, `establishes` including `commits_subset` when a claim grants a strict subset of its source commits, `says`, `text`, `text_when` for delivery variants, `speaker_text`, `audience`, `leak_terms` as `None` vs `()` vs list, `voiceable`, `requires`, `available_while`, `earn_when`, `reach`, `entities`, `relevance`, `repeatable`, `helps_exit`, `boundaries`) and the match entries (`aliases`, `action_evidence`, `must_convey` written out in full, `leak_terms` written out, per claim id, in the package claim order, because the match file order is the compiled claim order). Variants with no claim write no `claim_id`. Write reveal-level defaults only where the contract allows and the compiler restores them exactly; when in doubt write the value on the variant. Tests: every `Storylet` and every realization id in the package appears once, every claim id with a source realization appears once in `reveals` and once in its scene's match doc in package order, and the claims' `says`, `text` and matcher lists equal the package values for at least five claims including `k_sl_1a_b_r0`. Entry claims, bridge claims, incident observation claims and ending claims belong to another worker: skip any claim that the contract places under `entry_claims`, `bridge`, `incidents` or `ending` and say which kinds you skipped in NOTES_r5a-reveals.txt.""",
+    ),
+    "r5a-scene": dict(
+        owned=["storygame/story_source/convert_scene.py", "tests/story_source/test_convert_scene.py"],
+        gate=["test_convert_scene.py"],
+        spec="""YOUR JOB: write `storygame/story_source/convert_scene.py` with `convert_scenes(package) -> SceneResult`, a dataclass with `scene_docs: dict[str, dict]` (scene id to a dict holding ONLY these keys: `scene`, the header keys of contract section 4.3, `beats` (4.7 pacing events), `bridge` (4.10), `incidents` (4.11), `entry_claims` (4.12), `exit` (4.13), `ending` (4.14, only for the last scene), plus the reader-only `brief`/`outline` (4.4) only if their content exists in the package), and `match_docs: dict[str, dict]` holding ONLY the match entries for the claims you own (entry claims, bridge claims, ending claims, incident outcome claims, if the contract gives them match entries; else leave empty) keyed like the contract's match file (`{claims: {claim_id: {...}}}` merged by the assembler under `claims`). Read contract sections 4.3, 4.4, 4.7, 4.10 to 4.14 and section 5 rules 3, 4, 10, 14, 15, then `storygame/story_source/c_scene.py`, `c_passages.py`, `c_knowledge.py` and `compiler.py` for exactly what the compiler rebuilds: `SceneMetadata`, `SceneFrame`, `ScenePacing`, scene `Scene.beats`, pacing events with their `say` lists (first match wins; the last entry unguarded), transitions with `transition_ids` and `bridge_text`, `bridge_events`/`resolution_events`, the incident with outcomes (`id`, `storylet_id`/`realization_id` from the named variant, `advantages`, `costs`, `observation_knowledge_ids`, `observed_by`), entry variants as `entry_additions`, and the sole ending. Write `participants` and `items` explicitly in package order (rule 10). The reveals piece (another worker) owns the keys `reveals`, the facts piece owns `facts` and `placements`; do not emit those. Tests: every scene id, transition id, pacing event id, bridge event id, incident id and entry claim id in the package appears exactly once in your output; for scene 1A and 2C compare at least five header and beat fields against the package.""",
+    ),
+}
+
+
+def check(key: str, spec: dict) -> str:
+    owned = spec["owned"]
+    keep = " ".join(f"-e '^{p}$'" for p in owned)
+    gate = " ".join(f"tests/story_source/{n}" for n in spec["gate"])
+    return f"""set -eo pipefail
+[ -e .venv ] || ln -s {REPO}/.venv .venv
+export PYTHONPATH=$PWD:$PWD/packages/worldkeeper/src TMPDIR=/tmp
+out=$(mktemp)
+rc=0
+.venv/bin/python -m pytest -q -p no:cacheprovider -n 0 -rs {gate} > "$out" 2>&1 || rc=$?
+tail -40 "$out"
+[ "$rc" -eq 0 ] || exit "$rc"
+if grep -E "SKIPPED" "$out"; then echo "a gate test skips"; exit 1; fi
+rc=0
+.venv/bin/python -m pytest -q -p no:cacheprovider -n 0 tests/story_source > "$out" 2>&1 || rc=$?
+tail -15 "$out"
+[ "$rc" -eq 0 ] || exit "$rc"
+.venv/bin/python -m ruff check storygame/story_source tests/story_source
+.venv/bin/python -m ruff format --check storygame/story_source tests/story_source
+git add -A -- storygame tests
+bad=$(git diff --cached --name-only | grep -v {keep} || true)
+[ -z "$bad" ] || {{ echo "files outside ownership staged: $bad"; exit 1; }}
+git diff --cached > {WORK}/{key}.patch
+test -s {WORK}/{key}.patch
+"""
+
+
+manifest = {
+    "run_name": "story-data-round5a",
+    "workdir": WORK,
+    "max_parallel": 4,
+    "worktrees": True,
+    "repo": REPO,
+    "tasks": [
+        {
+            "key": key,
+            "task_type": "code-feature",
+            "engine": "codex",
+            "engine_args": ["-c", "model_reasoning_effort=high"],
+            "max_attempts": 2,
+            "timeout_s": 3000,
+            "check_timeout_s": 1200,
+            "ownership": spec["owned"],
+            "spec": PREAMBLE + "\n" + spec["spec"].replace("<key>", key),
+            "check": check(key, spec),
+            "expect_files": [],
+            "verified": f"gate tests {', '.join(spec['gate'])} pass unskipped; whole tests/story_source passes; ruff clean; only owned files changed.",
+        }
+        for key, spec in TASKS.items()
+    ],
+}
+
+if __name__ == "__main__":
+    out = Path(__file__).with_name("round5a-manifest.json")
+    out.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+    print(out)
