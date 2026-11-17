@@ -7,6 +7,7 @@ import json
 import re
 from collections import Counter
 from collections.abc import Mapping
+from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
@@ -57,12 +58,22 @@ def check_parity(legacy: Any, compiled: Any, *, reviews: Any = None) -> dict[str
 
     left = _canonical(legacy)
     right = _canonical(compiled)
+    canonical_left_indexes, canonical_right_indexes = _canonical_knowledge_indexes(left, right)
+    comparable_left = dict(left)
+    comparable_right = dict(right)
+    comparable_left["knowledge_indexes"] = canonical_left_indexes
+    comparable_right["knowledge_indexes"] = canonical_right_indexes
     review_entries = _review_entries(reviews)
     differences: list[dict[str, Any]] = []
-    _compare(left, right, "", differences, left)
+    _compare(comparable_left, comparable_right, "", differences, left)
+    if canonical_left_indexes != canonical_right_indexes:
+        index_difference = next((item for item in differences if item["path"] == "knowledge_indexes"), None)
+        if index_difference is not None:
+            index_difference["legacy"] = _digest(left.get("knowledge_indexes"))
+            index_difference["compiled"] = _digest(right.get("knowledge_indexes"))
     for difference in differences:
         difference["reviewed"] = _is_reviewed(difference, review_entries)
-    knowledge_changed = left.get("knowledge_indexes") != right.get("knowledge_indexes")
+    knowledge_changed = canonical_left_indexes != canonical_right_indexes
     summary = _summary(differences, _record_count(left), knowledge_changed)
     return {"differences": differences, "summary": summary}
 
@@ -89,6 +100,53 @@ def _compare(left: Any, right: Any, path: str, output: list[dict[str, Any]], roo
         _compare_lists(left, right, path, output, root)
         return
     _add_difference(output, path, left, right, _difference_class(path, left, right, root))
+
+
+def _canonical_knowledge_indexes(left: Mapping[str, Any], right: Mapping[str, Any]) -> tuple[Any, Any]:
+    """Canonicalize index operation order only when its upstream reorder is proved safe."""
+
+    left_indexes = deepcopy(left.get("knowledge_indexes"))
+    right_indexes = deepcopy(right.get("knowledge_indexes"))
+    if not isinstance(left_indexes, dict) or not isinstance(right_indexes, dict):
+        return left_indexes, right_indexes
+
+    left_entries = _knowledge_entries(left)
+    right_entries = _knowledge_entries(right)
+    upstream_reorders = {
+        claim_id
+        for claim_id in set(left_entries) & set(right_entries)
+        if left_entries[claim_id].get("establishes") != right_entries[claim_id].get("establishes")
+        and _operation_order_proof(
+            left_entries[claim_id].get("establishes"), right_entries[claim_id].get("establishes"), left
+        )
+    }
+    left_by_id = left_indexes.get("by_id")
+    right_by_id = right_indexes.get("by_id")
+    if not isinstance(left_by_id, dict) or not isinstance(right_by_id, dict):
+        return left_indexes, right_indexes
+
+    for claim_id in upstream_reorders & set(left_by_id) & set(right_by_id):
+        left_entry = left_by_id[claim_id]
+        right_entry = right_by_id[claim_id]
+        if not isinstance(left_entry, dict) or not isinstance(right_entry, dict):
+            continue
+        left_operations = left_entry.get("establishes")
+        right_operations = right_entry.get("establishes")
+        if not _operation_order_proof(left_operations, right_operations, left):
+            continue
+        left_entry["establishes"] = sorted(left_operations, key=_json_value)
+        right_entry["establishes"] = sorted(right_operations, key=_json_value)
+    return left_indexes, right_indexes
+
+
+def _knowledge_entries(package: Mapping[str, Any]) -> dict[str, Mapping[str, Any]]:
+    knowledge = package.get("knowledge")
+    records = knowledge.get("knowledge") if isinstance(knowledge, dict) else None
+    if not isinstance(records, list):
+        return {}
+    return {
+        record["id"]: record for record in records if isinstance(record, dict) and isinstance(record.get("id"), str)
+    }
 
 
 def _compare_mappings(
@@ -143,7 +201,7 @@ def _difference_class(path: str, left: Any, right: Any, root: Mapping[str, Any] 
         return "whitespace"
     if field in _CONDITION_FIELDS and _list_is_order_only(left, right):
         return "condition_order"
-    if field in {"operations", "costs"} and _operation_order_proof(left, right, root):
+    if field in {"operations", "costs", "establishes"} and _operation_order_proof(left, right, root):
         return "op_order"
     if field == "facts" and path.startswith("world.") and not _collection_order_proof(left, right, path, root):
         return "representation"

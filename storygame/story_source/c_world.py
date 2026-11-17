@@ -59,7 +59,7 @@ def build_world(
     effects = {
         fact_id: tuple(WorldEffect.model_validate(effect) for effect in declaration.get("on_assert", ()))
         for fact_id, declaration in facts
-        if declaration.get("on_assert")
+        if "on_assert" in declaration
     }
     guards = tuple(_guard(identifier, record) for identifier, record in _records(catalog.get("disclosure_guards")))
     return WorldSource(
