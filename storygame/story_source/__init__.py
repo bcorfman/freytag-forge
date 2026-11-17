@@ -50,4 +50,10 @@ def __getattr__(name: str) -> object:
         raise AttributeError(name)
     import importlib
 
-    return getattr(importlib.import_module(f"{__name__}.{module_name}"), name)
+    try:
+        module = importlib.import_module(f"{__name__}.{module_name}")
+    except ModuleNotFoundError as error:
+        if error.name != f"{__name__}.{module_name}":
+            raise
+        raise AttributeError(name) from error
+    return getattr(module, name)
