@@ -35,8 +35,8 @@ def test_loader_rejects_transition_trigger_without_source_scene_producer(
     with pytest.raises(
         SourceError,
         match=(
-            "scene 1C transition 't_1c_2a' trigger 'unbacked_trigger_fact' "
-            "is not asserted by a bridge event, pacing event or delivery cost"
+            "transition 't_1c_2a' trigger fact 'unbacked_trigger_fact' "
+            "can never fail because it has no producer in source scene '1C'"
         ),
     ):
         load_compiled_copy(root)

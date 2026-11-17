@@ -9,7 +9,7 @@ import yaml
 
 from storygame.audit_budget import deep_turn_budget, report
 from storygame.story_package.loader import load_story_package
-from tests.story_source.helpers import DELETE, compiled_story_copy, load_compiled_copy, patch_source
+from tests.story_source.helpers import compiled_story_copy, load_compiled_copy, patch_source
 
 REAL_PACKAGE = Path("data/stories/continuity-initiative")
 FIXTURE = Path("tests/fixtures/deep_turn_budget.json")
@@ -43,10 +43,16 @@ def _package(tmp_path: Path, *, alternate: bool = False, with_knowledge: bool = 
     patch_source(source, "scenes/1A.yaml", "beats[kristin_steadies_1a].sets", {"deep_statement_known": True})
 
     if not with_knowledge:
+        scene["facts"]["continuity_initiative_known"]["delivery"] = scene["facts"]["deep_statement_known"].pop(
+            "delivery"
+        )
+        scene_path.write_text(yaml.safe_dump(scene, sort_keys=False, width=10_000), encoding="utf-8")
+        match["deliveries"]["continuity_initiative_known"] = match["deliveries"].pop("deep_statement_known")
+        match_path.write_text(yaml.safe_dump(match, sort_keys=False, width=10_000), encoding="utf-8")
         patch_source(source, "scenes/1A.yaml", "reveals[sl_1a_a].variants.r1.audience.player_visible", False)
-        patch_source(source, "scenes/1A.yaml", "facts.deep_statement_known.delivery", DELETE)
-        patch_source(source, "scenes/1A.match.yaml", "deliveries", {})
-        patch_source(source, "scenes/1A.yaml", "bridge", [])
+        patch_source(
+            source, "scenes/1A.yaml", "bridge[bridge_1a_actionable_lead].when", ["continuity_initiative_known"]
+        )
     if alternate:
         patch_source(
             source,
