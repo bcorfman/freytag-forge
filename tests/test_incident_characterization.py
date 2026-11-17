@@ -1,17 +1,18 @@
 from __future__ import annotations
 
-import shutil
 from pathlib import Path
 
 import pytest
-import yaml
 
-from storygame.runtime.engine import RuntimeEngine
+from storygame.runtime.engine import ClarificationTurn, RuntimeEngine
 from storygame.runtime.facts import Fact
+from storygame.runtime.reference_resolution import Clarification, ReferenceResult
 from storygame.runtime.reveal_eligibility import explain_reveal
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import ProposalValidationError
-from storygame.story_package.loader import StoryPackageError, load_story_package
+from storygame.story_package.loader import load_story_package
+from storygame.story_source.diagnostics import SourceError
+from tests.story_source.helpers import compiled_story_copy, load_compiled_copy, patch_source
 
 PACKAGE_ROOT = Path("data/stories/continuity-initiative")
 PACKAGE = load_story_package(PACKAGE_ROOT)
@@ -103,16 +104,11 @@ def test_1c_incident_outcome_bypasses_min_turns_floor() -> None:
 
 
 def test_loader_rejects_pacing_event_beyond_scene_min_turns(tmp_path: Path) -> None:
-    root = tmp_path / "continuity-initiative"
-    shutil.copytree(PACKAGE_ROOT, root)
-    pacing_path = root / "pacing.yaml"
-    pacing = yaml.safe_load(pacing_path.read_text(encoding="utf-8"))
-    event = next(item for item in pacing["events"] if item["id"] == "transfer_window_1c")
-    event["at_turn"] = 9
-    pacing_path.write_text(yaml.safe_dump(pacing, sort_keys=False), encoding="utf-8")
+    root = compiled_story_copy(tmp_path)
+    patch_source(root, "source/scenes/1C.yaml", "beats[transfer_window_1c].at_turn", 9)
 
-    with pytest.raises(StoryPackageError, match="transfer_window_1c.*min_turns floor 8"):
-        load_story_package(root)
+    with pytest.raises(SourceError, match="transfer_window_1c.*min_turns floor 8"):
+        load_compiled_copy(root)
 
 
 def test_rejected_turn_restores_security_pacing_then_accepted_turn_fires_it() -> None:
@@ -140,8 +136,32 @@ def test_rejected_turn_restores_security_pacing_then_accepted_turn_fires_it() ->
     assert all("transfer line goes dark" not in segment.text for segment in result.segments)
 
 
-def test_clarification_turn_does_not_advance_pacing() -> None:
-    pytest.skip("No short, stable 1C command in today's reference resolver produces ClarificationTurn.")
+def test_clarification_turn_does_not_advance_pacing(monkeypatch: pytest.MonkeyPatch) -> None:
+    state = _scene_1c_state()
+    before = state.snapshot()
+    clarification = Clarification(
+        "Inspect the access point.",
+        "access point",
+        (("service_entrance", "service entrance"), ("observation_shaft", "observation shaft")),
+        0,
+    )
+    monkeypatch.setattr(
+        "storygame.runtime.engine.resolve_references",
+        lambda *_args, **_kwargs: ReferenceResult(
+            command="Inspect the access point.",
+            question=clarification,
+            outcome="ambiguous",
+            original="Inspect the access point.",
+            resolutions=(),
+        ),
+    )
+
+    result = RuntimeEngine(
+        state, lambda _: {"segments": [{"kind": "narration", "text": "The terminal is quiet."}]}
+    ).turn("Inspect the access point.")
+
+    assert isinstance(result, ClarificationTurn)
+    assert state.snapshot() == before
 
 
 def test_1c_missed_window_withdraws_without_unearned_facts() -> None:

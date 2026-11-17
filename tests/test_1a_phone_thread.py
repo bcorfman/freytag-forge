@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import yaml
-
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeState
@@ -31,8 +29,7 @@ def _knowledge() -> dict[str, object]:
 
 
 def _routes() -> dict:
-    data = yaml.safe_load((ROOT / "storylet-routes.yaml").read_text(encoding="utf-8"))
-    return {item["id"]: item for item in data["storylets"]}
+    return {route.id: route for route in PACKAGE.storylet_routes.storylets}
 
 
 def _candidate_ids(command: str, *, true_facts: tuple[str, ...] = (), false_facts: tuple[str, ...] = ()) -> set[str]:
@@ -48,18 +45,27 @@ def _candidate_ids(command: str, *, true_facts: tuple[str, ...] = (), false_fact
 
 def test_phone_thread_storylet_is_declared():
     storylet = _routes()["SL-1A-J"]
-    assert storylet["scene_id"] == "1A"
-    assert [option["id"] for option in storylet["realization_options"]] == list(PHONE_REALIZATIONS)
-    pacing = storylet["activation"]["pacing"]
-    assert (pacing["earliest_turn"], pacing["target_turn"], pacing["latest_turn"]) == (0, 5, 11)
+    assert storylet.scene_id == "1A"
+    assert [option.id for option in storylet.realizations] == list(PHONE_REALIZATIONS)
+    assert (storylet.earliest_turn, storylet.target_turn, storylet.latest_turn) == (0, 5, 11)
 
 
 def test_phone_thread_facts_are_declared_everywhere():
     fact_ids = {"michelle_text_read", "kristin_calls_read"}
-    routes = yaml.safe_load((ROOT / "storylet-routes.yaml").read_text(encoding="utf-8"))
+    route_facts = {
+        operation.fact_id
+        for route in PACKAGE.storylet_routes.storylets
+        for realization in route.realizations
+        for operation in realization.operations
+    }
+    route_facts.update(
+        operation.fact_id
+        for event in (*PACKAGE.storylet_routes.bridge_events, *PACKAGE.storylet_routes.resolution_events)
+        for operation in event.operations
+    )
     assert fact_ids <= {fact.id for fact in PACKAGE.knowledge.facts}
     assert fact_ids <= set(PACKAGE.world.facts)
-    assert fact_ids <= {fact["id"] for fact in routes["new_fact_ids"]}
+    assert fact_ids <= route_facts
 
 
 def test_the_text_is_offered_when_the_patrol_is_away():

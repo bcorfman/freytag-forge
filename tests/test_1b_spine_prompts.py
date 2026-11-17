@@ -5,10 +5,10 @@ import re
 from pathlib import Path
 
 import pytest
-import yaml
 
 from storygame.runtime.candidate_matcher import _matches_all
 from storygame.runtime.facts import Fact
+from storygame.story_package.loader import load_story_package
 from tests.test_hidden_bench_discovery import _engine, _fresh_1b_state
 
 FRONTEND_ROOT = Path("frontend/e2e")
@@ -28,18 +28,16 @@ def _scene_prompts() -> list[str]:
     return [json.loads(string.group(0)) for string in strings]
 
 
-def _knowledge() -> dict[str, dict]:
-    raw = yaml.safe_load((PACKAGE_ROOT / "knowledge.yaml").read_text())
-    return {item["id"]: item for item in raw["knowledge"]}
+def _knowledge() -> dict[str, object]:
+    package = load_story_package(PACKAGE_ROOT)
+    return {item.id: item for item in package.knowledge.knowledge}
 
 
-def _matches(knowledge: dict[str, dict], command: str) -> set[str]:
+def _matches(knowledge: dict[str, object], command: str) -> set[str]:
     return {
         item_id
         for item_id, item in knowledge.items()
-        if item_id.startswith("k_sl_1b")
-        and item.get("action_evidence")
-        and _matches_all(tuple(tuple(group) for group in item["action_evidence"]), command)
+        if item_id.startswith("k_sl_1b") and item.action_evidence and _matches_all(item.action_evidence, command)
     }
 
 
@@ -56,12 +54,9 @@ def test_1b_spine_prompts_match_their_authored_reveals_in_order() -> None:
     matched = [_matches(knowledge, prompt) for prompt in prompts]
     assert matched == expected
 
-    required = {requirement["fact_id"] for requirement in knowledge["k_sl_1b_c_r1"]["requires"]}
+    required = {requirement.fact_id for requirement in knowledge["k_sl_1b_c_r1"].requires}
     established = {
-        fact["fact_id"]
-        for item_ids in matched[:3]
-        for item_id in item_ids
-        for fact in knowledge[item_id].get("establishes", [])
+        fact.fact_id for item_ids in matched[:3] for item_id in item_ids for fact in knowledge[item_id].establishes
     }
     assert required <= established
 

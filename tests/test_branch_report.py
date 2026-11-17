@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import shutil
 from pathlib import Path
 
 import pytest
@@ -8,71 +7,40 @@ import yaml
 
 from storygame.story_package.branch_report import render_branch_report
 from storygame.story_package.loader import load_story_package
+from tests.story_source.helpers import compiled_story_copy, load_compiled_copy
 
 ROOT = Path(__file__).resolve().parents[1] / "data" / "stories" / "continuity-initiative"
 
 
 def _copy_package(tmp_path: Path) -> Path:
-    destination = tmp_path / "package"
-    shutil.copytree(ROOT, destination)
-    return destination
+    return compiled_story_copy(tmp_path)
 
 
-def _edit_yaml(root: Path, filename: str, edit) -> None:
-    path = root / filename
+def _edit_source(root: Path, filename: str, edit) -> None:
+    path = root / "source" / filename
     data = yaml.safe_load(path.read_text(encoding="utf-8"))
     edit(data)
     path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
 
 
-def _incident(data: dict, scene_id: str = "2C") -> dict:
-    return next(item for item in data["incidents"] if item["scene_id"] == scene_id)
+def _incident(data: dict) -> dict:
+    return next(item for item in data.incidents if item.scene_id == "2C")
 
 
 def _outcome(data: dict, outcome_id: str) -> dict:
-    return next(item for item in _incident(data)["outcomes"] if item["id"] == outcome_id)
-
-
-def _claim(data: dict, claim_id: str) -> dict:
-    return next(item for item in data["knowledge"] if item["id"] == claim_id)
-
-
-def _scene_block(root: Path, scene_id: str) -> tuple[str, str, str]:
-    path = root / "plot.md"
-    text = path.read_text(encoding="utf-8")
-    start = text.index(f"## Scene {scene_id} ")
-    end = text.find("\n## Scene ", start)
-    end = len(text) if end == -1 else end
-    return str(path), text[:start], text[start:end]
-
-
-def _replace_scene_block(root: Path, scene_id: str, replacement) -> None:
-    path_string, before, block = _scene_block(root, scene_id)
-    path = Path(path_string)
-    path.write_text(
-        before + replacement(block) + path.read_text(encoding="utf-8")[len(before) + len(block) :], encoding="utf-8"
-    )
+    reveal = next(item for item in data["reveals"] if item["id"] == "sl_2c_d")
+    return next(variant for variant in reveal["variants"].values() if variant["outcome"]["id"] == outcome_id)["outcome"]
 
 
 def _remove_entry_variants(root: Path) -> None:
-    def edit(block: str) -> str:
-        marker = "entry_variants:\n- requires: [committed_to_rescue]\n"
-        start = block.index(marker)
-        end = block.index("transition_ids:", start)
-        return block[:start] + "entry_variants: []\n" + block[end:]
-
-    _replace_scene_block(root, "3A", edit)
+    _edit_source(root, "scenes/3A.yaml", lambda data: data.update(entry_additions=[]))
 
 
 def _move_target_item(root: Path, parent: str) -> None:
-    def edit(block: str) -> str:
-        for old_parent in ("kristin", "detention_level"):
-            old = f"  copied_janus_files: {{parent: {old_parent}}}\n"
-            if old in block:
-                return block.replace(old, f"  copied_janus_files: {{parent: {parent}}}\n", 1)
-        raise AssertionError("target item placement is missing")
+    def edit(data: dict) -> None:
+        data["placements"]["copied_janus_files"]["parent"] = parent
 
-    _replace_scene_block(root, "3A", edit)
+    _edit_source(root, "scenes/3A.yaml", edit)
 
 
 def test_declared_costs_distinguish_unset_and_unread(tmp_path: Path) -> None:
@@ -84,21 +52,20 @@ def test_declared_costs_distinguish_unset_and_unread(tmp_path: Path) -> None:
             "rebecca_offer_active",
         ]
 
-    _edit_yaml(package_root, "incidents.yaml", seed)
-    _edit_yaml(
+    _edit_source(package_root, "scenes/2C.yaml", seed)
+    _edit_source(
         package_root,
-        "knowledge.yaml",
-        lambda data: _claim(data, "k_sl_2c_d_r3").update(
-            establishes=[
-                effect
-                for effect in _claim(data, "k_sl_2c_d_r3")["establishes"]
-                if effect["fact_id"] != "evidence_ready_to_transmit"
-            ]
+        "scenes/2C.yaml",
+        lambda data: data["reveals"][1]["variants"]["r3"].update(
+            commits_subset={
+                fact_id: value
+                for fact_id, value in data["reveals"][1]["variants"]["r3"]["commits"].items()
+                if fact_id != "evidence_ready_to_transmit"
+            }
         ),
     )
-    report = render_branch_report(
-        package_root, _incident(yaml.safe_load((package_root / "incidents.yaml").read_text()))["id"]
-    )
+    package = load_compiled_copy(package_root)
+    report = render_branch_report(package_root, _incident(package).id)
     assert "declares cost `evidence_ready_to_transmit`" in report
     assert "but the realization does not set it" in report
     assert "declares cost `rebecca_offer_active`" in report
@@ -107,7 +74,7 @@ def test_declared_costs_distinguish_unset_and_unread(tmp_path: Path) -> None:
     def clean(data: dict) -> None:
         _outcome(data, "committed_to_transmit")["costs"] = ["rebecca_offer_active"]
 
-    _edit_yaml(package_root, "incidents.yaml", clean)
+    _edit_source(package_root, "scenes/2C.yaml", clean)
     clean_report = render_branch_report(package_root, "i_2c_rebecca_corridor")
     assert "declares cost `evidence_ready_to_transmit`" not in clean_report
 
@@ -183,11 +150,7 @@ def test_real_incident_no_trace_line_names_only_later_scene_branches() -> None:
 def test_exit_transition_only_reader_does_not_leave_later_trace(tmp_path: Path) -> None:
     package_root = _copy_package(tmp_path)
 
-    def seed(data: dict) -> None:
-        transition = next(item for item in data["transitions"] if item["id"] == "t_2c_3a")
-        transition["triggers"] = [{"fact_id": "committed_to_transmit", "equals": True}]
-
-    _edit_yaml(package_root, "pacing.yaml", seed)
+    _edit_source(package_root, "scenes/2C.yaml", lambda data: data["exit"].update(when_all=["committed_to_transmit"]))
     _remove_entry_variants(package_root)
     report = render_branch_report(package_root, "i_2c_rebecca_corridor")
     line = next(line for line in report.splitlines() if line.startswith("Branches that leave no trace"))
@@ -197,19 +160,12 @@ def test_exit_transition_only_reader_does_not_leave_later_trace(tmp_path: Path) 
 def test_next_scene_reader_removes_branch_from_no_trace_line(tmp_path: Path) -> None:
     package_root = _copy_package(tmp_path)
 
-    def seed(block: str) -> str:
-        variant = (
-            "entry_variants:\n"
-            "- requires: [committed_to_transmit]\n"
-            "  text: The transmit branch carries into the next scene.\n"
-        )
-        return block.replace(
-            "entry_variants:\n",
-            variant,
-            1,
-        )
+    def seed(data: dict) -> None:
+        data["entry_additions"] = [
+            {"when": ["committed_to_transmit"], "text": "The transmit branch carries into the next scene."}
+        ]
 
-    _replace_scene_block(package_root, "3A", seed)
+    _edit_source(package_root, "scenes/3A.yaml", seed)
     report = render_branch_report(package_root, "i_2c_rebecca_corridor")
     line = next(line for line in report.splitlines() if line.startswith("Branches that leave no trace"))
     assert "`committed_to_transmit`" not in line
@@ -218,28 +174,23 @@ def test_next_scene_reader_removes_branch_from_no_trace_line(tmp_path: Path) -> 
 def test_branch_without_trigger_is_reported_as_dead_end_and_clean_variant(tmp_path: Path) -> None:
     package_root = _copy_package(tmp_path)
 
-    def seed(data: dict) -> None:
-        transition = next(item for item in data["transitions"] if item["id"] == "t_2c_3a")
-        transition["triggers"] = [{"fact_id": "committed_to_transmit", "equals": True}]
+    _edit_source(package_root, "scenes/2C.yaml", lambda data: data["exit"].update(when_all=["committed_to_transmit"]))
 
-    _edit_yaml(package_root, "pacing.yaml", seed)
-    _edit_yaml(
-        package_root,
-        "handoffs.yaml",
-        lambda data: data.update(
-            deliveries=[item for item in data["deliveries"] if item["fact_id"] != "committed_to_transmit"]
-        ),
-    )
+    def remove_delivery(data: dict) -> None:
+        data["facts"]["committed_to_transmit"].pop("delivery")
+
+    _edit_source(package_root, "scenes/2C.yaml", remove_delivery)
+    _edit_source(package_root, "scenes/2C.match.yaml", lambda data: data["deliveries"].pop("committed_to_transmit"))
     report = render_branch_report(package_root, "i_2c_rebecca_corridor")
     rescue = report.split("## Branch `committed_to_rescue`", 1)[1].split("## Branch", 1)[0]
     assert "Result: dead end" in rescue
     assert "unmet trigger facts: `committed_to_transmit`" in rescue
 
-    def clean(data: dict) -> None:
-        transition = next(item for item in data["transitions"] if item["id"] == "t_2c_3a")
-        transition["triggers"] = [{"fact_id": "combined_broadcast_rescue_plan_known", "equals": True}]
-
-    _edit_yaml(package_root, "pacing.yaml", clean)
+    _edit_source(
+        package_root,
+        "scenes/2C.yaml",
+        lambda data: data["exit"].update(when_all=["combined_broadcast_rescue_plan_known"]),
+    )
     clean_report = render_branch_report(package_root, "i_2c_rebecca_corridor")
     assert "Result: dead end" not in clean_report
 

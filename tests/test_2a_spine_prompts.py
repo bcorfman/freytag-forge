@@ -3,10 +3,10 @@ from __future__ import annotations
 import json
 import re
 from pathlib import Path
-
-import yaml
+from typing import Any
 
 from storygame.runtime.candidate_matcher import _matches_all
+from storygame.story_package.loader import load_story_package
 
 FRONTEND_ROOT = Path("frontend/e2e")
 PACKAGE_ROOT = Path("data/stories/continuity-initiative")
@@ -25,18 +25,16 @@ def _scene_prompts() -> list[str]:
     return [json.loads(string.group(0)) for string in strings]
 
 
-def _knowledge() -> dict[str, dict]:
-    raw = yaml.safe_load((PACKAGE_ROOT / "knowledge.yaml").read_text())
-    return {item["id"]: item for item in raw["knowledge"]}
+def _knowledge() -> dict[str, Any]:
+    package = load_story_package(PACKAGE_ROOT)
+    return {item.id: item for item in package.knowledge.knowledge}
 
 
-def _matches(knowledge: dict[str, dict], command: str) -> set[str]:
+def _matches(knowledge: dict[str, Any], command: str) -> set[str]:
     return {
         item_id
         for item_id, item in knowledge.items()
-        if item_id.startswith("k_sl_2a")
-        and item.get("action_evidence")
-        and _matches_all(tuple(tuple(group) for group in item["action_evidence"]), command)
+        if item_id.startswith("k_sl_2a") and item.action_evidence and _matches_all(item.action_evidence, command)
     }
 
 
@@ -60,12 +58,8 @@ def test_2a_spine_prompts_match_their_authored_reveals_in_order() -> None:
 
     established = {"facility_infiltration_needed", "inspection_window_missed"}
     for prompt_number, item_ids in enumerate(matched, start=1):
-        required = {
-            requirement["fact_id"] for item_id in item_ids for requirement in knowledge[item_id].get("requires", [])
-        }
-        established_by_prompt = {
-            fact["fact_id"] for item_id in item_ids for fact in knowledge[item_id].get("establishes", [])
-        }
+        required = {requirement.fact_id for item_id in item_ids for requirement in knowledge[item_id].requires}
+        established_by_prompt = {fact.fact_id for item_id in item_ids for fact in knowledge[item_id].establishes}
         assert required <= established | established_by_prompt, (
             f"2A prompt {prompt_number} requires facts not established earlier: {sorted(required - established)}"
         )

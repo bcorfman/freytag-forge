@@ -1,11 +1,8 @@
 from __future__ import annotations
 
 import json
-import shutil
 from pathlib import Path
 from unittest.mock import patch
-
-import yaml
 
 from storygame.audit_budget import (
     _PLAYER_INPUT,
@@ -16,75 +13,80 @@ from storygame.audit_budget import (
 from storygame.runtime.cloudflare import CloudflareTurnProvider
 from storygame.runtime.item_facts import ItemFactsProvider
 from storygame.story_package.loader import load_story_package
-from tests.test_audit_budget import LIGHTHOUSE
+from tests.story_source.helpers import DELETE, compiled_story_copy, patch_source
 
 REAL_PACKAGE = Path("data/stories/continuity-initiative")
 FIXTURE = Path("tests/fixtures/deep_turn_budget.json")
 
 
 def _branch_package(tmp_path: Path, *, contradictory: bool) -> Path:
-    root = tmp_path / "lighthouse"
-    shutil.copytree(LIGHTHOUSE, root)
-
-    knowledge_path = root / "knowledge.yaml"
-    knowledge = yaml.safe_load(knowledge_path.read_text(encoding="utf-8"))
-    knowledge["facts"].append({"id": "branch_state", "purpose": "Which branch is active."})
-    knowledge["facts"].append({"id": "branch_true_known", "purpose": "The true branch is known."})
-    knowledge["facts"].append({"id": "branch_false_known", "purpose": "The false branch is known."})
-    knowledge["knowledge"][0]["establishes"].append({"op": "assert", "fact_id": "branch_state", "value": True})
-    branch_entries = [
+    root = compiled_story_copy(tmp_path)
+    source = root / "source"
+    patch_source(source, "scenes/1A.yaml", "facts.branch_state", {"purpose": "Which branch is active."})
+    patch_source(source, "scenes/1A.yaml", "facts.branch_true_known", {"purpose": "The true branch is known."})
+    patch_source(source, "scenes/1A.yaml", "facts.branch_false_known", {"purpose": "The false branch is known."})
+    patch_source(
+        source,
+        "scenes/1A.yaml",
+        "reveals[sl_1a_a].variants.r1.commits.branch_state",
+        True,
+    )
+    branch_variants = [
         {
-            "id": "k_branch_true",
-            "statement": "Ada saw the true branch.",
-            "entity_ids": ["brass_key"],
-            "aliases": ["true branch"],
-            "audience": {"kind": "public", "player_visible": True},
-            "available_in_scenes": ["1A"],
-            "requires": [{"fact_id": "branch_state", "equals": True}],
-            "establishes": [{"op": "assert", "fact_id": "branch_true_known", "value": True}],
-            "source": {
-                "kind": "storylet_realization",
-                "storylet_id": "SL-1A-A",
-                "realization_id": "r0",
-            },
+            "realization_id": "SL-1A-A-R2",
+            "intent": "Record the true branch.",
+            "when": {"branch_state": True},
+            "commits": {"branch_true_known": True},
+            "helps_exit": [],
+            "from_outline": ["1A.1"],
+            "claim_id": "k_branch_true",
+            "says": "Ada saw the true branch.",
+            "entities": ["kristin"],
+            "reach": [],
+            "relevance": {"entity_ids": [], "priority": 0},
+            "audience": {"kind": "public", "character_ids": [], "player_visible": True},
+            "voiceable": True,
+            "repeatable": False,
+            "text": "Ada saw the true branch.",
+            "earn_when": "looks for the true branch",
         },
         {
-            "id": "k_branch_false",
-            "statement": "Ada saw the false branch.",
-            "entity_ids": ["brass_key"],
-            "aliases": ["false branch"],
-            "audience": {"kind": "public", "player_visible": True},
-            "available_in_scenes": ["1A"],
-            "establishes": [{"op": "assert", "fact_id": "branch_false_known", "value": True}],
-            "source": {
-                "kind": "storylet_realization",
-                "storylet_id": "SL-1A-A",
-                "realization_id": "r0",
-            },
+            "realization_id": "SL-1A-A-R3",
+            "intent": "Record the false branch.",
+            "when": {"branch_state": False},
+            "commits": {"branch_false_known": True},
+            "helps_exit": [],
+            "from_outline": ["1A.1"],
+            "claim_id": "k_branch_false",
+            "says": "Ada saw the false branch.",
+            "entities": ["kristin"],
+            "reach": [],
+            "relevance": {"entity_ids": [], "priority": 0},
+            "audience": {"kind": "public", "character_ids": [], "player_visible": True},
+            "voiceable": True,
+            "repeatable": False,
+            "text": "Ada saw the false branch.",
+            "earn_when": "looks for the false branch",
         },
     ]
-    if contradictory:
-        branch_entries[1]["requires"] = [{"fact_id": "branch_state", "equals": False}]
-    knowledge["knowledge"].extend(branch_entries)
-    knowledge_path.write_text(yaml.safe_dump(knowledge, sort_keys=False), encoding="utf-8")
-
-    world_path = root / "world.yaml"
-    world = yaml.safe_load(world_path.read_text(encoding="utf-8"))
-    world["facts"].append("branch_state")
-    world["facts"].append("branch_true_known")
-    world["facts"].append("branch_false_known")
-    world_path.write_text(yaml.safe_dump(world, sort_keys=False), encoding="utf-8")
-
-    routes_path = root / "storylet-routes.yaml"
-    routes = yaml.safe_load(routes_path.read_text(encoding="utf-8"))
-    routes["storylets"][0]["realization_options"][0]["operations"].extend(
-        [
-            {"op": "assert", "fact_id": "branch_state", "value": True},
-            {"op": "assert", "fact_id": "branch_true_known", "value": True},
-            {"op": "assert", "fact_id": "branch_false_known", "value": True},
-        ]
+    for key, variant in zip(("r2", "r3"), branch_variants, strict=True):
+        patch_source(source, "scenes/1A.yaml", f"reveals[sl_1a_a].variants.{key}", variant)
+    patch_source(
+        source,
+        "scenes/1A.match.yaml",
+        "claims.k_branch_true",
+        {"aliases": ["true branch"], "action_evidence": [["see"]], "must_convey": [["true branch"]]},
     )
-    routes_path.write_text(yaml.safe_dump(routes, sort_keys=False), encoding="utf-8")
+    patch_source(
+        source,
+        "scenes/1A.match.yaml",
+        "claims.k_branch_false",
+        {"aliases": ["false branch"], "action_evidence": [["see"]], "must_convey": [["false branch"]]},
+    )
+    if contradictory:
+        patch_source(source, "scenes/1A.yaml", "reveals[sl_1a_a].variants.r3.when", {"branch_state": False})
+    else:
+        patch_source(source, "scenes/1A.yaml", "reveals[sl_1a_a].variants.r3.when", DELETE)
     return root
 
 

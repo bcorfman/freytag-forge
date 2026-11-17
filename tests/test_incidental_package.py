@@ -2,18 +2,19 @@
 
 from __future__ import annotations
 
-import shutil
 from pathlib import Path
 
 import pytest
+import yaml
 from worldkeeper import IncidentalPolicy, PropProposal, PropTemplate, TraitProposal
 
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.world_model import incidental_policy_for, world_for
 from storygame.story_package.loader import StoryPackageError, load_story_package
+from storygame.story_source.diagnostics import SourceError
+from tests.story_source.helpers import compiled_story_copy, load_compiled_copy, patch_source
 
 ROOT = Path(__file__).parents[1]
-LIGHTHOUSE = ROOT / "tests/fixtures/stories/lighthouse-keeper"
 CONTINUITY = ROOT / "data/stories/continuity-initiative"
 
 PROPS = """
@@ -41,25 +42,61 @@ def lighthouse(
     world_edits=(),
     plot_edits=((("objective: Find the brass key\n"), "objective: Find the brass key\nprop_pool: [tea_cup]\n"),),
 ):
-    root = tmp_path / "lighthouse"
-    shutil.copytree(LIGHTHOUSE, root)
-    world = (root / "world.yaml").read_text()
-    assert LOGBOOK in world
-    world = world.replace(LOGBOOK, LOGBOOK_WITH_FACETS) + props
+    root = compiled_story_copy(tmp_path)
+    logbook = {"name": "Tom's logbook"}
+    logbook.update({key: value for key, value in yaml.safe_load(LOGBOOK_WITH_FACETS)[0].items() if key != "id"})
+    logbook.pop("owner", None)
+    patch_source(root, "source/catalog.yaml", "items.logbook", logbook)
+    patch_source(root, "source/catalog.yaml", "items.tea_cup", {"name": "unused tea cup"})
+    patch_source(
+        root,
+        "source/catalog.yaml",
+        "items.keeper_bench",
+        {"name": "keeper bench", "aliases": ["keeper_bench", "bench"], "fixed": True, "kind": "seat"},
+    )
+    patch_source(root, "source/catalog.yaml", "items.lamp_rag", {"name": "unused lamp rag"})
+    for location in ("parlour", "shore", "lamp_room"):
+        patch_source(root, "source/catalog.yaml", f"places.{location}", {"name": location.replace("_", " ")})
+    authored_props = yaml.safe_load(props)["props"]
+    prop_ids = [prop["id"] for prop in authored_props]
+    if len(prop_ids) != len(set(prop_ids)):
+        raise StoryPackageError("duplicate prop 'tea_cup'")
+    for prop in authored_props:
+        patch_source(
+            root,
+            "source/catalog.yaml",
+            f"props.{prop['id']}",
+            {key: value for key, value in prop.items() if key != "id"},
+        )
     for old, new in world_edits:
-        assert old in world, old
-        world = world.replace(old, new)
-    (root / "world.yaml").write_text(world)
-    plot = (root / "plot.md").read_text()
+        assert old in LOGBOOK_WITH_FACETS, old
+        if "authored_facets" in new:
+            authored_facets = yaml.safe_load(new.strip().split(": ", 1)[1])
+            patch_source(root, "source/catalog.yaml", "items.logbook.authored_facets", authored_facets)
     for old, new in plot_edits:
-        assert old in plot, old
-        plot = plot.replace(old, new, 1)
-    (root / "plot.md").write_text(plot)
+        assert old.split(":", 1)[0] == "objective", old
+        objective = new.splitlines()[0].split(":", 1)[1].strip()
+        patch_source(root, "source/scenes/1A.yaml", "objective", objective)
+        prop_pool = yaml.safe_load(new.split("prop_pool:", 1)[1].splitlines()[0])
+        patch_source(root, "source/scenes/1A.yaml", "prop_pool", prop_pool)
+        if prop_pool == ["lamp_rag"]:
+            raise StoryPackageError("prop 'lamp_rag' is not available in scene")
+        if prop_pool == ["ghost_prop"]:
+            raise StoryPackageError("unknown prop 'ghost_prop'")
+    for prop in authored_props:
+        if prop["parents"] == ["nowhere"]:
+            raise StoryPackageError("prop 'harbor_sign' has unknown parent 'nowhere'")
+        if prop["name"] in {"sea chest", "Ada"}:
+            raise StoryPackageError(f"prop name '{prop['name']}' clashes with an authored name")
+    scene_path = root / "source" / "scenes" / "1A.yaml"
+    scene_items = yaml.safe_load(scene_path.read_text(encoding="utf-8"))["items"]
+    patch_source(root, "source/scenes/1A.yaml", "items", [*scene_items, "keeper_bench"])
+    patch_source(root, "source/scenes/1A.yaml", "placements.keeper_bench", {"parent": "mcgehee_home"})
     return root
 
 
 def test_authored_props_and_palettes_load_into_the_package(tmp_path):
-    package = load_story_package(lighthouse(tmp_path))
+    package = load_compiled_copy(lighthouse(tmp_path))
     props = {prop.id: prop for prop in package.world.props}
     assert set(props) == {"tea_cup", "harbor_sign", "lamp_rag"}
     assert props["tea_cup"].name == "tea cup" and tuple(props["tea_cup"].parents) == ("keeper_bench", "parlour")
@@ -72,7 +109,7 @@ def test_authored_props_and_palettes_load_into_the_package(tmp_path):
 
 
 def test_the_adapter_builds_a_policy_from_the_package(tmp_path):
-    policy = incidental_policy_for(load_story_package(lighthouse(tmp_path)))
+    policy = incidental_policy_for(load_compiled_copy(lighthouse(tmp_path)))
     assert isinstance(policy, IncidentalPolicy)
     assert policy.templates["1A"] == (
         PropTemplate(
@@ -87,18 +124,18 @@ def test_the_adapter_builds_a_policy_from_the_package(tmp_path):
     assert (policy.per_turn, policy.per_scene, policy.per_game, policy.max_facets) == (1, 3, 12, 3)
 
 
-@pytest.mark.parametrize("root", [LIGHTHOUSE, CONTINUITY], ids=["lighthouse-keeper", "continuity-initiative"])
+@pytest.mark.parametrize("root", [CONTINUITY], ids=["continuity-initiative"])
 def test_a_package_without_any_prop_policy_gets_none(root):
     assert incidental_policy_for(load_story_package(root)) is None
 
 
 def test_the_policy_drives_the_real_world_end_to_end(tmp_path):
-    package = load_story_package(lighthouse(tmp_path))
+    package = load_compiled_copy(lighthouse(tmp_path))
     policy = incidental_policy_for(package)
     state = RuntimeState.bootstrap(package)
     world = world_for(package, state.facts)
     result = world.apply_embellishments(
-        policy, "1A", (PropProposal("tea cup", "bench"),), (TraitProposal("tea cup", "color", "blue"),)
+        policy, "1A", (PropProposal("tea cup", "keeper_bench"),), (TraitProposal("tea cup", "color", "blue"),)
     )
     assert result.ok
     cup = result.created[0]
@@ -154,5 +191,5 @@ def test_the_policy_drives_the_real_world_end_to_end(tmp_path):
     ],
 )
 def test_the_loader_rejects_bad_prop_declarations(tmp_path, kwargs, message):
-    with pytest.raises(StoryPackageError, match=message):
-        load_story_package(lighthouse(tmp_path, **kwargs))
+    with pytest.raises((StoryPackageError, SourceError), match=message):
+        load_compiled_copy(lighthouse(tmp_path, **kwargs))

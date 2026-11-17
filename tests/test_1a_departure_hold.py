@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import yaml
-
 from storygame.runtime.candidate_matcher import uniquely_matched_authored_handoff
 from storygame.runtime.cloudflare import CloudflareTurnProvider
 from storygame.runtime.delivery_text import resolve_delivery_text, true_fact_ids
@@ -34,9 +32,8 @@ DEPARTED_TEXT = (
 )
 
 
-def _routes() -> dict[str, object]:
-    data = yaml.safe_load((ROOT / "storylet-routes.yaml").read_text(encoding="utf-8"))
-    return {item["id"]: item for item in data["storylets"]}
+def _routes():
+    return {storylet.id: storylet for storylet in PACKAGE.storylet_routes.storylets}
 
 
 def _knowledge():
@@ -74,19 +71,19 @@ def _handoff_id(command: str, *, truck: bool = True, lead: bool = True, **facts:
 
 def test_departure_hold_storylet_is_declared() -> None:
     storylet = _routes()[STORYLET_ID]
-    assert storylet["scene_id"] == "1A"
-    assert [option["id"] for option in storylet["realization_options"]] == ["SL-1A-K-R1"]
-    pacing = storylet["activation"]["pacing"]
-    assert (pacing["earliest_turn"], pacing["target_turn"], pacing["latest_turn"]) == (4, 10, 12)
-    assert storylet["activation"]["conditions"] == [{"fact_id": "michelle_lead_actionable", "equals": True}]
+    assert storylet.scene_id == "1A"
+    assert [option.id for option in storylet.realizations] == ["SL-1A-K-R1"]
+    assert (storylet.earliest_turn, storylet.target_turn, storylet.latest_turn) == (4, 10, 12)
+    assert [condition.model_dump() for condition in storylet.activation_conditions] == [
+        {"fact_id": "michelle_lead_actionable", "equals": True}
+    ]
 
 
 def test_departure_held_fact_is_declared_everywhere() -> None:
-    routes = yaml.safe_load((ROOT / "storylet-routes.yaml").read_text(encoding="utf-8"))
     assert "departure_held" in {fact.id for fact in PACKAGE.knowledge.facts}
     assert "departure_held" in PACKAGE.world.facts
-    declaration = next(item for item in routes["new_fact_ids"] if item["id"] == "departure_held")
-    assert declaration["used_by_storylets"] == [STORYLET_ID]
+    realization = next(option for option in _routes()[STORYLET_ID].realizations if option.id == "SL-1A-K-R1")
+    assert [operation.fact_id for operation in realization.operations] == ["departure_held"]
 
 
 def test_the_hold_answers_a_departure_command_at_the_truck() -> None:

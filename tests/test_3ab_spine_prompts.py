@@ -4,9 +4,8 @@ import json
 import re
 from pathlib import Path
 
-import yaml
-
 from storygame.runtime.candidate_matcher import _matches_all
+from storygame.story_package.loader import load_story_package
 
 FRONTEND_ROOT = Path("frontend/e2e")
 PACKAGE_ROOT = Path("data/stories/continuity-initiative")
@@ -27,31 +26,31 @@ def _scene_prompts(scene: str, expected_count: int) -> list[str]:
     return [json.loads(string.group(0)) for string in strings]
 
 
-def _knowledge() -> dict[str, dict]:
-    raw = yaml.safe_load((PACKAGE_ROOT / "knowledge.yaml").read_text())
-    return {item["id"]: item for item in raw["knowledge"]}
+def _knowledge() -> dict[str, object]:
+    package = load_story_package(PACKAGE_ROOT)
+    return {item.id: item for item in package.knowledge.knowledge}
 
 
-def _matches(knowledge: dict[str, dict], scene: str, command: str) -> set[str]:
+def _matches(knowledge: dict[str, object], scene: str, command: str) -> set[str]:
     return {
         item_id
         for item_id, item in knowledge.items()
         if item_id.startswith(f"k_sl_{scene.lower()}")
-        and item.get("action_evidence")
-        and _matches_all(tuple(tuple(group) for group in item["action_evidence"]), command)
+        and item.action_evidence
+        and _matches_all(item.action_evidence, command)
     }
 
 
-def _required_fact_ids(item: dict) -> set[str]:
-    return {requirement["fact_id"] for requirement in item.get("requires", [])}
+def _required_fact_ids(item: object) -> set[str]:
+    return {requirement.fact_id for requirement in item.requires}
 
 
-def _established_fact_ids(knowledge: dict[str, dict], item_ids: set[str]) -> set[str]:
-    return {fact["fact_id"] for item_id in item_ids for fact in knowledge[item_id].get("establishes", [])}
+def _established_fact_ids(knowledge: dict[str, object], item_ids: set[str]) -> set[str]:
+    return {effect.fact_id for item_id in item_ids for effect in knowledge[item_id].establishes}
 
 
 def _assert_scene_spine(
-    knowledge: dict[str, dict],
+    knowledge: dict[str, object],
     scene: str,
     prompts: list[str],
     expected: list[set[str]],

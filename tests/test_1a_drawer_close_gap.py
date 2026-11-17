@@ -4,7 +4,6 @@ import json
 from pathlib import Path
 
 import pytest
-import yaml
 
 from storygame.runtime.candidate_matcher import uniquely_matched_authored_handoff
 from storygame.runtime.cloudflare import CloudflareTurnProvider
@@ -16,8 +15,7 @@ from storygame.runtime.world_model import world_for
 from storygame.story_package.loader import load_story_package
 from tests.test_observation_mode import _state_at
 
-PACKAGE_ROOT = Path("data/stories/continuity-initiative")
-PACKAGE = load_story_package(PACKAGE_ROOT)
+PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 OPEN_IDS = ("k_sl_1a_f_r1",)  # k_sl_1a_b_r0w is the witnessed card recovery, not an open-drawer reply
 OPEN_TEXT = "The drawer slides out. It holds a stapler, spare batteries, pens, and binder clips."
 CLOSE_ID = "k_sl_1a_f_r3"
@@ -144,12 +142,16 @@ def test_searching_under_the_drawer_still_finds_the_card_control(command: str) -
 
 
 def test_drawer_opened_is_declared_everywhere_and_the_storylet_has_three_realizations() -> None:
-    routes = yaml.safe_load((PACKAGE_ROOT / "storylet-routes.yaml").read_text(encoding="utf-8"))
-    route_by_id = {route["id"]: route for route in routes["storylets"]}
+    route = next(route for route in PACKAGE.storylet_routes.storylets if route.id == STORYLET)
     assert OPENED_FACT in {fact.id for fact in PACKAGE.knowledge.facts}
     assert OPENED_FACT in set(PACKAGE.world.facts)
-    assert OPENED_FACT in {fact["id"] for fact in routes["new_fact_ids"]}
-    assert [option["id"] for option in route_by_id[STORYLET]["realization_options"]] == [
+    assert OPENED_FACT in {
+        operation.fact_id
+        for storylet in PACKAGE.storylet_routes.storylets
+        for realization in storylet.realizations
+        for operation in realization.operations
+    }
+    assert [option.id for option in route.realizations] == [
         "SL-1A-F-R1",
         "SL-1A-F-R2",
         "SL-1A-F-R3",

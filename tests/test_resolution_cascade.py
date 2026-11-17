@@ -1,16 +1,16 @@
 from __future__ import annotations
 
-import shutil
 from pathlib import Path
 
 import pytest
-import yaml
 
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeState
-from storygame.story_package import StoryPackageError, load_story_package
+from storygame.story_package import load_story_package
 from storygame.story_package.obligations import required_storylet_ids
+from storygame.story_source.diagnostics import SourceError
+from tests.story_source.helpers import DELETE, compiled_story_copy, patch_source
 
 PACKAGE_ROOT = Path("data/stories/continuity-initiative")
 PACKAGE = load_story_package(PACKAGE_ROOT)
@@ -133,62 +133,44 @@ def test_portable_archive_starts_with_rebecca() -> None:
     assert "portable_archive_secured" in PACKAGE.world.fact_effects
 
 
-def _copied_package(tmp_path: Path) -> Path:
-    destination = tmp_path / "package"
-    shutil.copytree(PACKAGE_ROOT, destination)
-    return destination
-
-
-def _edit_routes(root: Path, edit) -> None:
-    source = root / "storylet-routes.yaml"
-    document = yaml.safe_load(source.read_text(encoding="utf-8"))
-    edit(document)
-    source.write_text(yaml.safe_dump(document, sort_keys=False), encoding="utf-8")
-
-
 def test_loader_rejects_resolution_event_without_fallback_text(tmp_path: Path) -> None:
-    root = _copied_package(tmp_path)
+    root = compiled_story_copy(tmp_path)
+    patch_source(root / "source", "scenes/3C.yaml", "bridge[resolution_exposure_holds].fallback_text", DELETE)
 
-    def remove_fallback(document: dict[str, object]) -> None:
-        document["canonical_resolution_events"][0].pop("fallback_text")  # type: ignore[index]
-
-    _edit_routes(root, remove_fallback)
-
-    with pytest.raises(StoryPackageError, match="resolution event 'resolution_exposure_holds'.*fallback_text"):
+    with pytest.raises(SourceError, match="resolution_exposure_holds.*fallback_text"):
         load_story_package(root)
 
 
 def test_loader_rejects_unknown_resolution_realization_storylet(tmp_path: Path) -> None:
-    root = _copied_package(tmp_path)
+    root = compiled_story_copy(tmp_path)
+    patch_source(
+        root / "source",
+        "scenes/3C.yaml",
+        "bridge[resolution_exposure_holds].realized_by",
+        ["sl_3c_a", "sl_3c_z"],
+    )
 
-    def add_unknown(document: dict[str, object]) -> None:
-        document["canonical_resolution_events"][0]["realization_storylets"].append("SL-3C-Z")  # type: ignore[index]
-
-    _edit_routes(root, add_unknown)
-
-    with pytest.raises(StoryPackageError, match="resolution_exposure_holds.*unknown realization storylet"):
+    with pytest.raises(SourceError, match="resolution_exposure_holds.*reveal reference.*does not resolve"):
         load_story_package(root)
 
 
 def test_loader_rejects_resolution_fact_not_guaranteed_by_scene_entry(tmp_path: Path) -> None:
-    root = _copied_package(tmp_path)
+    root = compiled_story_copy(tmp_path)
+    patch_source(root / "source", "scenes/3B.yaml", "bridge[bridge_3b_broadcast].when", ["relay_open"])
+    patch_source(
+        root / "source",
+        "scenes/3B.yaml",
+        "bridge[bridge_3b_broadcast].when_any",
+        [
+            "human_security_control",
+            "charles_abandoned_rebecca",
+            "detention_locations_secured",
+            "brandon_confession_available",
+        ],
+    )
+    patch_source(root / "source", "scenes/3B.yaml", "bridge[bridge_3b_broadcast].at_least", 3)
 
-    def weaken_bridge(document: dict[str, object]) -> None:
-        bridge = next(item for item in document["canonical_bridge_events"] if item["scene_id"] == "3B")  # type: ignore[index]
-        bridge["activation"] = {  # type: ignore[index]
-            "all_facts_true": ["relay_open"],
-            "any_of": [
-                "human_security_control",
-                "charles_abandoned_rebecca",
-                "detention_locations_secured",
-                "brandon_confession_available",
-            ],
-            "at_least": 3,
-        }
-
-    _edit_routes(root, weaken_bridge)
-
-    with pytest.raises(StoryPackageError, match="scene 3C.*brandon_confession_available"):
+    with pytest.raises(SourceError, match="scene 3C.*brandon_confession_available"):
         load_story_package(root)
 
 

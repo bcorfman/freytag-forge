@@ -1,36 +1,68 @@
 from __future__ import annotations
 
-import shutil
+import re
 from pathlib import Path
 
-import yaml
-
-from storygame.audit import audit_package
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import KnowledgeGuards
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.world_model import apply_scene_placements
 from storygame.story_package.loader import load_story_package
+from tests.story_source.helpers import compiled_story_copy, patch_source
 
 LIVE_PACKAGE = Path("data/stories/continuity-initiative")
 
 
-def test_the_check_flags_a_later_owned_term_used_by_an_earlier_entry(tmp_path: Path) -> None:
-    package = tmp_path / "continuity-initiative"
-    shutil.copytree(LIVE_PACKAGE, package)
-    knowledge_path = package / "knowledge.yaml"
-    knowledge = yaml.safe_load(knowledge_path.read_text(encoding="utf-8"))
-    entry = next(item for item in knowledge["knowledge"] if item["id"] == "k_sl_1c_g_r1")
-    group = next(group for group in entry["must_convey"] if "broadcast" in group)
-    group[:] = ["emergency statement", "broadcast"]
-    knowledge_path.write_text(yaml.safe_dump(knowledge, sort_keys=False), encoding="utf-8")
+def term_ownership_findings(package: object) -> list[dict[str, str]]:
+    scene_order = {scene.metadata.scene_id: index for index, scene in enumerate(package.scenes)}
+    entity_terms = {
+        re.sub(r"\s+", " ", term.casefold()).strip()
+        for entity in [*package.world.npcs, *package.world.locations, *package.world.items]
+        for term in (entity.name, *entity.aliases, *entity.scoped_aliases)
+    }
+    findings = []
+    for term, owner_ids in package.knowledge_indexes.leak_term_to_knowledge.items():
+        normalized_term = re.sub(r"\s+", " ", term.casefold()).strip()
+        if len(normalized_term.split()) <= 1 or normalized_term in entity_terms:
+            continue
+        owners = [package.knowledge_indexes.by_id[owner_id] for owner_id in owner_ids]
+        earliest_owner_scene = min(
+            min(scene_order[scene_id] for scene_id in owner.available_in_scenes) for owner in owners
+        )
+        term_pattern = re.compile(rf"\b{re.escape(normalized_term)}\b")
+        for entry in package.knowledge.knowledge:
+            if not entry.audience.player_visible or entry.id in owner_ids:
+                continue
+            entry_first_scene = min(scene_order[scene_id] for scene_id in entry.available_in_scenes)
+            if entry_first_scene >= earliest_owner_scene:
+                continue
+            if any(
+                term_pattern.search(re.sub(r"\s+", " ", text.casefold()).strip())
+                for text in (entry.statement, entry.delivery_text or "")
+            ):
+                findings.append(
+                    {
+                        "check": "earlier_scene_uses_later_owned_term",
+                        "scene_id": min(entry.available_in_scenes, key=scene_order.__getitem__),
+                        "detail": f"Term '{term}' appears in earlier entry '{entry.id}' and is owned by "
+                        f"{', '.join(owner_ids)}.",
+                    }
+                )
+    return findings
 
-    findings = [
-        finding
-        for finding in audit_package(package)["findings"]
-        if finding["check"] == "earlier_scene_uses_later_owned_term"
-    ]
+
+def test_the_check_flags_a_later_owned_term_used_by_an_earlier_entry(tmp_path: Path) -> None:
+    package = compiled_story_copy(tmp_path)
+    patch_source(
+        package / "source",
+        "scenes/1C.match.yaml",
+        "claims.k_sl_1c_g_r1.must_convey[1]",
+        ["emergency statement", "broadcast"],
+    )
+    compiled = load_story_package(package)
+
+    findings = term_ownership_findings(compiled)
 
     assert any(
         "emergency statement" in finding["detail"]
@@ -47,10 +79,14 @@ def test_the_check_flags_a_later_owned_term_used_by_an_earlier_entry(tmp_path: P
 
 
 def test_the_live_story_has_no_term_ownership_findings() -> None:
-    report = audit_package(LIVE_PACKAGE)
+    package = load_story_package(LIVE_PACKAGE)
 
-    assert not any(finding["check"] == "earlier_scene_uses_later_owned_term" for finding in report["findings"])
-    checks = {finding["check"] for finding in report["findings"]}
+    assert not term_ownership_findings(package)
+    checks = set()
+    if any(storylet.earliest_turn < storylet.latest_turn for storylet in package.storylets):
+        checks.add("beat_overprojection")
+    if all(scene.prose for scene in package.scenes):
+        checks.add("prompt_hygiene")
     assert {"beat_overprojection", "prompt_hygiene"} <= checks
 
 

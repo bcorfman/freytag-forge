@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import shutil
 from pathlib import Path
 
 import pytest
@@ -20,7 +19,9 @@ from storygame.runtime.world_model import (
     world_for,
     world_schema_data,
 )
-from storygame.story_package.loader import StoryPackageError, load_story_package
+from storygame.story_package.loader import load_story_package
+from storygame.story_source import SourceError
+from tests.story_source.helpers import compiled_story_copy, patch_source
 
 ROOT = Path(__file__).parents[1]
 STORIES = (ROOT / "data/stories/continuity-initiative", ROOT / "tests/fixtures/stories/lighthouse-keeper")
@@ -199,16 +200,9 @@ def package_root(package):
     return STORIES[1] if package.story_id == "lighthouse_keeper" else STORIES[0]
 
 
-def test_loader_rejects_unknown_lighthouse_parent(tmp_path):
-    root = tmp_path / "lighthouse"
-    shutil.copytree(STORIES[1], root)
-    path = root / "plot.md"
-    path.write_text(
-        path.read_text().replace(
-            "parent: parlour, text: on the parlour windowsill",
-            "parent: nowhere, text: on the parlour windowsill",
-        ),
-        encoding="utf-8",
-    )
-    with pytest.raises(StoryPackageError, match="unknown parent"):
+def test_loader_rejects_unknown_compiled_parent(tmp_path):
+    root = compiled_story_copy(tmp_path)
+    patch_source(root, "source/scenes/1A.yaml", "placements.memory_card.parent", "nowhere")
+
+    with pytest.raises(SourceError, match="entity reference 'nowhere' does not resolve"):
         load_story_package(root)

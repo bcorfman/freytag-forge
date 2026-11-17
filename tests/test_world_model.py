@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-import shutil
 from pathlib import Path
 
 import pytest
-import yaml
 
 from storygame.runtime.contracts import FactOperation, NarrationSegment, ResolvedTurnProposal, StoryEventProposal
 from storygame.runtime.engine import RuntimeEngine
@@ -19,8 +17,10 @@ from storygame.runtime.world_model import (
     world_for,
     world_schema_data,
 )
-from storygame.story_package.loader import StoryPackageError, load_story_package
+from storygame.story_package.loader import load_story_package
 from storygame.story_package.models import Entity, WorldEffect, WorldSource
+from storygame.story_source.diagnostics import SourceError
+from tests.story_source.helpers import compiled_story_copy, load_compiled_copy, patch_source
 
 
 def test_unnamed_label_needs_named_by() -> None:
@@ -248,43 +248,40 @@ def test_provider_rejects_world_fact_mutations(predicate: str) -> None:
     assert event_error.value.code == "world_fact_mutation"
 
 
-def copy_package(tmp_path: Path) -> Path:
-    root = tmp_path / "story"
-    shutil.copytree(PACKAGE_ROOT, root)
-    return root
-
-
 @pytest.mark.component
 def test_loader_reads_on_assert_effects_and_rejects_bad_world_effects(tmp_path) -> None:
-    root = copy_package(tmp_path)
-    world_path = root / "world.yaml"
-    data = yaml.safe_load(world_path.read_text())
-    fact_id = data["facts"][0]
-    data["facts"][0] = {"id": fact_id, "on_assert": [{"move": "memory_card", "parent": "los_angeles_park"}]}
-    world_path.write_text(yaml.safe_dump(data, sort_keys=False))
-    package = load_story_package(root)
-    assert package.world.facts == PACKAGE.world.facts
+    expected = load_compiled_copy(compiled_story_copy(tmp_path / "expected"))
+    root = compiled_story_copy(tmp_path)
+    fact_id = "facility_proof"
+    effect = [{"move": "memory_card", "parent": "los_angeles_park"}]
+    patch_source(root, "source/scenes/1C.yaml", f"facts.{fact_id}.on_assert", effect)
+    package = load_compiled_copy(root)
+    assert package.world.facts == expected.world.facts
     assert all(isinstance(fact, str) for fact in package.world.facts)
     assert package.world.fact_effects[fact_id][0].move == "memory_card"
 
-    unknown_root = copy_package(tmp_path / "unknown")
-    unknown_path = unknown_root / "world.yaml"
-    unknown_data = yaml.safe_load(unknown_path.read_text())
-    unknown_data["facts"][0] = {"id": fact_id, "on_assert": [{"move": "not_an_entity", "parent": "los_angeles_park"}]}
-    unknown_path.write_text(yaml.safe_dump(unknown_data, sort_keys=False))
-    with pytest.raises(StoryPackageError, match="unknown entity"):
-        load_story_package(unknown_root)
+    unknown_root = compiled_story_copy(tmp_path / "unknown")
+    patch_source(
+        unknown_root,
+        "source/scenes/1C.yaml",
+        f"facts.{fact_id}.on_assert",
+        [{"move": "not_an_entity", "parent": "los_angeles_park"}],
+    )
+    unknown_package = load_compiled_copy(unknown_root)
+    unknown_state = RuntimeState.bootstrap(unknown_package)
+    unknown_state.facts.assert_fact(asserted(fact_id))
+    refusals = apply_world_effects(unknown_package, unknown_state.facts)
+    assert len(refusals) == 1
+    assert refusals[0].reason == "unknown entity"
+    assert refusals[0].effect["move"] == "not_an_entity"
 
     for index, bad_effect in enumerate(
         ({"teleport": "memory_card"}, {"move": "memory_card"}, {"reveal": "memory_card", "under": True})
     ):
-        bad_root = copy_package(tmp_path / f"bad-{index}")
-        bad_path = bad_root / "world.yaml"
-        bad_data = yaml.safe_load(bad_path.read_text())
-        bad_data["facts"][0] = {"id": fact_id, "on_assert": [bad_effect]}
-        bad_path.write_text(yaml.safe_dump(bad_data, sort_keys=False))
-        with pytest.raises(StoryPackageError):
-            load_story_package(bad_root)
+        bad_root = compiled_story_copy(tmp_path / f"bad-{index}")
+        patch_source(bad_root, "source/scenes/1C.yaml", f"facts.{fact_id}.on_assert", [bad_effect])
+        with pytest.raises(SourceError):
+            load_compiled_copy(bad_root)
 
 
 @pytest.mark.component

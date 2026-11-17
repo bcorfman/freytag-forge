@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-import shutil
+from copy import deepcopy
 from pathlib import Path
 
 import pytest
@@ -9,8 +9,8 @@ import yaml
 
 from storygame.audit_budget import deep_turn_budget, report
 from storygame.story_package.loader import load_story_package
+from tests.story_source.helpers import DELETE, compiled_story_copy, load_compiled_copy, patch_source
 
-LIGHTHOUSE = Path("tests/fixtures/stories/lighthouse-keeper")
 REAL_PACKAGE = Path("data/stories/continuity-initiative")
 FIXTURE = Path("tests/fixtures/deep_turn_budget.json")
 # The pins are a regression tripwire, not the limit: a scene may grow to this size before the ratchet fails.
@@ -19,85 +19,55 @@ RATCHET_TOLERANCE = 6400
 KNOWN_OVER_BUDGET = frozenset({"3A", "3B", "3C"})  # O8 in .plans/richer-3a-open-issues-plan.md.
 
 
-def _package(tmp_path: Path, *, alternate: bool = False, with_knowledge: bool = True) -> Path:
-    root = tmp_path / "lighthouse"
-    shutil.copytree(LIGHTHOUSE, root)
-    knowledge_path = root / "knowledge.yaml"
-    knowledge = yaml.safe_load(knowledge_path.read_text(encoding="utf-8"))
-    knowledge["facts"].append({"id": "deep_statement_known", "purpose": "Ada knows the deep statement."})
-    knowledge["facts"].append({"id": "deep_statement_alt_known", "purpose": "Ada knows the alternate statement."})
-    knowledge["knowledge"][0]["establishes"] = [{"op": "assert", "fact_id": "deep_statement_known", "value": True}]
-    knowledge_path.write_text(yaml.safe_dump(knowledge, sort_keys=False), encoding="utf-8")
-
-    world_path = root / "world.yaml"
-    world = yaml.safe_load(world_path.read_text(encoding="utf-8"))
-    world["facts"].append("deep_statement_known")
-    world["facts"].append("deep_statement_alt_known")
-    world_path.write_text(yaml.safe_dump(world, sort_keys=False), encoding="utf-8")
-
-    routes_path = root / "storylet-routes.yaml"
-    routes = yaml.safe_load(routes_path.read_text(encoding="utf-8"))
-    routes["storylets"][0]["realization_options"][0]["operations"] = [
-        {"op": "assert", "fact_id": "deep_statement_known", "value": True}
-    ]
-    routes["canonical_bridge_events"][0]["activation"]["all_facts_true"] = ["deep_statement_known"]
-    routes_path.write_text(yaml.safe_dump(routes, sort_keys=False), encoding="utf-8")
-
-    pacing_path = root / "pacing.yaml"
-    pacing = yaml.safe_load(pacing_path.read_text(encoding="utf-8"))
-    pacing["transitions"][0]["triggers"][0]["fact_id"] = "deep_statement_known"
-    pacing_path.write_text(yaml.safe_dump(pacing, sort_keys=False), encoding="utf-8")
-
-    handoffs_path = root / "handoffs.yaml"
-    handoffs = yaml.safe_load(handoffs_path.read_text(encoding="utf-8"))
-    handoffs["deliveries"][0]["fact_id"] = "deep_statement_known"
-    handoffs_path.write_text(yaml.safe_dump(handoffs, sort_keys=False), encoding="utf-8")
+def _package(tmp_path: Path, *, alternate: bool = False, with_knowledge: bool = True):
+    root = compiled_story_copy(tmp_path)
+    source = root / "source"
+    patch_source(
+        source, "scenes/1A.yaml", "facts.deep_statement_known", {"purpose": "Kristin knows the deep statement."}
+    )
+    scene_path = source / "scenes" / "1A.yaml"
+    match_path = source / "scenes" / "1A.match.yaml"
+    scene = yaml.safe_load(scene_path.read_text(encoding="utf-8"))
+    scene["facts"]["deep_statement_known"]["delivery"] = scene["facts"]["continuity_initiative_known"].pop("delivery")
+    scene_path.write_text(yaml.safe_dump(scene, sort_keys=False, width=10_000), encoding="utf-8")
+    match = yaml.safe_load(match_path.read_text(encoding="utf-8"))
+    match["deliveries"]["deep_statement_known"] = match["deliveries"].pop("continuity_initiative_known")
+    match_path.write_text(yaml.safe_dump(match, sort_keys=False, width=10_000), encoding="utf-8")
+    patch_source(
+        source,
+        "scenes/1A.yaml",
+        "reveals[sl_1a_a].variants.r1.commits",
+        {"deep_statement_known": True},
+    )
+    patch_source(source, "scenes/1A.yaml", "bridge[bridge_1a_actionable_lead].when", ["deep_statement_known"])
+    patch_source(source, "scenes/1A.yaml", "beats[kristin_steadies_1a].sets", {"deep_statement_known": True})
 
     if not with_knowledge:
-        knowledge["knowledge"][0]["audience"]["player_visible"] = False
-        handoffs_path.write_text("deliveries: []\n", encoding="utf-8")
-        pacing["transitions"] = []
-        pacing_path.write_text(yaml.safe_dump(pacing, sort_keys=False), encoding="utf-8")
-        routes["canonical_bridge_events"] = []
-        routes_path.write_text(yaml.safe_dump(routes, sort_keys=False), encoding="utf-8")
-        plot_path = root / "plot.md"
-        plot_text = plot_path.read_text(encoding="utf-8")
-        plot_text = plot_text.replace("transition_ids: [t_1a_1b]", "transition_ids: []")
-        plot_text = plot_text.replace(
-            "bridge_text:\n  t_1a_1b: Ada carries the lantern into the lamp room.", "bridge_text: {}"
-        )
-        plot_path.write_text(plot_text, encoding="utf-8")
-        knowledge_path.write_text(yaml.safe_dump(knowledge, sort_keys=False), encoding="utf-8")
+        patch_source(source, "scenes/1A.yaml", "reveals[sl_1a_a].variants.r1.audience.player_visible", False)
+        patch_source(source, "scenes/1A.yaml", "facts.deep_statement_known.delivery", DELETE)
+        patch_source(source, "scenes/1A.match.yaml", "deliveries", {})
+        patch_source(source, "scenes/1A.yaml", "bridge", [])
     if alternate:
-        knowledge["knowledge"].append(
-            {
-                "id": "k_find_key_alt",
-                "statement": "Ada finds the brass key beneath the bench.",
-                "entity_ids": ["brass_key"],
-                "aliases": ["brass key beneath bench"],
-                "audience": {"kind": "public", "player_visible": True},
-                "available_in_scenes": ["1A"],
-                "establishes": [{"op": "assert", "fact_id": "deep_statement_alt_known", "value": True}],
-                "must_convey": [["brass key"]],
-                "source": {
-                    "kind": "storylet_realization",
-                    "storylet_id": "SL-1A-A",
-                    "realization_id": "r1",
-                },
-            }
+        patch_source(
+            source,
+            "scenes/1A.yaml",
+            "facts.deep_statement_alt_known",
+            {"purpose": "Kristin knows the alternate statement."},
         )
-    knowledge_path.write_text(yaml.safe_dump(knowledge, sort_keys=False), encoding="utf-8")
-    if alternate:
-        routes = yaml.safe_load(routes_path.read_text(encoding="utf-8"))
-        routes["storylets"][0]["realization_options"].append(
-            {
-                "id": "r1",
-                "dramatic_intent": "Find the key another way.",
-                "operations": [{"op": "assert", "fact_id": "deep_statement_alt_known", "value": True}],
-            }
-        )
-        routes_path.write_text(yaml.safe_dump(routes, sort_keys=False), encoding="utf-8")
-    return root
+        scene = yaml.safe_load(scene_path.read_text(encoding="utf-8"))
+        alternate_variant = deepcopy(scene["reveals"][0]["variants"]["r1"])
+        alternate_variant["realization_id"] = "SL-1A-A-R2"
+        alternate_variant["claim_id"] = "k_sl_1a_a_r1_alt"
+        alternate_variant["intent"] = "Connect the evidence another way."
+        alternate_variant["says"] = "Kristin recognizes the alternate deep statement."
+        alternate_variant["commits"] = {"deep_statement_alt_known": True}
+        scene["reveals"][0]["variants"]["alt"] = alternate_variant
+        scene_path.write_text(yaml.safe_dump(scene, sort_keys=False, width=10_000), encoding="utf-8")
+        match = yaml.safe_load(match_path.read_text(encoding="utf-8"))
+        match["claims"]["k_sl_1a_a_r1_alt"] = deepcopy(match["claims"]["k_sl_1a_a_r1"])
+        match["claims"]["k_sl_1a_a_r1_alt"]["aliases"] = ["alternate deep statement"]
+        match_path.write_text(yaml.safe_dump(match, sort_keys=False, width=10_000), encoding="utf-8")
+    return load_compiled_copy(root)
 
 
 def test_established_knowledge_makes_the_deep_prompt_longer(tmp_path: Path) -> None:
@@ -111,7 +81,7 @@ def test_established_knowledge_makes_the_deep_prompt_longer(tmp_path: Path) -> N
 def test_all_alternates_are_reported_and_make_the_prompt_larger(tmp_path: Path) -> None:
     result = deep_turn_budget(_package(tmp_path, alternate=True), "1A")
 
-    assert result["alternate_pairs"] == ["SL-1A-A"]
+    assert result["alternate_pairs"] == ["SL-1A-A", "SL-1A-B", "SL-1A-C", "SL-1A-F", "SL-1A-G", "SL-1A-J"]
     assert result["narration_chars_all_alternates"] > result["narration_chars"]
 
 

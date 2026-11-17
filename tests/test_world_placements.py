@@ -1,5 +1,3 @@
-import re
-import shutil
 from pathlib import Path
 
 import pytest
@@ -10,94 +8,86 @@ from storygame.runtime.contracts import ResolvedTurnProposal, SceneTransitionPro
 from storygame.runtime.item_facts import package_seed
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.world_model import apply_scene_placements, world_for
-from storygame.story_package.loader import StoryPackageError, load_story_package
+from storygame.story_package.loader import load_story_package
 from storygame.story_package.models import ItemPlacement, placement_text
 from storygame.story_package.world_schema import world_source_schema_data
+from storygame.story_source.diagnostics import SourceError
+from tests.story_source.helpers import compiled_story_copy, load_compiled_copy, patch_source
 
 ROOT = Path(__file__).parents[1]
 
 
 def placement_package(tmp_path: Path, *, phone_parent: str = "kitchen"):
-    root = tmp_path / "story"
-    shutil.copytree(ROOT / "data/stories/continuity-initiative", root)
-    world_path = root / "world.yaml"
-    world = yaml.safe_load(world_path.read_text())
+    root = compiled_story_copy(tmp_path)
+    catalog_path = root / "source" / "catalog.yaml"
+    catalog = yaml.safe_load(catalog_path.read_text(encoding="utf-8"))
     kind_overrides = [
-        {"id": "desk", "is": ["furniture", "supporter"]},
-        {"id": "seat", "is": ["supporter"], "enterable": True},
+        {"is": ["furniture", "supporter"]},
+        {"is": ["supporter"], "enterable": True},
     ]
-    kinds_by_id = {kind["id"]: kind for kind in world["kinds"]}
-    kinds_by_id.update({kind["id"]: kind for kind in kind_overrides})
-    world["kinds"] = list(kinds_by_id.values())
-    location_ids = {location["id"] for location in world["locations"]}
-    world["locations"].extend(
-        location
-        for location in [
-            {"id": "kitchen", "name": "kitchen", "parent": "mcgehee_home"},
-            {"id": "outside_house", "name": "outside the house"},
-        ]
-        if location["id"] not in location_ids
+    kinds_by_id = catalog["kinds"]
+    kinds_by_id.update({"desk": kind_overrides[0], "seat": kind_overrides[1]})
+    catalog["kinds"] = kinds_by_id
+    catalog["places"].setdefault("kitchen", {"name": "kitchen", "parent": "mcgehee_home"})
+    catalog["places"].setdefault("outside_house", {"name": "outside the house"})
+    catalog["items"].update(
+        {
+            "kristin_truck": {"name": "Kristin's truck", "kind": "vehicle", "owner": "kristin"},
+            "michelle_workstation": {"name": "Michelle's workstation", "kind": "desk"},
+        }
     )
-    item_ids = {item["id"] for item in world["items"]}
-    world["items"].extend(
-        item
-        for item in [
-            {"id": "kristin_truck", "name": "Kristin's truck", "kind": "vehicle", "owner": "kristin"},
-            {"id": "michelle_workstation", "name": "Michelle's workstation", "kind": "desk"},
-        ]
-        if item["id"] not in item_ids
+    catalog["items"]["michelle_drawer"].update(kind="container", openable=True, contents=["pens"])
+    catalog["items"]["memory_card"]["hidden"] = True
+    catalog_path.write_text(yaml.safe_dump(catalog, sort_keys=False), encoding="utf-8")
+
+    patch_source(
+        root,
+        "source/scenes/1A.yaml",
+        "placements",
+        {
+            "memory_card": {"parent": "michelle_drawer", "under": True},
+            "michelle_phone": {"parent": phone_parent},
+            "kristin_truck": {"parent": "outside_house"},
+            "michelle_workstation": {"parent": "kitchen"},
+            "michelle_drawer": {"parent": "michelle_workstation", "part_of": True},
+            "workstation_chair": {"parent": "kitchen"},
+        },
     )
-    for item in world["items"]:
-        if item["id"] == "michelle_drawer":
-            item.update(kind="container", openable=True, contents=["pens"])
-        if item["id"] == "memory_card":
-            item["hidden"] = True
-    world_path.write_text(yaml.safe_dump(world, sort_keys=False))
-    plot_path = root / "plot.md"
-    plot = plot_path.read_text()
-    plot = plot.replace(
-        "item_ids: [memory_card, michelle_phone, kristin_laptop, michelle_drawer, workstation_chair]",
-        "item_ids: [memory_card, michelle_phone, kristin_laptop, michelle_drawer, workstation_chair, "
-        "kristin_truck, michelle_workstation]",
-        1,
+    patch_source(
+        root,
+        "source/scenes/1B.yaml",
+        "items",
+        [
+            "memory_card",
+            "transit_card",
+            "number_sequence",
+            "michelle_photograph",
+            "park_bench",
+            "service_gate",
+            "storm_drain",
+            "kristin_truck",
+            "park_bicycle",
+            "picnic_blanket",
+            "picnic_thermos",
+            "picnic_cups",
+            "park_fence",
+            "dog_leash",
+            "park_loudspeaker",
+            "checkpoint_barrier",
+            "gate_keypad",
+            "michelle_phone",
+        ],
     )
-    replacement = f"""item_placements:
-  memory_card: {{parent: michelle_drawer, under: true}}
-  michelle_phone: {{parent: {phone_parent}}}
-  kristin_truck: {{parent: outside_house}}
-  michelle_workstation: {{parent: kitchen}}
-  michelle_drawer: {{parent: michelle_workstation, part_of: true}}
-  workstation_chair: {{parent: kitchen}}
-"""
-    plot = re.sub(r"item_placements:\n.*?entry_text:", replacement + "entry_text:", plot, count=1, flags=re.DOTALL)
-    scene_1b = (  # noqa: F841
-        "item_ids: [memory_card, transit_card, number_sequence, michelle_photograph, "
-        "park_bench, service_gate, storm_drain, kristin_truck]\n"
-        "item_placements:\n"
-        "  park_bench: {parent: los_angeles_park}\n"
-        "  service_gate: {parent: los_angeles_park}\n"
-        "  storm_drain: {parent: los_angeles_park}\n"
-        "  transit_card: {parent: park_bench, under: true}\n"
-        "  number_sequence: {parent: park_bench, under: true}\n"
-        "  michelle_photograph: {parent: park_bench, under: true}\n"
-        "  kristin_truck: {parent: los_angeles_park}\n"
+    patch_source(
+        root,
+        "source/scenes/1B.yaml",
+        "placements",
+        {
+            "park_bench": {"parent": "los_angeles_park"},
+            "michelle_phone": {"parent": "los_angeles_park", "text": "beside the park bench"},
+        },
     )
-    assert "## Scene 1B" in plot
-    scene_1b_replacement = (
-        "item_ids: [memory_card, transit_card, number_sequence, michelle_photograph, "
-        "park_bench, kristin_truck, michelle_phone]\n"
-        "item_placements:\n"
-        "  park_bench: {parent: los_angeles_park}\n"
-        "  michelle_phone: {parent: los_angeles_park, text: beside the park bench}\n",
-    )
-    scene_1b_start = plot.index("## Scene 1B")
-    scene_1b_text = plot[scene_1b_start:]
-    scene_1b_text = re.sub(
-        r"item_ids: .*?entry_text:", scene_1b_replacement[0] + "entry_text:", scene_1b_text, count=1, flags=re.DOTALL
-    )
-    plot = plot[:scene_1b_start] + scene_1b_text
-    plot_path.write_text(plot)
-    return load_story_package(root)
+    return load_compiled_copy(root)
 
 
 def test_bootstrap_applies_structural_scene_placements(tmp_path):
@@ -189,14 +179,13 @@ def test_world_kinds_are_typed_and_schema_defaults_fixed_flags(tmp_path):
 
 
 def test_cyclic_story_kinds_are_story_package_errors(tmp_path):
-    root = tmp_path / "story"
-    shutil.copytree(ROOT / "data/stories/continuity-initiative", root)
-    world_path = root / "world.yaml"
-    world = yaml.safe_load(world_path.read_text())
-    world["kinds"] = [{"id": "a", "is": ["b"]}, {"id": "b", "is": ["a"]}]
-    for item in world["items"]:
+    root = compiled_story_copy(tmp_path)
+    catalog_path = root / "source" / "catalog.yaml"
+    catalog = yaml.safe_load(catalog_path.read_text(encoding="utf-8"))
+    catalog["kinds"] = {"a": {"is": ["b"]}, "b": {"is": ["a"]}}
+    for item in catalog["items"].values():
         if item.get("kind") not in BASE_KINDS:
-            item.update(kind="thing", enter_pole=None, unavailable=None, seat_for=None, axes=[])
-    world_path.write_text(yaml.safe_dump(world, sort_keys=False))
-    with pytest.raises(StoryPackageError, match="cycle among kinds"):
-        load_story_package(root)
+            item["kind"] = "thing"
+    catalog_path.write_text(yaml.safe_dump(catalog, sort_keys=False), encoding="utf-8")
+    with pytest.raises(SourceError, match=r"L2\.cycles: :loader\.package: cycle among kinds"):
+        load_compiled_copy(root)

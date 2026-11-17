@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import shutil
 from pathlib import Path
 
 import pytest
@@ -8,7 +7,9 @@ import pytest
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeState
-from storygame.story_package.loader import StoryPackageError, load_story_package
+from storygame.story_package.loader import load_story_package
+from storygame.story_source.diagnostics import SourceError
+from tests.story_source.helpers import compiled_story_copy, load_compiled_copy, patch_source
 
 ROOT = Path(__file__).resolve().parents[1]
 PACKAGE_ROOT = ROOT / "data/stories/continuity-initiative"
@@ -83,15 +84,11 @@ def test_canonical_event_without_delivery_text_returns_no_delivery_segment() -> 
 
 
 def test_loader_rejects_blank_canonical_delivery_text(tmp_path: Path) -> None:
-    copied = tmp_path / "continuity-initiative"
-    shutil.copytree(PACKAGE_ROOT, copied)
-    routes = copied / "storylet-routes.yaml"
-    source = routes.read_text(encoding="utf-8")
-    source = source.replace(f'delivery_text: "{DELIVERY_TEXT}"', 'delivery_text: "   "', 1)
-    routes.write_text(source, encoding="utf-8")
+    copied = compiled_story_copy(tmp_path)
+    patch_source(copied / "source", "scenes/3C.yaml", "bridge[resolution_escape].delivery_text", "   ")
 
-    with pytest.raises(StoryPackageError, match="delivery_text must not be empty"):
-        load_story_package(copied)
+    with pytest.raises(SourceError, match="delivery_text must not be empty"):
+        load_compiled_copy(copied)
 
 
 def test_real_escape_delivery_sets_only_escape_facts() -> None:

@@ -16,315 +16,199 @@ SCRIPT = Path("scripts/hidden_thing_audit.py")
 
 
 def _write_package(root: Path) -> Path:
-    root.mkdir()
-    (root / "world.yaml").write_text(
-        yaml.safe_dump(
-            {
-                "story_id": "small_audit_story",
-                "protagonist_id": "hero",
-                "locations": [{"id": "room", "name": "quiet room"}],
-                "npcs": [{"id": "hero", "name": "the hero"}],
-                "items": [
-                    {"id": "chest", "name": "oak chest", "fixed": True, "kind": "container"},
-                    {
-                        "id": "amber_bead",
-                        "name": "amber bead",
-                        "aliases": ["bead"],
-                        "hidden": True,
-                    },
-                    {
-                        "id": "secret_letter",
-                        "name": "secret letter",
-                        "aliases": ["note"],
-                        "hidden": True,
-                    },
-                    {"id": "character_token", "name": "character token", "hidden": True},
-                    {"id": "action_result", "name": "action result", "hidden": True},
-                    {"id": "lost_coin", "name": "lost coin", "hidden": True},
-                ],
-                "facts": [
-                    "scene_1a_entry_known",
-                    "bead_found",
-                    "letter_delivered",
-                    "character_token_given",
-                    "action_result_found",
-                    "chest_pointed_out",
-                ],
-                "fact_effects": {
-                    "bead_found": [
-                        {"move": "amber_bead", "parent": "hero"},
-                        {"reveal": "amber_bead"},
-                    ],
-                    "letter_delivered": [
-                        {"move": "secret_letter", "parent": "hero"},
-                        {"reveal": "secret_letter"},
-                    ],
-                    "character_token_given": [
-                        {"move": "character_token", "parent": "hero"},
-                        {"reveal": "character_token"},
-                    ],
-                    "action_result_found": [
-                        {"move": "action_result", "parent": "room"},
-                        {"reveal": "action_result"},
-                    ],
+    source = root / "source"
+    scenes = source / "scenes"
+    scenes.mkdir(parents=True)
+
+    def write(path: Path, document: object) -> None:
+        path.write_text(yaml.safe_dump(document, sort_keys=False), encoding="utf-8")
+
+    write(
+        source / "story.yaml",
+        {
+            "schema": 1,
+            "story": "small_audit_story",
+            "genre": "",
+            "protagonist": "hero",
+            "budget_seconds": 180,
+            "scenes": ["1A"],
+            "principal_characters": ["hero"],
+        },
+    )
+    write(
+        source / "catalog.yaml",
+        {
+            "schema": 1,
+            "places": {"room": {"name": "quiet room"}},
+            "characters": {"hero": {"name": "the hero", "bio": "The hero."}},
+            "items": {
+                "chest": {"name": "oak chest", "fixed": True, "kind": "container"},
+                "amber_bead": {"name": "amber bead", "aliases": ["bead"], "hidden": True},
+                "secret_letter": {"name": "secret letter", "aliases": ["note"], "hidden": True},
+                "character_token": {"name": "character token", "hidden": True},
+                "action_result": {"name": "action result", "hidden": True},
+                "lost_coin": {"name": "lost coin", "hidden": True},
+            },
+            "groups": {},
+            "kinds": {},
+            "props": {},
+            "connections": {},
+            "protected_knowledge": [],
+            "disclosure_guards": {"bead_guard": {"terms": ["amber bead"], "unlock_fact": "bead_found"}},
+            "unplaced_facts": {},
+        },
+    )
+    write(
+        scenes / "1A.yaml",
+        {
+            "schema": 1,
+            "scene": "1A",
+            "location": "room",
+            "objective": "Find what the room conceals",
+            "freytag_phase": "exposition",
+            "pressure": "The room is quiet.",
+            "turns": {"min": 0, "nudge": 1, "handoff": 2},
+            "participants": ["hero"],
+            "items": ["chest", "amber_bead", "secret_letter", "character_token", "action_result", "lost_coin"],
+            "entry": "An oak chest waits in the quiet room. A sketch mentions an amber bead.",
+            "entry_claims": [{"claim_id": "k_entry", "says": "The room is quiet.", "audience": "public"}],
+            "brief": "",
+            "outline": [
+                {
+                    "id": "1A.1",
+                    "anchor": "scene-1a1--the-chest",
+                    "title": "The Chest",
+                    "details": ["oak chest", "dusty floor", "amber bead sketch"],
+                    "prose": "The oak chest waits beneath the window.",
+                }
+            ],
+            "facts": {
+                "bead_found": {
+                    "purpose": "The amber bead is found.",
+                    "on_assert": [{"move": "amber_bead", "parent": "hero"}, {"reveal": "amber_bead"}],
                 },
-                "disclosure_guards": [{"id": "bead_guard", "terms": ["amber bead"], "unlock_fact": "bead_found"}],
-            },
-            sort_keys=False,
-        ),
-        encoding="utf-8",
-    )
-    (root / "plot.md").write_text(
-        """# Small Audit Story
-
-## Scene 1A — The Quiet Room
-
----
-scene_id: 1A
-location_id: room
-freytag_phase: exposition
-objective: Find what the room conceals
-participant_ids: [hero]
-item_ids: [chest, amber_bead, secret_letter, character_token, action_result, lost_coin]
-item_placements:
-  chest: {parent: room}
-  amber_bead: {parent: chest, under: true}
-  secret_letter: {parent: chest, under: true}
-  character_token: {parent: hero}
-  action_result: {parent: room}
-  lost_coin: {parent: chest, under: true}
-entry_text: "An oak chest waits in the quiet room. A sketch mentions an amber bead."
-transition_ids: []
-bridge_text: {}
----
-
-### Scene 1A.1 — The Chest
-
-**Details:** oak chest; dusty floor; amber bead sketch
-
-The oak chest waits beneath the window.
-""",
-        encoding="utf-8",
-    )
-    (root / "storylets.md").write_text(
-        """# Small Audit Storylets
-
-### SL-1A-A — The Chest
-
-**Source beats:** [The Chest](plot.md#scene-1a1--the-chest)
-
-**Allowed scene:** `1A`
-
-**Available when**
-- The chest is in the room.
-
-**Participants / items**
-- The hero
-- The oak chest
-
-**Dramatic purpose**
-- Make the concealed objects discoverable.
-
-**Possible realizations**
-- The hero searches the chest.
-
-**Effects**
-- The authored reveal facts may be asserted.
-
-**Completion**
-- The room has been searched.
-
-**Abort**
-- The hero leaves the room.
-
-**Protected boundary**
-- The hidden objects remain package-owned.
-
-**Pacing window**
-- earliest: `turn 0`
-- target: `turn 1`
-- latest: `turn 2`
-""",
-        encoding="utf-8",
-    )
-    (root / "storylet-routes.yaml").write_text(
-        yaml.safe_dump(
-            {
-                "story_id": "small_audit_story",
-                "contract": {
-                    "canonical_scene_chain": ["1A"],
-                    "sole_ending_scene_id": "1A",
-                },
-                "storylets": [
-                    {
-                        "id": "SL-1A-A",
-                        "scene_id": "1A",
-                        "title": "The Chest",
-                        "activation": {
-                            "conditions": [],
-                            "pacing": {"earliest_turn": 0, "target_turn": 1, "latest_turn": 2},
-                        },
-                        "pressure_role": "discovery",
-                        "realization_options": [
-                            {
-                                "id": "SL-1A-A-R1",
-                                "dramatic_intent": "Reveal the authored room clues",
-                                "operations": [
-                                    {"op": "assert", "fact_id": "bead_found", "value": True},
-                                    {"op": "assert", "fact_id": "letter_delivered", "value": True},
-                                    {"op": "assert", "fact_id": "character_token_given", "value": True},
-                                    {"op": "assert", "fact_id": "action_result_found", "value": True},
-                                    {"op": "assert", "fact_id": "chest_pointed_out", "value": True},
-                                ],
-                            }
-                        ],
-                    }
-                ],
-            },
-            sort_keys=False,
-        ),
-        encoding="utf-8",
-    )
-    (root / "knowledge.yaml").write_text(
-        yaml.safe_dump(
-            {
-                "schema_version": "2.0",
-                "facts": [
-                    {"id": fact_id, "purpose": fact_id}
-                    for fact_id in (
-                        "scene_1a_entry_known",
-                        "bead_found",
-                        "letter_delivered",
-                        "character_token_given",
-                        "action_result_found",
-                        "chest_pointed_out",
-                    )
-                ],
-                "scene_frames": [{"scene_id": "1A", "pressure": "The room is quiet."}],
-                "knowledge": [
-                    {
-                        "id": "k_entry",
-                        "statement": "The room is quiet.",
-                        "aliases": ["quiet room"],
-                        "audience": {"kind": "public", "player_visible": True},
-                        "available_in_scenes": ["1A"],
-                        "establishes": [{"op": "assert", "fact_id": "scene_1a_entry_known", "value": True}],
-                        "source": {"kind": "scene_entry"},
-                    },
-                    {
-                        "id": "k_bead_search",
-                        "statement": "The amber bead is found.",
-                        "reach_entity_ids": ["chest"],
-                        "action_evidence": [["search"], ["chest"]],
-                        "earn_when": "searches beneath the chest",
-                        "delivery_text": "The amber bead is under the oak chest.",
-                        "aliases": ["bead found"],
-                        "audience": {"kind": "public", "player_visible": True},
-                        "available_in_scenes": ["1A"],
-                        "establishes": [{"op": "assert", "fact_id": "bead_found", "value": True}],
-                        "source": {
-                            "kind": "storylet_realization",
-                            "storylet_id": "SL-1A-A",
-                            "realization_id": "SL-1A-A-R1",
-                        },
-                    },
-                    {
-                        "id": "k_letter_handoff",
-                        "statement": "The courier has delivered the secret letter.",
-                        "voiceable": False,
-                        "aliases": ["letter delivered"],
-                        "audience": {"kind": "public", "player_visible": True},
-                        "available_in_scenes": ["1A"],
-                        "establishes": [{"op": "assert", "fact_id": "letter_delivered", "value": True}],
-                        "source": {
-                            "kind": "storylet_realization",
-                            "storylet_id": "SL-1A-A",
-                            "realization_id": "SL-1A-A-R1",
-                        },
-                    },
-                    {
-                        "id": "k_chest_pointer",
-                        "statement": "The chest has a shadowed underside.",
-                        "reach_entity_ids": ["chest"],
-                        "action_evidence": [["inspect"], ["chest"]],
-                        "earn_when": "inspects the chest without searching beneath it",
-                        "repeatable": True,
-                        "entity_ids": ["hero", "chest"],
-                        "requires": [{"fact_id": "bead_found", "equals": False}],
-                        "aliases": ["chest pointed out"],
-                        "audience": {"kind": "public", "player_visible": True},
-                        "available_in_scenes": ["1A"],
-                        "establishes": [{"op": "assert", "fact_id": "chest_pointed_out", "value": True}],
-                        "source": {
-                            "kind": "storylet_realization",
-                            "storylet_id": "SL-1A-A",
-                            "realization_id": "SL-1A-A-R1",
-                        },
-                    },
-                    {
-                        "id": "k_character_token_given",
-                        "statement": "The hero receives the character token.",
-                        "entity_ids": ["hero", "character_token"],
-                        "aliases": ["character token given"],
-                        "audience": {"kind": "public", "player_visible": True},
-                        "available_in_scenes": ["1A"],
-                        "establishes": [{"op": "assert", "fact_id": "character_token_given", "value": True}],
-                        "source": {
-                            "kind": "storylet_realization",
-                            "storylet_id": "SL-1A-A",
-                            "realization_id": "SL-1A-A-R1",
-                        },
-                    },
-                    {
-                        "id": "k_action_result",
-                        "statement": "The action result is recorded.",
-                        "entity_ids": ["action_result"],
-                        "action_evidence": [["perform"], ["action"]],
-                        "aliases": ["action result found"],
-                        "audience": {"kind": "public", "player_visible": True},
-                        "available_in_scenes": ["1A"],
-                        "establishes": [{"op": "assert", "fact_id": "action_result_found", "value": True}],
-                        "source": {
-                            "kind": "storylet_realization",
-                            "storylet_id": "SL-1A-A",
-                            "realization_id": "SL-1A-A-R1",
-                        },
-                    },
-                ],
-            },
-            sort_keys=False,
-        ),
-        encoding="utf-8",
-    )
-    (root / "handoffs.yaml").write_text(
-        yaml.safe_dump(
-            {
-                "deliveries": [
-                    {
-                        "fact_id": "letter_delivered",
-                        "scene_id": "1A",
+                "letter_delivered": {
+                    "purpose": "The secret letter is delivered.",
+                    "delivery": {
                         "source_kind": "message",
-                        "source_entity_id": "hero",
-                        "must_convey": [["courier"], ["secret letter"]],
+                        "source_entity": "hero",
                         "fallback_text": "The courier delivers the secret letter.",
-                    }
-                ]
+                        "costs": {},
+                    },
+                    "on_assert": [{"move": "secret_letter", "parent": "hero"}, {"reveal": "secret_letter"}],
+                },
+                "character_token_given": {
+                    "purpose": "The hero receives the character token.",
+                    "on_assert": [{"move": "character_token", "parent": "hero"}, {"reveal": "character_token"}],
+                },
+                "action_result_found": {
+                    "purpose": "The action result is recorded.",
+                    "on_assert": [{"move": "action_result", "parent": "room"}, {"reveal": "action_result"}],
+                },
+                "chest_pointed_out": {"purpose": "The chest is pointed out."},
             },
-            sort_keys=False,
-        ),
-        encoding="utf-8",
-    )
-    (root / "pacing.yaml").write_text(
-        yaml.safe_dump(
-            {
-                "budget_seconds": 180,
-                "scenes": [{"scene_id": "1A", "min_turns": 0, "nudge_after_turns": 1, "handoff_after_turns": 2}],
-                "transitions": [],
+            "placements": {
+                "chest": {"parent": "room"},
+                "amber_bead": {"parent": "chest", "under": True},
+                "secret_letter": {"parent": "chest", "under": True},
+                "character_token": {"parent": "hero"},
+                "action_result": {"parent": "room"},
+                "lost_coin": {"parent": "chest", "under": True},
             },
-            sort_keys=False,
-        ),
-        encoding="utf-8",
+            "reveals": [
+                {
+                    "id": "chest_search",
+                    "storylet_id": "SL-1A-A",
+                    "title": "The Chest",
+                    "guidance": {
+                        "pressure_role": "discovery",
+                        "window": {"earliest_turn": 0, "target_turn": 1, "latest_turn": 2},
+                    },
+                    "from_outline": ["1A.1"],
+                    "variants": {
+                        "search": {
+                            "realization_id": "SL-1A-A-R1",
+                            "intent": "Reveal the authored room clues",
+                            "commits": {
+                                "bead_found": True,
+                                "letter_delivered": True,
+                                "character_token_given": True,
+                                "action_result_found": True,
+                                "chest_pointed_out": True,
+                            },
+                            "claim_id": "k_bead_search",
+                            "says": "The amber bead is found.",
+                            "reach": ["chest"],
+                            "earn_when": "searches beneath the chest",
+                            "text": "The amber bead is under the oak chest.",
+                            "audience": "public",
+                            "extra_claims": [
+                                {
+                                    "claim_id": "k_chest_pointer",
+                                    "says": "The chest has a shadowed underside.",
+                                    "text": "The chest has a shadowed underside.",
+                                    "commits_subset": {"chest_pointed_out": True},
+                                    "when": {"bead_found": False},
+                                    "entities": ["hero", "chest"],
+                                    "reach": ["chest"],
+                                    "repeatable": True,
+                                    "audience": "public",
+                                },
+                                {
+                                    "claim_id": "k_letter_handoff",
+                                    "says": "The courier has delivered the secret letter.",
+                                    "text": "The courier delivers the secret letter.",
+                                    "commits_subset": {"letter_delivered": True},
+                                    "reach": [],
+                                    "voiceable": False,
+                                    "audience": "public",
+                                },
+                                {
+                                    "claim_id": "k_character_token_given",
+                                    "says": "The hero receives the character token.",
+                                    "text": "The hero receives the character token.",
+                                    "commits_subset": {"character_token_given": True},
+                                    "entities": ["hero", "character_token"],
+                                    "audience": "public",
+                                },
+                                {
+                                    "claim_id": "k_action_result",
+                                    "says": "The action result is recorded.",
+                                    "text": "The action result is recorded.",
+                                    "commits_subset": {"action_result_found": True},
+                                    "entities": ["action_result"],
+                                    "audience": "public",
+                                },
+                            ],
+                        }
+                    },
+                }
+            ],
+        },
     )
+    write(
+        scenes / "1A.match.yaml",
+        {
+            "schema": 1,
+            "scene": "1A",
+            "claims": {
+                "k_entry": {"aliases": ["quiet room"]},
+                "k_bead_search": {"aliases": ["bead found"], "action_evidence": [["search"], ["chest"]]},
+                "k_letter_handoff": {
+                    "aliases": ["letter delivered"],
+                    "action_evidence": [["deliver"]],
+                },
+                "k_chest_pointer": {"aliases": ["chest pointed out"], "action_evidence": [["inspect"], ["chest"]]},
+                "k_character_token_given": {
+                    "aliases": ["character token given"],
+                    "action_evidence": [["receive"]],
+                },
+                "k_action_result": {"aliases": ["action result found"], "action_evidence": [["perform"], ["action"]]},
+            },
+            "deliveries": {"letter_delivered": {"must_convey": [["courier"], ["secret letter"]]}},
+        },
+    )
+    (root / "ownership.yaml").write_text("schema: 1\ncatalog: compiled\nscenes:\n  1A: compiled\n", encoding="utf-8")
     return root
 
 

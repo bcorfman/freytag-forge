@@ -2,16 +2,15 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import yaml
-
 from storygame.runtime.candidate_matcher import _matches_all
+from storygame.story_package.loader import load_story_package
 
 PACKAGE_ROOT = Path("data/stories/continuity-initiative")
 
 
 def _knowledge() -> dict[str, dict]:
-    raw = yaml.safe_load((PACKAGE_ROOT / "knowledge.yaml").read_text())
-    return {item["id"]: item for item in raw["knowledge"]}
+    package = load_story_package(PACKAGE_ROOT)
+    return {item.id: item.model_dump() for item in package.knowledge.knowledge}
 
 
 def _matches(knowledge: dict[str, dict], command: str) -> set[str]:
@@ -42,7 +41,7 @@ def test_2c_assess_and_evaluate_verbs_match_unique_reveals() -> None:
 def test_2c_action_contract_positives_remain_unique() -> None:
     knowledge = _knowledge()
     for item_id in ("k_sl_2c_d_r3", "k_sl_2c_d_r4"):
-        for command in knowledge[item_id].get("action_contract", {}).get("positive", []):
+        for command in (knowledge[item_id].get("action_contract") or {}).get("positive", []):
             assert _matches(knowledge, command) == {item_id}, (item_id, command)
 
 
