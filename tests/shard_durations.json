@@ -2,6 +2,7 @@
   "version": 1,
   "files": {
     "tests/story_source/test_cli_core.py": 0.5,
+    "tests/story_source/test_compiled_story_copy.py": 2.0,
     "tests/story_source/test_compiler_core.py": 0.66,
     "tests/story_source/test_convert_catalog.py": 0.5,
     "tests/story_source/test_convert_facts.py": 0.5,
