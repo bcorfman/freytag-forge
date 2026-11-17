@@ -56,7 +56,6 @@
     "tests/story_source/test_parity_indexes.py": 0.1,
     "tests/story_source/test_parity_order_hides_content.py": 1.0,
     "tests/story_source/test_reader.py": 0.24,
-    "tests/story_source/test_source_tree_drift.py": 4.0,
     "tests/test_1a_arrival_glance.py": 4.66,
     "tests/test_1a_back_door_gap.py": 0.09,
     "tests/test_1a_departure_hold.py": 1.55,

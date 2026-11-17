@@ -8,10 +8,10 @@
 from collections import Counter
 from pathlib import Path
 
-from storygame.story_package.loader import load_story_package
+from storygame.story_package.loader import load_legacy_story_package
 from storygame.story_source.convert_scene import convert_scenes
 
-PACKAGE_ROOT = Path("data/stories/continuity-initiative")
+LEGACY_ROOT = Path("tests/fixtures/parity/continuity-initiative/legacy")
 
 
 def _operations(values):
@@ -37,7 +37,7 @@ def _claim_ids(package):
 
 
 def test_conversion_contains_every_owned_record_once():
-    package = load_story_package(PACKAGE_ROOT)
+    package = load_legacy_story_package(LEGACY_ROOT)
     result = convert_scenes(package)
 
     assert list(result.scene_docs) == [scene.metadata.scene_id for scene in package.scenes]
@@ -74,7 +74,7 @@ def test_conversion_contains_every_owned_record_once():
 
 
 def test_scene_1a_and_2c_headers_and_beats_match_package():
-    package = load_story_package(PACKAGE_ROOT)
+    package = load_legacy_story_package(LEGACY_ROOT)
     result = convert_scenes(package)
 
     for scene_id in ("1A", "2C"):
@@ -106,7 +106,7 @@ def test_scene_1a_and_2c_headers_and_beats_match_package():
 
 
 def test_representative_scene_owned_records_match_package():
-    package = load_story_package(PACKAGE_ROOT)
+    package = load_legacy_story_package(LEGACY_ROOT)
     result = convert_scenes(package)
 
     for scene in package.scenes[:3]:
@@ -164,7 +164,7 @@ def test_representative_scene_owned_records_match_package():
 
 
 def test_match_entries_are_expanded_plain_values():
-    result = convert_scenes(load_story_package(PACKAGE_ROOT))
+    result = convert_scenes(load_legacy_story_package(LEGACY_ROOT))
 
     def assert_plain(value):
         assert not isinstance(value, tuple)

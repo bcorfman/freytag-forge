@@ -10,11 +10,15 @@ from storygame.story_package.loader import StoryPackageError, load_legacy_story_
 from storygame.story_source.compiler import compile_source_tree
 
 PACKAGE = Path(__file__).resolve().parents[1] / "data" / "stories" / "continuity-initiative"
+LEGACY = Path(__file__).resolve().parents[1] / "tests" / "fixtures" / "parity" / "continuity-initiative" / "legacy"
 
 
 def copied_package(tmp_path: Path, name: str = "package") -> Path:
+    """Copy the default story with its frozen legacy files and no ownership manifest."""
     destination = tmp_path / name
     shutil.copytree(PACKAGE, destination)
+    (destination / "ownership.yaml").unlink()
+    shutil.copytree(LEGACY, destination, dirs_exist_ok=True)
     return destination
 
 

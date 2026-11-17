@@ -10,11 +10,11 @@
 from collections import Counter
 from pathlib import Path
 
-from storygame.story_package.loader import load_story_package
+from storygame.story_package.loader import load_legacy_story_package
 from storygame.story_source.convert_reveals import RevealsResult, convert_reveals
 
 ROOT = Path(__file__).parents[2]
-PACKAGE = load_story_package(ROOT / "data" / "stories" / "continuity-initiative")
+PACKAGE = load_legacy_story_package(ROOT / "tests" / "fixtures" / "parity" / "continuity-initiative" / "legacy")
 RESULT = convert_reveals(PACKAGE)
 
 

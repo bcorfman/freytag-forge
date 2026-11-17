@@ -3,14 +3,14 @@
 from pathlib import Path
 from typing import Any
 
-from storygame.story_package.loader import load_story_package
+from storygame.story_package.loader import load_legacy_story_package
 from storygame.story_source.convert_catalog import convert_catalog, convert_story
 
-PACKAGE_ROOT = Path("data/stories/continuity-initiative")
+LEGACY_ROOT = Path("tests/fixtures/parity/continuity-initiative/legacy")
 
 
 def _package() -> Any:
-    return load_story_package(PACKAGE_ROOT)
+    return load_legacy_story_package(LEGACY_ROOT)
 
 
 def _model_fields(record: Any) -> dict[str, Any]:
