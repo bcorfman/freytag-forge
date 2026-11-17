@@ -1,15 +1,14 @@
 from __future__ import annotations
 
-import shutil
 from pathlib import Path
 
 import pytest
-import yaml
 
 from storygame.runtime.seating import seat_before_use, stand_before_leave
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.world_model import world_for
 from storygame.story_package import StoryPackageError, load_story_package
+from tests.story_source.helpers import DELETE, compiled_story_copy, load_compiled_copy, patch_source
 
 ROOT = Path(__file__).parents[1]
 PACKAGE_ROOT = ROOT / "data/stories/continuity-initiative"
@@ -293,16 +292,11 @@ def test_question_is_not_asked_when_the_thing_is_elsewhere():
 
 
 def test_loader_rejects_a_seat_without_its_lines(tmp_path):
-    root = tmp_path / "story"
-    shutil.copytree(PACKAGE_ROOT, root)
-    path = root / "world.yaml"
-    data = yaml.safe_load(path.read_text(encoding="utf-8"))
-    chair = next(item for item in data["items"] if item["id"] == "workstation_chair")
-    chair.pop("enter_text")
-    path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+    root = compiled_story_copy(tmp_path)
+    patch_source(root, "source/catalog.yaml", "items.workstation_chair.enter_text", DELETE)
 
     with pytest.raises(StoryPackageError, match="enter_text"):
-        load_story_package(root)
+        load_compiled_copy(root)
 
 
 def test_seated_kristin_stands_before_leaving():
@@ -357,13 +351,8 @@ def test_standing_kristin_is_not_asked_to_stand():
 
 
 def test_loader_rejects_a_seat_without_its_leave_line(tmp_path):
-    root = tmp_path / "story"
-    shutil.copytree(PACKAGE_ROOT, root)
-    path = root / "world.yaml"
-    data = yaml.safe_load(path.read_text(encoding="utf-8"))
-    chair = next(item for item in data["items"] if item["id"] == "workstation_chair")
-    chair.pop("leave_text")
-    path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+    root = compiled_story_copy(tmp_path)
+    patch_source(root, "source/catalog.yaml", "items.workstation_chair.leave_text", DELETE)
 
     with pytest.raises(StoryPackageError, match="leave_text"):
-        load_story_package(root)
+        load_compiled_copy(root)

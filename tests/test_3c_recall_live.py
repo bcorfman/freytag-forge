@@ -6,14 +6,35 @@ from pathlib import Path
 
 import pytest
 
-from bench.core import load_variation, package_and_state
 from scripts.ringer.stage7 import three_c_recall_replay as replay
 from storygame.runtime.candidate_matcher import uniquely_matched_authored_handoff
 from storygame.runtime.facts import Fact
+from storygame.runtime.state import RuntimeState
+from storygame.runtime.world_model import apply_scene_placements, apply_world_effects, world_for
+from tests.story_source.helpers import compiled_story_copy, load_compiled_copy, patch_source
 
 ROOT = Path(__file__).resolve().parents[1]
-VARIATION = ROOT / "bench/variations/stage7-3c-recall-live.json"
 PACKAGE = ROOT / "data/stories/continuity-initiative"
+
+
+def _compiled_package_and_state(root: Path, scene_id: str) -> tuple[object, RuntimeState]:
+    package = load_compiled_copy(root)
+    scene = next(scene for scene in package.scenes if scene.metadata.scene_id == scene_id)
+    state = RuntimeState(package=package, current_scene_id=scene_id, phase=scene.metadata.freytag_phase)
+    state._assert_scene_entry_fact(scene_id)
+    world_for(package, state.facts).seed()
+    apply_scene_placements(package, state.facts, scene_id)
+    apply_world_effects(package, state.facts)
+    return package, state
+
+
+def _patched_variation(tmp_path: Path, claim_id: str, statement: str) -> dict[str, str]:
+    root = tmp_path / "continuity-initiative"
+    if not root.exists():
+        root = compiled_story_copy(tmp_path)
+    variant_id = "sl_3c_a" if claim_id == "k_sl_3c_a_r1" else "sl_3c_c"
+    patch_source(root / "source", "scenes/3C.yaml", f"reveals[{variant_id}].variants.r1.says", statement)
+    return {"_package_path": str(root)}
 
 
 def _hashes(root: Path) -> dict[str, str]:
@@ -22,28 +43,35 @@ def _hashes(root: Path) -> dict[str, str]:
     }
 
 
-@pytest.mark.skip(reason="the frozen C1 replay targets the retired pre-incident statement")
-def test_variation_replaces_c1_once_and_loads_with_real_loader() -> None:
-    source = (PACKAGE / "knowledge.yaml").read_text(encoding="utf-8")
-    assert source.count(replay.OLD_C1) == 1
-    variation = load_variation(VARIATION)
-    package, _ = package_and_state(variation, "3C")
+def test_variation_replaces_c1_once_and_loads_with_real_loader(tmp_path: Path) -> None:
+    original_root = compiled_story_copy(tmp_path / "original")
+    package, _ = _compiled_package_and_state(original_root, "3C")
+    old_statement = package.knowledge_indexes.by_id["k_sl_3c_c_r1"].statement
+    assert sum(item.statement.count(old_statement) for item in package.knowledge.knowledge) == 1
+    root = compiled_story_copy(tmp_path)
+    patch_source(root / "source", "scenes/3C.yaml", "reveals[sl_3c_c].variants.r1.says", replay.NEW_C1)
+    package, _ = _compiled_package_and_state(root, "3C")
     assert package.knowledge_indexes.by_id["k_sl_3c_c_r1"].statement == replay.NEW_C1
 
 
-@pytest.mark.skip(reason="the frozen C1 replay targets the retired pre-incident statement")
-def test_variation_changes_only_knowledge_file() -> None:
-    variation = load_variation(VARIATION)
-    materialized = Path(variation["_package_path"])
-    shipped = _hashes(PACKAGE)
-    loaded = _hashes(materialized)
-    assert {key: value for key, value in loaded.items() if key != "knowledge.yaml"} == {
-        key: value for key, value in shipped.items() if key != "knowledge.yaml"
+def test_variation_changes_only_knowledge_file(tmp_path: Path) -> None:
+    root = compiled_story_copy(tmp_path)
+    patch_source(root / "source", "scenes/3C.yaml", "reveals[sl_3c_c].variants.r1.says", replay.NEW_C1)
+    shipped = _hashes(PACKAGE / "source")
+    loaded = _hashes(root / "source")
+    assert {key: value for key, value in loaded.items() if key != "scenes/3C.yaml"} == {
+        key: value for key, value in shipped.items() if key != "scenes/3C.yaml"
     }
 
 
-@pytest.mark.skip(reason="the frozen C1 replay targets the retired pre-incident statement")
-def test_frozen_arms_have_three_c1_replacements_and_preserve_other_text() -> None:
+def test_frozen_arms_have_three_c1_replacements_and_preserve_other_text(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    monkeypatch.setattr(
+        replay,
+        "load_variation",
+        lambda _path: _patched_variation(tmp_path, "k_sl_3c_c_r1", replay.NEW_C1),
+    )
     pump, recall, count = replay.build_requests()
     assert pump == replay.recorded_request()
     assert count == 3
@@ -79,9 +107,13 @@ def test_c1_only_does_not_make_surface_fact_true_and_c_orders_unlock_d() -> None
         )
 
 
-@pytest.mark.skip(reason="the frozen C1 replay targets the retired pre-incident statement")
 def test_dry_run_never_calls_network_and_cap_is_honored(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.setattr(replay, "urlopen", lambda *_args, **_kwargs: pytest.fail("network called"))
+    monkeypatch.setattr(
+        replay,
+        "load_variation",
+        lambda _path: _patched_variation(tmp_path / "package", "k_sl_3c_c_r1", replay.NEW_C1),
+    )
     out = tmp_path / "dry"
     monkeypatch.setattr(
         "sys.argv", ["three_c_recall_replay.py", "--n", "12", "--out", str(out), "--dry-run", "--max-requests", "1"]
@@ -92,7 +124,6 @@ def test_dry_run_never_calls_network_and_cap_is_honored(monkeypatch: pytest.Monk
     assert summary["replacement_occurrences"] == 3
 
 
-@pytest.mark.skip(reason="the frozen C1 replay targets the retired pre-incident statement")
 def test_live_loop_stub_honors_cap_including_recovery(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     calls: list[dict[str, str]] = []
 
@@ -101,6 +132,11 @@ def test_live_loop_stub_honors_cap_including_recovery(monkeypatch: pytest.Monkey
         return 200, "not json" if len(calls) == 1 else '{"segments":[{"text":"ok"}]}'
 
     monkeypatch.setattr(replay, "_send", fake_send)
+    monkeypatch.setattr(
+        replay,
+        "load_variation",
+        lambda _path: _patched_variation(tmp_path / "package", "k_sl_3c_c_r1", replay.NEW_C1),
+    )
     monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://offline.invalid")
     pump, recall, _ = replay.build_requests()
     args = type("Args", (), {"n": 12, "max_requests": 3})()
@@ -122,12 +158,16 @@ def test_live_cli_requires_confirm_without_network_or_writes(monkeypatch: pytest
     assert not out.exists()
 
 
-@pytest.mark.skip(reason="the frozen C1 replay targets the retired pre-incident statement")
-def test_replay_checker_accepts_dry_and_rejects_bad_artifacts(tmp_path: Path) -> None:
+def test_replay_checker_accepts_dry_and_rejects_bad_artifacts(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     from scripts.ringer.stage7 import check_three_c_recall_replay as checker
 
     dry = tmp_path / "dry"
     dry.mkdir()
+    monkeypatch.setattr(
+        replay,
+        "load_variation",
+        lambda _path: _patched_variation(tmp_path / "package", "k_sl_3c_c_r1", replay.NEW_C1),
+    )
     replay._write_dry(dry, *replay.build_requests()[:2], 3)
     assert checker.check(dry, 1, "dry") == []
 
@@ -153,21 +193,27 @@ def test_replay_checker_accepts_dry_and_rejects_bad_artifacts(tmp_path: Path) ->
     assert any("alternating" in error for error in checker.check(artifacts, 2, "artifacts"))
 
 
-def test_broadcast_variation_replaces_a_r1_only_and_preserves_b_r1_delivery() -> None:
-    broadcast_variation = ROOT / "bench/variations/stage7-3c-broadcast-live.json"
-    source = (PACKAGE / "knowledge.yaml").read_text(encoding="utf-8")
-    assert source.count(replay.BROADCAST_OLD_LITERAL) == 1
-    variation = load_variation(broadcast_variation)
-    package, _ = package_and_state(variation, "3C")
+def test_broadcast_variation_replaces_a_r1_only_and_preserves_b_r1_delivery(tmp_path: Path) -> None:
+    original_root = compiled_story_copy(tmp_path / "original")
+    original, _ = _compiled_package_and_state(original_root, "3C")
+    assert sum(item.statement.count(replay.BROADCAST_OLD_LITERAL) for item in original.knowledge.knowledge) == 1
+    root = compiled_story_copy(tmp_path)
+    patch_source(root / "source", "scenes/3C.yaml", "reveals[sl_3c_a].variants.r1.says", replay.BROADCAST_NEW_LITERAL)
+    package, _ = _compiled_package_and_state(root, "3C")
     assert package.knowledge_indexes.by_id["k_sl_3c_a_r1"].statement == replay.BROADCAST_NEW_LITERAL
-    assert {
-        key: value
-        for key, value in _hashes(Path(variation["_package_path"]).resolve()).items()
-        if key != "knowledge.yaml"
-    } == {key: value for key, value in _hashes(PACKAGE).items() if key != "knowledge.yaml"}
+    assert {key: value for key, value in _hashes(root / "source").items() if key != "scenes/3C.yaml"} == {
+        key: value for key, value in _hashes(PACKAGE / "source").items() if key != "scenes/3C.yaml"
+    }
 
 
-def test_broadcast_arms_isolate_three_replacements_and_b_r1_delivery() -> None:
+def test_broadcast_arms_isolate_three_replacements_and_b_r1_delivery(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    monkeypatch.setattr(
+        replay,
+        "load_variation",
+        lambda _path: _patched_variation(tmp_path, "k_sl_3c_a_r1", replay.BROADCAST_NEW_LITERAL),
+    )
     pump, broadcast, count = replay.build_requests("broadcast")
     assert count == 3
     assert pump == replay.recorded_request()
