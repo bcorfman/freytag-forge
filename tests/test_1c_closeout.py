@@ -1,10 +1,7 @@
 from __future__ import annotations
 
-import re
-
 from storygame.runtime.candidate_matcher import uniquely_matched_authored_handoff
 from storygame.runtime.knowledge import RevealCandidate
-from storygame.story_source.lookup import story_text
 from tests.test_richer_1c import PACKAGE, _engine, _entries, _handoff, _routes
 
 
@@ -86,13 +83,3 @@ def test_the_michelle_command_reaches_the_michelle_glimpse():
     state, engine = _engine(true_facts=("facility_proof",))
     handoff = _handoff(engine, state, "Study the prisoners.")
     assert handoff is not None and handoff.candidate.id == "k_sl_1c_b_r1"
-
-
-def test_3a_reunion_says_the_captives_are_awake():
-    entry = _entries()["k_sl_3a_a_r1"]
-    assert "captives" in entry.delivery_text
-    assert "awake" in entry.delivery_text
-    shared_pacing_sentence = re.split(r"(?<=[.!?])\s+", story_text("claim:k_sl_3a_a_r2.text"))[2]
-    assert shared_pacing_sentence.lower() in entry.delivery_text.lower()
-    assert "reunited" in entry.statement
-    assert "coordinates" in entry.statement

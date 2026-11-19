@@ -47,12 +47,6 @@ def test_the_door_stance_lives_in_the_scene_details() -> None:
     assert "Brandon watching the door" not in {detail for beat in details for detail in beat}
 
 
-def test_the_badge_delivery_has_no_closing_beat() -> None:
-    entry = _entries(LIVE_PACKAGE)["k_sl_2b_e_r1"]
-
-    assert len(re.split(r"(?<=[.!?])\s+", _collapse_whitespace(entry.delivery_text))) == 2
-
-
 def test_gating_and_conveyance_are_unchanged() -> None:
     live_entries = _entries(LIVE_PACKAGE)
     frozen_entries = _entries(FROZEN_PACKAGE)

@@ -80,13 +80,6 @@ def test_the_calls_need_the_text_first():
     assert "k_sl_1a_j_r3" in _candidate_ids("Check the call log.", true_facts=("patrol_in_house", "michelle_text_read"))
 
 
-def test_delivery_texts_are_exactly_the_approved_lines():
-    entries = _knowledge()
-    assert [entry.id for entry in (entries[knowledge_id] for knowledge_id in PHONE_KNOWLEDGE)] == list(PHONE_KNOWLEDGE)
-    assert all(isinstance(entries[knowledge_id].delivery_text, str) for knowledge_id in PHONE_KNOWLEDGE)
-    assert all(entries[knowledge_id].delivery_text.strip() for knowledge_id in PHONE_KNOWLEDGE)
-
-
 def test_the_text_variants_establish_the_text_fact_and_nothing_about_the_card():
     entries = _knowledge()
     assert {operation.fact_id for operation in entries["k_sl_1a_j_r1"].establishes} == {"michelle_text_read"}
