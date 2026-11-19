@@ -23,12 +23,6 @@ def _only_layer_one(root: Path, name: str) -> None:
     assert require_story_source().check_source_tree(copy_fixture("mini_ok", root.parent / "clean")) == []
 
 
-def test_mini_ok_is_clean(tmp_path: Path) -> None:
-    story_source = require_story_source()
-
-    assert story_source.check_source_tree(copy_fixture("mini_ok", tmp_path)) == []
-
-
 def test_unknown_scene_key(tmp_path: Path) -> None:
     root = copy_fixture("mini_ok", tmp_path)
     patch_source(root, "scenes/1A.yaml", "reveals[find_card].done_when", "the card is found")
