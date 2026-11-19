@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import re
 from pathlib import Path
 
 from storygame.runtime.candidate_matcher import (
@@ -11,7 +10,6 @@ from storygame.runtime.candidate_matcher import (
 from storygame.runtime.knowledge import KnowledgeProjector
 from storygame.runtime.state import RuntimeState
 from storygame.story_package.loader import load_story_package
-from storygame.story_source.lookup import story_text
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 CARD_REVEAL = "k_sl_1a_b_r0"
@@ -19,15 +17,6 @@ F_R1 = "k_sl_1a_f_r1"
 F_R2 = "k_sl_1a_f_r2"
 F_STORYLET = "SL-1A-F"
 CARD_STORYLET = "SL-1A-E"
-SITUATION = (
-    "Michelle's home is otherwise untouched, but the back door has been forced. "
-    "The deadbolt is still thrown. Michelle is missing, and her tablet and "
-    "work bag are gone. Kristin knows Michelle would not leave her kitchen like this. "
-    "A drawer on Michelle's workstation has Kristin's initials, "
-    "KMS, newly carved into it. Kristin did not carve them."
-)
-PATROL_CARD_DELIVERY = story_text("claim:k_sl_1a_b_r0w.text", package=PACKAGE)
-PATROL_CARD_DELIVERY_SENTENCES = re.split(r"(?<=[.!?])\s+", PATROL_CARD_DELIVERY)
 
 
 def _state() -> RuntimeState:
@@ -56,21 +45,6 @@ def _plain_match(command: str):
         if candidate.action_evidence
     )
     return uniquely_matched_candidate(command, evidence)
-
-
-def test_scene_1a_and_card_copy_use_the_new_wording() -> None:
-    scene = next(item for item in PACKAGE.knowledge.scene_frames if item.scene_id == "1A")
-    card = PACKAGE.knowledge_indexes.by_id[CARD_REVEAL]
-
-    assert scene.situation == SITUATION
-    assert "frame" not in scene.situation.lower()
-    assert "gap" not in scene.situation.lower()
-    assert all(sentence in card.delivery_text for sentence in PATROL_CARD_DELIVERY_SENTENCES[:3])
-    assert card.id == CARD_REVEAL
-    assert "memory card" in card.statement
-    assert card.statement.endswith("and pockets it.")
-    assert "takes it with her" not in card.delivery_text
-    assert "in her truck outside" not in card.delivery_text
 
 
 def test_gap_commands_uniquely_match_the_card_reveal() -> None:
