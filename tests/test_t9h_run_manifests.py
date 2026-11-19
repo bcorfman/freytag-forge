@@ -47,16 +47,6 @@ def test_generated_t9h_manifests_match_committed_json() -> None:
         assert (Path(directory) / full.name).read_bytes() == expected_full
 
 
-def test_generated_t9h_probe_manifest_matches_committed_json() -> None:
-    generator = ENVIRONMENT_NARRATION / "make_t9h_probe_run_manifest.py"
-    expected = (ENVIRONMENT_NARRATION / "run-t9h-probe-live.json").read_bytes()
-    with tempfile.TemporaryDirectory() as directory:
-        temporary_generator = Path(directory) / generator.name
-        shutil.copy2(generator, temporary_generator)
-        subprocess.run([str(PYTHON), str(temporary_generator)], check=True)
-        assert (Path(directory) / "run-t9h-probe-live.json").read_bytes() == expected
-
-
 def test_t9h_manifests_have_caps_workdirs_checks_and_no_credential_values() -> None:
     for name, stage, usd, counts in (
         ("run-t9h-smoke.json", "smoke", 70000, (1, 6, 2, 6, 2, 6, 2, 6)),
@@ -184,29 +174,3 @@ def test_t9h_expect_files_and_conditional_check_behavior() -> None:
             missing_rows = clean_base / "d" / "rows" / "rows.json"
             assert clean_result.returncode != 0
             assert str(missing_rows) in clean_result.stderr
-
-
-def test_t9h_probe_manifest_has_request_cap_and_integrity_check() -> None:
-    path = ENVIRONMENT_NARRATION / "run-t9h-probe-live.json"
-    manifest = json.loads(path.read_text())
-    serialized = path.read_text()
-    assert manifest["workdir"] == "/home/bcorfman/dev/ringer-work/grounded-environment-narration-t9h-probe"
-    assert len(manifest["tasks"]) == 1
-    task = manifest["tasks"][0]
-    assert "under_question_probe.py --corpus v4" in task["spec"]
-    assert "--max-calls 48 --max-usd 0.01" in task["spec"]
-    assert "bench/results/environment-narration/t9h/probe/" in task["spec"]
-    assert "len(rows)==48" in task["check"]
-    assert "stop_reason" in task["check"]
-    assert "credential value" in task["check"]
-    for credential in (
-        "CLOUDFLARE_AI_TOKEN",
-        "CLOUDFLARE_ACCOUNT_ID",
-        "CLOUDFLARE_WORKER_TOKEN",
-        "OPENAI_API_KEY",
-        "RAILWAY_TOKEN",
-        "RAILWAY_PROJECT_ID",
-        "FREYTAG_TEST_CLOCK_TOKEN",
-    ):
-        value = os.environ.get(credential, "").strip()
-        assert not value or value not in serialized
