@@ -1,0 +1,49 @@
+{
+  "act": "TODO",
+  "prior_bonds": ["TODO"],
+  "harm_ladder": [
+    {"rung": 1, "kind": "TODO", "harm": "TODO"},
+    {"rung": 2, "kind": "TODO", "harm": "TODO"}
+  ],
+  "scenes": [
+    {
+      "scene_id": "1A",
+      "entry_prior_exit_sets_threat": false,
+      "feeling": "TODO",
+      "clock": {"running_out": "TODO", "bridge_hook": "TODO"},
+      "npc_in_the_way": {"character": "TODO", "named_in_entry": true},
+      "beats": [
+        {"id": "TODO", "kind": "TODO", "turn": 1, "summary": "TODO"},
+        {"id": "TODO", "kind": "TODO", "turn": 3, "summary": "TODO"},
+        {"id": "TODO", "kind": "TODO", "turn": 5, "summary": "TODO"},
+        {"id": "TODO", "kind": "TODO", "turn": 7, "summary": "TODO"},
+        {
+          "id": "TODO",
+          "kind": "TODO",
+          "turn": 9,
+          "summary": "TODO",
+          "outcomes": [
+            {"id": "TODO", "verb": "TODO"},
+            {"id": "TODO", "verb": "TODO"}
+          ]
+        },
+        {"id": "TODO", "kind": "TODO", "turn": 11, "summary": "TODO"}
+      ],
+      "delay_costs": [
+        {
+          "id": "TODO",
+          "window": "TODO",
+          "cost_kind": "TODO",
+          "passage_id": "TODO",
+          "riskier_storylet_id": "TODO"
+        }
+      ],
+      "bond_beats": [
+        {"id": "TODO", "character": "TODO", "kind": "TODO", "summary": "TODO"}
+      ],
+      "world_needs": [
+        {"id": "TODO", "relation": "TODO", "subject": "TODO", "object": "TODO"}
+      ]
+    }
+  ]
+}

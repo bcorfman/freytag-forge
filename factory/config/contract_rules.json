@@ -1,0 +1,11 @@
+{
+  "protected_characters": ["michelle"],
+  "cost_kinds": ["riskier_storylet", "npc_harm", "captive_harm"],
+  "beat_kinds": ["entry", "pressure", "relief", "reveal", "setpiece", "exit"],
+  "relations": ["hold", "know", "reach", "exist", "hidden", "seated", "companion", "axis"],
+  "bond_kinds": ["favor", "joke", "confession", "habit"],
+  "scene_ids": ["1A", "1B", "1C", "2A", "2B", "2C", "3A", "3B", "3C"],
+  "first_pressure_turns": [3, 4],
+  "min_gap_turns": 2,
+  "reading_verbs": ["read", "search", "look", "examine", "check"]
+}
