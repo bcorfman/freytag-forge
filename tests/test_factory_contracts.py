@@ -123,3 +123,33 @@ def test_template_parses_and_reports_placeholders() -> None:
         template = json.load(template_file)
 
     assert "contract.placeholder" in rule_ids(template)
+
+
+@pytest.mark.parametrize("field", ["subject_kind", "object_kind"])
+def test_world_need_optional_kind_must_be_non_empty_string(field: str) -> None:
+    contract = read_ok()
+    contract["scenes"][0]["world_needs"][0][field] = ""
+
+    assert "contract.world_need" in rule_ids(contract)
+
+
+def test_world_need_optional_kind_rejects_non_string() -> None:
+    contract = read_ok()
+    contract["scenes"][0]["world_needs"][0]["subject_kind"] = 42
+
+    assert "contract.world_need" in rule_ids(contract)
+
+
+def test_world_need_role_uses_rules_and_rejects_unknown_value() -> None:
+    contract = read_ok()
+    contract["scenes"][0]["world_needs"][0]["role"] = "depends_on"
+
+    assert "contract.world_need" in rule_ids(contract)
+
+
+def test_world_need_roles_accept_both_declared_values() -> None:
+    for role in ("relies_on", "creates"):
+        contract = read_ok()
+        contract["scenes"][0]["world_needs"][0]["role"] = role
+
+        assert "contract.world_need" not in rule_ids(contract)

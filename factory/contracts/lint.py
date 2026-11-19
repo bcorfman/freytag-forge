@@ -55,6 +55,7 @@ class _ContractLint:
         self.cost_kinds = list(rules.get("cost_kinds", []))
         self.beat_kinds = list(rules.get("beat_kinds", []))
         self.relations = list(rules.get("relations", []))
+        self.need_roles = list(rules.get("need_roles", []))
         self.bond_kinds = list(rules.get("bond_kinds", []))
         self.scene_ids = list(rules.get("scene_ids", []))
         self.protected_characters = {str(value).casefold() for value in rules.get("protected_characters", [])}
@@ -289,6 +290,11 @@ class _ContractLint:
                 self.add("contract.shape", f"{need_path}.relation", "unknown relation")
             if not _is_nonempty_string(need.get("subject")):
                 self.add("contract.shape", f"{need_path}.subject", "subject must be non-empty")
+            for field in ("subject_kind", "object_kind"):
+                if field in need and not _is_nonempty_string(need[field]):
+                    self.add("contract.world_need", f"{need_path}.{field}", f"{field} must be a non-empty string")
+            if "role" in need and need["role"] not in self.need_roles:
+                self.add("contract.world_need", f"{need_path}.role", "unknown need role")
         self.check_duplicates(ids, path, "id")
 
     def check_scene_rules(
