@@ -78,7 +78,6 @@
     "tests/test_1c_offers.py": 0.26,
     "tests/test_1c_reading_pointer.py": 0.73,
     "tests/test_1c_stall_exit.py": 2.17,
-    "tests/test_2a_forms_words.py": 0.04,
     "tests/test_2a_spine_prompts.py": 0.27,
     "tests/test_2b_delivery_repeat.py": 5.24,
     "tests/test_2b_spine_prompts.py": 0.17,

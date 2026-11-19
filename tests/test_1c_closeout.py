@@ -87,23 +87,6 @@ def test_the_michelle_command_reaches_the_michelle_glimpse():
     assert handoff is not None and handoff.candidate.id == "k_sl_1c_b_r1"
 
 
-def test_no_other_unique_1c_handoff_changes():
-    checks = (
-        ((), "Inspect the loading docks.", "k_sl_1c_a_r1"),
-        (("facility_proof",), "Study the prisoners.", "k_sl_1c_b_r1"),
-        (
-            ("facility_proof", "captives_confirmed_alive"),
-            "Ask Brandon about the transfer route.",
-            "k_sl_1c_c_secure_route",
-        ),
-        (("facility_proof", "captives_confirmed_alive"), "Copy the prisoner numbers.", "k_sl_1c_c_copy_numbers"),
-    )
-    for facts, command, entry_id in checks:
-        state, engine = _engine(true_facts=facts)
-        handoff = _handoff(engine, state, command)
-        assert handoff is not None and handoff.candidate.id == entry_id, command
-
-
 def test_3a_reunion_says_the_captives_are_awake():
     entry = _entries()["k_sl_3a_a_r1"]
     planned_text = (

@@ -947,24 +947,6 @@ def test_transport_repairs_then_salvages_a_truncated_quoted_reply(monkeypatch) -
     assert state.last_turn_delivery.recovery_used is True
 
 
-def test_transport_still_reasks_for_an_invalid_provider_envelope(monkeypatch) -> None:
-    payloads: list[dict[str, object]] = []
-    provider = CloudflareTurnProvider(
-        worker_url="https://worker.example/turn", token="", state=RuntimeState.bootstrap(PACKAGE)
-    )
-
-    def open_request(request, timeout):
-        payloads.append(json.loads(request.data))
-        if len(payloads) == 1:
-            return _Response({"narration": '{"segments":[]}'})
-        return _Response({"narration": '{"segments":[{"kind":"action","text":"Kristin checks the door."}]}'})
-
-    monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
-
-    assert provider("Listen.") == {"segments": [{"kind": "action", "text": "Kristin checks the door."}]}
-    assert len(payloads) == 2
-
-
 def test_transport_completes_a_reply_missing_two_closing_delimiters(monkeypatch) -> None:
     state = RuntimeState.bootstrap(PACKAGE)
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)

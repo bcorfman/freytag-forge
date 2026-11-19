@@ -47,3 +47,15 @@ Ringer run `probe-retire-and-coverage-report` (two tasks, both passed first try)
 - Missed by my first import scan and caught by the full suite: tests that load a script by a built path (`hidden_bench_prose_probe.py`, the t9h probe manifest). Lesson: run the full suite, not the import closure alone.
 - Historical run manifests and builders under `scripts/ringer/environment_narration` still name deleted files; they are run records and were left alone.
 - Added `scripts/coverage_redundancy.py` and a nightly step that uploads `artifacts/test-redundancy.json` (per-test unique lines, tests with none, identical groups). First data arrives with the next nightly run after merge. Stage 3 (mutation checks) follows from that report.
+
+## Stage 2 and 3 results (2026-11-19, branch `retire-duplicate-tests`)
+
+Nightly context report (manual run 44473904696 on `main` after PR #781; `test-redundancy.json`): 3,637 tests measured, 3,354 with no unique line, 491 identical-coverage groups (321 spanning more than one test function, 120 across files).
+
+Line coverage alone is weak evidence. Almost every test in a mature suite has no unique line, and identical line sets are mostly story-loading setup. I therefore combined the groups with the test bodies: of 52 pairs in identical groups whose bodies are at least 90% the same code, only the 5 exact duplicates from the static scan are redundant (same body, inputs, helpers and assertions, so any mutant one kills the other kills). Mutation runs on these would prove nothing the identical code does not already show.
+
+Removed (twin kept): `test_no_other_unique_1c_handoff_changes`, `test_2a_supervisor_diagnosis_selects_convincing_inspection`, `test_2a_unrelated_actions_do_not_select_an_inspection_outcome` (left `tests/test_2a_forms_words.py` empty, so the file is deleted), `test_transport_still_reasks_for_an_invalid_provider_envelope`, and `story_source/test_l1_scene.py::test_mini_ok_is_clean`. 7 fewer collected tests. Ringer run `redundant-tests-stage3`: the work passed; the check failed on a `pipefail` bug of mine (`git grep -c` exits 1 on zero matches), so the diff was taken from the worker's worktree.
+
+Not duplicates, kept: `test_negation_scope` vs `test_command_split_negation` (different inputs). Consolidation candidates, not deletions: `test_the_richer_scene_adds_no_beat_overprojection` is copied across `test_richer_{1c,2a,2b,2c,3a}.py` with only scene constants changed (could be one parametrized test); `test_candidate_matcher` 2C rescue/transmit and the 2A/2C unrelated-action tests are 95% the same code over different data.
+
+Where the real saving is: the biggest line items are not redundancy but cost (`test_frozen_prompts` 377 s, `test_game_path_completion` 434 tests with no unique lines, `test_bench_item_facts` 206). Those are parametrized sweeps; shrinking them needs a view on what each sweep guards, not a coverage rule.
