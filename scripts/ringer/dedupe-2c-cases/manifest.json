@@ -1,0 +1,28 @@
+{
+  "run_name": "dedupe-2c-cases",
+  "workdir": "/home/bcorfman/dev/ringer-work/dedupe-2c-cases",
+  "max_parallel": 1,
+  "worktrees": true,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "dedupe-2c-commitment-cases",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "max_attempts": 2,
+      "timeout_s": 900,
+      "check_timeout_s": 300,
+      "ownership": [
+        "tests/test_recovery_after_choice.py"
+      ],
+      "spec": "You are a Python engineer. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge (detached at HEAD). Edit files here directly. NEVER git commit, never touch /home/bcorfman/dev/freytag-forge itself, never run `uv`, never call a billed model or the network. FIRST run: [ -e .venv ] || ln -s /home/bcorfman/dev/freytag-forge/.venv .venv . Run tests as `PYTHONPATH=$PWD:$PWD/packages/worldkeeper/src TMPDIR=/tmp .venv/bin/python -m pytest -q -p no:cacheprovider -n 0 <files>` (never pass --cov); ruff as `.venv/bin/python -m ruff check <files>` and `.venv/bin/python -m ruff format <files>`.\n\nTASK. In tests/test_recovery_after_choice.py, `test_2c_commitment_is_exclusive_and_late_commitment_is_honoured` is parametrized over commitment (k_sl_2c_d_r3, k_sl_2c_d_r4) x (commit_turn, timing) x read_observation (True, False). When read_observation is False the body never uses `commitment` (it drives `None` and only asserts that no commitment fact exists), so the False cases for r3 and r4 are exact duplicates of each other (same steps, same assertions) and run twice for nothing.\nChange ONLY the parametrization so each distinct behaviour runs once: replace the separate `commitment` and `read_observation` parametrize decorators by one decorator over (read_observation, commitment) with exactly three cases: (True, \"k_sl_2c_d_r3\"), (True, \"k_sl_2c_d_r4\"), (False, None), with readable ids (\"read-r3\", \"read-r4\", \"no-read\"). Keep the (commit_turn, timing) decorator as is. Update the function signature type for `commitment` to `str | None`. Do not change the body logic or any assertion. That gives 12 cases instead of 16: the eight True cases are unchanged in behaviour and the four False cases remain once. Edit no other file; never weaken any other test.\n\nDONE WHEN the owned file passes pytest, ruff check and ruff format --check are clean, and the test collects exactly 12 cases.",
+      "check": "set -eo pipefail\n[ -e .venv ] || ln -s /home/bcorfman/dev/freytag-forge/.venv .venv\nexport PYTHONPATH=$PWD:$PWD/packages/worldkeeper/src TMPDIR=/tmp\nF=\"tests/test_recovery_after_choice.py\"\n.venv/bin/python -m pytest -q -p no:cacheprovider -n 0 $F 2>&1 | tail -4\nn=$(.venv/bin/python -m pytest --collect-only -q -p no:cacheprovider -n 0 $F 2>&1 | grep -c \"test_2c_commitment_is_exclusive_and_late_commitment_is_honoured\\[\" || true)\n[ \"$n\" = \"12\" ] || { echo \"expected 12 collected cases, got $n\"; exit 1; }\n.venv/bin/python -m ruff check $F\n.venv/bin/python -m ruff format --check $F\ngit add -A -- tests\nbad=$(git diff --cached --name-only | grep -v -x -e tests/test_recovery_after_choice.py || true)\n[ -z \"$bad\" ] || { echo \"files outside ownership staged: $bad\"; exit 1; }\ngit diff --cached --binary > /home/bcorfman/dev/ringer-work/dedupe-2c-cases/dedupe.patch\ntest -s /home/bcorfman/dev/ringer-work/dedupe-2c-cases/dedupe.patch\n",
+      "expect_files": [],
+      "verified": "4 duplicate parametrized cases dropped (16 -> 12), behaviour of the 8 reading cases unchanged, only the one owned file changed."
+    }
+  ]
+}
