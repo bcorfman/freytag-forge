@@ -183,6 +183,6 @@ def test_build_handlers_and_factory_line_advance(tmp_path: Path) -> None:
         check_breakers=lambda now: [],
     )
 
-    assert set(handlers) == {Station.WORLD_NEED, Station.FREE_GATES}
+    assert set(handlers) == {Station.WORLD_NEED, Station.FREE_GATES, Station.PROMPT_SNAPSHOT}
     assert line.step(NOW).kind == "advanced"
     assert queue.get("ticket").station is Station.PROSE
