@@ -419,6 +419,8 @@ Steps 1 to 4 build the factory, and you may still be steering there as you do to
 - **Open after 7b:** commit round 7 and 7b, re-run the full suite once, decide whether to merge. Brandon asked (2026-11-18) how to find useless or redundant tests after the new format; plan: static scan of format-bound tests first (legacy filenames, legacy loader users, `copied_prose.py`, overlap between the rewritten markdown loader tests and the L1/L2 fixture tests), then per-test coverage contexts in the nightly job only, then mutation checks on the candidates; nothing deleted without that evidence.
 - **Next (superseded):** the single Ringer task described earlier is done as round 7 above.
 
+**Status, 2026-11-19.** Round 7 and 7b are merged (PR #780); the order-pruning test helpers are in, and `tests/story_source`, `test_branch_report` and `test_incident_loader` pass (215). Full suite on merged `main` not re-run yet. Redundant-test scan stage 1 (static) is done: [redundant-test-scan.md](redundant-test-scan.md). Findings: 5 exact duplicate pairs, 25 assertion-free tests (mostly fine), and 45 experiment-named test files that cost 17% of suite time. Stage 2 needs the nightly job to upload per-test coverage; nothing deleted yet.
+
 ### Pre-flight: everything you do, all before start
 
 - [ ] Confirm headless Claude Code runs Opus and Sonnet on your subscription, not on API billing

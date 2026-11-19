@@ -1,0 +1,28 @@
+{
+  "run_name": "probe-retire-fix",
+  "workdir": "/home/bcorfman/dev/ringer-work/probe-retire-fix",
+  "max_parallel": 1,
+  "worktrees": true,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "drop-t9h-probe-manifest-tests",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "max_attempts": 2,
+      "timeout_s": 900,
+      "check_timeout_s": 300,
+      "ownership": [
+        "tests/test_t9h_run_manifests.py"
+      ],
+      "spec": "You are a Python engineer. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge (detached at HEAD). Edit files here directly. NEVER git commit, never touch /home/bcorfman/dev/freytag-forge itself, never run `uv`, never call a billed model or the network. FIRST run: [ -e .venv ] || ln -s /home/bcorfman/dev/freytag-forge/.venv .venv ; then run `git apply /home/bcorfman/dev/ringer-work/probe-retire-fix/state.patch` (it brings the worktree to the owner's branch, in which the probe scripts and the file scripts/ringer/environment_narration/run-t9h-probe-live.json and make_t9h_probe_run_manifest.py are already deleted; the patch is not yours to edit). Run tests as `PYTHONPATH=$PWD:$PWD/packages/worldkeeper/src TMPDIR=/tmp .venv/bin/python -m pytest -q -p no:cacheprovider -n 0 tests/test_t9h_run_manifests.py` (never pass --cov); ruff as `.venv/bin/python -m ruff check tests/test_t9h_run_manifests.py` and `.venv/bin/python -m ruff format tests/test_t9h_run_manifests.py`.\n\nTASK. The probe experiment scripts were retired. tests/test_t9h_run_manifests.py has two tests that exist only to check the deleted probe run manifest, and they now fail with FileNotFoundError: `test_generated_t9h_probe_manifest_matches_committed_json` and `test_t9h_probe_manifest_has_request_cap_and_integrity_check`. Delete exactly those two test functions. Then remove any import, constant or helper in the file that only they used (for example `shutil`, `tempfile`, `subprocess`, `json`, `os` if nothing else in the file still uses them; check each, do not guess). Never touch the other tests in the file, never weaken one, edit no other file.\n\nDONE WHEN the remaining tests in tests/test_t9h_run_manifests.py all pass, ruff check and ruff format --check are clean on the file, and the file defines neither of the two deleted tests.",
+      "check": "set -eo pipefail\n[ -e .venv ] || ln -s /home/bcorfman/dev/freytag-forge/.venv .venv\nexport PYTHONPATH=$PWD:$PWD/packages/worldkeeper/src TMPDIR=/tmp\n.venv/bin/python -m pytest -q -p no:cacheprovider -n 0 tests/test_t9h_run_manifests.py 2>&1 | tail -6\n.venv/bin/python -m ruff check tests/test_t9h_run_manifests.py\n.venv/bin/python -m ruff format --check tests/test_t9h_run_manifests.py\n! grep -q \"def test_generated_t9h_probe_manifest_matches_committed_json\\|def test_t9h_probe_manifest_has_request_cap_and_integrity_check\" tests/test_t9h_run_manifests.py\ngrep -c \"^def test\" tests/test_t9h_run_manifests.py | grep -qx 4\nbad=$(git status --porcelain | grep -v \"tests/test_t9h_run_manifests.py\" | grep -v \"^D \\|^ D\\|^A \\|^M \" || true)\ngit diff --stat -- tests/test_t9h_run_manifests.py | tail -1\ngit diff -- tests/test_t9h_run_manifests.py > /home/bcorfman/dev/ringer-work/probe-retire-fix/fix.patch\ntest -s /home/bcorfman/dev/ringer-work/probe-retire-fix/fix.patch\n",
+      "expect_files": [],
+      "verified": "the two tests of the deleted probe manifest are gone, the file's other four tests pass, and nothing else changed."
+    }
+  ]
+}
