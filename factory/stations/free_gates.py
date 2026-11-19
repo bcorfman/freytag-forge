@@ -1,0 +1,156 @@
+"""Run the free deterministic gates; the carry-matrix gate is deferred."""
+
+from __future__ import annotations
+
+import json
+import os
+import subprocess
+from collections.abc import Callable
+from datetime import datetime
+from pathlib import Path
+from typing import Any
+
+from factory.checks.gap_delta import DEFAULT_ROOT, load_baseline, new_results, snapshot
+from factory.line import StationHandler, StationResult
+from storygame.story_source import check_source_tree, compile_source_tree
+
+
+def _repository_root() -> Path:
+    return Path(__file__).resolve().parents[2]
+
+
+def _resolve(root: Path, value: object) -> Path:
+    if not isinstance(value, (str, Path)):
+        raise TypeError("path must be a string")
+    path = Path(value)
+    return path if path.is_absolute() else root / path
+
+
+def _tail(output: str) -> str:
+    return output[-4000:]
+
+
+def _diagnostic_line(diagnostic: Any) -> str:
+    return f"{diagnostic.name}: {diagnostic.file}:{diagnostic.address}.{diagnostic.field}: {diagnostic.message}"
+
+
+def _process_output(completed: subprocess.CompletedProcess) -> str:
+    parts = []
+    for value in (completed.stdout, completed.stderr):
+        if value:
+            parts.append(str(value))
+    return "".join(parts)
+
+
+def _run_command(
+    run: Callable[..., subprocess.CompletedProcess],
+    command: list[str],
+    root: Path,
+    *,
+    timeout: int | None = None,
+    env: dict[str, str] | None = None,
+) -> tuple[bool, str]:
+    kwargs: dict[str, object] = {"cwd": root, "check": False, "capture_output": True, "text": True}
+    if timeout is not None:
+        kwargs["timeout"] = timeout
+    if env is not None:
+        kwargs["env"] = env
+    try:
+        completed = run(command, **kwargs)
+    except subprocess.TimeoutExpired:
+        return False, "command timed out"
+    output = _process_output(completed)
+    return completed.returncode == 0, output
+
+
+def _pytest_environment(root: Path) -> dict[str, str]:
+    environment = os.environ.copy()
+    paths = [str(root), str(root / "packages/worldkeeper/src")]
+    if environment.get("PYTHONPATH"):
+        paths.append(environment["PYTHONPATH"])
+    environment["PYTHONPATH"] = os.pathsep.join(paths)
+    environment["TMPDIR"] = "/tmp"
+    return environment
+
+
+def _pytest_command(tests: list[str]) -> list[str]:
+    return [".venv/bin/python", "-m", "pytest", "-q", "-p", "no:cacheprovider", "-n", "0", *tests]
+
+
+def _reason(prefix: str, error: BaseException) -> str:
+    detail = str(error).replace("\n", " ").strip()
+    return f"{prefix}: {detail}" if detail else prefix
+
+
+def free_gates_handler(
+    root: Path | None = None,
+    run: Callable[..., subprocess.CompletedProcess] = subprocess.run,
+) -> StationHandler:
+    """Return a fail-fast handler for the source, gap, Ruff, and test gates."""
+
+    repository_root = Path(root) if root is not None else _repository_root()
+
+    def handle(ticket, now: datetime) -> StationResult:
+        del now
+        payload = ticket.payload
+        if "gap_baseline" not in payload:
+            return StationResult(False, "gap_delta", "missing payload key: gap_baseline")
+
+        source_value = payload.get("source_root")
+        if source_value is not None:
+            try:
+                source_root = _resolve(repository_root, source_value)
+                diagnostics = check_source_tree(source_root)
+            except (OSError, TypeError, ValueError) as error:
+                return StationResult(False, "source_tree", _tail(_reason("source tree check failed", error)))
+            if diagnostics:
+                return StationResult(
+                    False, "source_tree", _tail("\n".join(_diagnostic_line(item) for item in diagnostics))
+                )
+            try:
+                compile_source_tree(source_root)
+            except Exception as error:
+                return StationResult(False, "source_tree", _tail(str(error) or error.__class__.__name__))
+
+        try:
+            story_value = payload.get("story_root", DEFAULT_ROOT)
+            story_root = _resolve(repository_root, story_value)
+            anchors = payload.get("anchors")
+            current = snapshot(story_root, anchors if isinstance(anchors, list) else None)
+            baseline = load_baseline(_resolve(repository_root, payload["gap_baseline"]))
+            additions = new_results(baseline, current)
+        except (OSError, json.JSONDecodeError, TypeError, ValueError, KeyError) as error:
+            return StationResult(False, "gap_delta", _tail(_reason("gap delta check failed", error)))
+
+        gap_lines = [f"NEW {anchor} {result}" for anchor in sorted(additions) for result in additions[anchor]]
+        gap_lines.extend(f"ERROR {error}" for error in current.get("__errors__", []))
+        if gap_lines:
+            return StationResult(False, "gap_delta", _tail("\n".join(gap_lines)))
+
+        python_paths = [path for path in payload.get("paths", []) if isinstance(path, str) and path.endswith(".py")]
+        if python_paths:
+            for command in (
+                [".venv/bin/python", "-m", "ruff", "check", *python_paths],
+                [".venv/bin/python", "-m", "ruff", "format", "--check", *python_paths],
+            ):
+                passed, output = _run_command(run, command, repository_root)
+                if not passed:
+                    detail = output or "ruff command failed"
+                    return StationResult(False, "ruff", _tail(detail))
+
+        tests = [path for path in payload.get("tests", []) if isinstance(path, str)]
+        if tests:
+            passed, output = _run_command(
+                run,
+                _pytest_command(tests),
+                repository_root,
+                timeout=1200,
+                env=_pytest_environment(repository_root),
+            )
+            if not passed:
+                detail = output or "pytest command failed"
+                return StationResult(False, "tests", _tail(detail))
+
+        return StationResult(True, "free_gates", "all free gates passed")
+
+    return handle
