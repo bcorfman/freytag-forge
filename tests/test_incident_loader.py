@@ -26,11 +26,24 @@ def _write_source(root: Path, scene: str, document: dict) -> None:
     )
 
 
+def _remove_order_id(root: Path, kind: str, record_id: str, scene: str = "2C") -> None:
+    document = _load_source(root, scene)
+    order = document.get("order")
+    if isinstance(order, dict) and isinstance(order.get(kind), list):
+        order[kind] = [item_id for item_id in order[kind] if item_id != record_id]
+        if not order[kind]:
+            order.pop(kind)
+        if not order:
+            document.pop("order")
+    _write_source(root, scene, document)
+
+
 def _remove_match_claim(root: Path, claim_id: str) -> None:
     path = root / "source" / "scenes" / "2C.match.yaml"
     document = yaml.safe_load(path.read_text(encoding="utf-8"))
     document["claims"].pop(claim_id, None)
     path.write_text(yaml.safe_dump(document, sort_keys=False, width=10_000, allow_unicode=True), encoding="utf-8")
+    _remove_order_id(root, "knowledge", claim_id)
 
 
 def _duplicate_scene(root: Path) -> str:

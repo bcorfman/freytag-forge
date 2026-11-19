@@ -944,3 +944,32 @@ exit:
   - item: brandon
     relation: exists
   bridge: 'The purge clock was running. Michelle''s route led down into the detention levels, and the plan was now one combined mission: broadcast the truth and free the captives.'
+order:
+  storylets:
+  - SL-2C-F
+  - SL-2C-G
+  - SL-2C-H
+  - SL-2C-C
+  - SL-2C-D
+  - SL-2C-E
+  deliveries:
+  - purge_clock_started
+  - purge_window_missed
+  - evidence_ready_to_transmit
+  - rebecca_office_required_for_broadcast
+  - combined_broadcast_rescue_plan_known
+  - committed_to_transmit
+  - detention_sectors_sealed
+  - committed_to_rescue
+  - evidence_not_transmitted
+  knowledge:
+  - k_sl_2c_c_r1
+  - k_sl_2c_d_r3
+  - k_sl_2c_d_r4
+  - k_sl_2c_f_r1
+  - k_sl_2c_g_r1
+  - k_sl_2c_h_r1
+  - k_scene_2c_entry
+  - k_purge_recovery_ready
+  - k_sl_2c_e_route_effects
+  - k_purge_window_missed

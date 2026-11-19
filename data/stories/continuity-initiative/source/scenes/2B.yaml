@@ -1039,3 +1039,27 @@ exit:
   - item: brandon
     relation: exists
   bridge: Kristin and Brandon slipped out of the archive with the copied files. In the command corridor beyond, doors were already closing at both ends.
+order:
+  deliveries:
+  - janus_evidence
+  - brandon_janus_role_known
+  - brandon_claimed_reform_motive
+  - kristin_was_bait
+  - brandon_name_kept
+  - brandon_name_erased
+  - michelle_resistance_known
+  - michelle_reply_received
+  - audit_window_missed
+  knowledge:
+  - k_sl_2b_a_r1
+  - k_sl_2b_b_r4
+  - k_sl_2b_b_r5
+  - k_sl_2b_c_r3
+  - k_sl_2b_e_r1
+  - k_sl_2b_f_r1
+  - k_sl_2b_g_r1
+  - k_bridge_2b_archive_crisis
+  - k_scene_2b_entry
+  - k_audit_recovery_ready
+  - k_sl_2b_d_route_effects
+  - k_audit_window_missed

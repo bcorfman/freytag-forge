@@ -23,6 +23,30 @@ def _edit_source(root: Path, filename: str, edit) -> None:
     path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
 
 
+def _remove_delivery(root: Path, delivery_id: str) -> None:
+    _edit_source(root, "scenes/2C.yaml", lambda data: data["facts"][delivery_id].pop("delivery"))
+
+    def remove_match_delivery(data: dict) -> None:
+        data["deliveries"].pop(delivery_id)
+
+    _edit_source(root, "scenes/2C.match.yaml", remove_match_delivery)
+    _edit_source(
+        root,
+        "scenes/2C.yaml",
+        lambda data: _prune_order_id(data, "deliveries", delivery_id),
+    )
+
+
+def _prune_order_id(data: dict, kind: str, record_id: str) -> None:
+    order = data.get("order")
+    if isinstance(order, dict) and isinstance(order.get(kind), list):
+        order[kind] = [item_id for item_id in order[kind] if item_id != record_id]
+        if not order[kind]:
+            order.pop(kind)
+        if not order:
+            data.pop("order")
+
+
 def _incident(data: dict) -> dict:
     return next(item for item in data.incidents if item.scene_id == "2C")
 
@@ -176,11 +200,7 @@ def test_branch_without_trigger_is_reported_as_dead_end_and_clean_variant(tmp_pa
 
     _edit_source(package_root, "scenes/2C.yaml", lambda data: data["exit"].update(when_all=["committed_to_transmit"]))
 
-    def remove_delivery(data: dict) -> None:
-        data["facts"]["committed_to_transmit"].pop("delivery")
-
-    _edit_source(package_root, "scenes/2C.yaml", remove_delivery)
-    _edit_source(package_root, "scenes/2C.match.yaml", lambda data: data["deliveries"].pop("committed_to_transmit"))
+    _remove_delivery(package_root, "committed_to_transmit")
     report = render_branch_report(package_root, "i_2c_rebecca_corridor")
     rescue = report.split("## Branch `committed_to_rescue`", 1)[1].split("## Branch", 1)[0]
     assert "Result: dead end" in rescue

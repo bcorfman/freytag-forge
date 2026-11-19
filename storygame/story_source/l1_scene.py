@@ -362,6 +362,23 @@ def _check_header(data: dict[Any, Any], address: str, issue: Issue) -> None:
         _claim_list(data["entry_claims"], f"{address}.entry_claims", issue, entry=True)
 
 
+def _check_order(value: object, address: str, issue: Issue) -> None:
+    """Check the optional per-scene collection order lists."""
+
+    if not isinstance(value, dict):
+        return
+    allowed = {"storylets", "deliveries", "knowledge", "pacing_events"}
+    for key in value:
+        if key not in allowed:
+            issue("L1.unknown_key", address, str(key), f"unknown order key {key!r}")
+    for key in allowed:
+        if key in value:
+            if not isinstance(value[key], list):
+                issue("L1.type", f"{address}.{key}", key, f"key {key!r} must be a list")
+            else:
+                _strings(value[key], address, key, issue)
+
+
 def _claim_list(value: object, address: str, issue: Issue, *, entry: bool = False) -> None:
     """Check a list of claim records."""
 
@@ -856,6 +873,7 @@ def _check_scene_file(file: str, data: object, issue: Issue) -> None:
         "incidents": _rule("list"),
         "exit": _rule("mapping"),
         "ending": _rule("mapping"),
+        "order": _rule("mapping"),
     }
     record = _record(data, f"scene:{file}", root_rules, issue)
     if record is None:
@@ -867,6 +885,8 @@ def _check_scene_file(file: str, data: object, issue: Issue) -> None:
     _check_facts(record.get("facts"), f"{scene_address}.facts", issue)
     _check_placements(record.get("placements"), f"{scene_address}.placements", issue)
     _check_beats(record.get("beats"), f"{scene_address}.beats", issue)
+    if "order" in record:
+        _check_order(record["order"], f"{scene_address}.order", issue)
     _check_reveals(record.get("reveals"), f"{scene_address}.reveals", issue)
     _check_bridge(record.get("bridge"), f"{scene_address}.bridge", issue)
     _check_incidents(record.get("incidents"), f"{scene_address}.incidents", issue)

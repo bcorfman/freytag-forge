@@ -117,7 +117,7 @@ top-level key is a layer 1 error.
 | `ownership.yaml` | `schema`, `catalog` (`legacy`\|`compiled`), `scenes` (map scene id to `legacy`\|`compiled`; a scene not listed is `legacy`) |
 | `story.yaml` | `schema`, `story`, `title`, `genre`, `protagonist`, `budget_seconds`, `scenes`, `principal_characters`, `acts`, `front_matter`, `retired_ids` |
 | `catalog.yaml` | `schema`, `places`, `characters`, `groups`, `items`, `kinds`, `props`, `connections`, `protected_knowledge`, `disclosure_guards`, `unplaced_facts` |
-| `scenes/<id>.yaml` | `schema`, `scene`, header keys (4.3), `brief`, `outline`, `facts`, `placements`, `beats`, `reveals`, `bridge`, `incidents`, `exit`, `ending` |
+| `scenes/<id>.yaml` | `schema`, `scene`, header keys (4.3), `brief`, `outline`, `facts`, `placements`, `beats`, `reveals`, `bridge`, `incidents`, `exit`, `ending`, `order` |
 | `scenes/<id>.match.yaml` | `schema`, `scene`, `lexicon` (pass 2), `plural_twins` (pass 2), `shared`, `claims`, `deliveries` |
 | `scenes/<id>.match.lock.yaml` | `schema`, `scene`, `generated_by`, `claims`, `deliveries` (generated) |
 | `lexicon.yaml` | `schema`, `entities`, `concepts`, `verb_classes` |
@@ -657,6 +657,18 @@ open).
 | 12 | `note` on a beat | **Accept** | Reader-only; never reaches `StoryPackage` (fixture F26) |
 | 13 | Root `catalog` (ending, connections, guards, protected knowledge, entities) | **Change** | Split into `story.yaml` (identity, order, story text) and `catalog.yaml` (world records, unplaced facts). The ending goes to 3C's scene file |
 
+### 4.16 `order`
+
+The optional `order` mapping is the last top-level key in a scene file. It may
+contain `storylets`, `deliveries`, `knowledge`, and `pacing_events`, each a list
+of IDs belonging to that scene's records of the named kind (storylet IDs,
+delivery fact IDs, claim IDs, or pacing event IDs). The compiler first builds
+each collection in its natural order, then places the listed records first in
+the scene's existing block; unlisted records retain their natural relative
+order after them. The scene block keeps its position among the other scenes'
+blocks. Layer 2 reports `L2.order_id` for an ID that is not a record of that
+kind in the scene or for a duplicate ID.
+
 ## 5. Derivation rules
 
 Each rule names what was run against the loaded package. "Unchecked" means no
@@ -970,7 +982,7 @@ below).
 | --- | --- | --- |
 | `op_order` | Two operation lists hold the same set, all facts distinct, and no two facts have on-assert effects on one entity | No (proved by the tool) |
 | `condition_order` | Two predicate tuples hold the same set | No (evaluated with `all()`) |
-| `collection_order` | A keyed record moves only across scenes; its relative order among same-scene records is unchanged; for `world.facts`, every order-sensitive pair (5, rule 5) keeps its order | No |
+| `collection_order` | Applies only when a keyed record moves ONLY ACROSS SCENES; its relative order among same-scene records is unchanged. Moving a record from one scene's block to another's position is still allowed; reordering records of the same scene is not. For `world.facts`, every order-sensitive pair (5, rule 5) keeps its order | No |
 | `reader_only` | The field has no runtime reader: `Scene.prose`, `Storylet.title`, `Storylet` window, `Storylet.sections` (fixed list in the tool) | Yes |
 | `dedupe` | A duplicate entry removed (`world.facts`) | Yes |
 | `whitespace` | Texts equal after collapsing whitespace runs and trimming | Yes |

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping, Sequence
 from typing import Any
 
 from storygame.story_package.models import (
@@ -22,6 +22,38 @@ from storygame.story_package.models import (
 )
 
 from .c_passages import predicates
+
+
+def apply_scene_order(
+    records: Sequence[Any],
+    scenes: Sequence[tuple[str, Mapping[str, Any]]],
+    kind: str,
+    scene_for: Callable[[Any], str | None],
+    record_id: Callable[[Any], str],
+) -> tuple[Any, ...]:
+    """Reorder listed records within each natural scene block."""
+
+    result = list(records)
+    positions: dict[str, list[int]] = {}
+    for index, record in enumerate(records):
+        scene_id = scene_for(record)
+        if scene_id is not None:
+            positions.setdefault(scene_id, []).append(index)
+
+    for scene_id, scene in scenes:
+        order = scene.get("order")
+        if not isinstance(order, Mapping):
+            continue
+        requested = order.get(kind)
+        if not isinstance(requested, list) or not requested:
+            continue
+        block_positions = positions.get(scene_id, [])
+        by_id = {record_id(records[index]): records[index] for index in block_positions}
+        selected = [by_id[item_id] for item_id in requested if item_id in by_id]
+        selected.extend(records[index] for index in block_positions if record_id(records[index]) not in requested)
+        for index, record in zip(block_positions, selected, strict=False):
+            result[index] = record
+    return tuple(result)
 
 
 class CompiledScene(Scene):
@@ -183,7 +215,13 @@ def build_events(scene: Mapping[str, Any]) -> tuple[PacingEvent, ...]:
                 trailing=record.get("trailing", False),
             )
         )
-    return tuple(events)
+    return apply_scene_order(
+        events,
+        ((scene["scene"], scene),),
+        "pacing_events",
+        lambda item: item.scene_id,
+        lambda item: item.id,
+    )
 
 
 def _say_entries(value: object) -> list[Mapping[str, Any]]:

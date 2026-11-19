@@ -735,3 +735,10 @@ exit:
   - broadcast_started
   needs: []
   bridge: Brandon disconnected the relay from JANUS and held it open while Kristin and Michelle began the broadcast. The evidence was moving beyond Charles's control as water rose through the outer access level.
+order:
+  deliveries:
+  - relay_open
+  - human_security_control
+  - charles_abandoned_rebecca
+  - detention_locations_secured
+  - brandon_confession_available

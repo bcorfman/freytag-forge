@@ -25,6 +25,7 @@ from storygame.story_package.models import (
 
 from .c_lexicon import resolve_match_value
 from .c_passages import audience, effective_match, expand, matcher_groups, operations, predicates, tuple_strings
+from .c_scene import apply_scene_order
 
 
 @dataclass(frozen=True)
@@ -63,7 +64,15 @@ def build_routes(contexts: Sequence[SceneContext]) -> tuple[tuple[Storylet, ...]
             route, storylet = _route_and_storylet(context, reveal)
             routes.append(route)
             storylets.append(storylet)
-    return tuple(storylets), tuple(routes)
+    scene_records = tuple((context.scene["scene"], context.scene) for context in contexts)
+    ordered_storylets = apply_scene_order(
+        storylets,
+        scene_records,
+        "storylets",
+        lambda item: item.scene_id,
+        lambda item: item.id,
+    )
+    return ordered_storylets, tuple(routes)
 
 
 def _route_and_storylet(context: SceneContext, reveal: Mapping[str, Any]) -> tuple[StoryletRoute, Storylet]:
@@ -190,6 +199,21 @@ def build_knowledge(
     for context in contexts:
         claims.extend(_scene_claims(context, by_route))
         deliveries.extend(_scene_deliveries(context))
+    scene_records = tuple((context.scene["scene"], context.scene) for context in contexts)
+    claims = list(
+        apply_scene_order(
+            claims,
+            scene_records,
+            "knowledge",
+            lambda item: item.available_in_scenes[0] if item.available_in_scenes else None,
+            lambda item: item.id,
+        )
+    )
+    deliveries = list(
+        apply_scene_order(
+            deliveries, scene_records, "deliveries", lambda item: item.scene_id, lambda item: item.fact_id
+        )
+    )
     _attach_delivery_facts(claims, deliveries, routes)
     return tuple(claims), tuple(deliveries)
 

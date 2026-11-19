@@ -991,3 +991,18 @@ exit:
   - item: brandon
     relation: exists
   bridge: The park pursuit was behind them. Kristin and Brandon headed for the freight terminal along the transport route.
+order:
+  storylets:
+  - SL-1B-D
+  - SL-1B-A
+  - SL-1B-E
+  - SL-1B-F
+  - SL-1B-G
+  - SL-1B-H
+  - SL-1B-B
+  - SL-1B-C
+  deliveries:
+  - park_pursuit_resolved
+  - transport_route_identified
+  - brandon_identified
+  - missing_may_be_alive

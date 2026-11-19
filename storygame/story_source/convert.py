@@ -12,6 +12,7 @@ from storygame.story_package.models import StoryPackage
 
 from .convert_catalog import convert_catalog, convert_story
 from .convert_facts import convert_facts
+from .convert_order import convert_order
 from .convert_reveals import convert_reveals
 from .convert_scene import convert_scenes
 
@@ -44,6 +45,7 @@ _SCENE_KEYS = (
     "incidents",
     "exit",
     "ending",
+    "order",
 )
 _MATCH_KEYS = ("schema", "scene", "lexicon", "plural_twins", "shared", "claims", "deliveries")
 
@@ -91,6 +93,7 @@ def convert_package(package: StoryPackage) -> dict[str, dict]:
     facts = convert_facts(package)
     reveals = convert_reveals(package)
     scenes = convert_scenes(package)
+    orders = convert_order(package, facts=facts, reveals=reveals, scenes=scenes)
     documents: dict[str, dict] = {
         "story.yaml": convert_story(package),
         "catalog.yaml": convert_catalog(package, facts.unplaced_facts),
@@ -98,7 +101,10 @@ def convert_package(package: StoryPackage) -> dict[str, dict]:
     for scene in package.scenes:
         scene_id = scene.metadata.scene_id
         documents[f"scenes/{scene_id}.yaml"] = _merge_scene_documents(
-            scenes.scene_docs[scene_id], facts.scene_docs[scene_id], reveals.scene_docs[scene_id]
+            scenes.scene_docs[scene_id],
+            facts.scene_docs[scene_id],
+            reveals.scene_docs[scene_id],
+            {"order": orders[scene_id]} if scene_id in orders else {},
         )
         documents[f"scenes/{scene_id}.match.yaml"] = _merge_match_documents(
             reveals.match_docs[scene_id], scenes.match_docs.get(scene_id, {})

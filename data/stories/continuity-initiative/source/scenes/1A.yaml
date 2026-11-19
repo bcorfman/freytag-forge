@@ -1483,3 +1483,16 @@ exit:
   - item: memory_card
     relation: exists
   bridge: Kristin starts the truck and heads for the park, avoiding checkpoints and emergency patrols.
+order:
+  storylets:
+  - SL-1A-A
+  - SL-1A-G
+  - SL-1A-H
+  - SL-1A-I
+  - SL-1A-J
+  - SL-1A-E
+  - SL-1A-F
+  - SL-1A-B
+  - SL-1A-D
+  - SL-1A-C
+  - SL-1A-K
