@@ -9,6 +9,7 @@ from storygame.runtime.knowledge import KnowledgeGuards
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.world_model import apply_scene_placements
 from storygame.story_package.loader import load_story_package
+from storygame.story_source.lookup import story_text
 from tests.story_source.helpers import compiled_story_copy, patch_source
 
 LIVE_PACKAGE = Path("data/stories/continuity-initiative")
@@ -115,8 +116,9 @@ def test_an_earned_mouthing_may_be_echoed_in_1b() -> None:
     assert entry.id in KnowledgeGuards(state).earned_ids
     assert "k_sl_1c_g_r1" not in KnowledgeGuards(state).earned_ids
 
+    mouthing = re.split(r"(?<=[.!?])\s+", story_text("claim:k_sl_1b_g_r1.says"))[0]
     narration = (
-        "The stranger mouths the loudspeaker's emergency statement along with it, his eyes fixed on Kristin. "
+        f"{mouthing} His eyes are fixed on Kristin. "
         '"...all citizens are advised to remain calm..." The stranger\'s gaze lingers on Kristin as the moment passes. '
         "Kristin stays still and watches him."
     )

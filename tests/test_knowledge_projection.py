@@ -18,6 +18,7 @@ from storygame.runtime.validation import ProposalValidationError
 from storygame.runtime.world_model import apply_scene_placements, world_for
 from storygame.story_package.loader import load_story_package
 from storygame.story_package.models import Audience
+from storygame.story_source.lookup import story_text
 from tests._legacy_package import legacy_package
 from tests.test_richer_3a import (
     ARRIVED,
@@ -384,11 +385,7 @@ def test_scene_1a_route_windows_preserve_the_recording_timeline() -> None:
                 "segments": [
                     {
                         "kind": "narration",
-                        "text": (
-                            "The card holds Michelle's saved files and a damaged recording. The recording warns, "
-                            '"Do not trust the emergency broadcasts." The files name the Continuity Initiative and '
-                            "point to a dead drop at a bench in the park."
-                        ),
+                        "text": story_text("claim:k_sl_1a_b_r1.text", package=package),
                         "grounding_ids": ["k_sl_1a_b_r1"],
                     }
                 ],

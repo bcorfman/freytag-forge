@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from itertools import product
 from pathlib import Path
 
@@ -14,6 +15,7 @@ from storygame.runtime.state import RuntimeState
 from storygame.runtime.world_model import apply_scene_placements
 from storygame.story_package.loader import load_story_package
 from storygame.story_package.models import FactPredicate, PacingEvent, PacingRealization
+from storygame.story_source.lookup import story_text
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 
@@ -258,12 +260,13 @@ def test_3c_pacing_prioritizes_records_over_check_for_all_gap_combinations(
 
 def test_3c_no_gaps_keep_original_default_texts() -> None:
     collapse = next(event for event in PACKAGE.pacing.events if event.id == "collapse_3c")
-    routes = next(event for event in PACKAGE.pacing.events if event.id == "routes_collapse_3c")
+    _, routes_text = _pacing_texts(())
+    expected_routes = (
+        re.split(r"(?<=[.!?])\s+", story_text("beat:routes_collapse_3c.say[0].text", package=PACKAGE))[0]
+        + " The remaining routes are narrowing fast."
+    )
 
     assert collapse.realizations[-1].text == (
         "Water seeps under the outer doors. Charles's emergency deluge is becoming real."
     )
-    assert (
-        routes.realizations[-1].text
-        == "Rising water is closing routes through the facility. The remaining routes are narrowing fast."
-    )
+    assert routes_text == expected_routes

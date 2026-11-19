@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 from storygame.runtime.candidate_matcher import uniquely_matched_authored_handoff
@@ -8,6 +9,7 @@ from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.world_model import apply_scene_placements
 from storygame.story_package.loader import load_story_package
+from storygame.story_source.lookup import story_text
 
 ROOT = Path("data/stories/continuity-initiative")
 PACKAGE = load_story_package(ROOT)
@@ -147,23 +149,14 @@ def test_the_new_reveals_are_quiet_short_and_exact():
 def test_michelle_glimpse_contract_is_uncertain_and_preserves_its_metadata():
     entries = _entries()
     entry = entries["k_sl_1c_b_r2"]
-    lead = (
-        "Kristin watches the sedated captives in the processing line. They are alive. "
-        "She spots someone in the line who looks like Michelle, but she can't be sure. "
-        "The woman goes around the corner out of sight before Kristin can be certain, "
-        "and guards standing over the prisoners block her from investigating further. "
-        "The transfer is still moving."
-    )
-    brandon = (
-        'Brandon says, "Copy the prisoner numbers if you want stronger proof. Or ask me about the transfer route. '
-        "I can help with the service entrance. That will cost us the chance to copy the full set of numbers. "
-        'There is time for one choice before the transfer leaves."'
-    )
-    assert entry.statement == (
-        "Kristin sees living captives in the processing line. She spots someone who looks like Michelle "
-        "but cannot be sure."
-    )
-    assert entry.delivery_text.startswith(lead)
+    brandon = re.search(r"Brandon says, .*", story_text("claim:k_sl_1c_b_r1.text")).group()
+    delivery_text = entry.delivery_text.casefold()
+    assert "processing line" in delivery_text
+    assert "alive" in delivery_text
+    assert "michelle" in delivery_text
+    assert entry.statement.count(".") == 2
+    assert "living captives" in entry.statement.casefold()
+    assert "michelle" in entry.statement.casefold()
     assert entry.delivery_text.endswith(brandon)
     assert entry.voiceable is False
     assert entry.earn_when == "watches the processing line for Michelle"

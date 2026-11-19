@@ -10,6 +10,7 @@ from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import ProposalValidationError
 from storygame.runtime.world_model import apply_scene_placements, world_for
 from storygame.story_package.loader import load_story_package
+from storygame.story_source.lookup import story_text
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 
@@ -135,11 +136,7 @@ def test_warning_the_supervisor_earns_corridor_access_by_handoff(monkeypatch: py
                 "segments": [
                     {
                         "kind": "narration",
-                        "text": (
-                            "Kristin feels the cooling lines, reads the gauge and traces the vent. The water pressure "
-                            "is falling on the return line, and the ventilation is hiding the drop. The shift "
-                            'supervisor says, "Well? What is failing, and what happens if nobody fixes it?"'
-                        ),
+                        "text": story_text("claim:k_sl_2a_b_r1.text", package=PACKAGE),
                         "grounding_ids": ["k_sl_2a_b_r1"],
                     }
                 ],

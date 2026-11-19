@@ -10,18 +10,13 @@ from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.world_model import world_for
 from storygame.story_package.loader import load_story_package
+from storygame.story_source.lookup import story_text
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
-ARRIVAL_TEXT = (
-    "A federal emergency patrol pulls up outside Michelle's house. Two officers get out. "
-    "One walks to the front door. The other looks over the street."
-)
-ENTERING_TEXT = "The front door opens. An officer walks in and heads straight for Michelle's workstation."
+ARRIVAL_TEXT = story_text("beat:patrol_arrives_1a.say[0].text", package=PACKAGE)
+ENTERING_TEXT = story_text("beat:patrol_enters_1a.say[0].text", package=PACKAGE)
 LEAVING_TEXT = "The patrol pulls away from the curb."
-NARROWS_TEXT = (
-    "The patrol is checking parked vehicles and speaking to neighbors. "
-    "The house is no longer the only place under watch."
-)
+NARROWS_TEXT = story_text("beat:home_search_narrows_1a.say[0].text", package=PACKAGE)
 RETURNING_TEXT = "The patrol is coming back to the house."
 
 

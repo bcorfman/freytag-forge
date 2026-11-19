@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from io import BytesIO
 from pathlib import Path
 from types import SimpleNamespace
@@ -29,10 +30,18 @@ from storygame.runtime.validation import ProposalValidationError, SelectedReveal
 from storygame.runtime.world_model import apply_scene_placements, apply_world_effects, world_for
 from storygame.story_package.loader import load_story_package
 from storygame.story_package.models import ItemPlacement
+from storygame.story_source.lookup import story_text
 from tests.story_source.helpers import compiled_story_copy, load_compiled_copy, patch_source
 from tests.test_narration_json import FIXTURE_1, FIXTURE_2, FIXTURE_3
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
+
+
+def _story_sentence(address: str, index: int = 0, *, package=None) -> str:
+    return re.split(r"(?<=[.!?])\s+", story_text(address, package=package))[index]
+
+
+CLAIM_B_R2_SAYS = _story_sentence("claim:k_sl_1a_b_r2.says")
 
 
 @pytest.fixture
@@ -484,10 +493,7 @@ def test_transport_keeps_selected_reveal_delivery_after_segment_cap(monkeypatch,
     filler = [{"kind": "narration", "text": f"Filler {index}."} for index in range(MAX_TURN_SEGMENTS + 1)]
     delivery = {
         "kind": "narration",
-        "text": (
-            "After the patrol leaves, Kristin finds reflective tape on the gate, a warning that the house will be "
-            "watched."
-        ),
+        "text": _story_sentence("claim:k_sl_1a_c_r2.says", package=package),
         "grounding_ids": ["k_sl_1a_c_r2"],
     }
     reply = {"segments": [*filler, delivery], "selected_knowledge_ids": ["k_sl_1a_c_r2"]}
@@ -1092,8 +1098,12 @@ def test_transport_derives_grounding_without_a_recovery_request(monkeypatch, com
         return _Response(
             {
                 "narration": (
-                    '{"segments":[{"kind":"narration","text":"After the patrol leaves, Kristin finds '
-                    'reflective tape on the gate, a warning that the house will be watched."}],'
+                    json.dumps(
+                        {
+                            "segments": [{"kind": "narration", "text": _story_sentence("claim:k_sl_1a_c_r2.says")}],
+                        }
+                    )[:-1]
+                    + ","
                     '"selected_knowledge_ids":["k_sl_1a_c_r2"]}'
                 )
             }
@@ -1116,17 +1126,14 @@ def test_transport_auto_selects_one_candidate_when_narration_proves_it(monkeypat
         "segments": [
             {
                 "kind": "narration",
-                "text": (
-                    "Kristin plays the damaged recording on Michelle's memory card. "
-                    "Her warning is not to trust emergency broadcasts."
-                ),
+                "text": (f"{CLAIM_B_R2_SAYS} Her warning is not to trust emergency broadcasts."),
             }
         ],
         "selected_knowledge_ids": [],
     }
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", lambda *_args, **_kwargs: _Response(reply))
 
-    result = provider("Play the damaged recording on Michelle's memory card.")
+    result = provider(CLAIM_B_R2_SAYS)
 
     assert result["selected_knowledge_ids"] == ["k_sl_1a_b_r2"]
     assert result["segments"][0]["grounding_ids"] == ["k_sl_1a_b_r0", "k_sl_1a_b_r2"]
@@ -1153,7 +1160,7 @@ def test_authored_handoff_composes_delivery_and_ignores_model_selection(monkeypa
     }
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", lambda *_args, **_kwargs: _Response(reply))
 
-    result = provider("Play the damaged recording on Michelle's memory card.")
+    result = provider(CLAIM_B_R2_SAYS)
 
     assert result["selected_knowledge_ids"] == ["k_sl_1a_b_r2"]
     assert result["segments"] == [
@@ -1182,7 +1189,7 @@ def test_authored_handoff_uses_normal_validation_and_commits_atomically(monkeypa
     )
     before = state.snapshot()
 
-    proposal = RuntimeEngine(state, provider).turn("Play the damaged recording on Michelle's memory card.")
+    proposal = RuntimeEngine(state, provider).turn(CLAIM_B_R2_SAYS)
 
     assert proposal.selected_knowledge_ids == ("k_sl_1a_b_r2",)
     assert proposal.segments[-1].text == AUTHORED_DELIVERY
@@ -1202,7 +1209,7 @@ def test_authored_handoff_uses_normal_validation_and_commits_atomically(monkeypa
     )
 
     with pytest.raises(ProposalValidationError):
-        RuntimeEngine(state, provider).turn("Play the damaged recording on Michelle's memory card.")
+        RuntimeEngine(state, provider).turn(CLAIM_B_R2_SAYS)
 
     assert state.snapshot() == before
 
@@ -1229,7 +1236,7 @@ def test_authored_handoff_prompt_hides_candidate_contract(monkeypatch) -> None:
 
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
 
-    result = provider("Play the damaged recording on Michelle's memory card.")
+    result = provider(CLAIM_B_R2_SAYS)
 
     assert result["segments"][-1]["text"] == AUTHORED_DELIVERY
     assert len(captured) == 1
@@ -1263,7 +1270,7 @@ def test_authored_handoff_recovery_keeps_candidate_contract_hidden(monkeypatch) 
 
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
 
-    result = provider("Play the damaged recording on Michelle's memory card.")
+    result = provider(CLAIM_B_R2_SAYS)
 
     assert result["segments"][-1]["text"] == AUTHORED_DELIVERY
     assert provider.recovery_count == 1
@@ -1308,7 +1315,7 @@ def test_authored_handoff_with_positive_selection_example_uses_the_default_examp
         prompt_variant={"positive_selection_example": True},
     )
 
-    prompt = provider.assemble_turn_prompt("Play the damaged recording on Michelle's memory card.")
+    prompt = provider.assemble_turn_prompt(CLAIM_B_R2_SAYS)
 
     assert DEFAULT_OUTPUT_EXAMPLE in prompt["system"]
     assert "k_sl_1a_b_r2" not in prompt["system"]
@@ -1324,10 +1331,7 @@ def test_harness_selected_candidate_still_uses_the_normal_runtime_resolver(monke
         "segments": [
             {
                 "kind": "narration",
-                "text": (
-                    "After the patrol leaves, Kristin finds reflective tape on the gate, "
-                    "a warning that the house will be watched."
-                ),
+                "text": _story_sentence("claim:k_sl_1a_c_r2.says", package=package),
             }
         ],
         "selected_knowledge_ids": [],
@@ -1560,8 +1564,7 @@ def test_transport_retries_a_reveal_the_narration_never_delivers(monkeypatch, co
                         "segments": [
                             {
                                 "kind": "narration",
-                                "text": "After the patrol leaves, Kristin finds reflective tape on the gate, "
-                                "a warning that the house will be watched.",
+                                "text": _story_sentence("claim:k_sl_1a_c_r2.says", package=package),
                                 "grounding_ids": ["k_sl_1a_c_r2"],
                             }
                         ],
@@ -1676,8 +1679,7 @@ def test_transport_accepts_grounding_on_the_selected_candidate(monkeypatch, comp
                         "segments": [
                             {
                                 "kind": "narration",
-                                "text": "After the patrol leaves, Kristin finds reflective tape on the gate, "
-                                "a warning that the house will be watched.",
+                                "text": _story_sentence("claim:k_sl_1a_c_r2.says", package=package),
                                 "grounding_ids": ["k_sl_1a_c_r2"],
                             }
                         ],

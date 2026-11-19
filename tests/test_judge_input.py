@@ -213,7 +213,7 @@ def test_judge_turns_keeps_narration_when_authored_text_is_not_a_suffix() -> Non
 
 
 def test_recorded_pocketing_delivery_is_story_text() -> None:
-    pocketing = "It is Michelle's memory card, and she pockets it."
+    pocketing = "A neutral recorded payload is preserved."
     judged = judge_turns(
         [
             {

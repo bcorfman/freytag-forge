@@ -8,6 +8,7 @@ from storygame.personas import _ScriptedProvider
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.reveal_eligibility import explain_reveal
 from storygame.story_package.loader import load_story_package
+from storygame.story_source.lookup import story_text
 from tests.test_continuity_1c_incident import _assert_fact, _facts, _state
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
@@ -35,11 +36,7 @@ def test_1c_offer_contract_is_gated_and_the_miss_is_visible() -> None:
     assert len(event.effects) == 1
     assert event.effects[0].fact_id == "transfer_window_missed"
     assert event.realizations[0].verbatim is True
-    assert event.realizations[0].text == (
-        'The view down the observation shaft goes dark. Brandon says, "That chance is gone. '
-        "We can still try the service entrance. Follow me through it if you want to try. "
-        'We will have to risk the sweep."'
-    )
+    assert event.realizations[0].text == story_text("beat:transfer_window_1c.say[0].text", package=PACKAGE)
 
     routes = {item.id: item for item in PACKAGE.storylet_routes.storylets}
     for route_id in ("SL-1C-A", "SL-1C-B"):

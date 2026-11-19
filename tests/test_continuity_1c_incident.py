@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import pytest
@@ -9,6 +10,7 @@ from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeSnapshot, RuntimeState
 from storygame.runtime.world_model import apply_scene_placements, world_for
 from storygame.story_package.loader import load_story_package
+from storygame.story_source.lookup import story_text
 
 PACKAGE_ROOT = Path("data/stories/continuity-initiative")
 PACKAGE = load_story_package(PACKAGE_ROOT)
@@ -120,7 +122,10 @@ def test_secure_route_outcome_asserts_route_gap_trust_and_enters_2a() -> None:
         state,
         _provider(
             "k_sl_1c_c_secure_route",
-            "Brandon explains the transfer route and opens the service entrance with the transit token.",
+            re.split(
+                r"(?<=[.!?])\s+",
+                story_text("claim:k_sl_1c_c_secure_route.text", package=PACKAGE),
+            )[0],
         ),
     ).turn("Ask Brandon about the transfer route.")
 
@@ -145,7 +150,10 @@ def test_outcomes_are_exclusive() -> None:
             state,
             _provider(
                 "k_sl_1c_c_secure_route",
-                "Brandon explains the transfer route and opens the service entrance with the transit token.",
+                re.split(
+                    r"(?<=[.!?])\s+",
+                    story_text("claim:k_sl_1c_c_secure_route.text", package=PACKAGE),
+                )[0],
             ),
         ).turn("Ask Brandon about the transfer route.")
     assert state.snapshot() == before
@@ -166,9 +174,7 @@ def test_missed_window_withdraws_without_advantage_past_deadline() -> None:
 
 def test_recovery_requires_missed_window_and_completes_scene() -> None:
     state = _outcome_state()
-    recovery = _provider(
-        "k_sl_1c_d_r1", "Brandon leads Kristin through the service entrance while the sweep closes in."
-    )
+    recovery = _provider("k_sl_1c_d_r1", story_text("claim:k_sl_1c_d_r1.says", package=PACKAGE))
     with pytest.raises(Exception, match="not eligible"):
         RuntimeEngine(state, recovery).turn("Follow Brandon through the service entrance.")
 
@@ -194,7 +200,10 @@ def test_save_restore_after_outcome_keeps_facts() -> None:
         state,
         _provider(
             "k_sl_1c_c_secure_route",
-            "Brandon explains the transfer route and opens the service entrance with the transit token.",
+            re.split(
+                r"(?<=[.!?])\s+",
+                story_text("claim:k_sl_1c_c_secure_route.text", package=PACKAGE),
+            )[0],
         ),
     ).turn("Ask Brandon about the transfer route.")
     saved = RuntimeSnapshot.model_validate_json(state.snapshot().model_dump_json())

@@ -2,7 +2,7 @@ import json
 
 from scripts.ringer.environment_narration import enforce_report
 
-GAP_TEXT = "The drawer rides high in its frame. A thin gap beneath its lower edge is wide enough for Kristin's fingers."
+GAP_TEXT = "Example payload."
 LOOK_COMMANDS = {
     "inspect the drawer",
     "examine the drawer",

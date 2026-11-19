@@ -11,6 +11,7 @@ from storygame.runtime.item_facts import ItemFactsProvider
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.world_model import world_for
 from storygame.story_package.loader import load_story_package
+from storygame.story_source.lookup import story_text
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 RECORDS_ID = "detention_medical_records"
@@ -24,10 +25,7 @@ RECORD_COMMANDS = (
     "Inspect the medical records.",
     "Review the survivor records.",
 )
-DELIVERY_TEXT = (
-    "Michelle shows Kristin experiment records. They prove planned survivors were conditioned to support Charles's "
-    "story. The senior official waits among the government prisoners."
-)
+DELIVERY_TEXT = story_text("claim:k_sl_3a_b_r1.text")
 
 
 def _state(*, michelle_reached: bool = False) -> RuntimeState:

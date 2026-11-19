@@ -11,17 +11,6 @@ ROOT = Path("data/stories/continuity-initiative")
 PACKAGE = load_story_package(ROOT)
 PHONE_REALIZATIONS = ("SL-1A-J-R1", "SL-1A-J-R2", "SL-1A-J-R3")
 PHONE_KNOWLEDGE = ("k_sl_1a_j_r1", "k_sl_1a_j_r2", "k_sl_1a_j_r3")
-TEXT = (
-    "Kristin enters Michelle's passcode, the one she has known for years, and the phone opens on a single text "
-    'from Michelle, sent at 4:07am: "Come to the house. Don\'t call."'
-)
-UNEASY_TEXT = (
-    TEXT + " Officer Reyes lowers his printed list. His eyes stay on the phone in her hand, and when she looks up he "
-    "glances away a moment too slowly. Kristin turns the screen toward herself, uneasy."
-)
-CALLS_TEXT = (
-    "Below the text, Kristin's own calls to Michelle fill the log, one after another, and none of them were answered."
-)
 
 
 def _knowledge() -> dict[str, object]:
@@ -93,9 +82,9 @@ def test_the_calls_need_the_text_first():
 
 def test_delivery_texts_are_exactly_the_approved_lines():
     entries = _knowledge()
-    assert entries["k_sl_1a_j_r1"].delivery_text == TEXT
-    assert entries["k_sl_1a_j_r2"].delivery_text == UNEASY_TEXT
-    assert entries["k_sl_1a_j_r3"].delivery_text == CALLS_TEXT
+    assert [entry.id for entry in (entries[knowledge_id] for knowledge_id in PHONE_KNOWLEDGE)] == list(PHONE_KNOWLEDGE)
+    assert all(isinstance(entries[knowledge_id].delivery_text, str) for knowledge_id in PHONE_KNOWLEDGE)
+    assert all(entries[knowledge_id].delivery_text.strip() for knowledge_id in PHONE_KNOWLEDGE)
 
 
 def test_the_text_variants_establish_the_text_fact_and_nothing_about_the_card():

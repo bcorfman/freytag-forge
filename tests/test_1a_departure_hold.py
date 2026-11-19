@@ -12,15 +12,13 @@ from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.world_model import apply_world_effects, world_for
 from storygame.story_package.loader import load_story_package
+from storygame.story_source.lookup import story_text
 
 ROOT = Path("data/stories/continuity-initiative")
 PACKAGE = load_story_package(ROOT)
 KNOWLEDGE_ID = "k_sl_1a_k_r1"
 STORYLET_ID = "SL-1A-K"
-BASE_TEXT = (
-    "Kristin does not pull away yet. If anyone is watching the street, driving to the park now would lead them "
-    "straight to the bench. She waits to see what the street does."
-)
+BASE_TEXT = story_text("claim:k_sl_1a_k_r1.text", package=PACKAGE)
 ON_SCENE_TEXT = (
     "Kristin does not pull away yet. The patrol is still at the house, and the truck would be the first thing they "
     "follow. If she drives to the park now, she leads them straight to the bench. She waits to see what the patrol "

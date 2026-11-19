@@ -13,6 +13,7 @@ from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import ProgressionValidator, ProposalValidationError
 from storygame.runtime.world_model import world_for
 from storygame.story_package.loader import load_story_package
+from storygame.story_source.lookup import story_text
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 
@@ -55,12 +56,11 @@ def test_warning_first_path_secures_card_then_reads_remaining_files() -> None:
                 ["k_sl_1a_b_r0"],
             ),
             _turn(
-                'The card holds a damaged recording. Michelle\'s voice warns, "Do not trust the emergency broadcasts."',
+                story_text("claim:k_sl_1a_b_r2.text"),
                 ["k_sl_1a_b_r2"],
             ),
             _turn(
-                "Kristin reads the remaining files on Michelle's recovered memory card and learns the place she used "
-                "to trade information.",
+                story_text("claim:k_sl_1a_d_r1.says"),
                 ["k_sl_1a_d_r1"],
             ),
         )
@@ -88,9 +88,7 @@ def test_complete_path_secures_card_with_files_and_park_lead() -> None:
             _turn("A memory card is taped beneath the KMS drawer. Michelle left it there.", ["k_sl_1a_b_r0"])
             if "Search" in player_input
             else _turn(
-                "The card holds Michelle's saved files and a damaged recording. The recording warns, "
-                '"Do not trust the emergency broadcasts." The files name the Continuity Initiative and point to a dead '
-                "drop at a bench in the park.",
+                story_text("claim:k_sl_1a_b_r1.text"),
                 ["k_sl_1a_b_r1"],
             )
         ),
@@ -189,11 +187,7 @@ def test_a_fully_conveyed_reveal_commits_and_opens_the_scene_exit() -> None:
                 "segments": [
                     {
                         "kind": "narration",
-                        "text": (
-                            "The card holds Michelle's saved files and a damaged recording. The recording warns, "
-                            '"Do not trust the emergency broadcasts." The files name the Continuity Initiative and '
-                            "point to a dead drop at a bench in the park."
-                        ),
+                        "text": story_text("claim:k_sl_1a_b_r1.text"),
                         "grounding_ids": ["k_sl_1a_b_r1"],
                     }
                 ],
@@ -230,11 +224,7 @@ def test_an_ungrounded_fully_conveyed_reveal_derives_its_grounding_and_commits()
             "segments": [
                 {
                     "kind": "narration",
-                    "text": (
-                        "The card holds Michelle's saved files and a damaged recording. The recording warns, "
-                        '"Do not trust the emergency broadcasts." The files name the Continuity Initiative and '
-                        "point to a dead drop at a bench in the park."
-                    ),
+                    "text": story_text("claim:k_sl_1a_b_r1.text"),
                 }
             ],
             "selected_knowledge_ids": ["k_sl_1a_b_r1"],

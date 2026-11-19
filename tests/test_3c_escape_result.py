@@ -8,6 +8,7 @@ from bench.core import load_variation, package_and_state
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.world_model import world_for
 from storygame.story_package.loader import load_story_package
+from storygame.story_source.lookup import story_text
 
 ROOT = Path(__file__).resolve().parents[1]
 ARM_FILES = {
@@ -63,4 +64,4 @@ def _eligibility(engine: RuntimeEngine) -> list[str]:
 def test_clean_evacuation_statement_uses_the_redesigned_outcome() -> None:
     package = load_story_package(ROOT / "data/stories/continuity-initiative")
     statement = package.knowledge_indexes.by_id["k_sl_3c_c_r1"].statement
-    assert statement == "Kristin restores the pumps and holds the watertight barrier until the last captive passes."
+    assert statement == story_text("claim:k_sl_3c_c_r1.says")

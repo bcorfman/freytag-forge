@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import shutil
 from pathlib import Path
 
@@ -14,6 +15,7 @@ from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.world_model import apply_scene_placements, apply_world_effects, world_for
 from storygame.story_package.loader import load_legacy_story_package
+from storygame.story_source.lookup import story_text
 from tests.story_source.helpers import compiled_story_copy, load_compiled_copy, patch_source
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -271,7 +273,11 @@ def test_broadcast_arms_isolate_three_replacements_and_b_r1_delivery(
     assert broadcast["user"].count(replay.BROADCAST_OLD_LITERAL) == 0
     assert broadcast["user"].count(replay.BROADCAST_NEW_LITERAL) == 3
     assert "Michelle broadcasts captives" not in broadcast["user"]
-    delivery = "Michelle sends its prisoner locations to independent networks"
+    delivery = next(
+        sentence.rstrip(".")
+        for sentence in re.split(r"(?<=[.!?])\s+", story_text("claim:k_sl_3c_b_r1.text"))
+        if "independent networks" in sentence
+    )
     assert pump["user"].count(delivery) == broadcast["user"].count(delivery)
 
 

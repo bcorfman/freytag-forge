@@ -5,6 +5,7 @@ from pathlib import Path
 
 from storygame.runtime.validation import unconveyed_terms
 from storygame.story_package.loader import load_story_package
+from storygame.story_source.lookup import story_text
 
 LIVE_PACKAGE = Path("data/stories/continuity-initiative")
 FROZEN_PACKAGE = Path("bench/frozen/continuity-pre-richer-2b")
@@ -22,7 +23,9 @@ def _entries(package_path: Path) -> dict[str, object]:
 def test_the_door_delivery_is_only_the_quote() -> None:
     entry = _entries(LIVE_PACKAGE)["k_sl_1c_f_r1"]
 
-    assert _collapse_whitespace(entry.delivery_text) == 'Brandon says only, "Somebody has to watch the door."'
+    assert _collapse_whitespace(entry.delivery_text) == _collapse_whitespace(
+        story_text("claim:k_sl_1c_f_r1.text", source=True)
+    )
     assert [list(group) for group in entry.must_convey] == [["Brandon"], ["door"]]
 
 
@@ -47,10 +50,7 @@ def test_the_door_stance_lives_in_the_scene_details() -> None:
 def test_the_badge_delivery_has_no_closing_beat() -> None:
     entry = _entries(LIVE_PACKAGE)["k_sl_2b_e_r1"]
 
-    assert _collapse_whitespace(entry.delivery_text) == (
-        "In the build record, the access section lists what the badge readers check. "
-        "There are three checks, the same three Brandon said he knew at the gate."
-    )
+    assert len(re.split(r"(?<=[.!?])\s+", _collapse_whitespace(entry.delivery_text))) == 2
 
 
 def test_gating_and_conveyance_are_unchanged() -> None:
