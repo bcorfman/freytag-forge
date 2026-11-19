@@ -393,6 +393,61 @@ def delivery_names_unbound_item(
     return findings
 
 
+def _compiled_audit_inputs(
+    package: Any,
+) -> tuple[str, dict[str, Any], dict[str, Any], dict[str, Any], dict[str, Any], str]:
+    """Build the legacy-shaped lexical inputs used by the audit from a package."""
+
+    scene_blocks: list[str] = []
+    for scene in package.scenes:
+        metadata = scene.metadata
+        placements = {
+            item_id: placement.model_dump(by_alias=True, exclude_none=True, exclude_defaults=True, mode="python")
+            if hasattr(placement, "model_dump")
+            else placement
+            for item_id, placement in metadata.item_placements.items()
+        }
+        front_text = "\n".join(
+            (
+                f"scene_id: {metadata.scene_id}",
+                f"participant_ids: [{', '.join(metadata.participant_ids)}]",
+                f"item_ids: [{', '.join(metadata.item_ids)}]",
+                "item_placements:",
+                yaml.safe_dump(placements, sort_keys=False, allow_unicode=True, width=1000).rstrip(),
+            )
+        )
+        front_text += f"\nentry_text: {json.dumps(metadata.entry_text, ensure_ascii=False)}"
+        scene_blocks.append(
+            f"## Scene {metadata.scene_id} — {metadata.scene_id}\n---\n{front_text}\n---\n{scene.prose}"
+        )
+
+    storylet_blocks: list[str] = []
+    for storylet in sorted(package.storylets, key=lambda item: item.id):
+        links = list(storylet.source_links)
+        storylet_blocks.append(
+            f"### {storylet.id} — {storylet.title}\n"
+            f"**Source beats:** {', '.join(f'[{link}](plot.md#{link})' for link in links)}\n"
+            "**Pacing window**\n"
+            f"- earliest: `turn {storylet.earliest_turn}`\n"
+            f"- latest: `turn {storylet.latest_turn}`\n"
+        )
+
+    routes = {
+        "storylets": [
+            {"id": route.id, "activation": {"pacing": {"earliest_turn": route.earliest_turn}}}
+            for route in package.storylet_routes.storylets
+        ]
+    }
+    return (
+        "\n\n".join(scene_blocks),
+        package.knowledge.model_dump(mode="json"),
+        package.world.model_dump(mode="json"),
+        package.pacing.model_dump(mode="json"),
+        routes,
+        "\n\n".join(storylet_blocks),
+    )
+
+
 def audit_package(root: Path) -> dict[str, Any]:
     """Return deterministic findings for every scene in *root*.
 
@@ -402,12 +457,24 @@ def audit_package(root: Path) -> dict[str, Any]:
     finding for that check, which keeps small fixture packages useful.
     """
     root = Path(root)
-    plot = (root / "plot.md").read_text(encoding="utf-8")
+    from storygame.story_package.loader import StoryPackageError, load_story_package
+
+    package = None
+    if not (root / "plot.md").exists():
+        try:
+            package = load_story_package(root)
+        except StoryPackageError:
+            package = None
+    compiled_storylets: str | None = None
+    if package is not None:
+        plot, knowledge, world, pacing, routes, compiled_storylets = _compiled_audit_inputs(package)
+    else:
+        plot = (root / "plot.md").read_text(encoding="utf-8")
+        knowledge = _read_yaml(root / "knowledge.yaml")
+        world = _read_yaml(root / "world.yaml")
+        pacing = _read_yaml(root / "pacing.yaml")
+        routes = _read_yaml(root / "storylet-routes.yaml")
     scenes = _plot_scenes(plot)
-    knowledge = _read_yaml(root / "knowledge.yaml")
-    world = _read_yaml(root / "world.yaml")
-    pacing = _read_yaml(root / "pacing.yaml")
-    routes = _read_yaml(root / "storylet-routes.yaml")
     findings: list[dict[str, str]] = []
     pacing_scene_ids = tuple(
         str(item.get("scene_id"))
@@ -507,12 +574,6 @@ def audit_package(root: Path) -> dict[str, Any]:
                     )
                 )
 
-    try:
-        from storygame.story_package.loader import StoryPackageError, load_story_package
-
-        package = load_story_package(root)
-    except StoryPackageError:
-        package = None
     if package is not None:
         scene_order = {scene.metadata.scene_id: index for index, scene in enumerate(package.scenes)}
         entity_terms = {
@@ -623,9 +684,14 @@ def audit_package(root: Path) -> dict[str, Any]:
                     )
                 )
 
-    links = (
-        _source_links((root / "storylets.md").read_text(encoding="utf-8")) if (root / "storylets.md").exists() else {}
-    )
+    if compiled_storylets is not None:
+        links = _source_links(compiled_storylets)
+    else:
+        links = (
+            _source_links((root / "storylets.md").read_text(encoding="utf-8"))
+            if (root / "storylets.md").exists()
+            else {}
+        )
     route_windows = {
         item.get("id"): item.get("activation", {}).get("pacing", {}) for item in routes.get("storylets", [])
     }
@@ -651,6 +717,8 @@ def audit_package(root: Path) -> dict[str, Any]:
             )
 
     runtime = root.parent.parent.parent / "storygame" / "runtime" / "cloudflare.py"
+    if not runtime.exists() and package is not None:
+        runtime = Path(__file__).resolve().parent / "runtime" / "cloudflare.py"
     runtime_text = runtime.read_text(encoding="utf-8") if runtime.exists() else ""
     for scene_id, body in scenes.items():
         entry = re.search(r"entry_text:\s*(['\"])(.*?)\1", body, re.DOTALL)

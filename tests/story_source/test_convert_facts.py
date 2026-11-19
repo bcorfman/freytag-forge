@@ -4,7 +4,7 @@ from pathlib import Path
 
 import yaml
 
-from storygame.story_package.loader import load_story_package
+from storygame.story_package.loader import load_legacy_story_package
 from storygame.story_source.convert_facts import convert_facts
 
 # NOTE: The compiler renames source `delivery.source_entity` to the package's `source_entity_id`.
@@ -15,13 +15,13 @@ from storygame.story_source.convert_facts import convert_facts
 #       them here would duplicate records, so compiler behavior wins and the converter leaves them out.
 
 
-PACKAGE_ROOT = Path("data/stories/continuity-initiative")
+LEGACY_ROOT = Path("tests/fixtures/parity/continuity-initiative/legacy")
 
 
 def test_converter_owns_every_distinct_fact_once_and_serializes() -> None:
     """Every source-declared package fact is declared exactly once and remains YAML-safe."""
 
-    package = load_story_package(PACKAGE_ROOT)
+    package = load_legacy_story_package(LEGACY_ROOT)
     result = convert_facts(package)
     fact_ids = [fact_id for document in result.scene_docs.values() for fact_id in document["facts"]] + list(
         result.unplaced_facts
@@ -59,7 +59,7 @@ def test_converter_owns_every_distinct_fact_once_and_serializes() -> None:
 def test_fact_declarations_copy_purposes_effects_and_delivery_fields() -> None:
     """Spot-check three fact records against their immutable package models."""
 
-    package = load_story_package(PACKAGE_ROOT)
+    package = load_legacy_story_package(LEGACY_ROOT)
     result = convert_facts(package)
     declarations = {
         fact_id: declaration
@@ -83,7 +83,7 @@ def test_fact_declarations_copy_purposes_effects_and_delivery_fields() -> None:
 def test_placement_routing_copies_three_package_records() -> None:
     """Item and non-item placements are emitted as plain source values."""
 
-    package = load_story_package(PACKAGE_ROOT)
+    package = load_legacy_story_package(LEGACY_ROOT)
     result = convert_facts(package)
     placements = result.scene_docs["1A"]["placements"]
     scene = next(item for item in package.scenes if item.metadata.scene_id == "1A")
@@ -101,7 +101,7 @@ def test_placement_routing_copies_three_package_records() -> None:
 def test_fact_set_in_two_scenes_is_declared_in_first_scene() -> None:
     """A repeated setter follows story order, as required by layer two."""
 
-    package = load_story_package(PACKAGE_ROOT)
+    package = load_legacy_story_package(LEGACY_ROOT)
     result = convert_facts(package)
     route_scenes = [
         route.scene_id

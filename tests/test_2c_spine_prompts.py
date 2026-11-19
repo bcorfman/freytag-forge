@@ -4,9 +4,9 @@ import json
 import re
 from pathlib import Path
 
-import yaml
-
 from storygame.runtime.candidate_matcher import _matches_all
+from storygame.story_package.loader import load_story_package
+from storygame.story_package.models import KnowledgeDefinition
 
 FRONTEND_ROOT = Path("frontend/e2e")
 PACKAGE_ROOT = Path("data/stories/continuity-initiative")
@@ -25,18 +25,16 @@ def _scene_prompts() -> list[str]:
     return [json.loads(string.group(0)) for string in strings]
 
 
-def _knowledge() -> dict[str, dict]:
-    raw = yaml.safe_load((PACKAGE_ROOT / "knowledge.yaml").read_text())
-    return {item["id"]: item for item in raw["knowledge"]}
+def _knowledge() -> dict[str, KnowledgeDefinition]:
+    package = load_story_package(PACKAGE_ROOT)
+    return {item.id: item for item in package.knowledge.knowledge}
 
 
-def _matches(knowledge: dict[str, dict], command: str) -> set[str]:
+def _matches(knowledge: dict[str, KnowledgeDefinition], command: str) -> set[str]:
     return {
         item_id
         for item_id, item in knowledge.items()
-        if item_id.startswith("k_sl_2c")
-        and item.get("action_evidence")
-        and _matches_all(tuple(tuple(group) for group in item["action_evidence"]), command)
+        if item_id.startswith("k_sl_2c") and item.action_evidence and _matches_all(item.action_evidence, command)
     }
 
 

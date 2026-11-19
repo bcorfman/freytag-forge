@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import shutil
 from pathlib import Path
 
 import pytest
@@ -14,6 +13,8 @@ from storygame.runtime.state import RuntimeState
 from storygame.runtime.world_model import world_for
 from storygame.story_package.loader import load_story_package
 from storygame.story_package.models import PacingEvent
+from storygame.story_source.diagnostics import SourceError
+from tests.story_source.helpers import compiled_story_copy, patch_source
 
 PACKAGE_DIR = Path(__file__).parents[1] / "data/stories/continuity-initiative"
 ARRIVAL_TEXT = (
@@ -51,22 +52,11 @@ class _Response:
 
 
 def _variant_package(tmp_path: Path, event_id: str, trailing: str) -> object:
-    package_dir = tmp_path / f"continuity-{event_id}"
-    shutil.copytree(PACKAGE_DIR, package_dir)
-    pacing_path = package_dir / "pacing.yaml"
-    pacing = pacing_path.read_text()
-    anchor = f"- id: {event_id}\n  scene_id: 1A"
-    assert pacing.count(anchor) == 1
-    flagged = f"{anchor}\n  trailing: true"
-    assert pacing.count(flagged) == 1
-    if trailing == "false":
-        pacing = pacing.replace(flagged, anchor)
-    else:
-        pacing = pacing.replace(flagged, f"{anchor}\n  trailing: {trailing}")
-    pacing_path.write_text(pacing)
+    package_dir = compiled_story_copy(tmp_path)
+    trailing_value: object = trailing if trailing == "maybe" else trailing == "true"
+    patch_source(package_dir / "source", "scenes/1A.yaml", f"beats[{event_id}].trailing", trailing_value)
     # These tests watch the world the opening request sees, so scene 1A must ask the provider.
-    plot_path = package_dir / "plot.md"
-    plot_path.write_text(plot_path.read_text().replace("scripted_opening: true\n", "", 1))
+    patch_source(package_dir / "source", "scenes/1A.yaml", "scripted_opening", False)
     return load_story_package(package_dir)
 
 
@@ -111,7 +101,7 @@ def test_pacing_event_accepts_trailing_true(tmp_path: Path) -> None:
 
 
 def test_pacing_event_rejects_non_boolean_trailing(tmp_path: Path) -> None:
-    with pytest.raises(ValueError, match=r"(?is)trailing.*boolean|boolean.*trailing"):
+    with pytest.raises(SourceError, match=r"(?is)trailing.*must be a boolean"):
         _variant_package(tmp_path, "patrol_leaves_1a", "maybe")
 
 

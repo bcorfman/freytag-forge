@@ -1,0 +1,276 @@
+schema: 1
+scene: 1B
+claims:
+  k_sl_1b_d_r1:
+    aliases:
+    - bench clues recovered
+    action_evidence:
+    - - look
+      - search
+      - inspect
+      - check
+    - - under
+      - beneath
+      - underside
+    - - park bench
+      - bench
+    must_convey: []
+    leak_terms:
+    - transit token
+    - handwritten number sequence
+    - number sequence
+    - handwritten sequence
+    - Michelle's photograph
+    - Michelle's photo
+    - bench clues recovered
+  k_sl_1b_e_r1:
+    aliases:
+    - bench underside pointed out
+    action_evidence:
+    - - examine
+      - inspect
+      - search
+      - check
+      - look
+      - study
+      - run my hands
+    - - park bench
+      - bench
+    must_convey: []
+  k_sl_1b_a_r1:
+    aliases:
+    - transport route identified
+    action_evidence:
+    - - match
+      - compare
+      - line up
+      - check
+    - - transit token
+      - token
+    - - handwritten number sequence
+      - number sequence
+      - numbers
+    must_convey: []
+  k_sl_1b_a_r2:
+    aliases:
+    - brandon face known
+    action_evidence:
+    - - look at
+      - inspect
+      - examine
+      - study
+      - check
+    - - Michelle's photograph
+      - Michelle's photo
+      - photograph
+      - photo
+      - picture
+    must_convey: []
+  k_sl_1b_b_r1:
+    aliases:
+    - brandon identified
+    - missing may be alive
+    - transport route identified
+    action_evidence:
+    - - show
+      - hold up
+      - hand
+      - give
+      - ask
+      - question
+      - approach
+      - confront
+    - - Michelle's photograph
+      - Michelle's photo
+      - photograph
+      - photo
+      - picture
+    - - man
+      - watcher
+      - stranger
+      - him
+    must_convey: []
+  k_sl_1b_b_r2:
+    aliases:
+    - brandon identified
+    - missing may be alive
+    action_evidence:
+    - - ask
+      - question
+      - press
+    - - man
+      - watcher
+      - stranger
+      - him
+    - - about Michelle
+    must_convey: []
+  k_sl_1b_c_r1:
+    aliases:
+    - brandon retains system access
+    - transport route identified
+    - park pursuit resolved
+    action_evidence:
+    - - follow
+      - flee
+      - escape
+      - run
+      - run through
+      - head into
+      - go into
+      - climb into
+      - descend into
+      - go through the gate
+      - go through the storm drain
+      - go through the drain
+      - go through the tunnel
+      - enter the gate
+      - enter the storm drain
+      - enter the drain
+      - enter the tunnel
+      - take the tunnel
+      - take the storm drain
+      - open
+      - unlock
+      - pick
+    - - service gate
+      - secured gate
+      - gate
+      - storm drain
+      - drain
+      - tunnel
+      - Brandon
+      - lock
+    must_convey: []
+  k_sl_1b_c_r2:
+    aliases:
+    - brandon retains system access
+    - transport route identified
+    - park pursuit resolved
+    action_evidence:
+    - - ask
+      - tell
+      - get
+    - - Brandon
+    - - gate code
+      - access code
+      - the code
+      - open the gate
+      - unlock the gate
+    must_convey: []
+  k_sl_1b_f_r1:
+    aliases:
+    - park left behind read
+    action_evidence:
+    - - look
+      - examine
+      - inspect
+      - search
+      - study
+    - - picnic
+      - blanket
+      - cups
+      - bicycle
+      - bike
+      - leash
+      - fence
+    must_convey:
+    - - picnic
+      - blanket
+      - cups
+    - - bicycle
+      - bike
+    - - leash
+  k_sl_1b_g_r1:
+    aliases:
+    - stranger knows script
+    action_evidence:
+    - - listen
+      - watch
+      - look
+      - hear
+      - study
+    - - loudspeaker
+      - broadcast
+      - stranger
+      - man
+      - watcher
+    must_convey:
+    - - loudspeaker
+      - broadcast
+    - - mouths
+      - half-beat
+    - - stops
+      - sees
+      - watching
+  k_sl_1b_h_r1:
+    aliases:
+    - emergency water label read
+    action_evidence:
+    - - look
+      - examine
+      - inspect
+      - read
+      - check
+    - - thermos
+      - label
+      - cap
+    must_convey:
+    - - emergency-water label
+      - emergency water
+      - label
+    - - lot number
+  k_bridge_1b_departure:
+    aliases:
+    - transport departure
+    - departure route
+  k_scene_1b_entry:
+    aliases:
+    - park
+    - pursuit
+  k_1b_stranger_evasion:
+    aliases:
+    - stranger
+deliveries:
+  park_pursuit_resolved:
+    must_convey:
+    - - escaped through the storm-drain system
+      - storm-drain system
+      - secured service gate
+      - escaped through the storm drains
+      - storm drains
+      - service gate
+    - - park pursuit ended
+      - tactical team lost their trail
+      - pursuit ended
+      - the pursuit was over
+      - they lost the tactical team
+      - the ambush was behind them
+  transport_route_identified:
+    must_convey:
+    - - transport route
+      - freight route
+    - - freight terminal
+      - freight yard
+      - old freight yard
+  brandon_identified:
+    must_convey:
+    - - Brandon Corfman
+      - Brandon
+    - - identified himself
+      - introduced himself
+      - says his name is
+      - said his name was
+  missing_may_be_alive:
+    must_convey:
+    - - Brandon claims
+      - Brandon says
+      - Brandon's warning
+      - Brandon's claim
+      - Brandon maintains
+      - Brandon's account
+    - - missing are still alive
+      - missing people are alive
+      - captives are alive
+      - the disappeared are alive
+      - people were taken alive
+      - living survivors

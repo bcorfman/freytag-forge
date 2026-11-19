@@ -23,11 +23,8 @@ def test_the_kitchen_picture_is_a_plain_lake_photograph():
     item = _kitchen_things()["lake_photograph"]
     assert item.name == "lake photograph"
     assert "lake_snapshot" not in _kitchen_things()
-    story_text = "\n".join(
-        (ROOT / name).read_text(encoding="utf-8")
-        for name in ("plot.md", "world.yaml", "knowledge.yaml", "storylets.md", "storylet-routes.yaml")
-    )
-    # `canonical_transition_snapshot` is an unrelated structural key in storylet-routes.yaml.
+    story_text = "\n".join(path.read_text(encoding="utf-8") for path in sorted((ROOT / "source").rglob("*.yaml")))
+    # `canonical_transition_snapshot` is an unrelated structural key in the authored data.
     assert "snapshot" not in story_text.replace("canonical_transition_snapshot", "").casefold()
 
 

@@ -1,15 +1,14 @@
 from __future__ import annotations
 
-import shutil
 from pathlib import Path
 
 import pytest
-import yaml
 
 from storygame.story_package import dependencies, situation_trace
 from storygame.story_package.gap_rules import CustodyCheck, custody_checks
 from storygame.story_package.loader import load_story_package
 from storygame.story_package.situation_trace import render_situation_trace
+from tests.story_source.helpers import compiled_story_copy, load_compiled_copy, patch_source
 
 ROOT = Path("data/stories/continuity-initiative")
 
@@ -89,9 +88,8 @@ def test_transition_trace_reports_untested_holder_check() -> None:
 
 
 def test_trace_can_render_holder_checked_for_seeded_clean_copy(tmp_path: Path, monkeypatch) -> None:
-    package_root = tmp_path / "package"
-    shutil.copytree(ROOT, package_root)
-    package = load_story_package(package_root)
+    package_root = compiled_story_copy(tmp_path)
+    package = load_compiled_copy(package_root)
     check = next(check for check in custody_checks(package, "officer_presses_1a") if check.item_id == "memory_card")
     patched_check = CustodyCheck(check.claim_id, check.item_id, check.character_id, status="checked")
     monkeypatch.setattr(situation_trace, "custody_checks", lambda _package, _anchor: [patched_check])
@@ -105,18 +103,11 @@ def test_trace_can_render_holder_checked_for_seeded_clean_copy(tmp_path: Path, m
 
 
 def test_trace_reports_no_held_item_when_claim_does_not_name_one(tmp_path: Path) -> None:
-    package_root = tmp_path / "package"
-    shutil.copytree(ROOT, package_root)
-    package = load_story_package(package_root)
-    check = next(check for check in custody_checks(package, "t_1a_1b") if check.status == "untested")
-
-    knowledge_path = package_root / "knowledge.yaml"
-    knowledge = yaml.safe_load(knowledge_path.read_text(encoding="utf-8"))
-    for check in custody_checks(package, "t_1a_1b"):
-        claim = next(item for item in knowledge["knowledge"] if item["id"] == check.claim_id)
-        claim["entity_ids"].remove(check.item_id)
-        claim["relevance"]["entity_ids"].remove(check.item_id)
-    knowledge_path.write_text(yaml.safe_dump(knowledge, sort_keys=False), encoding="utf-8")
+    package_root = compiled_story_copy(tmp_path)
+    source_root = package_root / "source"
+    patch_source(source_root, "scenes/1A.yaml", "reveals[sl_1a_d].variants.r1.entities", ["kristin", "michelle"])
+    patch_source(source_root, "scenes/1A.yaml", "reveals[sl_1a_d].variants.r1.relevance.entity_ids", [])
+    load_compiled_copy(package_root)
 
     text = render_situation_trace(package_root, "t_1a_1b")
 
@@ -129,13 +120,8 @@ def test_unknown_anchor_raises() -> None:
 
 
 def test_event_and_transition_duplicate_anchor_is_ambiguous(tmp_path: Path) -> None:
-    package_root = tmp_path / "package"
-    shutil.copytree(ROOT, package_root)
-    pacing_path = package_root / "pacing.yaml"
-    pacing = yaml.safe_load(pacing_path.read_text(encoding="utf-8"))
-    event = next(item for item in pacing["events"] if item["id"] == "officer_presses_1a")
-    event["id"] = "t_1b_1c"
-    pacing_path.write_text(yaml.safe_dump(pacing, sort_keys=False), encoding="utf-8")
+    package_root = compiled_story_copy(tmp_path)
+    patch_source(package_root / "source", "scenes/1A.yaml", "beats[officer_presses_1a].id", "t_1b_1c")
 
     with pytest.raises(ValueError, match=r"ambiguous anchor 't_1b_1c'.*pacing event.*transition"):
         render_situation_trace(package_root, "t_1b_1c")

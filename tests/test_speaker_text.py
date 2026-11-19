@@ -2,19 +2,18 @@ from __future__ import annotations
 
 import copy
 import pickle
-import shutil
 from pathlib import Path
 
 import pytest
-import yaml
 
 from storygame.runtime.cloudflare import CloudflareTurnProvider
 from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import KnowledgeProjector
 from storygame.runtime.state import RuntimeState
-from storygame.story_package import StoryPackageError
 from storygame.story_package.loader import load_story_package
 from storygame.story_package.models import KnowledgeDefinition
+from storygame.story_source.diagnostics import SourceError
+from tests.story_source.helpers import compiled_story_copy, load_compiled_copy, patch_source
 
 PACKAGE_ROOT = Path("data/stories/continuity-initiative")
 PACKAGE = load_story_package(PACKAGE_ROOT)
@@ -87,19 +86,23 @@ def test_speaker_text_requires_voiceable() -> None:
 
 
 def test_loader_rejects_unknown_speaker_and_accepts_declared_speaker(tmp_path: Path) -> None:
-    destination = tmp_path / "package"
-    shutil.copytree(PACKAGE_ROOT, destination)
-    source = destination / "knowledge.yaml"
-    catalog = yaml.safe_load(source.read_text())
-    item = next(item for item in catalog["knowledge"] if item["id"] == "k_sl_3a_a_r1")
-    item["speaker_text"] = {"unknown_speaker": "I saw it."}
-    source.write_text(yaml.safe_dump(catalog, sort_keys=False))
-    with pytest.raises(StoryPackageError, match="k_sl_3a_a_r1.*unknown_speaker"):
-        load_story_package(destination)
+    destination = compiled_story_copy(tmp_path)
+    patch_source(
+        destination,
+        "source/scenes/3A.yaml",
+        "reveals[sl_3a_a].variants.r1.speaker_text",
+        {"unknown_speaker": "I saw it."},
+    )
+    with pytest.raises(SourceError, match="LOADER:.*k_sl_3a_a_r1.*unknown_speaker"):
+        load_compiled_copy(destination)
 
-    item["speaker_text"] = {"michelle": "I saw it."}
-    source.write_text(yaml.safe_dump(catalog, sort_keys=False))
-    load_story_package(destination)
+    patch_source(
+        destination,
+        "source/scenes/3A.yaml",
+        "reveals[sl_3a_a].variants.r1.speaker_text",
+        {"michelle": "I saw it."},
+    )
+    load_compiled_copy(destination)
 
 
 def test_speaker_lines_use_only_the_listed_speaker_text() -> None:

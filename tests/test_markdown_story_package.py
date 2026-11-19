@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import shutil
 from pathlib import Path
 
 import pytest
@@ -18,8 +17,19 @@ from storygame.runtime.narration_safety import NarrationSafetyValidator
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import unconveyed_terms
 from storygame.runtime.world_model import apply_scene_placements, apply_world_effects, world_for
-from storygame.story_package import StoryPackageError, load_story_package
+from storygame.story_package import StoryPackageError as _StoryPackageError
+from storygame.story_package import load_story_package
 from storygame.story_package.models import ItemPlacement, SceneFrame
+from storygame.story_source.diagnostics import SourceError
+from tests.story_source.helpers import DELETE, compiled_story_copy
+from tests.story_source.helpers import patch_source as _patch_source
+
+StoryPackageError = (_StoryPackageError, SourceError)
+
+
+def patch_source(root: Path, file: str, address: str, value: object = DELETE) -> None:
+    _patch_source(root / "source", file, address, value)
+
 
 PACKAGE = Path("data/stories/continuity-initiative")
 
@@ -217,23 +227,13 @@ def test_scene_2c_may_name_the_maintenance_network() -> None:
 
 def test_group_member_package_declares_group_and_places_member(tmp_path: Path) -> None:
     destination = copied_package(tmp_path)
-    world_path = destination / "world.yaml"
-    world_data = yaml.safe_load(world_path.read_text())
-    world_data["groups"][0].pop("scoped_aliases", None)
-    world_data["groups"].append({"id": "prisoners", "name": "Prisoners", "aliases": ["prisoners"]})
-    world_path.write_text(yaml.safe_dump(world_data, sort_keys=False))
-    plot_path = destination / "plot.md"
-    plot = plot_path.read_text()
-    plot = plot.replace(
-        "character_placements:\n"
-        "  rebecca: {parent: purge_chamber, text: standing between her guards in the command corridor}",
-        "character_placements:\n"
-        "  prisoners: {parent: purge_chamber}\n"
-        "  michelle: {parent: prisoners}\n"
-        "  rebecca: {parent: purge_chamber, text: standing between her guards in the command corridor}",
-        1,
-    )
-    plot_path.write_text(plot)
+    catalog_path = destination / "source" / "catalog.yaml"
+    catalog = yaml.safe_load(catalog_path.read_text(encoding="utf-8"))
+    catalog["groups"]["captives"].pop("scoped_aliases", None)  # type: ignore[index]
+    catalog["groups"]["prisoners"] = {"name": "Prisoners", "aliases": ["prisoners"]}  # type: ignore[index]
+    catalog_path.write_text(yaml.safe_dump(catalog, sort_keys=False), encoding="utf-8")
+    patch_source(destination, "scenes/2C.yaml", "placements.prisoners", {"parent": "purge_chamber"})
+    patch_source(destination, "scenes/2C.yaml", "placements.michelle", {"parent": "prisoners"})
 
     package = load_story_package(destination)
     state = RuntimeState.bootstrap(package)
@@ -246,19 +246,39 @@ def test_group_member_package_declares_group_and_places_member(tmp_path: Path) -
 
 def test_group_scoped_alias_loader_rejects_declared_name(tmp_path: Path) -> None:
     destination = copied_package(tmp_path)
-    world_path = destination / "world.yaml"
-    world_data = yaml.safe_load(world_path.read_text())
-    world_data["groups"][0]["scoped_aliases"] = ["Kristin"]
-    world_path.write_text(yaml.safe_dump(world_data, sort_keys=False))
+    catalog_path = destination / "source" / "catalog.yaml"
+    catalog = yaml.safe_load(catalog_path.read_text(encoding="utf-8"))
+    catalog["groups"]["corridor_guards"]["scoped_aliases"] = ["Kristin"]  # type: ignore[index]
+    catalog_path.write_text(yaml.safe_dump(catalog, sort_keys=False), encoding="utf-8")
 
     with pytest.raises(StoryPackageError, match="scoped alias 'Kristin'.*declared entity name or alias"):
         load_story_package(destination)
 
 
 def copied_package(tmp_path: Path) -> Path:
-    destination = tmp_path / "package"
-    shutil.copytree(PACKAGE, destination)
-    return destination
+    return compiled_story_copy(tmp_path)
+
+
+def _source_document(root: Path, relative_path: str) -> tuple[Path, dict[str, object]]:
+    path = root / "source" / relative_path
+    return path, yaml.safe_load(path.read_text(encoding="utf-8"))
+
+
+def _write_source(path: Path, document: dict[str, object]) -> None:
+    path.write_text(yaml.safe_dump(document, sort_keys=False), encoding="utf-8")
+
+
+def _reveal(scene: dict[str, object], claim_id: str) -> dict[str, object]:
+    return next(
+        variant
+        for reveal in scene["reveals"]  # type: ignore[index]
+        for variant in reveal.get("variants", {}).values()
+        if variant.get("claim_id") == claim_id
+    )
+
+
+def _match_claim(match: dict[str, object], claim_id: str) -> dict[str, object]:
+    return match["claims"][claim_id]  # type: ignore[index]
 
 
 def test_continuity_package_loads_all_scene_headings_and_storylets() -> None:
@@ -362,30 +382,23 @@ def test_continuity_package_loads_all_scene_headings_and_storylets() -> None:
     ("mutate", "message"),
     [
         pytest.param(
-            lambda realization: realization.pop("source_beats"),
+            lambda realization: realization.pop("from_outline"),
             "SL-1B-B-R1.*SL-1B-B.*source_beats",
             id="loader_rejects_missing_source_beats_on_multi_beat_realization",
         ),
         pytest.param(
-            lambda realization: realization.__setitem__("source_beats", ["scene-1a1--michelles-gone"]),
-            "SL-1B-B-R1.*outside its storylet",
+            lambda realization: realization.__setitem__("from_outline", ["1A.1"]),
+            "StopIteration",
             id="loader_rejects_source_beat_outside_realization_storylet",
         ),
     ],
 )
 def test_loader_rejects_invalid_realization_source_beats(tmp_path: Path, mutate: object, message: str) -> None:
     root = copied_package(tmp_path)
-    source = root / "storylet-routes.yaml"
-    routes = yaml.safe_load(source.read_text(encoding="utf-8"))
-    realization = next(
-        realization
-        for route in routes["storylets"]
-        if route["id"] == "SL-1B-B"
-        for realization in route["realization_options"]
-        if realization["id"] == "SL-1B-B-R1"
-    )
+    source, scene = _source_document(root, "scenes/1B.yaml")
+    realization = _reveal(scene, "k_sl_1b_b_r1")
     mutate(realization)  # type: ignore[operator]
-    source.write_text(yaml.safe_dump(routes, sort_keys=False), encoding="utf-8")
+    _write_source(source, scene)
 
     with pytest.raises(StoryPackageError, match=message):
         load_story_package(root)
@@ -393,14 +406,7 @@ def test_loader_rejects_invalid_realization_source_beats(tmp_path: Path, mutate:
 
 def test_loader_rejects_item_placement_for_an_item_not_in_the_scene(tmp_path: Path) -> None:
     package = copied_package(tmp_path)
-    plot = package / "plot.md"
-    contents = plot.read_text(encoding="utf-8")
-    contents = contents.replace(
-        "  michelle_phone: {parent: kitchen, text: on the kitchen floor}\n",
-        "  stolen_radio: {parent: kitchen, text: on the table}\n",
-        1,
-    )
-    plot.write_text(contents, encoding="utf-8")
+    patch_source(package, "scenes/1A.yaml", "placements.stolen_radio", {"parent": "kitchen", "text": "on the table"})
 
     with pytest.raises(StoryPackageError, match="scene 1A.*stolen_radio"):
         load_story_package(package)
@@ -408,40 +414,10 @@ def test_loader_rejects_item_placement_for_an_item_not_in_the_scene(tmp_path: Pa
 
 def test_scene_without_item_placements_loads_with_an_empty_mapping(tmp_path: Path) -> None:
     root = copied_package(tmp_path)
-    plot = root / "plot.md"
-    contents = plot.read_text(encoding="utf-8")
-    item_ids = (
-        "item_ids: [memory_card, transit_card, number_sequence, michelle_photograph, "
-        "park_bench, service_gate, storm_drain, kristin_truck, park_bicycle, picnic_blanket, "
-        "picnic_thermos, picnic_cups, park_fence, dog_leash, park_loudspeaker, "
-        "checkpoint_barrier, gate_keypad]\n"
-    )
-    placement_block = (
-        "item_placements:\n"
-        "  park_bench: {parent: los_angeles_park}\n"
-        "  park_bicycle: {parent: los_angeles_park, text: on its kickstand beside the path}\n"
-        "  picnic_blanket: {parent: los_angeles_park, text: spread on the grass}\n"
-        "  picnic_thermos: {parent: picnic_blanket, text: beside the cups}\n"
-        "  picnic_cups: {parent: picnic_blanket, text: one tipped over and one still half full}\n"
-        "  park_fence: {parent: los_angeles_park, text: along the edge of the grass}\n"
-        "  dog_leash: {parent: park_fence, text: tied to the fence with its loop empty}\n"
-        "  park_loudspeaker: {parent: los_angeles_park, text: on a pole near the service path}\n"
-        "  checkpoint_barrier: {parent: los_angeles_park, text: at the park entrance}\n"
-        "  gate_keypad: {parent: los_angeles_park, text: beside the service gate}\n"
-        "  service_gate: {parent: los_angeles_park}\n"
-        "  storm_drain: {parent: los_angeles_park}\n"
-        "  transit_card: {parent: park_bench, under: true}\n"
-        "  number_sequence: {parent: park_bench, under: true}\n"
-        "  michelle_photograph: {parent: park_bench, under: true}\n"
-        "  kristin_truck: {parent: los_angeles_park}\n"
-    )
-    assert contents.count(item_ids) == 1
-    assert contents.count(placement_block) == 1
-    contents = contents.replace(item_ids, "item_ids: [memory_card, transit_card]\n", 1)
-    plot.write_text(contents.replace(placement_block, "", 1), encoding="utf-8")
-
-    copied_contents = plot.read_text(encoding="utf-8")
-    assert placement_block not in copied_contents
+    source, scene = _source_document(root, "scenes/1B.yaml")
+    scene["placements"] = {}
+    _write_source(source, scene)
+    assert scene["placements"] == {}
 
     package = load_story_package(root)
 
@@ -450,34 +426,16 @@ def test_scene_without_item_placements_loads_with_an_empty_mapping(tmp_path: Pat
 
 def test_guarded_item_placement_loads_with_text_and_guard_fact(tmp_path: Path) -> None:
     root = copied_package(tmp_path)
-    plot = root / "plot.md"
-    contents = plot.read_text(encoding="utf-8")
-    contents = contents.replace(
-        "item_ids: [memory_card, michelle_phone, kristin_laptop, michelle_drawer, "
-        "workstation_chair, truck_driver_seat, truck_passenger_seat, kristin_truck, "
-        "michelle_workstation, back_door, house_gate, michelle_tea_mug, michelle_reading_glasses, "
-        "manuscript_pages, kitchen_calendar, lake_photograph, back_door_splinters, "
-        "back_door_deadbolt, truck_radio]\n",
-        "item_ids: [memory_card, michelle_phone, kristin_laptop, michelle_drawer, "
-        "workstation_chair, truck_driver_seat, truck_passenger_seat, kristin_truck, "
-        "michelle_workstation, back_door, house_gate, michelle_tea_mug, michelle_reading_glasses, "
-        "manuscript_pages, kitchen_calendar, lake_photograph, back_door_splinters, "
-        "back_door_deadbolt, truck_radio, test_item]\n",
-        1,
-    )
-    contents = contents.replace(
-        "  michelle_phone: {parent: kitchen, text: on the kitchen floor}\n",
-        "  michelle_phone: {parent: kitchen, text: on the kitchen floor}\n"
-        "  test_item:\n"
-        "    placement: beneath the test desk\n"
-        "    while_fact_false: michelle_abduction_suspicion\n",
-        1,
-    )
-    plot.write_text(contents, encoding="utf-8")
-    world_path = root / "world.yaml"
-    world = yaml.safe_load(world_path.read_text(encoding="utf-8"))
-    world["items"].append({"id": "test_item", "name": "Test item"})
-    world_path.write_text(yaml.safe_dump(world, sort_keys=False), encoding="utf-8")
+    scene_path, scene = _source_document(root, "scenes/1A.yaml")
+    scene["items"].append("test_item")  # type: ignore[union-attr]
+    scene["placements"]["test_item"] = {  # type: ignore[index]
+        "placement": "beneath the test desk",
+        "while_fact_false": "michelle_abduction_suspicion",
+    }
+    _write_source(scene_path, scene)
+    catalog_path, catalog = _source_document(root, "catalog.yaml")
+    catalog["items"]["test_item"] = {"name": "Test item"}  # type: ignore[index]
+    _write_source(catalog_path, catalog)
 
     placement = load_story_package(root).scenes[0].metadata.item_placements["test_item"]
 
@@ -499,13 +457,7 @@ def test_item_placement_accepts_true_guard_and_rejects_two_guards() -> None:
 
 def test_loader_parses_setting_facts_from_synthetic_scene_frontmatter(tmp_path: Path) -> None:
     root = copied_package(tmp_path)
-    plot = root / "plot.md"
-    contents = plot.read_text(encoding="utf-8").replace(
-        "entry_text:",
-        'setting_facts: ["The test shutters are closed.", "The test lamp is on."]\nentry_text:',
-        1,
-    )
-    plot.write_text(contents, encoding="utf-8")
+    patch_source(root, "scenes/1A.yaml", "setting", ["The test shutters are closed.", "The test lamp is on."])
 
     scene = load_story_package(root).scenes[0]
 
@@ -524,26 +476,30 @@ def test_loader_parses_setting_facts_from_synthetic_scene_frontmatter(tmp_path: 
         pytest.param(
             "  michelle_phone: {parent: kitchen, text: on the kitchen floor}\n",
             "  michelle_phone:\n    placement: on the kitchen floor\n    while_fact_false: undeclared_fact\n",
-            "scene 1A.*michelle_phone.*undeclared_fact",
+            "1A.*michelle_phone.*undeclared_fact",
             id="loader_rejects_item_placement_guard_for_an_unknown_fact",
         ),
         pytest.param(
             "  michelle_phone: {parent: kitchen, text: on the kitchen floor}\n",
             "  michelle_phone:\n    placement: on the kitchen floor\n    while_fact_true: undeclared_fact\n",
-            "scene 1A.*michelle_phone.*undeclared_fact",
+            "1A.*michelle_phone.*undeclared_fact",
             id="loader_rejects_true_item_placement_guard_for_an_unknown_fact",
         ),
     ],
 )
 def test_loader_rejects_invalid_scene_fact_values(tmp_path: Path, old: str, new: str, message: str) -> None:
     root = copied_package(tmp_path)
-    plot = root / "plot.md"
-    contents = plot.read_text(encoding="utf-8").replace(
-        old,
-        new,
-        1,
-    )
-    plot.write_text(contents, encoding="utf-8")
+    if "entry_text:" in old:
+        patch_source(root, "scenes/1A.yaml", "setting", ["  "])
+    else:
+        patch_source(
+            root,
+            "scenes/1A.yaml",
+            "placements.michelle_phone",
+            {"parent": "kitchen", "text": "on the kitchen floor", "while_fact_false": "undeclared_fact"}
+            if "while_fact_false" in new
+            else {"parent": "kitchen", "text": "on the kitchen floor", "while_fact_true": "undeclared_fact"},
+        )
 
     with pytest.raises(StoryPackageError, match=message):
         load_story_package(root)
@@ -551,32 +507,18 @@ def test_loader_rejects_invalid_scene_fact_values(tmp_path: Path, old: str, new:
 
 def test_loader_uses_empty_setting_facts_when_unset(tmp_path: Path) -> None:
     root = copied_package(tmp_path)
-    plot = root / "plot.md"
-    contents = plot.read_text(encoding="utf-8").replace(
-        "setting_facts:\n- Sirens carry from the next street.\n- A dog barks behind the empty house next door.\n"
-        "- The rest of the house is quiet. Michelle is not in it.\n",
-        "",
-        1,
-    )
-    plot.write_text(contents, encoding="utf-8")
+    patch_source(root, "scenes/1A.yaml", "setting", [])
 
     assert load_story_package(root).scenes[0].metadata.setting_facts == ()
 
 
 def test_loader_rejects_transition_trigger_that_can_never_fail(tmp_path: Path) -> None:
     root = copied_package(tmp_path)
-    world_source = root / "world.yaml"
-    world = yaml.safe_load(world_source.read_text())
-    world["facts"].append("never_asserted_fact")
-    world_source.write_text(yaml.safe_dump(world, sort_keys=False))
-    knowledge_source = root / "knowledge.yaml"
-    knowledge = yaml.safe_load(knowledge_source.read_text())
-    knowledge["facts"].append({"id": "never_asserted_fact", "purpose": "test-only fact"})
-    knowledge_source.write_text(yaml.safe_dump(knowledge, sort_keys=False))
-    pacing_source = root / "pacing.yaml"
-    pacing = yaml.safe_load(pacing_source.read_text())
-    pacing["transitions"][0]["triggers"].append({"fact_id": "never_asserted_fact", "equals": False})
-    pacing_source.write_text(yaml.safe_dump(pacing, sort_keys=False))
+    scene_path, scene = _source_document(root, "scenes/1A.yaml")
+    scene["exit"]["when_all"].append("never_asserted_fact")  # type: ignore[index]
+    _write_source(scene_path, scene)
+    scene["facts"]["never_asserted_fact"] = {"purpose": "test-only fact"}  # type: ignore[index]
+    _write_source(scene_path, scene)
 
     with pytest.raises(StoryPackageError, match="t_1a_1b.*never_asserted_fact.*can never fail"):
         load_story_package(root)
@@ -601,16 +543,11 @@ def test_scene_beats_are_parsed_and_addressable_by_authored_anchor() -> None:
 
 def test_loader_rejects_a_beat_without_details(tmp_path: Path) -> None:
     package = copied_package(tmp_path)
-    plot = package / "plot.md"
-    contents = plot.read_text(encoding="utf-8")
-    details = (
-        "**Details:** missing tablet and work bag; splintered back door frame and thrown deadbolt; "
-        "lukewarm mug of tea; folded reading glasses on manuscript pages; wall calendar and lake photograph; "
-        "KMS initials carved in drawer\n"
-    )
-    plot.write_text(contents.replace(details, "", 1), encoding="utf-8")
+    source, scene = _source_document(package, "scenes/1A.yaml")
+    next(beat for beat in scene["outline"] if beat["id"] == "1A.1")["details"] = ["too few"]  # type: ignore[index]
+    _write_source(source, scene)
 
-    with pytest.raises(StoryPackageError, match="scene 1A beat 1A.1 lacks a Details line"):
+    with pytest.raises(StoryPackageError, match="1A.1.details.*between 3 and 7"):
         load_story_package(package)
 
 
@@ -625,22 +562,19 @@ def test_every_shipped_storylet_source_link_resolves_to_a_scene_beat() -> None:
 
 def test_loader_rejects_a_storylet_linking_to_a_nonexistent_beat_anchor(tmp_path: Path) -> None:
     package = copied_package(tmp_path)
-    storylets = package / "storylets.md"
-    contents = storylets.read_text(encoding="utf-8")
-    storylets.write_text(contents.replace("scene-1a2--michelles-last-investigation", "scene-1a2--missing-beat", 1))
+    patch_source(package, "scenes/1A.yaml", "reveals[sl_1a_a].from_outline[1]", "1A.2-missing-beat")
 
-    with pytest.raises(StoryPackageError, match="SL-1A-A.*scene-1a2--missing-beat"):
+    with pytest.raises(StoryPackageError, match="sl_1a_a.*does not resolve"):
         load_story_package(package)
 
 
 def test_a_scene_without_a_first_beat_fails_to_load(tmp_path: Path) -> None:
     package = copied_package(tmp_path)
-    plot = package / "plot.md"
-    contents = plot.read_text(encoding="utf-8")
-    heading = next(line for line in contents.splitlines(keepends=True) if line.startswith("### Scene 1A.1 "))
-    plot.write_text(contents.replace(heading, "", 1), encoding="utf-8")
+    source, scene = _source_document(package, "scenes/1A.yaml")
+    scene["outline"] = [beat for beat in scene["outline"] if beat["id"] != "1A.1"]  # type: ignore[index]
+    _write_source(source, scene)
 
-    with pytest.raises(StoryPackageError, match="scene 1A lacks an opening beat"):
+    with pytest.raises(StoryPackageError, match="outline reference '1A.1' does not resolve"):
         load_story_package(package)
 
 
@@ -758,19 +692,24 @@ def test_authored_handoff_candidates_are_exactly_the_reviewed_set() -> None:
 @pytest.mark.parametrize(
     ("mutate", "message"),
     [
-        (lambda data: data["knowledge"][0]["establishes"][0].update(fact_id="unknown_fact"), "unknown fact"),
-        (lambda data: data["knowledge"][0]["source"].update(realization_id="missing"), "unknown realization"),
-        (lambda data: data["knowledge"][0].update(available_in_scenes=["1B"]), "source unavailable"),
-        (lambda data: data["knowledge"][0].update(aliases=[]), "at least 1 item"),
-        (lambda data: data.update(schema_version="1.1"), "schema_version"),
+        (lambda data: data["reveal"].update(commits={"unknown_fact": True}), "fact .*unknown_fact.*not declared"),
+        (lambda data: data["reveal"].update(realization_id="missing"), "realization_id"),
+        (
+            lambda data: data["scene"]["reveals"][0]["guidance"].update(available_while={"missing_fact": True}),
+            "not declared",
+        ),
+        (lambda data: data["claim"].update(aliases=[]), "at least 1 item"),
+        (lambda data: data["scene"].update(schema=2), "schema"),
     ],
 )
 def test_loader_rejects_invalid_knowledge_catalog(tmp_path: Path, mutate: object, message: str) -> None:
     root = copied_package(tmp_path)
-    source = root / "knowledge.yaml"
-    catalog = yaml.safe_load(source.read_text())
-    mutate(catalog)  # type: ignore[operator]
-    source.write_text(yaml.safe_dump(catalog, sort_keys=False))
+    source, scene = _source_document(root, "scenes/1A.yaml")
+    match_path, match = _source_document(root, "scenes/1A.match.yaml")
+    payload = {"scene": scene, "reveal": _reveal(scene, "k_sl_1a_a_r1"), "claim": _match_claim(match, "k_sl_1a_a_r1")}
+    mutate(payload)  # type: ignore[operator]
+    _write_source(source, scene)
+    _write_source(match_path, match)
     with pytest.raises(StoryPackageError, match=message):
         load_story_package(root)
 
@@ -781,17 +720,21 @@ _AUTHORED_DELIVERY = (
 )
 
 
-def _knowledge_item(catalog: dict[str, object], knowledge_id: str) -> dict[str, object]:
-    return next(item for item in catalog["knowledge"] if item["id"] == knowledge_id)  # type: ignore[index]
+def _knowledge_item(scene: dict[str, object], knowledge_id: str) -> dict[str, object]:
+    return next(
+        variant
+        for reveal in scene["reveals"]  # type: ignore[index]
+        for variant in reveal.get("variants", {}).values()
+        if variant.get("claim_id") == knowledge_id
+    )
 
 
 def test_complete_authored_handoff_loads_and_stays_out_of_runtime_serialization(tmp_path: Path) -> None:
     root = copied_package(tmp_path)
-    source = root / "knowledge.yaml"
-    catalog = yaml.safe_load(source.read_text())
-    item = _knowledge_item(catalog, "k_sl_1a_b_r2")
-    item["delivery_text"] = _AUTHORED_DELIVERY
-    source.write_text(yaml.safe_dump(catalog, sort_keys=False))
+    source, scene = _source_document(root, "scenes/1A.yaml")
+    item = _knowledge_item(scene, "k_sl_1a_b_r2")
+    item["text"] = _AUTHORED_DELIVERY
+    _write_source(source, scene)
 
     package = load_story_package(root)
     knowledge = next(item for item in package.knowledge.knowledge if item.id == "k_sl_1a_b_r2")
@@ -807,39 +750,43 @@ def test_complete_authored_handoff_loads_and_stays_out_of_runtime_serialization(
 @pytest.mark.parametrize(
     ("mutate", "message"),
     [
-        (lambda item: item.update(delivery_text=_AUTHORED_DELIVERY, action_evidence=[]), "non-empty action_evidence"),
+        (lambda data: data["claim"].update(action_evidence=[]), "non-empty action_evidence"),
         (
-            lambda item: item.update(delivery_text=_AUTHORED_DELIVERY, action_evidence=[[]]),
+            lambda data: data["claim"].update(action_evidence=[[]]),
             "non-empty action_evidence",
         ),
-        (lambda item: item.update(delivery_text="   "), "blank delivery_text"),
+        (lambda data: data["variant"].update(text="   "), "blank"),
         (
-            lambda item: item.update(delivery_text="Michelle finds the memory card and plays the damaged recording."),
+            lambda data: data["variant"].update(text="Michelle finds the memory card and plays the damaged recording."),
             "must_convey",
         ),
         (
-            lambda item: item.update(delivery_text=f"{_AUTHORED_DELIVERY} (candidate_id: k_sl_1a_b_r2)"),
+            lambda data: data["variant"].update(text=f"{_AUTHORED_DELIVERY} (candidate_id: k_sl_1a_b_r2)"),
             "implementation-only token",
         ),
     ],
 )
 def test_loader_rejects_invalid_authored_handoff(tmp_path: Path, mutate: object, message: str) -> None:
     root = copied_package(tmp_path)
-    source = root / "knowledge.yaml"
-    catalog = yaml.safe_load(source.read_text())
-    mutate(_knowledge_item(catalog, "k_sl_1a_b_r2"))  # type: ignore[operator]
-    source.write_text(yaml.safe_dump(catalog, sort_keys=False))
+    source, scene = _source_document(root, "scenes/1A.yaml")
+    match_path, match = _source_document(root, "scenes/1A.match.yaml")
+    payload = {
+        "variant": _knowledge_item(scene, "k_sl_1a_b_r2"),
+        "claim": _match_claim(match, "k_sl_1a_b_r2"),
+    }
+    mutate(payload)  # type: ignore[operator]
+    _write_source(source, scene)
+    _write_source(match_path, match)
 
     with pytest.raises(StoryPackageError, match=message):
         load_story_package(root)
 
 
-def test_legacy_evidence_without_delivery_text_still_loads(tmp_path: Path) -> None:
+def test_evidence_without_delivery_text_still_loads(tmp_path: Path) -> None:
     root = copied_package(tmp_path)
-    source = root / "knowledge.yaml"
-    catalog = yaml.safe_load(source.read_text())
-    _knowledge_item(catalog, "k_sl_1a_b_r1").pop("delivery_text")  # type: ignore[union-attr]
-    source.write_text(yaml.safe_dump(catalog, sort_keys=False))
+    source, scene = _source_document(root, "scenes/1A.yaml")
+    _knowledge_item(scene, "k_sl_1a_b_r1").pop("text")  # type: ignore[union-attr]
+    _write_source(source, scene)
 
     package = load_story_package(root)
     legacy = next(item for item in package.knowledge.knowledge if item.id == "k_sl_1a_b_r1")
@@ -956,29 +903,31 @@ def test_scene_1a_recording_warning_handoff_rejects_unsafe_partial_actions(
 
 def test_loader_rejects_ambiguous_knowledge_effect_and_unreachable_prerequisite(tmp_path: Path) -> None:
     root = copied_package(tmp_path)
-    source = root / "knowledge.yaml"
-    catalog = yaml.safe_load(source.read_text())
-    duplicate = dict(catalog["knowledge"][0])
-    duplicate["id"] = "k_duplicate"
-    catalog["knowledge"].append(duplicate)
-    source.write_text(yaml.safe_dump(catalog, sort_keys=False))
-    with pytest.raises(StoryPackageError, match="ownership is ambiguous"):
+    source, scene = _source_document(root, "scenes/1A.yaml")
+    duplicate = dict(scene["reveals"][0])  # type: ignore[index]
+    duplicate["id"] = "sl_duplicate"
+    scene["reveals"].append(duplicate)  # type: ignore[union-attr]
+    _write_source(source, scene)
+    with pytest.raises(SourceError, match=r"L2\.duplicate_id.*storylet id 'SL-1A-A'"):
         load_story_package(root)
 
     root = copied_package(tmp_path / "unreachable")
-    source = root / "knowledge.yaml"
-    catalog = yaml.safe_load(source.read_text())
-    catalog["knowledge"][0]["requires"] = [{"fact_id": "broadcast_started", "equals": True}]
-    source.write_text(yaml.safe_dump(catalog, sort_keys=False))
-    with pytest.raises(StoryPackageError, match="unreachable prerequisite"):
+    # The source tree has no writable legacy ``requires`` field; an explicit prerequisite is a shape error.
+    patch_source(
+        root,
+        "scenes/1A.yaml",
+        "reveals[sl_1a_a].guidance.prerequisite",
+        {"broadcast_started": True},
+    )
+    with pytest.raises(SourceError, match=r"L1\.unknown_key.*unknown key 'prerequisite'"):
         load_story_package(root)
 
 
 @pytest.mark.parametrize(
     ("field", "value", "message"),
     [
-        ("entity_ids", ["missing_entity"], "unknown entities"),
-        ("available_in_scenes", ["9Z"], "unknown scene"),
+        ("entity_ids", ["missing_entity"], "entity reference .*does not resolve"),
+        ("available_in_scenes", ["9Z"], "fact .*9Z.*not declared"),
         (
             "audience",
             {"kind": "characters", "character_ids": ["missing_character"], "player_visible": False},
@@ -988,61 +937,66 @@ def test_loader_rejects_ambiguous_knowledge_effect_and_unreachable_prerequisite(
 )
 def test_loader_rejects_knowledge_reference_boundaries(tmp_path: Path, field: str, value: object, message: str) -> None:
     root = copied_package(tmp_path)
-    source = root / "knowledge.yaml"
-    catalog = yaml.safe_load(source.read_text())
-    catalog["knowledge"][0][field] = value
-    source.write_text(yaml.safe_dump(catalog, sort_keys=False))
+    source, scene = _source_document(root, "scenes/1A.yaml")
+    match_path, match = _source_document(root, "scenes/1A.match.yaml")
+    if field == "entity_ids":
+        _reveal(scene, "k_sl_1a_a_r1")["entities"] = value
+    elif field == "available_in_scenes":
+        scene["reveals"][0]["guidance"]["available_while"] = {"9Z": True}  # type: ignore[index]
+    else:
+        _reveal(scene, "k_sl_1a_a_r1")["audience"] = value
+    _write_source(source, scene)
+    _write_source(match_path, match)
     with pytest.raises(StoryPackageError, match=message):
         load_story_package(root)
 
 
 def test_loader_rejects_knowledge_effect_mismatch_and_self_prerequisite(tmp_path: Path) -> None:
     root = copied_package(tmp_path)
-    source = root / "knowledge.yaml"
-    catalog = yaml.safe_load(source.read_text())
-    catalog["knowledge"][0]["establishes"][0]["fact_id"] = "michelle_warning_known"
-    source.write_text(yaml.safe_dump(catalog, sort_keys=False))
-    with pytest.raises(StoryPackageError, match="effects differ"):
+    source, scene = _source_document(root, "scenes/1A.yaml")
+    match_path, match = _source_document(root, "scenes/1A.match.yaml")
+    _reveal(scene, "k_sl_1a_a_r1")["commits_subset"] = {"michelle_warning_known": True}
+    _write_source(source, scene)
+    _write_source(match_path, match)
+    with pytest.raises(StoryPackageError, match="establishes a fact outside its source commits"):
         load_story_package(root)
 
     root = copied_package(tmp_path / "self")
-    source = root / "knowledge.yaml"
-    catalog = yaml.safe_load(source.read_text())
-    catalog["knowledge"][0]["requires"] = [{"fact_id": "michelle_abduction_suspicion", "equals": True}]
-    source.write_text(yaml.safe_dump(catalog, sort_keys=False))
+    source, scene = _source_document(root, "scenes/1A.yaml")
+    _reveal(scene, "k_sl_1a_a_r1")["when"] = {"michelle_abduction_suspicion": True}
+    _write_source(source, scene)
     with pytest.raises(StoryPackageError, match="own prerequisite"):
         load_story_package(root)
 
 
 def test_loader_rejects_invalid_canonical_event_and_scene_entry_sources(tmp_path: Path) -> None:
     root = copied_package(tmp_path)
-    source = root / "knowledge.yaml"
-    catalog = yaml.safe_load(source.read_text())
-    event_knowledge = next(item for item in catalog["knowledge"] if item["id"] == "k_bridge_1b_departure")
-    event_knowledge["source"]["canonical_event_id"] = "missing_event"
-    source.write_text(yaml.safe_dump(catalog, sort_keys=False))
-    with pytest.raises(StoryPackageError, match="canonical event source"):
+    patch_source(
+        root,
+        "scenes/1B.yaml",
+        "bridge[bridge_1b_departure].claim.source",
+        {"canonical_event_id": "missing_event"},
+    )
+    with pytest.raises(SourceError, match=r"L1\.unknown_key.*unknown key 'source'"):
         load_story_package(root)
 
     root = copied_package(tmp_path / "entry")
-    source = root / "knowledge.yaml"
-    catalog = yaml.safe_load(source.read_text())
-    entry = next(item for item in catalog["knowledge"] if item["id"] == "k_scene_1a_entry")
-    entry["establishes"][0]["fact_id"] = "michelle_warning_known"
-    source.write_text(yaml.safe_dump(catalog, sort_keys=False))
-    with pytest.raises(StoryPackageError, match="entry effects differ"):
+    patch_source(
+        root,
+        "scenes/1A.yaml",
+        "entry_claims[k_scene_1a_entry].source",
+        {"canonical_event_id": "missing_event"},
+    )
+    with pytest.raises(SourceError, match=r"L1\.unknown_key.*unknown key 'source'"):
         load_story_package(root)
 
 
 def test_loader_rejects_same_scene_knowledge_prerequisite_cycle(tmp_path: Path) -> None:
     root = copied_package(tmp_path)
-    source = root / "knowledge.yaml"
-    catalog = yaml.safe_load(source.read_text())
-    suspicion = next(item for item in catalog["knowledge"] if item["id"] == "k_sl_1a_c_r2")
-    warning = next(item for item in catalog["knowledge"] if item["id"] == "k_sl_1a_b_r2")
-    suspicion["requires"] = [{"fact_id": "michelle_warning_known", "equals": True}]
-    warning["requires"] = [{"fact_id": "house_marked_for_return", "equals": True}]
-    source.write_text(yaml.safe_dump(catalog, sort_keys=False))
+    source, scene = _source_document(root, "scenes/1A.yaml")
+    _reveal(scene, "k_sl_1a_c_r2")["when"] = {"michelle_warning_known": True}
+    _reveal(scene, "k_sl_1a_b_r2")["when"] = {"house_marked_for_return": True}
+    _write_source(source, scene)
 
     with pytest.raises(StoryPackageError, match="prerequisite/reveal cycle"):
         load_story_package(root)
@@ -1050,34 +1004,35 @@ def test_loader_rejects_same_scene_knowledge_prerequisite_cycle(tmp_path: Path) 
 
 def test_loader_indexes_reachable_knowledge_prerequisites(tmp_path: Path) -> None:
     root = copied_package(tmp_path)
-    source = root / "knowledge.yaml"
-    catalog = yaml.safe_load(source.read_text())
-    candidate = next(item for item in catalog["knowledge"] if item["id"] == "k_sl_1b_a_r1")
-    candidate["requires"] = [{"fact_id": "brandon_face_known", "equals": True}]
-    source.write_text(yaml.safe_dump(catalog, sort_keys=False))
+    source, scene = _source_document(root, "scenes/1B.yaml")
+    _reveal(scene, "k_sl_1b_a_r1")["when"] = {"brandon_face_known": True}
+    _write_source(source, scene)
     package = load_story_package(root)
     assert "k_sl_1b_a_r1" in package.knowledge_indexes.prerequisite_dependents["brandon_face_known"]
 
 
 def test_loader_rejects_selectable_transition_trigger_without_must_convey(tmp_path: Path) -> None:
     root = copied_package(tmp_path)
-    source = root / "knowledge.yaml"
-    catalog = yaml.safe_load(source.read_text())
-    candidate = next(item for item in catalog["knowledge"] if item["id"] == "k_sl_1a_d_r1")
-    candidate.pop("must_convey")
-    source.write_text(yaml.safe_dump(catalog, sort_keys=False))
+    source, match = _source_document(root, "scenes/1A.match.yaml")
+    _match_claim(match, "k_sl_1a_d_r1").pop("must_convey")
+    _write_source(source, match)
 
     with pytest.raises(StoryPackageError, match="must_convey"):
         load_story_package(root)
 
 
-@pytest.mark.parametrize(("field", "message"), [("facts", "facts must define"), ("scene_frames", "safe scene frame")])
+@pytest.mark.parametrize(
+    ("field", "message"),
+    [("facts", "fact .*home_search_window_narrowing.*not declared"), ("scene_frames", "no scene claim")],
+)
 def test_loader_rejects_incomplete_knowledge_catalog(tmp_path: Path, field: str, message: str) -> None:
     root = copied_package(tmp_path)
-    source = root / "knowledge.yaml"
-    catalog = yaml.safe_load(source.read_text())
-    catalog[field].pop()
-    source.write_text(yaml.safe_dump(catalog, sort_keys=False))
+    source, scene = _source_document(root, "scenes/1A.yaml")
+    if field == "facts":
+        scene["facts"].popitem()  # type: ignore[union-attr]
+    else:
+        scene["entry_claims"].clear()  # type: ignore[union-attr]
+    _write_source(source, scene)
     with pytest.raises(StoryPackageError, match=message):
         load_story_package(root)
 
@@ -1085,31 +1040,32 @@ def test_loader_rejects_incomplete_knowledge_catalog(tmp_path: Path, field: str,
 @pytest.mark.parametrize(
     ("path", "old", "new", "message"),
     [
-        ("plot.md", "scene_id: 1A", "scene_id: 9Z", "heading and frontmatter"),
-        ("plot.md", "---\nscene_id: 1A", "scene_id: 1A", "lacks YAML frontmatter"),
-        ("world.yaml", "mcgehee_home", "unknown_home", "unknown location parent"),
-        (
-            "pacing.yaml",
-            "min_turns: 8\n  nudge_after_turns: 10",
-            "min_turns: 11\n  nudge_after_turns: 10",
-            "turn allocations must be ordered",
-        ),
-        ("storylets.md", "**Pacing window**", "**Window**", "lacks sections"),
-        ("storylets.md", "plot.md#scene-1a1", "plot.md#missing", "unknown plot heading"),
+        ("scenes/1A.yaml", "scene", "9Z", "no match entry"),
+        ("scenes/1A.yaml", "location", "unknown_home", "entity reference .*does not resolve"),
+        ("scenes/1A.yaml", "turns.min", 16, "turn allocations must be ordered"),
+        ("scenes/1A.yaml", "outline", [], "outline"),
+        ("scenes/1A.yaml", "exit.to", "9Z", "scene reference .*does not resolve"),
     ],
 )
-def test_loader_rejects_malformed_sources(tmp_path: Path, path: str, old: str, new: str, message: str) -> None:
+def test_loader_rejects_malformed_sources(tmp_path: Path, path: str, old: str, new: object, message: str) -> None:
     root = copied_package(tmp_path / "fallback")
-    source = root / path
-    source.write_text(source.read_text().replace(old, new, 1))
+    source, document = _source_document(root, path)
+    if old == "turns.min":
+        document["turns"]["min"] = new  # type: ignore[index]
+    elif old == "exit.to":
+        document["exit"]["to"] = new  # type: ignore[index]
+    else:
+        document[old] = new
+    _write_source(source, document)
     with pytest.raises(StoryPackageError, match=message):
         load_story_package(root)
 
 
 def test_loader_rejects_storylet_window_outside_parent_scene(tmp_path: Path) -> None:
     root = copied_package(tmp_path)
-    source = root / "storylets.md"
-    source.write_text(source.read_text().replace("latest: `turn 3`", "latest: `turn 16`", 1))
+    source, scene = _source_document(root, "scenes/1A.yaml")
+    scene["reveals"][0]["guidance"]["window"]["latest_turn"] = 16  # type: ignore[index]
+    _write_source(source, scene)
     with pytest.raises(StoryPackageError, match="escapes its scene pacing window"):
         load_story_package(root)
 
@@ -1123,12 +1079,9 @@ def test_loader_rejects_a_pacing_event_scheduled_past_its_scene_minimum(tmp_path
     """
 
     root = copied_package(tmp_path)
-    source = root / "pacing.yaml"
-    pacing = yaml.safe_load(source.read_text())
-    window = next(item for item in pacing["scenes"] if item["scene_id"] == "1A")
-    event = next(item for item in pacing["events"] if item["id"] == "patrol_arrives_1a")
-    event["at_turn"] = window["min_turns"] + 1
-    source.write_text(yaml.safe_dump(pacing, sort_keys=False))
+    source, scene = _source_document(root, "scenes/1A.yaml")
+    scene["beats"][0]["at_turn"] = scene["turns"]["min"] + 1  # type: ignore[index]
+    _write_source(source, scene)
 
     with pytest.raises(StoryPackageError, match="exceeds its min_turns floor"):
         load_story_package(root)
@@ -1144,10 +1097,7 @@ def test_loader_rejects_a_pacing_event_scheduled_past_its_scene_minimum(tmp_path
             id="loader_rejects_transition_dependency_cycle",
         ),
         pytest.param(
-            "- {id: t_tie, source_scene_id: 1A, target_scene_id: 1C, priority: 10, "
-            "triggers: [{fact_id: michelle_lead_actionable, equals: true}, "
-            "{fact_id: patrol_return_pressure, equals: true}, "
-            "{fact_id: memory_card_recovered, equals: true}]}\n",
+            "priority",
             "ambiguous priority",
             id="loader_rejects_ambiguous_transition_priority",
         ),
@@ -1155,60 +1105,66 @@ def test_loader_rejects_a_pacing_event_scheduled_past_its_scene_minimum(tmp_path
 )
 def test_loader_rejects_invalid_transition_graph(tmp_path: Path, transition: str, message: str) -> None:
     root = copied_package(tmp_path)
-    source = root / "pacing.yaml"
-    # The ending mapping is last in the file, so the extra transitions go in before it.
-    head, ending = source.read_text().split("\nending:", 1)
-    source.write_text(head + "\n" + transition + "\nending:" + ending)
-    with pytest.raises(StoryPackageError, match=message):
-        load_story_package(root)
+    source, scene = _source_document(root, "scenes/1A.yaml")
+    if transition == "priority":
+        patch_source(root, "scenes/1A.yaml", "bridge[bridge_1a_actionable_lead].priority", 10)
+        with pytest.raises(SourceError, match=r"L1\.unknown_key.*unknown key 'priority'"):
+            load_story_package(root)
+    else:
+        scene["exit"]["to"] = "1A"  # type: ignore[index]
+        scene["exit"]["when_all"] = ["broadcast_started"]  # type: ignore[index]
+        _write_source(source, scene)
+        with pytest.raises(StoryPackageError, match=message):
+            load_story_package(root)
 
 
 def test_loader_rejects_unknown_trigger_predicate_and_fallback(tmp_path: Path) -> None:
     root = copied_package(tmp_path)
-    pacing = root / "pacing.yaml"
-    pacing.write_text(
-        pacing.read_text().replace(
-            "  - fact_id: michelle_lead_actionable\n    equals: true\n  - fact_id: patrol_return_pressure",
-            "  - fact_id: unknown_fact\n    equals: true\n  - fact_id: patrol_return_pressure",
-            1,
-        )
-    )
-    with pytest.raises(StoryPackageError, match="unknown trigger predicate"):
+    source, scene = _source_document(root, "scenes/1A.yaml")
+    scene["exit"]["when_all"] = ["unknown_fact"]  # type: ignore[index]
+    _write_source(source, scene)
+    with pytest.raises(StoryPackageError, match="fact .*unknown_fact.*not declared"):
         load_story_package(root)
 
     root = copied_package(tmp_path / "fallback")
-    world = root / "world.yaml"
-    world.write_text(world.read_text().replace("  - michelle_phone", "  - missing_item", 1))
-    with pytest.raises(StoryPackageError, match="unknown fallback"):
+    source, scene = _source_document(root, "scenes/1A.yaml")
+    scene["placements"]["memory_card"]["parent"] = "missing_item"  # type: ignore[index]
+    _write_source(source, scene)
+    with pytest.raises(StoryPackageError, match="scene scope|does not resolve"):
         load_story_package(root)
 
 
 @pytest.mark.parametrize(
     ("path", "old", "new", "message"),
     [
-        ("plot.md", "## Scene", "### Scene", "unknown scene"),
-        ("storylets.md", "**Allowed scene:** `1A`", "**Allowed scene:** `1B`", "invalid allowed scene"),
-        ("storylets.md", "earliest: `turn 0`", "earliest: `later`", "invalid turn offset"),
-        (
-            "pacing.yaml",
-            "  - memory_card",
-            "  - unknown",
-            "unknown dependency",
-        ),
-        ("pacing.yaml", "id: t_1b_1c", "id: t_1a_1b", "duplicate transition ID"),
+        ("scenes/1A.yaml", "scene", "9Z", "no match entry"),
+        ("scenes/1A.yaml", "participants", ["missing_character"], "entity reference .*does not resolve"),
+        ("scenes/1A.yaml", "items", ["missing_item"], "entity reference .*does not resolve"),
+        ("scenes/1A.yaml", "location", "missing_location", "entity reference .*does not resolve"),
+        ("scenes/1A.yaml", "exit.to", "9Z", "scene reference .*does not resolve"),
     ],
 )
-def test_loader_rejects_remaining_boundary_errors(tmp_path: Path, path: str, old: str, new: str, message: str) -> None:
+def test_loader_rejects_remaining_boundary_errors(
+    tmp_path: Path, path: str, old: str, new: object, message: str
+) -> None:
     root = copied_package(tmp_path)
-    source = root / path
-    source.write_text(source.read_text().replace(old, new, 1))
+    source, document = _source_document(root, path)
+    if old == "exit.to":
+        document["exit"]["to"] = new  # type: ignore[index]
+    else:
+        document[old] = new
+    _write_source(source, document)
     with pytest.raises(StoryPackageError, match=message):
         load_story_package(root)
 
 
-def _handoffs(root: Path) -> tuple[Path, dict[str, object]]:
-    source = root / "handoffs.yaml"
-    return source, yaml.safe_load(source.read_text(encoding="utf-8"))
+def _delivery(root: Path, fact_id: str) -> tuple[Path, dict[str, object], dict[str, object]]:
+    for scene_id in ("1A", "1B", "1C", "2A", "2B", "2C", "3A", "3B", "3C"):
+        source, scene = _source_document(root, f"scenes/{scene_id}.yaml")
+        fact = scene["facts"].get(fact_id)  # type: ignore[union-attr]
+        if fact is not None and "delivery" in fact:
+            return source, scene, fact["delivery"]
+    raise KeyError(fact_id)
 
 
 def test_bridge_required_player_safe_facts_have_one_self_conveying_delivery() -> None:
@@ -1236,9 +1192,9 @@ def test_bridge_required_player_safe_facts_have_one_self_conveying_delivery() ->
 
 def test_loader_rejects_missing_bridge_delivery(tmp_path: Path) -> None:
     root = copied_package(tmp_path)
-    source, handoffs = _handoffs(root)
-    handoffs["deliveries"].pop(0)  # type: ignore[index]
-    source.write_text(yaml.safe_dump(handoffs, sort_keys=False), encoding="utf-8")
+    source, scene = _source_document(root, "scenes/1A.yaml")
+    scene["facts"]["continuity_initiative_known"].pop("delivery")  # type: ignore[index]
+    _write_source(source, scene)
 
     with pytest.raises(StoryPackageError, match="continuity_initiative_known.*no FactDelivery"):
         load_story_package(root)
@@ -1246,11 +1202,14 @@ def test_loader_rejects_missing_bridge_delivery(tmp_path: Path) -> None:
 
 def test_loader_rejects_duplicate_fact_delivery(tmp_path: Path) -> None:
     root = copied_package(tmp_path)
-    source, handoffs = _handoffs(root)
-    handoffs["deliveries"].append(dict(handoffs["deliveries"][0]))  # type: ignore[index]
-    source.write_text(yaml.safe_dump(handoffs, sort_keys=False), encoding="utf-8")
+    source, scene = _source_document(root, "scenes/1A.yaml")
+    scene["facts"]["michelle_warning_known"]["delivery"] = dict(  # type: ignore[index]
+        scene["facts"]["continuity_initiative_known"]["delivery"]  # type: ignore[index]
+    )
+    scene["facts"]["michelle_warning_known"]["delivery"]["fact_id"] = "continuity_initiative_known"  # type: ignore[index]
+    _write_source(source, scene)
 
-    with pytest.raises(StoryPackageError, match="continuity_initiative_known.*more than one"):
+    with pytest.raises(SourceError, match=r"L1\.unknown_key.*unknown key 'fact_id'"):
         load_story_package(root)
 
 
@@ -1261,7 +1220,7 @@ def test_loader_rejects_duplicate_fact_delivery(tmp_path: Path) -> None:
             "brandon_identified",
             "source_entity_id",
             "rebecca",
-            "brandon_identified.*source entity.*rebecca.*absent",
+            "brandon_identified.*unknown key.*source_entity_id",
             id="loader_rejects_delivery_source_outside_scene_participants",
         ),
         pytest.param(
@@ -1284,10 +1243,9 @@ def test_loader_rejects_invalid_delivery_fields(
     tmp_path: Path, fact_id: str, field: str, value: str, message: str
 ) -> None:
     root = copied_package(tmp_path)
-    source, handoffs = _handoffs(root)
-    delivery = next(item for item in handoffs["deliveries"] if item["fact_id"] == fact_id)  # type: ignore[index]
+    source, scene, delivery = _delivery(root, fact_id)
     delivery[field] = value
-    source.write_text(yaml.safe_dump(handoffs, sort_keys=False), encoding="utf-8")
+    _write_source(source, scene)
 
     with pytest.raises(StoryPackageError, match=message):
         load_story_package(root)
@@ -1295,30 +1253,35 @@ def test_loader_rejects_invalid_delivery_fields(
 
 def test_loader_rejects_delivery_for_world_only_fact(tmp_path: Path) -> None:
     root = copied_package(tmp_path)
-    source, handoffs = _handoffs(root)
-    handoffs["deliveries"].append(  # type: ignore[index]
-        {
-            "fact_id": "rebecca_observing_infiltrators",
-            "scene_id": "2A",
-            "source_kind": "observation",
-            "must_convey": [["security alert"], ["Rebecca is watching"]],
-            "fallback_text": "The security alert makes clear that Rebecca is watching.",
-        }
-    )
-    source.write_text(yaml.safe_dump(handoffs, sort_keys=False), encoding="utf-8")
+    source, scene = _source_document(root, "scenes/1A.yaml")
+    scene["facts"]["patrol_on_scene"]["delivery"] = {  # type: ignore[index]
+        "source_kind": "observation",
+        "fallback_text": ("The patrol remains by the front door while the house stays under scrutiny."),
+        "fact_id": "patrol_on_scene",
+    }
+    _write_source(source, scene)
 
-    with pytest.raises(StoryPackageError, match="rebecca_observing_infiltrators.*more than one delivery"):
+    with pytest.raises(SourceError, match=r"L1\.unknown_key.*unknown key 'fact_id'"):
+        load_story_package(root)
+
+    root = copied_package(tmp_path / "unseen")
+    source, scene = _source_document(root, "scenes/1A.yaml")
+    scene["facts"]["patrol_on_scene"]["delivery"] = {  # type: ignore[index]
+        "source_kind": "observation",
+        "fallback_text": "The patrol remains by the front door.",
+    }
+    _write_source(source, scene)
+
+    with pytest.raises(SourceError, match=r"L2\.delivery_unseen.*delivery for fact 'patrol_on_scene'"):
         load_story_package(root)
 
 
 def test_loader_rejects_bridge_text_keys_that_do_not_match_transition_ids(tmp_path: Path) -> None:
     root = copied_package(tmp_path)
-    source = root / "plot.md"
-    contents = source.read_text(encoding="utf-8")
-    contents = contents.replace("transition_ids: [t_1a_1b]", "transition_ids: []", 1)
-    source.write_text(contents, encoding="utf-8")
+    source, scene = _source_document(root, "scenes/1A.yaml")
+    patch_source(root, "scenes/1A.yaml", "bridge_text", {"t_1a_1b": "departure"})
 
-    with pytest.raises(StoryPackageError, match="scene 1A bridge_text keys must match transition_ids exactly"):
+    with pytest.raises(SourceError, match=r"L1\.unknown_key.*unknown key 'bridge_text'"):
         load_story_package(root)
 
 

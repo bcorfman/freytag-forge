@@ -16,11 +16,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-try:
-    import yaml
-except ImportError:  # pragma: no cover - the repository has PyYAML installed
-    yaml = None
-
+from storygame.story_package.loader import load_story_package
 
 STATES = ("none", "processing", "development", "marked", "all")
 FACT_STATES = {
@@ -66,25 +62,23 @@ def load(path: Path) -> Any:
 
 
 def load_gap_lines(path: Path | None = None) -> dict[str, GapLine]:
-    """Load the four conditional evidence-gap realizations from pacing YAML."""
+    """Load the conditional evidence-gap realizations from the story package."""
 
-    pacing_path = path or Path(__file__).parents[2] / "data/stories/continuity-initiative/pacing.yaml"
-    if yaml is None:  # pragma: no cover
-        raise RuntimeError("PyYAML is required to load pacing.yaml")
-    pacing = yaml.safe_load(pacing_path.read_text(encoding="utf-8"))
+    root = path or Path(__file__).parents[2] / "data/stories/continuity-initiative"
+    package = load_story_package(root)
     lines: dict[str, GapLine] = {}
-    for event in pacing.get("events", []):
-        for realization in event.get("realizations", []):
-            conditions = realization.get("when")
+    for event in package.pacing.events:
+        for realization in event.realizations:
+            conditions = realization.when
             if not conditions:
                 continue
-            fact_id = conditions[0].get("fact_id")
+            fact_id = conditions[0].fact_id
             state = FACT_STATES.get(fact_id)
             if state:
-                sentence = str(realization["text"]).strip()
+                sentence = realization.text.strip()
                 lines[state] = GapLine(state, sentence, sentence.split(". ", 1)[1])
     if set(lines) != set(FACT_STATES.values()):
-        raise ValueError("pacing.yaml does not contain all four evidence-gap realizations")
+        raise ValueError("story package does not contain all evidence-gap realizations")
     return lines
 
 

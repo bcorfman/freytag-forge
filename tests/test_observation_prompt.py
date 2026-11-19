@@ -12,6 +12,7 @@ from storygame.runtime.cloudflare import CloudflareTurnProvider
 from storygame.runtime.observation import ObservationRequest
 from storygame.runtime.world_model import world_for
 from storygame.story_package.loader import load_story_package
+from tests.story_source.helpers import compiled_story_copy, patch_source
 
 ROOT = Path(__file__).parents[1]
 PACKAGE_ROOT = ROOT / "data/stories/continuity-initiative"
@@ -216,23 +217,13 @@ def _capture_drawer_observation_prompt(
     keep_item_in_drawer: bool = False,
     request: ObservationRequest | None,
 ) -> tuple[str, object]:
-    import shutil
-
-    import yaml
-
     from storygame.runtime.capture import WorldCapture, build_capture_provider
     from storygame.runtime.facts import Fact
     from storygame.runtime.world_model import apply_world_effects
-    from storygame.story_package.loader import load_story_package
 
-    root = tmp_path / "story"
-    shutil.copytree(PACKAGE_ROOT, root)
-    world_path = root / "world.yaml"
-    world_data = yaml.safe_load(world_path.read_text(encoding="utf-8"))
-    drawer = next(item for item in world_data["items"] if item["id"] == "michelle_drawer")
+    root = compiled_story_copy(tmp_path)
     if contents_complete:
-        drawer["contents_complete"] = True
-    world_path.write_text(yaml.safe_dump(world_data, sort_keys=False), encoding="utf-8")
+        patch_source(root, "source/catalog.yaml", "items.michelle_drawer.contents_complete", True)
 
     package = load_story_package(root)
     state = boarding_probe._state_at(package, "kitchen")

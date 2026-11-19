@@ -2,10 +2,10 @@
   "name": "stage7-3c-no-close",
   "story_package": "data/stories/continuity-initiative",
   "overrides": {
-    "storylet-routes.yaml": {
+    "source/scenes/3C.yaml": {
       "replacements": [
         {
-          "old": "  delivery_text: \"The captives have emerged into Los Angeles. News drones, civilians, and local responders begin arriving. Brandon’s voice comes through the emergency speakers. “Reports from other detention sites are reaching the broadcast chamber. Families of the missing are calling there for news.” Then his voice falls silent. Your barrier holds the way from the maintenance network to Rebecca's executive office open for now. The broadcast chamber remains reachable while the barrier holds.\"\n",
+          "old": "  delivery_text: The captives have emerged into Los Angeles. News drones, civilians, and local responders begin arriving. Brandon’s voice comes through the emergency speakers. “Reports from other detention sites are reaching the broadcast chamber. Families of the missing are calling there for news.” Then his voice falls silent. Your barrier holds the way from the maintenance network to Rebecca's executive office open for now. The broadcast chamber remains reachable while the barrier holds.\n",
           "new": ""
         }
       ]

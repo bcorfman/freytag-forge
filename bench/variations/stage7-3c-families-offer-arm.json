@@ -2,11 +2,11 @@
   "name": "stage7-3c-families-offer-arm",
   "story_package": "data/stories/continuity-initiative",
   "overrides": {
-    "handoffs.yaml": {
+    "source/scenes/3C.yaml": {
       "replacements": [
         {
-          "old": "  cue_text: Families of the missing call the broadcast chamber for word. Kristin can answer the families with news of the captives.",
-          "new": "  cue_text: Families of the missing call the broadcast chamber for word."
+          "old": "      cue_text: Families of the missing call the broadcast chamber for word. Kristin can answer the families with news of the captives.",
+          "new": "      cue_text: Families of the missing call the broadcast chamber for word."
         }
       ]
     }

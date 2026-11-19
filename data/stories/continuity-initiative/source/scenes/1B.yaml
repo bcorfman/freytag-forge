@@ -1,0 +1,1008 @@
+schema: 1
+scene: 1B
+location: los_angeles_park
+objective: Follow Michelles lead and survive the park
+freytag_phase: rising_action
+situation: A damaged public park with an ordinary bench near the service path. Checkpoints and emergency patrols make a simple search feel exposed.
+pressure: Follow Michelle's lead and survive the park
+turns:
+  min: 8
+  nudge: 10
+  handoff: 13
+scripted_opening: false
+companions: []
+participants:
+- kristin
+- brandon
+- michelle
+items:
+- memory_card
+- transit_card
+- number_sequence
+- michelle_photograph
+- park_bench
+- service_gate
+- storm_drain
+- kristin_truck
+- park_bicycle
+- picnic_blanket
+- picnic_thermos
+- picnic_cups
+- park_fence
+- dog_leash
+- park_loudspeaker
+- checkpoint_barrier
+- gate_keypad
+setting:
+- Dry leaves skitter across the empty paths.
+prop_pool: []
+entry: 'The park was quieter than the streets around it. The clues led Kristin to an ordinary bench near the service path. She crossed the damaged grounds, kept clear of the checkpoints, and knelt beside the bench.
+
+
+  '
+entry_additions: []
+entry_claims:
+- claim_id: k_scene_1b_entry
+  says: The park is an immediate place of pursuit and uncertainty.
+  entities:
+  - kristin
+  - los_angeles_park
+  reach: []
+  relevance:
+    entity_ids: []
+    priority: 0
+  audience:
+    kind: public
+    character_ids: []
+    player_visible: true
+  voiceable: true
+  repeatable: false
+- claim_id: k_1b_stranger_evasion
+  says: I won't tell you that. Keep your voice down; patrols are nearby.
+  entities: []
+  reach: []
+  relevance:
+    entity_ids: []
+    priority: 0
+  audience:
+    kind: characters
+    character_ids:
+    - brandon
+    player_visible: false
+  voiceable: true
+  repeatable: false
+brief: '**Setting:** Kristin’s neighborhood and a damaged public park in Los Angeles
+
+
+  **Characters:**
+
+
+  * Kristin Schweitzer
+
+  * Brandon Corfman
+
+  * Dr. Michelle McGehee, through recordings and evidence
+
+
+  **Plot:** Kristin follows clues left by Michelle and discovers that the disappearances were coordinated through disguised emergency operations.
+
+
+  **Hidden canon:** Michelle left a transit token, a handwritten number sequence and her photograph under the park bench. All three stay hidden until Kristin searches beneath the bench. She retrieves them together and keeps them with her. Finding them does not identify the transport route or the man in the photograph.
+
+
+  **Established timeline:** For months Michelle used this bench to meet her confidential source, Brandon. She left the cache the night before she was taken, and she put Brandon''s photograph in it so that Kristin would know him on sight and not mistake him for the enemy. The loudspeaker on the pole by the service path has repeated one ninety-second emergency statement since the morning of the disappearances. The people who sat on the picnic blanket drank emergency water from a county distribution point, and only one of them was taken.'
+outline:
+- id: 1B.1
+  anchor: scene-1b1--michelles-dead-drop
+  title: Michelle’s Dead Drop
+  details:
+  - ordinary park bench
+  - damaged grounds
+  - service path
+  - checkpoints
+  - emergency patrols
+  - abandoned picnic and bicycle
+  - loudspeaker on its pole
+  prose: 'Michelle’s files reference an ordinary park bench where she exchanged information with a confidential source. Kristin travels there while avoiding checkpoints and emergency patrols. The bench could be nothing, or it could hold the only lead Michelle prepared for her. Looking the bench over shows the shadowed space beneath it, deep enough for Kristin to reach under.
+
+
+    Kristin searches beneath the park bench and retrieves Michelle''s transit token, handwritten number sequence and photograph. She keeps all three with her. Comparing the token with the sequence identifies a freight route out of the city. Studying the photograph reveals that it shows the man watching her. Showing it to him gives him a reason to identify himself.
+
+
+    The records suggest that the mass disappearance was preceded by years of secret tests.
+
+
+    The park reads as a moment cut short. A bicycle stands on its kickstand where no one will ride it. A dog leash is still tied to the fence, its loop empty. On a picnic blanket two cups sit beside a thermos: one cup is tipped over, and the other is still half full. A loudspeaker on a pole near the service path repeats the same emergency statement, and at the park entrance a checkpoint barrier stands with no one at it. Nothing here is a clue yet. It shows how many people were taken from ordinary afternoons, and that someone was left sitting beside each of them.'
+- id: 1B.2
+  anchor: scene-1b2--the-man-following-her
+  title: The Man Following Her
+  details:
+  - stranger in the park
+  - abandoned service tunnels
+  - emergency patrol
+  - Brandon Corfman
+  - Continuity Initiative
+  - the stranger mouthing the broadcast
+  prose: 'Kristin notices a man watching her from across the park. Believing the man works for the government, Kristin attempts to escape through abandoned service tunnels beneath the park. If Kristin speaks to him before he is identified, the man refuses to give his name and tells her to keep her voice down because patrols are nearby.
+
+
+    When the loudspeaker starts its statement again, the man mouths the words a half-beat ahead of it. He stops when he sees Kristin watching. If she asks, he says that anyone made to repeat something long enough learns it.
+
+
+    The man watching Kristin waits near the service path. Once Kristin has recovered Michelle''s photograph, she can show it to him. She can also question him about Michelle.
+
+
+    The man follows but saves Kristin when an emergency patrol corners her. He identifies himself as Brandon Corfman, the person in Michelle’s photograph.
+
+
+    Brandon says Michelle contacted him because he had once worked on the Continuity Initiative.'
+- id: 1B.3
+  anchor: scene-1b3--brandons-warning
+  title: Brandon’s Warning
+  details:
+  - contaminated emergency water
+  - disguised response teams
+  - evacuation tunnels
+  - missing registrations
+  - communications outages
+  - falsified casualty data
+  - the thermos on the picnic blanket
+  prose: 'Brandon explains that the disappearances were not instantaneous. During the hours before the public became aware of the event, selected people were:
+
+
+    * Drugged through contaminated emergency water supplies
+
+    * Removed by disguised response teams
+
+    * Transported through evacuation tunnels
+
+    * Registered as missing before local authorities understood what had occurred
+
+
+    The scale was hidden by communications outages, manufactured panic, and falsified casualty data.
+
+
+    Brandon claims the missing are still alive, but he refuses to explain how he knows.
+
+
+    The thermos on the picnic blanket carries a county emergency-water label, and a lot number is stamped on its cap. Its twin cup sits beside it, still half full. Someone sat here, drank, and was taken, and the person beside them was not.'
+- id: 1B.4
+  anchor: scene-1b4--the-park-ambush
+  title: The Park Ambush
+  details:
+  - tactical team
+  - storm-drain system
+  - specialized codes
+  - secured service gate
+  - government systems
+  - Brandon’s hidden involvement
+  - gate keypad
+  prose: 'A tactical team arrives, proving Kristin was tracked from Michelle''s house. Kristin and Brandon escape through a storm-drain system, but Brandon is forced to use specialized codes to unlock a secured service gate.
+
+
+    At the secured service gate Brandon does not look at the keypad. His fingers know it. The storm-drain grate lifts without a sound, its latch freshly oiled, as if someone prepared this way out ahead of time.
+
+
+    Kristin realizes Brandon retains access to government systems and may be more deeply involved than he admits.'
+facts:
+  bench_underside_pointed_out:
+    purpose: Kristin has been pointed toward the shadowed space beneath the park bench.
+  bench_clues_recovered:
+    purpose: Kristin has recovered the three clues hidden under the park bench.
+    on_assert:
+    - move: transit_card
+      parent: kristin
+      text: with Kristin
+    - reveal: transit_card
+    - move: number_sequence
+      parent: kristin
+      text: with Kristin
+    - reveal: number_sequence
+    - move: michelle_photograph
+      parent: kristin
+      text: with Kristin
+    - reveal: michelle_photograph
+  transport_route_identified:
+    purpose: Kristin and Brandon have enough evidence to follow the removal operation’s physical transport route toward a specific industrial/freight destination.
+    delivery:
+      source_kind: observation
+      source_entity: kristin
+      fallback_text: The transport route leads toward the supposedly abandoned freight terminal and its evacuation tunnels.
+      cue_text: Michelle's trail points past this park, if Kristin can work out where.
+  brandon_face_known:
+    purpose: Kristin recognizes Brandon as the unidentified man in Michelle’s photograph.
+  brandon_identified:
+    purpose: Kristin knows the follower is Brandon Corfman, Michelle’s contact.
+    on_assert:
+    - accompany: brandon
+      with: kristin
+    delivery:
+      source_kind: npc
+      source_entity: brandon
+      fallback_text: The man identified himself as Brandon Corfman, Michelle's contact.
+      cue_text: The man watching Kristin waits near the service path.
+      costs:
+        trust_brandon: retract
+  missing_may_be_alive:
+    purpose: Kristin has credible reason to believe at least some missing people are alive.
+    delivery:
+      source_kind: message
+      source_entity: brandon
+      fallback_text: Brandon claims that the missing are still alive, though he refuses to explain how he knows. His warning gives Kristin reason to believe the disappeared people are captives rather than casualties.
+  brandon_retains_system_access:
+    purpose: Kristin has observed Brandon using retained Continuity-system access.
+  pursuit_closing_in:
+    purpose: The pursuit team is visibly closing in on Kristin and Brandon in the park.
+  park_pursuit_resolved:
+    purpose: Kristin and Brandon have survived or otherwise resolved the park pursuit and can depart together.
+    delivery:
+      source_kind: observation
+      source_entity: kristin
+      fallback_text: Kristin and Brandon escaped through the storm-drain system, and Brandon unlocked the secured service gate. The park pursuit ended behind them when the tactical team lost their trail.
+      cue_text: A tactical team is closing across the damaged park.
+  park_left_behind_read:
+    purpose: Kristin has read the abandoned park as a moment cut short.
+  stranger_knows_script:
+    purpose: Kristin has seen the stranger mouth the emergency statement ahead of the loudspeaker.
+  emergency_water_label_read:
+    purpose: Kristin has read the emergency-water label on the picnic thermos.
+  transport_route_departure_ready:
+    purpose: Kristin and Brandon have the transport lead, have resolved the park pursuit, have identified Brandon's connection to it, and can proceed to the industrial destination.
+  trust_brandon:
+    purpose: Kristin's trust in Brandon is a durable relationship state across his warning, betrayal, and confession.
+  park_lockdown_spreading:
+    purpose: Emergency teams are closing the park's paths and service exits around Kristin and Brandon.
+placements:
+  park_bench:
+    parent: los_angeles_park
+  park_bicycle:
+    parent: los_angeles_park
+    text: on its kickstand beside the path
+  picnic_blanket:
+    parent: los_angeles_park
+    text: spread on the grass
+  picnic_thermos:
+    parent: picnic_blanket
+    text: beside the cups
+  picnic_cups:
+    parent: picnic_blanket
+    text: one tipped over and one still half full
+  park_fence:
+    parent: los_angeles_park
+    text: along the edge of the grass
+  dog_leash:
+    parent: park_fence
+    text: tied to the fence with its loop empty
+  park_loudspeaker:
+    parent: los_angeles_park
+    text: on a pole near the service path
+  checkpoint_barrier:
+    parent: los_angeles_park
+    text: at the park entrance
+  gate_keypad:
+    parent: los_angeles_park
+    text: beside the service gate
+  service_gate:
+    parent: los_angeles_park
+  storm_drain:
+    parent: los_angeles_park
+  transit_card:
+    parent: park_bench
+    under: true
+  number_sequence:
+    parent: park_bench
+    under: true
+  michelle_photograph:
+    parent: park_bench
+    under: true
+  kristin_truck:
+    parent: los_angeles_park
+  brandon:
+    parent: los_angeles_park
+    text: watching Kristin in the park
+beats:
+- id: pursuit_1b
+  at_turn: 4
+  sets:
+    pursuit_closing_in: true
+  say:
+  - when:
+      kristin_marked_by_patrol: true
+    text: The pursuers already have a description of Kristin. They are closing in through the park.
+    verbatim: false
+  - text: The pursuers are closing in through the park. The pursuit is not over.
+    verbatim: false
+- id: park_lockdown_1b
+  at_turn: 8
+  sets:
+    park_lockdown_spreading: true
+  say:
+  - text: Emergency teams close the footpaths one by one. The service exits are becoming the only way out of the park.
+    verbatim: false
+reveals:
+- id: sl_1b_d
+  storylet_id: SL-1B-D
+  title: Beneath the Park Bench
+  guidance:
+    pressure_role: Let a search beneath the park bench recover Michelle's clues before the park closes.
+    window:
+      earliest_turn: 0
+      target_turn: 2
+      latest_turn: 12
+    available_while:
+      bench_clues_recovered: false
+    boundaries:
+    - brandon_history
+    - janus_selection_system
+    - janus_phase_two
+  from_outline:
+  - 1B.1
+  notes:
+    available_when: '- Kristin has not recovered the clues under the park bench.'
+    participants: '- Kristin Schweitzer
+
+      - Park bench
+
+      - Transit token
+
+      - Handwritten number sequence
+
+      - Michelle''s photograph'
+    dramatic_purpose: '- Reward an underside search with the clues Michelle left for Kristin.'
+    possible_realizations: '- Kristin searches beneath the bench, retrieves all three clues, and keeps them with her.'
+    effects: '- Sets `bench_clues_recovered`.'
+    completion: '- Kristin has recovered the three clues.'
+    abort: '- Kristin leaves scene 1B.'
+    protected_boundary: '- Finding the clues does not identify the route or the photographed man.
+
+      - It does not identify Brandon, establish trust, or reveal the fate of the missing.'
+  variants:
+    r1:
+      realization_id: SL-1B-D-R1
+      intent: Kristin searches beneath the park bench and keeps the transit token, handwritten number sequence and Michelle's photograph.
+      commits:
+        bench_clues_recovered: true
+      helps_exit: []
+      from_outline:
+      - 1B.1
+      claim_id: k_sl_1b_d_r1
+      says: Kristin finds Michelle's transit token, handwritten number sequence and photograph under the park bench and keeps them with her.
+      entities:
+      - kristin
+      - park_bench
+      - transit_card
+      - number_sequence
+      - michelle_photograph
+      reach:
+      - park_bench
+      relevance:
+        entity_ids:
+        - park_bench
+        priority: 10
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: false
+      repeatable: false
+      text: Kristin reaches beneath the park bench. She retrieves a transit token, a handwritten number sequence and Michelle's photograph. She keeps all three with her.
+      earn_when: looks, searches, inspects or checks beneath the park bench
+- id: sl_1b_a
+  storylet_id: SL-1B-A
+  title: The Dead Drop Has More Than One Meaning
+  guidance:
+    pressure_role: Turn lingering investigation into several converging leads—tests, a man in Michelle’s photo, and physical transport infrastructure—without making one clue the required interaction.
+    window:
+      earliest_turn: 0
+      target_turn: 2
+      latest_turn: 3
+    available_while:
+      bench_clues_recovered: true
+    boundaries:
+    - brandon_history
+    - janus_selection_system
+    - janus_phase_two
+  from_outline:
+  - 1B.1
+  notes:
+    available_when: '- Kristin has recovered the three clues beneath the park bench.'
+    participants: '- Kristin Schweitzer
+
+      - Dr. Michelle McGehee through the dead drop
+
+      - Transit token
+
+      - Handwritten number sequence
+
+      - Photograph of Michelle with Brandon'
+    dramatic_purpose: '- Let the player decide which clue feels most important while all clues still point toward the authored transport/test history.
+
+      - Build a quality-based investigative texture rather than a single “correct” inspection.'
+    possible_realizations: '- The dates lead Kristin to suspect earlier tests.
+
+      - The photograph makes the unknown man personally important.
+
+      - The transit token and handwritten sequence can be correlated into routing information that points toward a freight/industrial destination, rather than merely suggesting physical infrastructure.
+
+      - The number sequence remains unresolved context for later interpretation.'
+    effects: '- May reveal evidence of earlier secret tests.
+
+      - May set `brandon_face_known`.
+
+      - May make the transport route more compelling to investigate.'
+    completion: '- Kristin has identified the transport route or recognized the man in the photograph.'
+    abort: '- The park situation is overtaken by the pursuit/ambush.'
+    protected_boundary: '- Brandon is not yet established as trustworthy or as a JANUS developer.'
+  variants:
+    r1:
+      realization_id: SL-1B-A-R1
+      intent: Correlate the transit token with Michelle’s handwritten sequence/dates so the encoded routing information points to a specific freight/industrial destination used by the removal operation.
+      commits:
+        transport_route_identified: true
+      helps_exit:
+      - t_1b_1c
+      claim_id: k_sl_1b_a_r1
+      says: Kristin matches the transit token and number sequence to a freight route leading out of the city.
+      entities:
+      - transit_card
+      - number_sequence
+      reach: []
+      relevance:
+        entity_ids: []
+        priority: 0
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: true
+      repeatable: false
+      when:
+        bench_clues_recovered: true
+      text: Kristin matches the transit token and handwritten number sequence to a freight route out of the city.
+      earn_when: matches the transit token to the handwritten number sequence
+    r2:
+      realization_id: SL-1B-A-R2
+      intent: Identify the photographed stranger as a live lead while preserving uncertainty about his allegiance.
+      commits:
+        brandon_face_known: true
+      helps_exit: []
+      claim_id: k_sl_1b_a_r2
+      says: The photograph recovered from Michelle’s dead drop gives Kristin the face of the man who has been following her.
+      entities:
+      - michelle_photograph
+      reach: []
+      relevance:
+        entity_ids: []
+        priority: 0
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: false
+      repeatable: false
+      when:
+        bench_clues_recovered: true
+      text: Michelle's photograph shows Kristin the face of the man who has been following her.
+      earn_when: examines Michelle's recovered photograph
+- id: sl_1b_e
+  storylet_id: SL-1B-E
+  title: The Bench Points Beneath
+  guidance:
+    pressure_role: Let a plain look at the park bench point Kristin toward the space beneath the bench without recovering the clues.
+    window:
+      earliest_turn: 0
+      target_turn: 3
+      latest_turn: 12
+    available_while:
+      bench_clues_recovered: false
+    boundaries:
+    - brandon_history
+    - janus_selection_system
+    - janus_phase_two
+  from_outline:
+  - 1B.1
+  notes:
+    available_when: '- Kristin has not recovered the clues under the park bench.'
+    participants: '- Kristin Schweitzer
+
+      - Park bench'
+    dramatic_purpose: '- Give a plain look at the bench a short authored reply.
+
+      - Point Kristin toward the space beneath the bench without recovering the clues.'
+    possible_realizations: '- Kristin looks the bench over and notices the shadowed space beneath it.'
+    effects: '- Sets `bench_underside_pointed_out`.
+
+      - Does not recover the clues.'
+    completion: '- Kristin has been pointed toward the space beneath the park bench.'
+    abort: '- Kristin leaves scene 1B.'
+    protected_boundary: '- Does not name or reveal what is beneath the bench, and does not identify Brandon, trust, or the fate of the missing.'
+    non_coercion_note: Offer as a consequence of free-text investigation. Do not present it as a choice or required command; equivalent careful looks at the bench may validate the same operation.
+  variants:
+    r1:
+      realization_id: SL-1B-E-R1
+      intent: Kristin looks the park bench over and notices the shadowed space beneath it without finding anything.
+      commits:
+        bench_underside_pointed_out: true
+      helps_exit: []
+      from_outline:
+      - 1B.1
+      claim_id: k_sl_1b_e_r1
+      says: Kristin looks over the park bench and is pointed toward the shadowed space beneath it.
+      entities:
+      - kristin
+      - park_bench
+      reach:
+      - park_bench
+      relevance:
+        entity_ids:
+        - kristin
+        - park_bench
+        priority: 0
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: false
+      repeatable: true
+      when:
+        bench_clues_recovered: false
+      text: The bench is ordinary. The space beneath it is shadowed and deep enough for Kristin to reach under.
+      earn_when: examines, inspects, searches or checks the park bench without going underneath it
+- id: sl_1b_b
+  storylet_id: SL-1B-B
+  title: Is Brandon Hunter or Rescuer?
+  guidance:
+    pressure_role: When the player resists trusting Brandon, let behavior under pressure earn only provisional cooperation while keeping his deeper history unresolved.
+    window:
+      earliest_turn: 0
+      target_turn: 6
+      latest_turn: 7
+    available_while: {}
+    boundaries:
+    - brandon_history
+    - janus_selection_system
+    - janus_phase_two
+  from_outline:
+  - 1B.2
+  - 1B.3
+  notes:
+    available_when: '- Brandon is following or has just contacted Kristin.
+
+      - Kristin has not yet reached a stable judgment about Brandon.'
+    participants: '- Kristin Schweitzer, former assessment lead for the U.S. Army with Army intelligence, infrastructure, and operations experience
+
+      - Brandon Corfman
+
+      - Photograph from the dead drop'
+    dramatic_purpose: '- Create an early trust problem without forcing the player to accept Brandon immediately.
+
+      - Give Brandon a reason to earn provisional credibility through behavior and limited disclosure.'
+    possible_realizations: '- Kristin confronts Brandon with the photograph.
+
+      - Kristin tries to evade him and sees Brandon intervene against the patrol.
+
+      - Kristin questions how Brandon knows the missing are alive.
+
+      - Brandon refuses full disclosure, preserving suspicion.'
+    effects: '- May change `trust_brandon` within an early bounded range.
+
+      - May set `brandon_identified`.
+
+      - May set `missing_may_be_alive`.
+
+      - May set `transport_route_identified` when Brandon can credibly connect Michelle’s transit clue to the removal operation.
+
+      - May leave Brandon suspicious even as trust increases.'
+    completion: '- Kristin has enough reason to continue with Brandon, even if he remains distrustful.'
+    abort: '- Brandon becomes unavailable through a validated destructive branch.
+
+      - The park escape forces immediate movement into the next situation.'
+    protected_boundary: '- Brandon may admit prior Continuity Initiative work, but not yet the full JANUS-development history.'
+  variants:
+    r1:
+      realization_id: SL-1B-B-R1
+      intent: Brandon intervenes against the patrol, identifies himself as Michelle’s contact, and credibly connects her transit clue to a route used by the removal operation without revealing the facility itself.
+      commits:
+        trust_brandon: true
+        brandon_identified: true
+        missing_may_be_alive: true
+        transport_route_identified: true
+      helps_exit:
+      - t_1b_1c
+      from_outline:
+      - 1B.2
+      - 1B.3
+      claim_id: k_sl_1b_b_r1
+      says: Confronted with Michelle’s photograph, Brandon identifies himself and says the missing are being moved alive.
+      entities: []
+      reach: []
+      relevance:
+        entity_ids: []
+        priority: 0
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: true
+      repeatable: false
+      when:
+        bench_clues_recovered: true
+      text: The man says his name is Brandon Corfman. He says the missing people are being moved alive. A tactical team is closing across the park. Brandon says he can open the secured service gate beside the storm drain. He tells Kristin to follow him.
+      earn_when: shows, holds up, hands, asks, questions, approaches, or confronts the man, watcher, or stranger with Michelle's photograph
+    r2:
+      realization_id: SL-1B-B-R2
+      intent: Kristin questions the man about Michelle; Brandon admits he knew her and that the missing may still be alive, but withholds the protected JANUS role.
+      commits:
+        brandon_identified: true
+        missing_may_be_alive: true
+      helps_exit: []
+      from_outline:
+      - 1B.2
+      - 1B.3
+      claim_id: k_sl_1b_b_r2
+      says: Brandon admits he knew Michelle and insists the missing may still be alive, but his evasions leave Kristin unsure whether he came to help or watch her.
+      entities: []
+      reach: []
+      relevance:
+        entity_ids: []
+        priority: 0
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: true
+      repeatable: false
+      text: Brandon says he knew Michelle. He insists the missing people may still be alive. His vague answers leave Kristin unsure whether he came to help or watch her. A tactical team is closing across the park. Brandon says he can open the secured service gate beside the storm drain. He tells Kristin to follow him.
+      earn_when: asks, questions, or presses the man, watcher, or stranger about Michelle
+- id: sl_1b_c
+  storylet_id: SL-1B-C
+  title: The Gate Code Gives Brandon Away
+  guidance:
+    pressure_role: 'Convert pursuit into both forward motion and suspicion: Brandon can solve the immediate escape problem, but doing so exposes unexplained retained access.'
+    window:
+      earliest_turn: 0
+      target_turn: 10
+      latest_turn: 11
+    available_while:
+      brandon_identified: true
+      missing_may_be_alive: true
+    boundaries:
+    - brandon_history
+    - janus_selection_system
+    - janus_phase_two
+  from_outline:
+  - 1B.4
+  notes:
+    available_when: '- A tactical/emergency team has closed on Kristin and Brandon.
+
+      - The secured maintenance route is relevant.
+
+      - Brandon remains capable of helping.'
+    participants: '- Kristin Schweitzer
+
+      - Brandon Corfman
+
+      - Tactical/emergency patrol
+
+      - Secured service gate'
+    dramatic_purpose: '- Turn escape pressure into character evidence.
+
+      - Let Brandon solve an immediate problem in a way that creates a larger trust problem.'
+    possible_realizations: '- Brandon opens a secured service gate without looking at its keypad.
+
+      - Kristin notices how practiced Brandon is with the system.
+
+      - Brandon minimizes the significance of his access.
+
+      - The escape succeeds but the player can press him afterward.'
+    effects: '- May increase immediate danger.
+
+      - May leave Brandon more suspicious.
+
+      - May set `brandon_retains_system_access`.
+
+      - May establish `transport_route_identified` when Brandon’s retained access and the escape route make the physical removal route followable.'
+    completion: '- Kristin and Brandon escape the immediate park pursuit.'
+    abort: '- The maintenance route is no longer relevant or the scene has advanced.'
+    protected_boundary: '- The access proves deeper involvement, not the exact nature of Brandon’s guilt.'
+  variants:
+    r1:
+      realization_id: SL-1B-C-R1
+      intent: Brandon opens a secured service gate without looking at its keypad; the storm-drain grate lifts without a sound, its latch freshly oiled.
+      commits:
+        brandon_retains_system_access: true
+        transport_route_identified: true
+        park_pursuit_resolved: true
+      helps_exit:
+      - t_1b_1c
+      claim_id: k_sl_1b_c_r1
+      says: With patrols closing in, Brandon opens a secured service gate and leads Kristin through the storm drain.
+      entities: []
+      reach: []
+      relevance:
+        entity_ids: []
+        priority: 0
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: true
+      repeatable: false
+      when:
+        brandon_identified: true
+        missing_may_be_alive: true
+      text: As patrols close in, Brandon opens a secured service gate without looking at its keypad. The storm-drain grate lifts without a sound, its latch freshly oiled. He leads Kristin through it.
+      earn_when: follows Brandon, flees or escapes through the service gate, opens or unlocks the gate, or goes into the storm drain or the tunnel
+    r2:
+      realization_id: SL-1B-C-R2
+      intent: Kristin notices Brandon’s practiced system access during the maintenance-route escape and carries that unresolved suspicion forward while the transport route toward the freight terminal becomes clear.
+      commits:
+        brandon_retains_system_access: true
+        transport_route_identified: true
+        park_pursuit_resolved: true
+      helps_exit: []
+      claim_id: k_sl_1b_c_r2
+      says: Brandon enters a code no civilian should know, getting them clear toward the freight route while deepening Kristin’s suspicion.
+      entities: []
+      reach: []
+      relevance:
+        entity_ids: []
+        priority: 0
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: true
+      repeatable: false
+      when:
+        brandon_identified: true
+        missing_may_be_alive: true
+      text: Brandon enters a code no civilian should know, his fingers moving without a glance at the keypad. It gets them clear toward the freight route. Kristin trusts him less.
+      earn_when: asks or tells Brandon to use the gate code or to open the gate
+- id: sl_1b_f
+  storylet_id: SL-1B-F
+  title: Left Behind
+  guidance:
+    pressure_role: Let Kristin read the abandoned park as a moment cut short.
+    window:
+      earliest_turn: 0
+      target_turn: 3
+      latest_turn: 12
+    available_while: {}
+    boundaries:
+    - janus_selection_system
+    - brandon_history
+    - janus_phase_two
+  from_outline:
+  - 1B.1
+  notes:
+    available_when: '- No conditions.'
+    participants: '- Kristin Schweitzer
+
+      - Picnic blanket
+
+      - Bicycle
+
+      - Dog leash'
+    dramatic_purpose: '- Let Kristin read the abandoned park as a moment cut short.'
+    possible_realizations: '- The park is abandoned: a bicycle and a picnic were left behind.'
+    effects: '- Sets `park_left_behind_read`.'
+    completion: '- Kristin has read the abandoned park as a moment cut short.'
+    abort: '- Kristin leaves scene 1B.'
+    protected_boundary: '- Does not reveal JANUS, Brandon''s history, or JANUS Phase Two.'
+  variants:
+    r1:
+      realization_id: SL-1B-F-R1
+      intent: 'The park is abandoned: a bicycle and a picnic were left behind.'
+      commits:
+        park_left_behind_read: true
+      helps_exit: []
+      from_outline:
+      - 1B.1
+      claim_id: k_sl_1b_f_r1
+      says: 'The park is abandoned: a bicycle and a picnic were left behind.'
+      entities:
+      - kristin
+      - picnic_blanket
+      - park_bicycle
+      - dog_leash
+      reach:
+      - picnic_blanket
+      - park_bicycle
+      - dog_leash
+      relevance:
+        entity_ids:
+        - picnic_blanket
+        - park_bicycle
+        - dog_leash
+        priority: -1
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: false
+      repeatable: false
+      text: 'A bicycle stands on its kickstand where no one will ride it. Whoever held the dog leash let go in a hurry. On a picnic blanket two cups sit beside a thermos: one is tipped over, and the other is still half full.'
+      earn_when: looks closely at the picnic blanket, the cups, the bicycle or the dog leash
+- id: sl_1b_g
+  storylet_id: SL-1B-G
+  title: The Stranger Knows the Words
+  guidance:
+    pressure_role: Let Kristin notice that the stranger knows the looping emergency statement.
+    window:
+      earliest_turn: 0
+      target_turn: 4
+      latest_turn: 8
+    available_while:
+      brandon_identified: false
+    boundaries:
+    - janus_selection_system
+    - brandon_history
+    - janus_phase_two
+  from_outline:
+  - 1B.2
+  notes:
+    available_when: '- Brandon has not yet been identified.'
+    participants: '- Kristin Schweitzer
+
+      - Brandon Corfman
+
+      - Park loudspeaker'
+    dramatic_purpose: '- Let Kristin notice that the stranger knows the looping emergency statement.'
+    possible_realizations: '- The stranger mouths the loudspeaker''s emergency statement along with it.'
+    effects: '- Sets `stranger_knows_script`.'
+    completion: '- Kristin has seen the stranger mouth the emergency statement ahead of the loudspeaker.'
+    abort: '- Kristin leaves scene 1B.'
+    protected_boundary: '- Does not reveal JANUS, Brandon''s history, or JANUS Phase Two.'
+  variants:
+    r1:
+      realization_id: SL-1B-G-R1
+      intent: The stranger mouths the loudspeaker's emergency statement along with it.
+      commits:
+        stranger_knows_script: true
+      helps_exit: []
+      from_outline:
+      - 1B.2
+      claim_id: k_sl_1b_g_r1
+      says: The stranger mouths the loudspeaker's emergency statement along with it.
+      entities:
+      - kristin
+      - park_loudspeaker
+      - brandon
+      reach:
+      - park_loudspeaker
+      - brandon
+      relevance:
+        entity_ids:
+        - park_loudspeaker
+        - brandon
+        priority: -1
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: false
+      repeatable: false
+      when:
+        brandon_identified: false
+      text: The loudspeaker on its pole starts the emergency statement again. The man by the service path mouths the words a half-beat ahead of it. When he sees Kristin watching, he stops.
+      earn_when: listens to the loudspeaker or watches the stranger while the broadcast plays
+- id: sl_1b_h
+  storylet_id: SL-1B-H
+  title: The Emergency Water
+  guidance:
+    pressure_role: Let Kristin connect the picnic's emergency water to Brandon's warning.
+    window:
+      earliest_turn: 0
+      target_turn: 6
+      latest_turn: 12
+    available_while:
+      missing_may_be_alive: true
+    boundaries:
+    - janus_selection_system
+    - brandon_history
+    - janus_phase_two
+  from_outline:
+  - 1B.3
+  notes:
+    available_when: '- Kristin has credible reason to believe at least some missing people are alive.'
+    participants: '- Kristin Schweitzer
+
+      - Picnic thermos'
+    dramatic_purpose: '- Let Kristin connect the picnic''s emergency water to Brandon''s warning.'
+    possible_realizations: '- The thermos carries a county emergency-water label.'
+    effects: '- Sets `emergency_water_label_read`.'
+    completion: '- Kristin has read the emergency-water label on the picnic thermos.'
+    abort: '- Kristin leaves scene 1B.'
+    protected_boundary: '- Does not reveal JANUS, Brandon''s history, or JANUS Phase Two.'
+  variants:
+    r1:
+      realization_id: SL-1B-H-R1
+      intent: The thermos carries a county emergency-water label.
+      commits:
+        emergency_water_label_read: true
+      helps_exit: []
+      from_outline:
+      - 1B.3
+      claim_id: k_sl_1b_h_r1
+      says: The thermos carries a county emergency-water label.
+      entities:
+      - kristin
+      - picnic_thermos
+      reach:
+      - picnic_thermos
+      relevance:
+        entity_ids:
+        - picnic_thermos
+        priority: -1
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: false
+      repeatable: false
+      when:
+        missing_may_be_alive: true
+      text: The thermos carries a county emergency-water label, and a lot number is stamped on its cap. Its twin cup sits beside it, still half full. Someone sat here, drank, and was taken. The person beside them was not.
+      earn_when: examines the thermos, its label or its cap
+bridge:
+- id: bridge_1b_departure
+  kind: bridge
+  when:
+  - park_pursuit_resolved
+  - transport_route_identified
+  - brandon_identified
+  - missing_may_be_alive
+  commits:
+    transport_route_departure_ready: true
+  realized_by:
+  - sl_1b_a
+  - sl_1b_b
+  - sl_1b_c
+  claim:
+    claim_id: k_bridge_1b_departure
+    says: Kristin and Brandon can depart along the identified transport route.
+    entities:
+    - kristin
+    - brandon
+    - transit_card
+    reach: []
+    relevance:
+      entity_ids: []
+      priority: 0
+    audience:
+      kind: public
+      character_ids: []
+      player_visible: true
+    voiceable: true
+    repeatable: false
+    commits_subset:
+      transport_route_departure_ready: true
+incidents: []
+exit:
+  id: t_1b_1c
+  to: 1C
+  priority: 10
+  when_all:
+  - transport_route_departure_ready
+  needs:
+  - item: transit_card
+    relation: exists
+  - item: brandon
+    relation: exists
+  bridge: The park pursuit was behind them. Kristin and Brandon headed for the freight terminal along the transport route.
+order:
+  storylets:
+  - SL-1B-D
+  - SL-1B-A
+  - SL-1B-E
+  - SL-1B-F
+  - SL-1B-G
+  - SL-1B-H
+  - SL-1B-B
+  - SL-1B-C
+  deliveries:
+  - park_pursuit_resolved
+  - transport_route_identified
+  - brandon_identified
+  - missing_may_be_alive

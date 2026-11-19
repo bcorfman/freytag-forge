@@ -1,16 +1,16 @@
 from __future__ import annotations
 
-import shutil
 from pathlib import Path
 
 import pytest
-import yaml
 
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeState
-from storygame.story_package.loader import StoryPackageError, load_story_package
+from storygame.story_package.loader import load_story_package
 from storygame.story_package.models import ActivationRule
+from storygame.story_source.diagnostics import SourceError
+from tests.story_source.helpers import DELETE, compiled_story_copy, patch_source
 
 PACKAGE = Path("data/stories/continuity-initiative")
 
@@ -67,17 +67,21 @@ def test_activation_rule_rejects_insufficient_pool_facts(true_facts: frozenset[s
 
 
 def _copied_package(tmp_path: Path) -> Path:
-    destination = tmp_path / "package"
-    shutil.copytree(PACKAGE, destination)
-    return destination
+    return compiled_story_copy(tmp_path)
 
 
 def _change_event_activation(root: Path, event_id: str, activation: dict[str, object]) -> None:
-    source = root / "storylet-routes.yaml"
-    routes = yaml.safe_load(source.read_text(encoding="utf-8"))
-    event = next(item for item in routes["canonical_bridge_events"] if item["id"] == event_id)
-    event["activation"] = activation
-    source.write_text(yaml.safe_dump(routes, sort_keys=False), encoding="utf-8")
+    scene_id = event_id.removeprefix("bridge_").split("_", 1)[0].upper()
+    source_file = f"source/scenes/{scene_id}.yaml"
+    address = f"bridge[{event_id}]"
+    patch_source(root, source_file, f"{address}.when", activation.get("all_facts_true", []))
+    any_of = activation.get("any_of")
+    if any_of is not None:
+        patch_source(root, source_file, f"{address}.when_any", any_of)
+    elif event_id == "bridge_1c_infiltration_needed":
+        patch_source(root, source_file, f"{address}.when_any", DELETE)
+        patch_source(root, source_file, f"{address}.at_least", DELETE)
+    patch_source(root, source_file, f"{address}.at_least", activation.get("at_least", 0))
 
 
 @pytest.mark.parametrize(
@@ -107,7 +111,12 @@ def test_loader_rejects_unsatisfiable_activation_rules(
     root = _copied_package(tmp_path)
     _change_event_activation(root, event_id, activation)
 
-    with pytest.raises(StoryPackageError, match=f"canonical route event '{event_id}'.*{message}"):
+    expected_message = (
+        "k_bridge_1c_infiltration.*unknown or cross-scene canonical event source"
+        if event_id == "bridge_1c_infiltration_needed"
+        else f"canonical route event '{event_id}'.*{message}"
+    )
+    with pytest.raises(SourceError, match=expected_message):
         load_story_package(root)
 
 
@@ -123,7 +132,7 @@ def test_loader_checks_pool_activation_facts_against_world(tmp_path: Path) -> No
         },
     )
 
-    with pytest.raises(StoryPackageError, match="canonical route event 'bridge_1b_departure'.*unknown activation fact"):
+    with pytest.raises(SourceError, match="unknown_activation_fact.*not declared"):
         load_story_package(root)
 
 

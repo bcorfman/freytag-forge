@@ -1,9 +1,10 @@
 import scripts.generate_spine_expected_reveals as spine
+from tests.story_source.helpers import compiled_story_copy
 
 SCENES = ("1A", "1B", "1C", "2A", "2B", "2C", "3A", "3B", "3C")
 
 
-def _simulate_current_ending(monkeypatch):
+def _simulate_current_ending(monkeypatch, root):
     original_fact = spine.Fact
 
     def current_fact(*, predicate, subject, value):
@@ -12,20 +13,21 @@ def _simulate_current_ending(monkeypatch):
         return original_fact(predicate=predicate, subject=subject, value=value)
 
     monkeypatch.setattr(spine, "Fact", current_fact)
-    return spine.simulate_expected_reveals()
+    return spine.simulate_expected_reveals(root)
 
 
-def test_committed_expectation_matches_the_engine_simulation(monkeypatch) -> None:
-    simulated = _simulate_current_ending(monkeypatch)
+def test_committed_expectation_matches_the_engine_simulation(monkeypatch, tmp_path) -> None:
+    simulated = _simulate_current_ending(monkeypatch, compiled_story_copy(tmp_path))
     assert tuple(simulated) == SCENES
     assert all(
         item_id.startswith(("k_scene_", "k_sl_", "k_resolution_")) for ids in simulated.values() for item_id in ids
     )
 
 
-def test_expected_reveal_ids_are_current_and_scene_specific(monkeypatch) -> None:
-    expected = _simulate_current_ending(monkeypatch)
-    knowledge = spine.knowledge_items()
+def test_expected_reveal_ids_are_current_and_scene_specific(monkeypatch, tmp_path) -> None:
+    root = compiled_story_copy(tmp_path)
+    expected = _simulate_current_ending(monkeypatch, root)
+    knowledge = spine.knowledge_items(root)
 
     assert all(ids == sorted(ids) for ids in expected.values())
     assert all(item_id in knowledge for ids in expected.values() for item_id in ids)

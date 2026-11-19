@@ -27,6 +27,7 @@ from storygame.runtime.item_facts import _MATCH_SYSTEM, ItemFactsProvider
 from storygame.runtime.knowledge import KnowledgeProjector
 from storygame.runtime.world_model import apply_world_effects, world_for
 from tests._legacy_package import legacy_package
+from tests.story_source.helpers import compiled_story_copy, load_compiled_copy
 
 ROOT = Path(__file__).resolve().parents[1]
 PACKAGE = ROOT / "data" / "stories" / "continuity-initiative"
@@ -235,13 +236,25 @@ def test_selection_only_variation_disables_model_grounding(tmp_path) -> None:
     assert variation["_prompt_variant"]["model_grounding"] is False
 
 
-def test_overlay_changes_effective_package_hash_and_assembled_prompt() -> None:
-    example = load_variation(VARIATION)
-    overlay = load_variation(OVERLAY_VARIATION)
+def test_overlay_changes_effective_package_hash_and_assembled_prompt(tmp_path) -> None:
+    compiled_root = compiled_story_copy(tmp_path)
+    example = core.resolve_variation({"name": "example", "story_package": str(compiled_root)}, OVERLAY_VARIATION)
+    overlay_source = json.loads(OVERLAY_VARIATION.read_text(encoding="utf-8"))
+    override = next(iter(overlay_source["overrides"].values()))
+    overlay_source["story_package"] = str(compiled_root)
+    overlay_source["overrides"] = {"source/scenes/1A.yaml": override}
+    overlay = core.resolve_variation(overlay_source, OVERLAY_VARIATION)
     assert overlay["_package_hash"] != example["_package_hash"]
-    assert "KMS initials carved in drawer" in (PACKAGE / "plot.md").read_text(encoding="utf-8")
+    package = load_compiled_copy(compiled_root)
+    assert any(
+        "KMS initials carved in drawer" in detail
+        for scene in package.scenes
+        if scene.metadata.scene_id == "1A"
+        for beat in scene.beats.values()
+        for detail in beat.details
+    )
 
-    prompt = prompt_for(overlay, "1A", PLAYER_INPUT)
+    prompt = prompt_for(overlay, "1A", PLAYER_INPUT, "1A.1")
     assert "- KMS initials carved beneath the drawer" in prompt["user"]
     assert "- KMS initials carved in drawer" not in prompt["user"]
 
@@ -1599,7 +1612,7 @@ def test_a_beat_may_be_named_by_id_ordinal_or_anchor() -> None:
 
 
 def test_an_unknown_beat_names_the_beats_the_scene_actually_has() -> None:
-    """A bad id must not send the caller reading plot.md to find the right one."""
+    """A bad id must not send the caller reading source to find the right one."""
 
     from bench.core import default_variation, package_and_state, resolve_beat
 

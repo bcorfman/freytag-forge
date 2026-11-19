@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-import shutil
 from pathlib import Path
 
 import pytest
-import yaml
 
 from storygame.runtime.cloudflare import CloudflareTurnProvider
 from storygame.runtime.engine import RuntimeEngine
@@ -13,12 +11,14 @@ from storygame.runtime.knowledge import KnowledgeProjector
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import ProposalValidationError
 from storygame.runtime.world_model import apply_world_effects
-from storygame.story_package import StoryPackageError
-from storygame.story_package.loader import load_story_package
+from storygame.story_package.loader import load_legacy_story_package, load_story_package
 from storygame.story_package.models import KnowledgeDefinition
+from storygame.story_source.compiler import SourceError
+from tests.story_source.helpers import compiled_story_copy, load_compiled_copy, patch_source
 
 PACKAGE_ROOT = Path("data/stories/continuity-initiative")
 PACKAGE = load_story_package(PACKAGE_ROOT)
+LEGACY_PACKAGE = load_legacy_story_package(Path("tests/fixtures/parity/continuity-initiative/legacy"))
 
 
 def _generic_item(*, voiceable: bool | None = None) -> KnowledgeDefinition:
@@ -180,23 +180,19 @@ def test_dialogue_grounding_rejects_quoted_gap_statement(knowledge_id: str) -> N
 
 
 def test_loader_rejects_non_boolean_voiceable(tmp_path: Path) -> None:
-    destination = tmp_path / "package"
-    shutil.copytree(PACKAGE_ROOT, destination)
-    source = destination / "knowledge.yaml"
-    catalog = yaml.safe_load(source.read_text())
-    item = next(item for item in catalog["knowledge"] if item["id"] == "k_sl_1a_b_r0")
-    item["voiceable"] = "false"
-    source.write_text(yaml.safe_dump(catalog, sort_keys=False))
+    destination = compiled_story_copy(tmp_path)
+    patch_source(destination / "source", "scenes/1A.yaml", "reveals[sl_1a_e].variants.r1.voiceable", "false")
 
-    with pytest.raises(StoryPackageError) as caught:
-        load_story_package(destination)
+    with pytest.raises(SourceError) as caught:
+        load_compiled_copy(destination)
     assert "voiceable" in str(caught.value)
 
 
 def test_real_package_has_exactly_the_non_voiceable_knowledge_items() -> None:
-    non_voiceable = [item for item in PACKAGE.knowledge.knowledge if item.voiceable is False]
+    non_voiceable = {item.id for item in PACKAGE.knowledge.knowledge if item.voiceable is False}
+    legacy_non_voiceable = {item.id for item in LEGACY_PACKAGE.knowledge.knowledge if item.voiceable is False}
 
-    assert [item.id for item in non_voiceable] == [
+    expected = {
         "k_sl_1a_j_r1",
         "k_sl_1a_j_r2",
         "k_sl_1a_j_r3",
@@ -232,7 +228,9 @@ def test_real_package_has_exactly_the_non_voiceable_knowledge_items() -> None:
         "k_sl_3a_g_r1",
         "k_sl_3a_h_r1",
         "k_sl_3a_i_r1",
-    ]
+    }
+    assert non_voiceable == expected
+    assert non_voiceable == legacy_non_voiceable
 
 
 def test_default_serialization_omits_voiceable_but_false_round_trips() -> None:

@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import json
-import shutil
 from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
+import yaml
 
 import storygame.runtime.cloudflare as cloudflare
 from storygame.runtime.capture import build_capture_provider
@@ -39,6 +39,8 @@ from storygame.story_package.models import (
     StoryPackage,
     WorldSource,
 )
+from storygame.story_source.diagnostics import SourceError
+from tests.story_source.helpers import compiled_story_copy, load_compiled_copy
 
 ROOT = Path(__file__).parents[1]
 PACKAGE = load_story_package(ROOT / "data/stories/continuity-initiative")
@@ -270,18 +272,13 @@ def test_name_matching_prompt_keeps_the_full_scene_list(monkeypatch: pytest.Monk
 
 
 def test_loader_rejects_blank_location_description(tmp_path: Path) -> None:
-    root = tmp_path / "story"
-    shutil.copytree(ROOT / "data/stories/continuity-initiative", root)
-    world_path = root / "world.yaml"
-    text = world_path.read_text()
-    old_description = (
-        "  description: \"Michelle's house stands behind a low gate. Kristin's truck is parked at the curb, and "
-        'sirens carry from the next street."\n'
-    )
-    assert text.count(old_description) == 1
-    world_path.write_text(text.replace(old_description, "  description: '  '\n"))
-    with pytest.raises(StoryPackageError, match="description must be a non-blank string"):
-        load_story_package(root)
+    root = compiled_story_copy(tmp_path)
+    catalog_path = root / "source/catalog.yaml"
+    catalog = yaml.safe_load(catalog_path.read_text(encoding="utf-8"))
+    catalog["places"]["outside_house"]["description"] = "  "
+    catalog_path.write_text(yaml.safe_dump(catalog, sort_keys=False), encoding="utf-8")
+    with pytest.raises((StoryPackageError, SourceError), match="description must be a non-blank string"):
+        load_compiled_copy(root)
 
 
 def test_reach_scoped_committed_statements_follow_the_protagonist(monkeypatch: pytest.MonkeyPatch) -> None:

@@ -185,7 +185,6 @@ def _compare_lists(
                 "collection_order" if _collection_order_proof(left, right, path, root) else "representation"
             )
             _add_difference(output, path, left, right, difference_class)
-            return
         for key in sorted(keyed_left):
             _compare(keyed_left[key], keyed_right[key], _part(path, key), output, root)
         return
@@ -206,7 +205,7 @@ def _difference_class(path: str, left: Any, right: Any, root: Mapping[str, Any] 
     if field == "facts" and path.startswith("world.") and not _collection_order_proof(left, right, path, root):
         return "representation"
     if field in _COLLECTION_FIELDS and _list_is_order_only(left, right):
-        return "collection_order"
+        return "collection_order" if _collection_order_proof(left, right, path, root) else "representation"
     if _reader_path(path):
         return "reader_only"
     if field in {"owner", "owners", "source_owner"}:
@@ -315,7 +314,9 @@ def _collection_order_proof(
     if path == "world.facts":
         return _facts_keep_effect_order(left, right, root)
     if path.rsplit(".", 1)[-1] in _COLLECTION_FIELDS:
-        return True
+        scenes_left = _scene_sequence(left)
+        scenes_right = _scene_sequence(right)
+        return scenes_left is None or scenes_right is None or scenes_left == scenes_right
     scenes_left = _scene_sequence(left)
     scenes_right = _scene_sequence(right)
     return scenes_left is not None and scenes_left == scenes_right
@@ -362,12 +363,27 @@ def _ordered_pair(left: list[Any], right: list[Any], pair: frozenset[Any]) -> bo
 
 
 def _scene_sequence(items: list[Any]) -> list[list[str]] | None:
-    if not all(isinstance(item, dict) and isinstance(item.get("scene_id"), str) for item in items):
+    scene_ids = [_item_scene_id(item) for item in items]
+    if any(scene_id is None for scene_id in scene_ids):
         return None
     by_scene: dict[str, list[str]] = {}
-    for item in items:
-        by_scene.setdefault(item["scene_id"], []).append(_item_key(item) or "")
+    for item, scene_id in zip(items, scene_ids, strict=True):
+        by_scene.setdefault(scene_id, []).append(_item_key(item) or "")
     return [by_scene[key] for key in sorted(by_scene)]
+
+
+def _item_scene_id(item: Any) -> str | None:
+    if not isinstance(item, dict):
+        return None
+    if isinstance(item.get("scene_id"), str):
+        return item["scene_id"]
+    metadata = item.get("metadata")
+    if isinstance(metadata, dict) and isinstance(metadata.get("scene_id"), str):
+        return metadata["scene_id"]
+    available = item.get("available_in_scenes")
+    if isinstance(available, list) and len(available) == 1 and isinstance(available[0], str):
+        return available[0]
+    return None
 
 
 def _reader_path(path: str) -> bool:

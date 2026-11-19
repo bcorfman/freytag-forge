@@ -1,0 +1,1065 @@
+schema: 1
+scene: 2B
+location: janus_archive
+objective: Find the truth in the archive before the audit finds them
+freytag_phase: rising_action
+situation: The facility's restricted records archive, with rows of terminals and a medical terminal tied to the detention levels. An audit sweep is working down the aisles toward Kristin and Brandon.
+pressure: Find the truth in the archive before the audit reaches them
+turns:
+  min: 8
+  nudge: 10
+  handoff: 15
+scripted_opening: false
+companions:
+- brandon
+participants:
+- kristin
+- brandon
+- michelle
+- shift_supervisor
+items:
+- archive_terminals
+- medical_terminal
+- cooling_service_archive_panel
+- build_record
+- transfer_queue
+setting:
+- The cooling-service archive panel connects the infrastructure corridors to the records archive.
+- The cooling-service archive panel opens with a push.
+- Kristin has already reached the records archive.
+- The archive terminals are available for investigation.
+prop_pool: []
+entry: 'Kristin and Brandon came through the cooling-service panel into the records archive just as the lights came up at the far end. An audit sweep had started. Voices and footsteps were working their way down the aisles toward them. They had a few minutes among the archive terminals. Brandon whispered, "Use the archive terminals. Pull your own file first. My name may be on whatever you find. If it is, let me delete it before we copy the files, or tell me to leave it. Your call."
+
+
+  '
+entry_additions:
+- when:
+  - cover_suspected
+  text: The supervisor had logged them at the gate, and the audit sweep had started early because of it. The voices were already close, working down the nearest aisle. Kristin and Brandon had barely a minute among the archive terminals.
+entry_claims:
+- claim_id: k_scene_2b_entry
+  says: The archive crisis is immediate and evidence must be secured.
+  entities:
+  - kristin
+  - janus_archive
+  reach: []
+  relevance:
+    entity_ids: []
+    priority: 0
+  audience:
+    kind: public
+    character_ids: []
+    player_visible: true
+  voiceable: true
+  repeatable: false
+brief: '**Setting:** The facility’s records archive, its stacks and terminals, during an audit sweep
+
+
+  **Characters:**
+
+
+  * Kristin Schweitzer
+
+  * Brandon Corfman
+
+  * The shift supervisor, leading the audit
+
+  * Dr. Michelle McGehee, through the medical terminal
+
+
+  **Plot:** Kristin and Brandon reach the archive as an audit sweep begins. One file tells Kristin that she was left behind as bait and that Brandon built the system that chose the missing. She confronts him in whispers while the audit passes. Then Michelle answers her.'
+outline:
+- id: 2B.1
+  anchor: scene-2b1--the-selection-algorithm
+  title: The Selection Algorithm
+  details:
+  - audit sweep
+  - records archive
+  - archive terminals
+  - Kristin's own file
+  prose: 'The audit sweep is the pressure. The shift supervisor and his staff are working down the aisles. If he logged Kristin and Brandon for a follow-up audit in 2A, the sweep starts closer and moves faster.
+
+
+    Kristin does not have to search file after file. The first thing she pulls is her own record. It names the system that made it: an artificial-intelligence system called **JANUS**.
+
+
+    JANUS analyzed government, financial, medical, employment, education, and communications data to classify every American according to:
+
+
+    * Usefulness to national reconstruction
+
+    * Likelihood of organized resistance
+
+    * Political influence
+
+    * Psychological vulnerability
+
+    * Family and social connections
+
+    * Potential value as leverage over others
+
+
+    Michelle was taken because JANUS predicted that her research and public credibility could unite opposition after the disappearance.'
+- id: 2B.2
+  anchor: scene-2b2--kristin-was-bait
+  title: Kristin Was Bait
+  details:
+  - Kristin's classification
+  - RETAINED
+  - predicted to lead investigators to Corfman
+  - anticipated journey
+  - accessible evidence
+  - held transfers
+  prose: 'Kristin''s record is short. It reads: **RETAINED — predicted to lead investigators to CORFMAN.**
+
+
+    She was left behind on purpose. Charles expected her to look for Michelle, find Brandon and lead security to his hidden network. Security left parts of Michelle''s evidence where Kristin could find them.
+
+
+    The terminals also list the transfer queue. If Kristin opens it, dozens of prisoner transfers are being held, each pushed back a week under a maintenance ticket, and every ticket is closed with the same code: sensor fault. It is the excuse the building uses for anything it does not want to look at, the same one that closed the supervisor''s forty alarms. Someone is using it on purpose. Kristin does not know who yet.
+
+
+    Kristin realizes that every step she has taken may have been anticipated. Directly below her record is the JANUS build record. Its author is Brandon Corfman.'
+- id: 2B.3
+  anchor: scene-2b3--brandons-role
+  title: Brandon’s Role
+  details:
+  - JANUS build record
+  - whispered confrontation
+  - the stacks
+  - Brandon's request
+  - his name
+  - the badge readers' three checks
+  prose: 'The audit is coming down the aisle. Kristin confronts Brandon crouched between the shelves, in whispers, while footsteps pass on the other side. A raised voice or a sudden move could give them away.
+
+
+    Brandon admits that he helped write the AI software used to identify people at risk during national emergencies. When he learned that Charles meant to use it for mass detention and political control, he tried to destroy the project. He failed and fled. Michelle knew about his involvement and believed his access was the only way to expose the program.
+
+
+    Kristin feels betrayed. She suspects he may still be manipulating her to erase evidence of his own guilt.
+
+
+    If she reads the access section of the build record, it lists the three things the badge readers check. They are the three Brandon said he knew at the gate. That is how two badges were forged in one night, and it is the sharpest thing she has to say to him. Brandon watches her read and says nothing.
+
+
+    Then Brandon asks for exactly that. Before they copy the files, he wants to delete his name from the build record. "Let me fix this one thing."
+
+
+    * If Kristin refuses, Brandon complies, stung. The evidence stays intact, and trust between them is colder.
+
+    * If Kristin lets him, trust warms, but his name is gone from the record. Only his own word can prove his role later.
+
+
+    Either way, Kristin copies the JANUS files and keeps them with her. If the audit reaches them before she decides, Brandon''s name stays.'
+- id: 2B.4
+  anchor: scene-2b4--michelles-hidden-resistance
+  title: Michelle’s Hidden Resistance
+  details:
+  - medical terminal
+  - maintenance line
+  - Shelly
+  - one reply
+  - Michelle alive
+  - the shift supervisor
+  - the ticket header
+  prose: 'As they move to leave, the medical terminal in the archive prints a maintenance line. It is in Michelle''s private phrasing, and it ends with "Shelly," the name only Kristin uses for her. Michelle has been using her access to the medical terminal to alter prisoner classifications, delay transfers and send coded messages through maintenance reports.
+
+
+    Kristin can type one reply. Michelle answers once. She is alive. She is working against the facility from inside. She will send a route when she can. She says nothing about an uprising or the broadcast system.
+
+
+    Michelle is not waiting to be rescued. That changes how Kristin leaves the archive.
+
+
+    Kristin has reason to doubt a message that finds her. She was left behind as bait. If she has seen the held transfers, she can check the maintenance line against them: it carries the same ticket header and the same closing code, sensor fault. Whoever held the transfers wrote it. This is also how Michelle''s later messages travel, hidden among the maintenance reports nobody reads.
+
+
+    If the audit reaches them first, the shift supervisor sees them and does not raise the alarm. He lets them go. He is one of the workers Michelle has quietly recruited, though Kristin does not learn that here.'
+facts:
+  janus_evidence:
+    purpose: Kristin has secured archive material showing JANUS classified Americans for detention, leverage, and political control.
+    delivery:
+      source_kind: observation
+      source_entity: kristin
+      fallback_text: Kristin pulls her own file first. It says she was retained to lead investigators to Corfman. It says she was predicted to lead investigators to Corfman. The file names JANUS. The build record below names Brandon Corfman.
+  badge_checks_read:
+    purpose: Kristin has read the three checks listed in the build record's access section.
+    on_assert: []
+  held_transfers_seen:
+    purpose: Kristin has seen the prisoner transfers held under repeated sensor fault tickets.
+    on_assert: []
+  ticket_header_matched:
+    purpose: Kristin has matched the maintenance line's ticket header to the held transfers.
+    on_assert: []
+  kristin_file_read:
+    purpose: Kristin has pulled and read her own file in the archive.
+  kristin_was_bait:
+    purpose: Kristin knows Charles left Michelle’s evidence accessible so she would expose Brandon’s hidden network.
+    delivery:
+      source_kind: observation
+      source_entity: kristin
+      fallback_text: Kristin was bait. Kristin's file says she was left behind as bait. Charles expected her to lead investigators to Brandon.
+  brandon_janus_role_known:
+    purpose: Kristin knows Brandon wrote JANUS AI software to identify threats.
+    delivery:
+      source_kind: message
+      source_entity: brandon
+      fallback_text: Brandon admits that he helped write JANUS. He says he tried to stop it after he learned its purpose.
+  brandon_claimed_reform_motive:
+    purpose: Brandon has claimed he broke with Charles after learning JANUS would be used for mass detention/control.
+    delivery:
+      source_kind: message
+      source_entity: brandon
+      fallback_text: Brandon says he tried to destroy JANUS after he learned its purpose. He meant to expose the program and stop it from becoming a tool of political control.
+  michelle_resistance_known:
+    purpose: Kristin knows Michelle is actively sabotaging the facility from inside.
+    delivery:
+      source_kind: message
+      source_entity: michelle
+      fallback_text: Michelle's resistance is active inside the facility. Michelle's maintenance reply confirms that her hidden resistance is active inside the facility. Her coded messages have been delaying the program and helping people survive.
+  evidence_gap_development_record:
+    purpose: Kristin missed copying the development record bearing Brandon's name when time ran out.
+  brandon_name_kept:
+    purpose: Kristin kept Brandon's name in the JANUS build record.
+    on_assert:
+    - move: copied_janus_files
+      parent: kristin
+      text: with Kristin
+    - reveal: copied_janus_files
+    delivery:
+      source_kind: message
+      source_entity: brandon
+      fallback_text: Brandon's name stays in the record. Kristin keeps Brandon's name in the JANUS build record. Evidence intact. The development evidence remains intact.
+  brandon_name_erased:
+    purpose: Kristin allowed Brandon's name to be erased from the JANUS build record.
+    on_assert:
+    - move: copied_janus_files
+      parent: kristin
+      text: with Kristin
+    - reveal: copied_janus_files
+    delivery:
+      source_kind: message
+      source_entity: brandon
+      fallback_text: Brandon's name erased from the record. Kristin lets Brandon erase his name from the JANUS build record. The record has a gap. The development record now has a gap.
+  michelle_reply_received:
+    purpose: Michelle answered Kristin once through the medical terminal.
+    delivery:
+      source_kind: message
+      source_entity: michelle
+      fallback_text: Kristin replies to the maintenance line on the medical terminal. Michelle answers once. She is alive and working inside the facility. She will send a route.
+  audit_window_missed:
+    purpose: The archive audit reached the stacks before Kristin resolved the incident.
+    delivery:
+      source_kind: observation
+      source_entity: shift_supervisor
+      fallback_text: The audit reaches the stacks in the archive before Kristin and Brandon finish.
+  audit_recovery_ready:
+    purpose: The archive audit has lasted long enough for the missed-window recovery to close the archive crisis.
+  audit_reaches_stacks:
+    purpose: The live audit has reached Kristin and Brandon in the archive stacks.
+  archive_crisis_understood:
+    purpose: Kristin has secured JANUS evidence, learned the bait/Brandon revelations, and recognized Michelle’s active resistance, completing the archive crisis.
+  janus_known:
+    purpose: Kristin has identified JANUS as the selection system before its records expose Brandon's role.
+  michelle_selected_for_resistance_influence:
+    purpose: Kristin knows JANUS selected Michelle for her predicted ability to unite resistance.
+placements:
+  archive_terminals:
+    parent: janus_archive
+  medical_terminal:
+    parent: janus_archive
+  build_record:
+    parent: janus_archive
+    text: below the personnel records on the archive terminals
+  transfer_queue:
+    parent: janus_archive
+    text: in the transfer listing on the archive terminals
+  cooling_service_archive_panel:
+    parent: infrastructure_corridors
+  shift_supervisor:
+    parent: janus_archive
+    text: leading the audit sweep between the archive stacks
+beats:
+- id: audit_window_2b
+  at_turn: 5
+  sets:
+    audit_window_missed: true
+  say:
+  - text: The audit reaches the archive stacks.
+    verbatim: false
+- id: audit_nudge_2b
+  at_turn: 6
+  sets:
+    audit_reaches_stacks: true
+  say:
+  - text: The shift supervisor is close to the archive stacks. Kristin must keep her confrontation with Brandon to a whisper.
+    verbatim: false
+  when:
+    audit_window_missed: true
+    brandon_name_kept: false
+    brandon_name_erased: false
+- id: audit_recovery_2b
+  at_turn: 8
+  sets:
+    audit_recovery_ready: true
+  when:
+    audit_window_missed: true
+    audit_reaches_stacks: true
+    brandon_name_kept: false
+    brandon_name_erased: false
+reveals:
+- id: sl_2b_a
+  storylet_id: SL-2B-A
+  title: Her Own File
+  guidance:
+    pressure_role: Let Kristin's own file expose the bait and Brandon's authorship before he offers the name choice.
+    window:
+      earliest_turn: 0
+      target_turn: 1
+      latest_turn: 3
+    available_while:
+      audit_window_missed: false
+    boundaries:
+    - janus_phase_two
+  from_outline:
+  - 2B.1
+  - 2B.2
+  notes:
+    available_when: '- `audit_window_missed` is false.'
+    participants: '- Kristin Schweitzer
+
+      - Brandon Corfman
+
+      - Archive terminals
+
+      - Kristin''s personnel file'
+    dramatic_purpose: '- Let Kristin pull her own file and learn why she was selected before Brandon offers the name choice.'
+    possible_realizations: '- Kristin pulls her own file at the archive terminals.
+
+      - The file says she was retained to lead investigators to Corfman and names Brandon as an author.
+
+      - Brandon whispers the choice about keeping or erasing his name.'
+    effects: '- May set `kristin_file_read`.'
+    completion: '- Kristin has pulled and read her own file.'
+    abort: '- The scene is no longer `2B`.'
+    protected_boundary: '- The full JANUS history and the final name choice remain unresolved until the observation is complete.'
+  variants:
+    r1:
+      realization_id: SL-2B-A-R1
+      intent: Kristin pulls and reads her own file in the archive.
+      commits:
+        kristin_file_read: true
+      helps_exit: []
+      from_outline:
+      - 2B.1
+      - 2B.2
+      claim_id: k_sl_2b_a_r1
+      says: Kristin pulls and reads her own file in the archive.
+      entities:
+      - kristin
+      - brandon
+      - janus_archive
+      - archive_terminals
+      reach: []
+      relevance:
+        entity_ids:
+        - kristin
+        - brandon
+        - janus_archive
+        - archive_terminals
+        priority: 10
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: true
+      repeatable: false
+      when:
+        audit_window_missed: false
+      text: Kristin pulls her own file. It says she was retained to lead investigators to Corfman. Kristin was bait. The build record for the system names Brandon Corfman as an author. Brandon whispers, "Let me delete my name from the record before we copy the files. Or tell me to leave it. Your call."
+      earn_when: pulls Kristin's own file at the archive terminals
+- id: sl_2b_b
+  storylet_id: SL-2B-B
+  title: Brandon’s Name Is in the Build Records
+  guidance:
+    pressure_role: Turn accumulated suspicion into a confrontation that can occur immediately or after observation, without forcing forgiveness or hostility.
+    window:
+      earliest_turn: 0
+      target_turn: 5
+      latest_turn: 7
+    available_while:
+      kristin_file_read: true
+    boundaries:
+    - janus_phase_two
+  from_outline:
+  - 2B.1
+  - 2B.2
+  - 2B.3
+  notes:
+    available_when: '- Kristin and Brandon are in the records archive.
+
+      - The audit sweep is moving through the stacks.
+
+      - `kristin_file_read` is true.'
+    participants: '- Kristin Schweitzer
+
+      - Brandon Corfman
+
+      - The shift supervisor
+
+      - Archive terminals
+
+      - Copied JANUS files'
+    dramatic_purpose: '- Make one file pull reveal Kristin’s bait status, JANUS, and Brandon’s role.
+
+      - Turn the audit into a whispered confrontation.'
+    possible_realizations: '- Kristin pulls her own file first.
+
+      - The record reads, “RETAINED — predicted to lead investigators to CORFMAN.”
+
+      - The build record below it names Brandon as JANUS’s author.
+
+      - Kristin confronts Brandon between the shelves while the audit passes.
+
+      - Brandon admits that he wrote the software and claims he broke with Charles.
+
+      - Brandon asks Kristin to remove his name before they copy the files.
+
+      - Kristin keeps his name or lets him erase it.'
+    effects: '- May set `janus_known`.
+
+      - May set `janus_evidence`.
+
+      - May set `kristin_was_bait`.
+
+      - May set `michelle_selected_for_resistance_influence`.
+
+      - May set `brandon_janus_role_known`.
+
+      - May set `brandon_claimed_reform_motive`.
+
+      - May set `archive_crisis_understood`.'
+    completion: '- Kristin has confronted Brandon and resolved whether his name stays in the build record.'
+    abort: '- The scene is no longer `2B`.'
+    protected_boundary: '- Michelle’s uprising and the broadcast solution remain undisclosed.'
+  variants:
+    r4:
+      realization_id: SL-2B-B-R4
+      intent: Kristin keeps Brandon’s name while the single file pull reveals JANUS, her bait status, and his role.
+      commits:
+        brandon_name_kept: true
+        brandon_janus_role_known: true
+        brandon_claimed_reform_motive: true
+        janus_known: true
+        kristin_was_bait: true
+        michelle_selected_for_resistance_influence: true
+        janus_evidence: true
+        archive_crisis_understood: true
+      helps_exit:
+      - t_2b_2c
+      from_outline:
+      - 2B.1
+      - 2B.2
+      - 2B.3
+      outcome:
+        id: brandon_name_kept
+        advantages:
+        - brandon_name_kept
+      claim_id: k_sl_2b_b_r4
+      says: Kristin pulls her own JANUS file first, learns she was bait, and keeps Brandon’s name in the build record.
+      entities:
+      - kristin
+      - brandon
+      - janus_archive
+      - archive_terminals
+      - copied_janus_files
+      reach: []
+      relevance:
+        entity_ids:
+        - kristin
+        - brandon
+        - janus_archive
+        - archive_terminals
+        - copied_janus_files
+        priority: 10
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: true
+      repeatable: false
+      when:
+        kristin_file_read: true
+      text: The file names the system JANUS. Brandon admits that he helped write JANUS. He says he tried to stop it after he learned its purpose. Kristin keeps his name in the record. The JANUS files are copied. Kristin carries the copied files. The medical terminal prints a maintenance line that ends with the name Shelly. Only Kristin uses that name. Before the audit reaches the aisle, Kristin has time to type one reply on the medical terminal.
+      earn_when: tells Brandon to leave his name in the build record after reading Kristin's own file
+    r5:
+      realization_id: SL-2B-B-R5
+      intent: Kristin lets Brandon erase his name while the archive preserves the JANUS evidence and the confrontation.
+      commits:
+        brandon_name_erased: true
+        brandon_janus_role_known: true
+        brandon_claimed_reform_motive: true
+        janus_known: true
+        kristin_was_bait: true
+        michelle_selected_for_resistance_influence: true
+        janus_evidence: true
+        archive_crisis_understood: true
+        evidence_gap_development_record: true
+      helps_exit:
+      - t_2b_2c
+      from_outline:
+      - 2B.1
+      - 2B.2
+      - 2B.3
+      outcome:
+        id: brandon_name_erased
+        advantages:
+        - brandon_name_erased
+        costs:
+        - evidence_gap_development_record
+      claim_id: k_sl_2b_b_r5
+      says: Kristin pulls her own JANUS file first, learns she was bait, and lets Brandon erase his name from the build record.
+      entities:
+      - kristin
+      - brandon
+      - janus_archive
+      - archive_terminals
+      - copied_janus_files
+      reach: []
+      relevance:
+        entity_ids:
+        - kristin
+        - brandon
+        - janus_archive
+        - archive_terminals
+        - copied_janus_files
+        priority: 10
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: true
+      repeatable: false
+      when:
+        kristin_file_read: true
+      text: The file names the system JANUS. Brandon admits that he helped write JANUS. He says he tried to stop it after he learned its purpose. Kristin lets him erase his name from the record. The development record now has a gap. The JANUS files are copied. Kristin carries the copied files. The medical terminal prints a maintenance line that ends with the name Shelly. Only Kristin uses that name. Before the audit reaches the aisle, Kristin has time to type one reply on the medical terminal.
+      earn_when: lets Brandon erase his name from the build record after reading Kristin's own file
+- id: sl_2b_c
+  storylet_id: SL-2B-C
+  title: Michelle Answers Once
+  guidance:
+    pressure_role: After the whispered confrontation, let a medical-terminal reply show that Michelle is alive and active.
+    window:
+      earliest_turn: 4
+      target_turn: 6
+      latest_turn: 7
+    available_while:
+      archive_crisis_understood: true
+    boundaries:
+    - janus_phase_two
+  from_outline:
+  - 2B.4
+  notes:
+    available_when: '- Kristin and Brandon have completed the archive discovery.
+
+      - The medical terminal is available.'
+    participants: '- Kristin Schweitzer
+
+      - Brandon Corfman
+
+      - Dr. Michelle McGehee through the medical terminal
+
+      - Medical terminal'
+    dramatic_purpose: '- Let Michelle answer after the betrayal.
+
+      - Show that she is alive and active without revealing the uprising plan.'
+    possible_realizations: '- The medical terminal prints a maintenance line in Michelle’s private phrasing.
+
+      - The line ends with “Shelly.”
+
+      - Kristin types one reply.
+
+      - Michelle answers once.
+
+      - She says she is alive, active, and will send a route.'
+    effects: '- Sets `michelle_resistance_known`.
+
+      - Sets `michelle_reply_received`.
+
+      - Sets `archive_crisis_understood`.'
+    completion: '- Kristin receives Michelle’s single reply.'
+    abort: '- The scene is no longer `2B`.'
+    protected_boundary: '- The uprising and broadcast solution remain undisclosed.'
+  variants:
+    r3:
+      realization_id: SL-2B-C-R3
+      intent: The medical terminal prints Michelle’s maintenance line. Kristin replies once. Michelle answers that she is alive and active.
+      commits:
+        michelle_resistance_known: true
+        michelle_reply_received: true
+        archive_crisis_understood: true
+      helps_exit:
+      - t_2b_2c
+      from_outline:
+      - 2B.4
+      claim_id: k_sl_2b_c_r3
+      says: Michelle answers Kristin once through the medical terminal and confirms that she is alive and active inside the facility.
+      entities:
+      - kristin
+      - michelle
+      - janus_archive
+      - medical_terminal
+      reach: []
+      relevance:
+        entity_ids:
+        - michelle
+        - janus_archive
+        - medical_terminal
+        priority: 10
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: true
+      repeatable: false
+      when:
+        janus_evidence: true
+      text: Kristin types one reply to the maintenance line. Michelle answers once. She is alive. She is working inside the facility. She will send a route.
+      earn_when: types one reply to the maintenance line on the medical terminal
+- id: sl_2b_d
+  storylet_id: SL-2B-D
+  title: The Audit Reaches the Stacks
+  guidance:
+    pressure_role: Let the audit close the archive choice while the supervisor allows Kristin and Brandon to leave.
+    window:
+      earliest_turn: 5
+      target_turn: 6
+      latest_turn: 10
+    available_while:
+      audit_window_missed: true
+    boundaries:
+    - janus_phase_two
+  from_outline:
+  - 2B.1
+  - 2B.2
+  - 2B.3
+  - 2B.4
+  notes:
+    available_when: '- `audit_window_missed` is true.'
+    participants: '- Kristin Schweitzer
+
+      - Brandon Corfman
+
+      - The shift supervisor
+
+      - Archive terminals
+
+      - Medical terminal
+
+      - Copied JANUS files'
+    dramatic_purpose: '- Complete the archive crisis when the audit closes the normal choice.'
+    possible_realizations: '- The audit reaches the stacks.
+
+      - The shift supervisor sees Kristin and Brandon but does not raise the alarm.
+
+      - Kristin keeps Brandon’s name in the build record.
+
+      - They leave with the copied JANUS files.
+
+      - Michelle’s maintenance line prints as they leave.
+
+      - Kristin receives Michelle’s one reply.'
+    effects: '- Sets `brandon_name_kept`.
+
+      - Sets `janus_known`.
+
+      - Sets `janus_evidence`.
+
+      - Sets `kristin_was_bait`.
+
+      - Sets `michelle_selected_for_resistance_influence`.
+
+      - Sets `brandon_janus_role_known`.
+
+      - Sets `brandon_claimed_reform_motive`.
+
+      - Sets `michelle_resistance_known`.
+
+      - Sets `michelle_reply_received`.
+
+      - Sets `archive_crisis_understood`.'
+    completion: '- Kristin and Brandon leave the archive with the files and the audit has passed.'
+    abort: '- The scene is no longer `2B`.'
+    protected_boundary: '- The uprising and broadcast solution remain undisclosed.'
+  variants:
+    r1:
+      realization_id: SL-2B-D-R1
+      intent: The audit reaches the stacks. Kristin keeps Brandon’s name, copies the JANUS files, and receives Michelle’s one reply.
+      commits:
+        brandon_name_kept: true
+        janus_known: true
+        kristin_was_bait: true
+        michelle_selected_for_resistance_influence: true
+        brandon_janus_role_known: true
+        brandon_claimed_reform_motive: true
+        janus_evidence: true
+        michelle_resistance_known: true
+        michelle_reply_received: true
+        archive_crisis_understood: true
+        audit_recovery_ready: true
+      helps_exit:
+      - t_2b_2c
+      from_outline:
+      - 2B.1
+      - 2B.2
+      - 2B.3
+      - 2B.4
+      claim_id: k_audit_recovery_ready
+      says: The archive audit is ready for the missed-window recovery.
+      entities: []
+      reach: []
+      relevance:
+        entity_ids: []
+        priority: 0
+      audience:
+        kind: world_only
+        character_ids: []
+        player_visible: false
+      voiceable: true
+      repeatable: false
+      commits_subset:
+        audit_recovery_ready: true
+      extra_claims:
+      - claim_id: k_sl_2b_d_route_effects
+        says: The missed-window archive recovery carries its route effects.
+        entities: []
+        reach: []
+        relevance:
+          entity_ids: []
+          priority: 0
+        audience:
+          kind: characters
+          character_ids:
+          - charles
+          player_visible: false
+        voiceable: true
+        repeatable: false
+        commits_subset:
+          brandon_name_kept: true
+          janus_known: true
+          kristin_was_bait: true
+          michelle_selected_for_resistance_influence: true
+          brandon_janus_role_known: true
+          brandon_claimed_reform_motive: true
+          janus_evidence: true
+          michelle_resistance_known: true
+          michelle_reply_received: true
+          archive_crisis_understood: true
+- id: sl_2b_e
+  storylet_id: SL-2B-E
+  title: The Badge Checks
+  guidance:
+    pressure_role: Let Kristin confirm the three checks Brandon knew at the gate.
+    window:
+      earliest_turn: 0
+      target_turn: 6
+      latest_turn: 6
+    available_while:
+      audit_window_missed: false
+      kristin_file_read: true
+    boundaries:
+    - janus_phase_two
+  from_outline:
+  - 2B.3
+  notes:
+    available_when: '- `audit_window_missed` is false.
+
+      - `kristin_file_read` is true.'
+    participants: '- Kristin Schweitzer
+
+      - Brandon Corfman
+
+      - Build record
+
+      - Archive terminals'
+    dramatic_purpose: '- Let Kristin confirm the three checks Brandon knew at the gate.'
+    possible_realizations: '- Kristin reads the access section of the build record or checks what the badge readers check.'
+    effects: '- Sets `badge_checks_read`.'
+    completion: '- Kristin has read the access section of the build record.'
+    abort: '- The scene is no longer `2B`.'
+    protected_boundary: '- The protected system, Brandon’s past, and Rebecca’s interest remain undisclosed.'
+  variants:
+    r1:
+      realization_id: SL-2B-E-R1
+      intent: Kristin reads the access section of the build record and confirms the badge checks.
+      commits:
+        badge_checks_read: true
+      helps_exit: []
+      from_outline:
+      - 2B.3
+      claim_id: k_sl_2b_e_r1
+      says: The badge readers check exactly the three things Brandon said he knew.
+      entities:
+      - kristin
+      - brandon
+      - build_record
+      - archive_terminals
+      reach:
+      - build_record
+      relevance:
+        entity_ids:
+        - build_record
+        - brandon
+        priority: -1
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: false
+      repeatable: false
+      when:
+        audit_window_missed: false
+        kristin_file_read: true
+      text: In the build record, the access section lists what the badge readers check. There are three checks, the same three Brandon said he knew at the gate.
+      earn_when: reads the access section of the build record, or checks what the badge readers check
+- id: sl_2b_f
+  storylet_id: SL-2B-F
+  title: The Held Transfers
+  guidance:
+    pressure_role: Let Kristin see the held transfers and the repeated maintenance excuse.
+    window:
+      earliest_turn: 0
+      target_turn: 6
+      latest_turn: 6
+    available_while:
+      audit_window_missed: false
+    boundaries:
+    - janus_phase_two
+  from_outline:
+  - 2B.2
+  notes:
+    available_when: '- `audit_window_missed` is false.'
+    participants: '- Kristin Schweitzer
+
+      - Transfer queue
+
+      - Archive terminals'
+    dramatic_purpose: '- Let Kristin see the held transfers and the repeated maintenance excuse.'
+    possible_realizations: '- Kristin opens or reads the transfer queue on the archive terminals.'
+    effects: '- Sets `held_transfers_seen`.'
+    completion: '- Kristin has read the transfer queue.'
+    abort: '- The scene is no longer `2B`.'
+    protected_boundary: '- The protected system, Brandon’s past, and Rebecca’s interest remain undisclosed.'
+  variants:
+    r1:
+      realization_id: SL-2B-F-R1
+      intent: Kristin reads the transfer queue on the archive terminals.
+      commits:
+        held_transfers_seen: true
+      helps_exit: []
+      from_outline:
+      - 2B.2
+      claim_id: k_sl_2b_f_r1
+      says: Dozens of prisoner transfers are held under sensor fault tickets.
+      entities:
+      - kristin
+      - transfer_queue
+      - archive_terminals
+      reach:
+      - transfer_queue
+      relevance:
+        entity_ids:
+        - transfer_queue
+        priority: -1
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: false
+      repeatable: false
+      when:
+        audit_window_missed: false
+      text: Dozens of prisoner transfers sit held in the transfer queue, each pushed back a week under a maintenance ticket. Every ticket is closed with the same code, sensor fault. It is the excuse the building uses for anything it does not want to look at, and someone is using it on purpose.
+      earn_when: opens or reads the transfer queue on the archive terminals
+- id: sl_2b_g
+  storylet_id: SL-2B-G
+  title: The Ticket Header
+  guidance:
+    pressure_role: Let Kristin match the maintenance line to the held transfers.
+    window:
+      earliest_turn: 4
+      target_turn: 6
+      latest_turn: 7
+    available_while:
+      archive_crisis_understood: true
+      held_transfers_seen: true
+    boundaries:
+    - janus_phase_two
+  from_outline:
+  - 2B.4
+  notes:
+    available_when: '- `archive_crisis_understood` is true.
+
+      - `held_transfers_seen` is true.'
+    participants: '- Kristin Schweitzer
+
+      - Medical terminal
+
+      - Transfer queue'
+    dramatic_purpose: '- Let Kristin match the maintenance line to the held transfers.'
+    possible_realizations: '- Kristin reads or compares the maintenance line on the medical terminal with the held transfers.'
+    effects: '- Sets `ticket_header_matched`.'
+    completion: '- Kristin has matched the maintenance line to the held transfers.'
+    abort: '- The scene is no longer `2B`.'
+    protected_boundary: '- The protected system, Brandon’s past, and Rebecca’s interest remain undisclosed.'
+  variants:
+    r1:
+      realization_id: SL-2B-G-R1
+      intent: Kristin compares the maintenance line with the held transfers.
+      commits:
+        ticket_header_matched: true
+      helps_exit: []
+      from_outline:
+      - 2B.4
+      claim_id: k_sl_2b_g_r1
+      says: The maintenance line has the same ticket header as the held transfers.
+      entities:
+      - kristin
+      - medical_terminal
+      - transfer_queue
+      reach:
+      - medical_terminal
+      relevance:
+        entity_ids:
+        - medical_terminal
+        priority: -1
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: false
+      repeatable: false
+      when:
+        archive_crisis_understood: true
+        held_transfers_seen: true
+      text: The maintenance line carries the same ticket header and the same closing code, sensor fault, as the held transfers. Whoever held them wrote this.
+      earn_when: reads or compares the maintenance line on the medical terminal with the held transfers
+bridge:
+- id: bridge_2b_archive_crisis
+  kind: bridge
+  when:
+  - janus_evidence
+  - brandon_janus_role_known
+  - brandon_claimed_reform_motive
+  - michelle_resistance_known
+  commits:
+    archive_crisis_understood: true
+  realized_by:
+  - sl_2b_b
+  - sl_2b_a
+  - sl_2b_c
+  - sl_2b_d
+  claim:
+    claim_id: k_bridge_2b_archive_crisis
+    says: 'The archive crisis is understood: the evidence, betrayal, and Michelle''s resistance converge here.'
+    entities:
+    - kristin
+    - michelle
+    - brandon
+    - janus_archive
+    reach: []
+    relevance:
+      entity_ids: []
+      priority: 0
+    audience:
+      kind: public
+      character_ids: []
+      player_visible: true
+    voiceable: true
+    repeatable: false
+    commits_subset:
+      archive_crisis_understood: true
+- id: bridge_2b_missed_window_recovery
+  kind: bridge
+  when:
+  - audit_window_missed
+  - audit_recovery_ready
+  commits:
+    audit_window_missed: true
+    brandon_name_kept: true
+    janus_known: true
+    kristin_was_bait: true
+    michelle_selected_for_resistance_influence: true
+    brandon_janus_role_known: true
+    brandon_claimed_reform_motive: true
+    janus_evidence: true
+    michelle_resistance_known: true
+    michelle_reply_received: true
+    archive_crisis_understood: true
+  realized_by:
+  - sl_2b_d
+  claim:
+    claim_id: k_audit_window_missed
+    says: The archive audit reached the stacks before Kristin resolved the archive incident.
+    entities: []
+    reach: []
+    relevance:
+      entity_ids: []
+      priority: 0
+    audience:
+      kind: public
+      character_ids: []
+      player_visible: true
+    voiceable: true
+    repeatable: false
+    commits_subset:
+      audit_window_missed: true
+incidents:
+- id: i_2b_audit
+  reveal: sl_2b_b
+  outcomes:
+  - r4
+  - r5
+  recovery: sl_2b_d
+  missed_window: audit_window_2b
+  observed_by:
+  - k_sl_2b_a_r1
+  - k_sl_2b_b_r4
+  - k_sl_2b_b_r5
+  - k_sl_2b_c_r3
+  successor: t_2b_2c
+exit:
+  id: t_2b_2c
+  to: 2C
+  priority: 10
+  when_all:
+  - michelle_reply_received
+  needs:
+  - item: brandon
+    relation: exists
+  bridge: Kristin and Brandon slipped out of the archive with the copied files. In the command corridor beyond, doors were already closing at both ends.
+order:
+  deliveries:
+  - janus_evidence
+  - brandon_janus_role_known
+  - brandon_claimed_reform_motive
+  - kristin_was_bait
+  - brandon_name_kept
+  - brandon_name_erased
+  - michelle_resistance_known
+  - michelle_reply_received
+  - audit_window_missed
+  knowledge:
+  - k_sl_2b_a_r1
+  - k_sl_2b_b_r4
+  - k_sl_2b_b_r5
+  - k_sl_2b_c_r3
+  - k_sl_2b_e_r1
+  - k_sl_2b_f_r1
+  - k_sl_2b_g_r1
+  - k_bridge_2b_archive_crisis
+  - k_scene_2b_entry
+  - k_audit_recovery_ready
+  - k_sl_2b_d_route_effects
+  - k_audit_window_missed

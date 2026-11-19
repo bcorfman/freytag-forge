@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+import yaml
 
 from bench.core import load_variation
 from storygame.runtime.candidate_matcher import (
@@ -325,9 +326,12 @@ def _families_match(package, engine, command: str):
 
 
 def test_families_replacement_is_unique_and_current_package_lacks_aliases() -> None:
-    source = Path("data/stories/continuity-initiative/knowledge.yaml").read_text(encoding="utf-8")
-    old = "reassure the families, respond to the families]"
-    assert source.count(old) == 1
+    source = yaml.safe_load(
+        Path("data/stories/continuity-initiative/source/scenes/3C.match.yaml").read_text(encoding="utf-8")
+    )
+    evidence = source["claims"]["k_sl_3c_d_r2"]["action_evidence"]
+    old_aliases = {"reassure the families", "respond to the families"}
+    assert sum(old_aliases <= set(group) for group in evidence) == 1
 
     package, _ = _families_package_and_state()
     d_r2 = package.knowledge_indexes.by_id["k_sl_3c_d_r2"]

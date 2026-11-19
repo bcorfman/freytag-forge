@@ -3,8 +3,6 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-import yaml
-
 from storygame.audit import audit_package
 from storygame.runtime.candidate_matcher import uniquely_matched_authored_handoff
 from storygame.runtime.cloudflare import CloudflareTurnProvider
@@ -68,8 +66,7 @@ def _entries() -> dict:
 
 
 def _routes() -> dict:
-    data = yaml.safe_load((ROOT / "storylet-routes.yaml").read_text(encoding="utf-8"))
-    return {item["id"]: item for item in data["storylets"]}
+    return {route.id: route for route in PACKAGE.storylet_routes.storylets}
 
 
 def _engine(*, true_facts: tuple[str, ...] = (), turn_index: int = 0) -> tuple[RuntimeState, RuntimeEngine]:
@@ -457,16 +454,15 @@ def test_four_new_optional_storylets_share_their_beats_windows_and_conditions():
     }
     for storylet_id, (conditions, source_beat) in expected.items():
         route = routes[storylet_id]
-        assert route["scene_id"] == "3A"
-        assert len(route["realization_options"]) == 1
-        realization = route["realization_options"][0]
-        pacing = route["activation"]["pacing"]
-        assert (pacing["earliest_turn"], pacing["target_turn"], pacing["latest_turn"]) == (0, 8, 9)
-        actual = {(item["fact_id"], item.get("equals")) for item in route["activation"].get("conditions", [])}
+        assert route.scene_id == "3A"
+        assert len(route.realizations) == 1
+        realization = route.realizations[0]
+        assert (route.earliest_turn, route.target_turn, route.latest_turn) == (0, 8, 9)
+        actual = {(item.fact_id, item.equals) for item in route.activation_conditions}
         assert actual == conditions
-        assert realization["id"] == f"{storylet_id}-R1"
-        assert realization["source_beats"] == [source_beat]
-        assert realization["protected_knowledge_boundaries"] == ["janus_phase_two"]
+        assert realization.id == f"{storylet_id}-R1"
+        assert realization.source_beats == (source_beat,)
+        assert realization.protected_knowledge_boundaries == ("janus_phase_two",)
 
 
 def test_the_new_reveals_are_quiet_short_and_exact():

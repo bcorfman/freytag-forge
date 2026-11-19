@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[3]
-PACKAGE_ROOT = ROOT / "data/stories/continuity-initiative"
+PACKAGE_ROOT = ROOT / "tests/fixtures/parity/continuity-initiative/legacy"
 STATES = ("opening", "inspect", "find")
 ARMS = ("base", "B", "C")
 CAPTURE_ARMS = ("base", "B")
@@ -171,7 +171,7 @@ def _rename_capture(payloads: list[dict[str, Any]], arm: str) -> list[dict[str, 
 
 def _capture_package(package_root: Path, arm: str) -> list[dict[str, Any]]:
     prose = _prose_module()
-    return _rename_capture(prose._capture_package(package_root, arm), arm)
+    return _rename_capture(prose._capture_package(package_root, arm, legacy=True), arm)
 
 
 def _sort_payloads(payloads: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -341,9 +341,9 @@ def run_rows(document: dict[str, Any], *, max_calls: int, max_usd: float, out: P
         raise ValueError(f"USD ceiling ${ceiling:.6f} exceeds --max-usd ${max_usd:.6f}")
     from storygame.runtime.cloudflare import CloudflareTurnProvider
     from storygame.runtime.state import RuntimeState
-    from storygame.story_package.loader import load_story_package
+    from storygame.story_package.loader import load_legacy_story_package
 
-    package = load_story_package(PACKAGE_ROOT)
+    package = load_legacy_story_package(PACKAGE_ROOT)
     rows_document: dict[str, Any] = {
         "schema": 1,
         "stage": "t9h-hidden-arm",
@@ -403,9 +403,9 @@ def write_label_freeze(labels_path: Path) -> Path:
 def _engine_segments(row: dict[str, Any]) -> list[dict[str, str]]:
     prose = _prose_module()
     try:
-        from storygame.story_package.loader import load_story_package
+        from storygame.story_package.loader import load_legacy_story_package
 
-        package = load_story_package(PACKAGE_ROOT)
+        package = load_legacy_story_package(PACKAGE_ROOT)
         segments, composable = prose._inferred_delivery(package, str(row.get("state")), str(row["response_text"]))
         if composable:
             return segments

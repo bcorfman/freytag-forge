@@ -1,12 +1,10 @@
 from __future__ import annotations
 
-import shutil
 from collections.abc import Iterator
 from pathlib import Path
 from typing import Any, get_args
 
 import pytest
-import yaml
 from pydantic import BaseModel
 
 from storygame.story_package import impact_report
@@ -32,6 +30,7 @@ from storygame.story_package.models import (
     StoryletRoute,
     Transition,
 )
+from tests.story_source.helpers import compiled_story_copy, load_compiled_copy, patch_source
 
 ROOT = Path("data/stories/continuity-initiative")
 FACT = "kristin_marked_by_patrol"
@@ -87,12 +86,8 @@ def test_unknown_and_ambiguous_subjects_raise(tmp_path: Path) -> None:
     with pytest.raises(ValueError, match=r"unknown subject 'missing_subject'"):
         render_impact_report(ROOT, "missing_subject")
 
-    package_root = tmp_path / "package"
-    shutil.copytree(ROOT, package_root)
-    pacing_path = package_root / "pacing.yaml"
-    pacing = yaml.safe_load(pacing_path.read_text(encoding="utf-8"))
-    pacing["events"][0]["id"] = FACT
-    pacing_path.write_text(yaml.safe_dump(pacing, sort_keys=False), encoding="utf-8")
+    package_root = compiled_story_copy(tmp_path)
+    patch_source(package_root / "source", "scenes/1A.yaml", "beats[officer_presses_1a].id", FACT)
 
     with pytest.raises(ValueError, match=rf"ambiguous subject '{FACT}': fact, pacing event"):
         render_impact_report(package_root, FACT)
@@ -100,6 +95,19 @@ def test_unknown_and_ambiguous_subjects_raise(tmp_path: Path) -> None:
 
 def test_render_is_deterministic() -> None:
     assert render_impact_report(ROOT, FACT) == render_impact_report(ROOT, FACT)
+
+
+def test_compiled_root_uses_source_tree_paths(tmp_path: Path) -> None:
+    root = compiled_story_copy(tmp_path)
+    load_compiled_copy(root)
+
+    text = render_impact_report(root, CLAIM)
+
+    assert "source: source/scenes/1A.yaml:" in text
+    assert not any(
+        legacy_name in text
+        for legacy_name in ("knowledge.yaml", "pacing.yaml", "storylet-routes.yaml", "connections.yaml", "world.yaml")
+    )
 
 
 def test_render_does_not_change_story_files() -> None:

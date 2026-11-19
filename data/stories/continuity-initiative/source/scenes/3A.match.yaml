@@ -1,0 +1,481 @@
+schema: 1
+scene: 3A
+claims:
+  k_sl_3a_a_r1:
+    aliases:
+    - michelle reached
+    - uprising prepared
+    action_evidence:
+    - - look
+      - search
+      - check
+      - examine
+      - inspect
+      - read
+      - study
+      - find
+      - trace
+      - follow
+      - enter
+      - listen
+      - free
+      - help
+      - use
+      - organize
+      - coordinate
+      - rescue
+    - - Michelle
+      - Michelle's voice
+      - radio voice
+      - the radio voice
+      - stolen radio
+      - stolen radios
+      - secret message
+      - secret messages
+      - holding block
+      - holding blocks
+      - captives
+      - the captives
+      - prisoners
+      - the prisoners
+      - prisoner escape
+      - the prisoner escape
+      - detention block
+    must_convey: []
+  k_sl_3a_a_r2:
+    aliases:
+    - michelle reached
+    - uprising prepared
+    action_evidence:
+    - - ask
+      - question
+      - talk
+      - speak
+      - tell
+      - press
+      - discuss
+      - inquire
+      - probe
+      - consult
+      - listen
+      - hear
+    - - Michelle
+      - other site
+      - other sites
+      - the other sites
+      - more sites
+      - other facility
+      - hidden sites
+      - the sites
+    must_convey: []
+  k_sl_3a_b_r1:
+    aliases:
+    - conditioned release plan known
+    action_evidence:
+    - - look
+      - search
+      - check
+      - examine
+      - inspect
+      - read
+      - study
+      - find
+      - review
+      - scan
+      - open
+      - take
+    - - experiment record
+      - experiment records
+      - medical file
+      - medical files
+      - survivor list
+      - survivor lists
+      - planned survivor
+      - planned survivors
+      - conditioning record
+      - conditioning records
+      - record
+      - records
+      - experiment
+      - experiments
+      - survivor
+      - survivors
+      - conditioning
+      - experiment file
+      - experiment files
+      - medical records
+      - survivor records
+      - conditioning files
+    must_convey: []
+  k_sl_3a_b_r2:
+    aliases:
+    - behavioral experiments known
+    action_evidence:
+    - - walk
+      - enter
+      - go
+      - follow
+      - head
+      - move
+      - step
+      - travel
+      - proceed
+      - visit
+      - explore
+      - tour
+    - - medical level
+      - the medical level
+      - med level
+      - the med level
+      - Michelle
+    must_convey: []
+  k_sl_3a_e_r1:
+    aliases:
+    - conditioned release plan known
+    action_evidence:
+    - - look
+      - search
+      - check
+      - examine
+      - inspect
+      - read
+      - study
+      - find
+      - review
+      - scan
+      - open
+      - take
+    - - experiment record
+      - experiment records
+      - medical file
+      - medical files
+      - survivor list
+      - survivor lists
+      - planned survivor
+      - planned survivors
+      - conditioning record
+      - conditioning records
+      - record
+      - records
+      - experiment
+      - experiments
+      - survivor
+      - survivors
+      - conditioning
+      - experiment file
+      - experiment files
+      - medical records
+      - survivor records
+      - conditioning files
+    must_convey: []
+  k_sl_3a_d_r1:
+    aliases:
+    - emergency gate authorization
+    - framed official
+    action_evidence:
+    - - ask
+      - question
+      - talk
+      - speak
+      - tell
+      - press
+      - interview
+      - confront
+      - consult
+      - request
+      - listen
+      - meet
+    - - senior official
+      - framed official
+      - imprisoned official
+      - government prisoner
+      - gate code
+      - gate codes
+      - surface gate
+      - surface gates
+      - emergency gate
+      - emergency gates
+      - emergency override code
+      - emergency override codes
+      - gate authorization
+      - emergency authorization
+      - surface gate authority
+      - emergency gate authority
+      - one-use code
+      - one-use codes
+      - official access seal
+      - access seal
+      - prisoner with the official access seal
+      - official's access seal
+    must_convey: []
+  k_sl_3a_d_r2:
+    aliases:
+    - emergency gate authorization
+    - authorization deadline
+    action_evidence:
+    - - check
+      - test
+      - look
+      - examine
+      - inspect
+      - read
+      - study
+      - verify
+      - scan
+      - review
+      - type
+      - enter
+      - use
+      - override
+      - activate
+      - operate
+    - - gate-status panel
+      - gate status panel
+      - override code
+      - override codes
+      - emergency override code
+      - emergency override codes
+      - gate code
+      - gate codes
+      - code
+      - codes
+      - gate authorization
+      - emergency authorization
+      - emergency gate code
+      - code expiry
+      - code expiration
+      - code deadline
+      - override deadline
+      - authorization deadline
+      - code time limit
+    must_convey: []
+  k_sl_3a_c_r1:
+    aliases:
+    - detention uprising started
+    action_evidence:
+    - - tell
+      - signal
+      - order
+      - ask
+      - direct
+      - instruct
+      - command
+      - urge
+      - call
+      - rally
+      - begin
+      - start
+      - lead
+      - guide
+      - escort
+      - advance
+      - follow
+      - join
+      - march
+    - - uprising
+      - the uprising
+      - start uprising
+      - prison uprising
+      - coordinated uprising
+      - checkpoint
+      - checkpoints
+      - revolt
+      - the revolt
+      - rebellion
+      - the rebellion
+      - riot
+      - the riot
+      - breakout
+      - detention uprising
+      - detention revolt
+      - checkpoint uprising
+      - prisoners
+      - the prisoners
+      - surface gates
+      - the surface gates
+      - emergency surface gates
+      - stolen radio
+      - the stolen radio
+      - the radio
+      - radio signal
+      - the signal
+      - signal
+    must_convey: []
+  k_sl_3a_c_r2:
+    aliases:
+    - detention uprising started
+    - override codes deadline known
+    action_evidence:
+    - - warn
+      - tell
+      - alert
+      - notify
+      - advise
+      - remind
+      - caution
+      - press
+      - inform
+      - report
+      - check
+      - watch
+    - - code
+      - codes
+      - override code
+      - override codes
+      - emergency override code
+      - emergency override codes
+      - expiring code
+      - expiring codes
+      - code expiry
+      - code expiration
+      - gate authorization
+      - emergency authorization
+      - new authority
+      - Charles's authority
+      - deadline
+      - code deadline
+      - override deadline
+      - authorization deadline
+      - code time limit
+    must_convey: []
+  k_sl_3a_f_r1:
+    aliases:
+    - wrist tags read
+    action_evidence:
+    - - read
+      - look at
+      - check
+      - examine
+      - inspect
+      - study
+    - - wrist tags
+      - wrist tag
+      - tags
+      - tag
+    must_convey:
+    - - tag
+      - wrist tag
+    - - held
+  k_sl_3a_g_r1:
+    aliases:
+    - radio loop known
+    action_evidence:
+    - - listen to
+      - listen
+      - hear
+      - tune
+      - study
+      - check
+      - examine
+      - trace
+    - - stolen radio
+      - the stolen radio
+      - radio
+      - radios
+      - announcement
+      - announcements
+      - secret message
+      - secret messages
+      - loop
+    must_convey:
+    - - code words
+      - secret messages
+    - - one word
+    leak_terms: []
+  k_sl_3a_h_r1:
+    aliases:
+    - Michelle private proof
+    action_evidence:
+    - - ask
+      - test
+      - question
+      - quiz
+      - press
+      - probe
+    - - lemon cake
+      - the lemon cake
+      - calendar
+      - the calendar
+      - kitchen calendar
+      - birthday
+    must_convey:
+    - - lemon cake
+    - - Saturday
+      - birthday
+  k_sl_3a_i_r1:
+    aliases:
+    - checkpoint opened
+    action_evidence:
+    - - watch
+      - check
+      - examine
+      - study
+      - look at
+      - inspect
+    - - checkpoint reader
+      - the checkpoint reader
+      - reader
+      - card reader
+      - checkpoint door
+    must_convey:
+    - - checkpoint reader
+      - reader
+    - - first pass
+  k_bridge_3a_command_assault:
+    aliases:
+    - command and broadcast levels
+    - broadcast levels
+  k_scene_3a_entry:
+    aliases:
+    - Michelle
+    - uprising
+deliveries:
+  michelle_reached:
+    must_convey:
+    - - Kristin reaches Michelle
+      - reunion with Michelle
+      - Michelle is reached
+      - Kristin finds Michelle
+      - they are reunited
+      - Kristin reaches her
+    - - detention sector
+      - holding blocks
+      - Michelle's cell
+      - prisoner block
+      - detention holding block
+      - the cell block
+  military_override_codes_available:
+    must_convey:
+    - - framed official
+      - senior official
+      - imprisoned official
+      - government prisoner
+    - - emergency surface gates
+      - surface gates
+      - emergency gates
+    - - authorization code
+      - gate authorization
+      - one-use authorization
+      - override code
+    - - expires
+      - deadline
+      - new authority
+      - time limit
+  detention_uprising_started:
+    must_convey:
+    - - Michelle triggers
+      - Michelle organizes prisoners
+      - secret messages
+      - Michelle sets it off
+      - Michelle starts the disturbances
+      - her secret messages
+      - Kristin gives the signal
+      - Kristin signals the prisoners
+      - Michelle hands Kristin the stolen radio
+      - Kristin radios the prisoners
+    - - uprising begins
+      - prisoners rise
+      - detention uprising
+      - the prisoners revolt
+      - the uprising is underway
+      - prisoners seize checkpoints

@@ -1,0 +1,287 @@
+schema: 1
+scene: 2A
+claims:
+  k_sl_2a_b_r1:
+    aliases:
+    - cooling manifold fault
+    - manifold fault found
+    action_evidence:
+    - - feel
+      - touch
+      - read
+      - trace
+      - inspect
+      - check
+      - test
+      - examine
+      - study
+    - - cooling manifold
+      - manifold
+      - cooling lines
+      - cooling water
+      - pressure gauge
+      - gauge
+      - vent
+      - ventilation
+    must_convey: []
+  k_sl_2a_e_r1:
+    aliases:
+    - badge craft noted
+    action_evidence:
+    - - ask
+      - check
+      - look at
+      - examine
+      - inspect
+      - study
+    - - badges
+      - badge
+      - readers
+    must_convey:
+    - - badges
+    - - three things
+    - - Brandon
+  k_sl_2a_f_r1:
+    aliases:
+    - alarm log read
+    action_evidence:
+    - - read
+      - look at
+      - check
+      - examine
+      - inspect
+      - study
+    - - alarm log
+      - log
+      - tablet
+      - alarms
+      - alarm
+    must_convey:
+    - - forty
+      - three weeks
+    - - sensor fault
+    - - upstairs
+  k_sl_2a_g_r1:
+    aliases:
+    - return line traced
+    action_evidence:
+    - - trace
+      - follow
+      - check
+      - inspect
+      - examine
+      - study
+    - - return line
+      - line
+    must_convey:
+    - - pumps
+    - - heavy door
+  k_sl_2a_h_r1:
+    aliases:
+    - camera on Brandon seen
+    action_evidence:
+    - - look at
+      - watch
+      - study
+      - check
+      - examine
+      - notice
+    - - camera
+      - security camera
+    must_convey:
+    - - camera
+    - - Brandon
+  k_supervisor_escorting:
+    aliases:
+    - supervisor escorting
+    - inspection under watch
+    action_evidence: []
+    must_convey: []
+    leak_terms: []
+  k_inspection_recovery_ready:
+    aliases:
+    - recovery ready
+    action_evidence: []
+    must_convey: []
+  k_sl_2a_d_route_effects:
+    aliases:
+    - inspection recovery route effects
+    action_evidence: []
+    must_convey:
+    - - inspection recovery
+      - route effects
+  k_sl_2a_c_r5:
+    aliases:
+    - restricted corridor access
+    - console used
+    action_evidence:
+    - - feel
+      - read
+      - trace
+      - inspect
+      - check
+      - test
+      - diagnose
+      - explain
+      - tell
+      - show
+      - say
+    - - cooling manifold
+      - cooling water
+      - water pressure
+      - pressure gauge
+      - pipe
+      - ventilation
+      - vent
+      - cooling fault
+      - pressure problem
+    - - real
+      - genuine
+      - convincing
+      - precise
+      - pressure
+      - falling
+      - return line
+      - masking
+      - hiding
+      - fail
+      - failing
+      - will fail
+    must_convey:
+    - - genuine cooling-water pressure fault
+      - cooling-water pressure fault
+      - genuine pressure problem
+      - genuine cooling fault
+    - - real ventilation fault
+      - ventilation fault
+      - ventilation problem
+    - - restricted infrastructure corridors
+      - infrastructure corridors
+      - restricted corridor access
+    - - limited console
+      - console
+  k_sl_2a_c_r6:
+    aliases:
+    - restricted corridor access
+    - cover suspected
+    - console used
+    action_evidence:
+    - - explain
+      - explanation
+      - describe
+      - answer
+      - diagnose
+      - tell
+      - warn
+      - show
+    - - cooling
+      - cooling water
+      - water pressure
+      - pressure
+      - ventilation
+      - vent
+      - fault
+      - manifold
+    - - vague
+      - general
+      - unclear
+      - overlong
+      - too much detail
+      - long explanation
+    must_convey:
+    - - cooling-water pressure fault
+      - cooling fault
+      - pressure problem
+    - - ventilation fault
+      - ventilation problem
+    - - restricted infrastructure corridors
+      - infrastructure corridors
+      - restricted corridor access
+    - - supervisor
+    - - follow-up audit
+      - closer watch
+      - cover suspected
+    - - limited console
+      - console
+  k_scene_2a_entry:
+    aliases:
+    - facility entrance
+    - facility gate
+  k_inspection_window_missed:
+    aliases:
+    - inspection window missed
+    - inspection window closes
+    leak_terms: []
+deliveries:
+  processing_numbers_copied:
+    must_convey:
+    - - prisoner numbers
+      - identification numbers
+    - - missing-person records
+      - missing records
+  service_level_access_known:
+    must_convey:
+    - - Brandon
+      - Brandon's help
+    - - transfer route
+      - service entrance
+  restricted_corridor_access:
+    must_convey:
+    - - shift supervisor
+      - supervisor
+    - - real cooling-water pressure fault
+      - cooling-water fault
+      - pressure problem
+    - - real ventilation fault
+      - ventilation fault
+    - - restricted infrastructure corridors
+      - restricted corridor access
+  supervisor_convinced:
+    must_convey:
+    - - convincing diagnosis
+      - diagnosis is convincing
+      - convinced
+    - - supervisor
+      - shift supervisor
+    - - clean access
+      - restricted infrastructure corridors
+      - access
+  inspection_console_used:
+    must_convey:
+    - - inspection console
+      - limited inspection console
+    - - report faults
+      - cycle noncritical systems
+    - - cannot open detention cells
+      - cannot change the main flood controls
+  rebecca_observing_infiltrators:
+    must_convey:
+    - - watch
+      - watches
+      - under watch
+      - scrutiny
+    - - camera
+      - Brandon
+      - marked
+      - stays on him
+  cover_suspected:
+    must_convey:
+    - - follow-up audit
+      - audit
+    - - closer watch
+      - watches them
+      - keeps watch
+  inspection_window_missed:
+    must_convey:
+    - - patience ends
+      - inspection window closes
+      - window is missed
+    - - supervisor
+      - inspection
+  supervisor_escorting:
+    must_convey:
+    - - supervisor escorts
+      - supervisor leads them
+    - - inspection oversight
+      - supervisor's oversight
+      - stays nearby

@@ -1,4 +1,8 @@
-"""Helpers for copying and patching declarative story-source fixtures."""
+"""Helpers for copying and patching declarative story-source fixtures.
+
+Addresses are ``key``, ``key[<list id or index>]`` joined with dots; files are
+paths relative to the root such as ``scenes/1A.yaml``.
+"""
 
 from __future__ import annotations
 
@@ -55,6 +59,30 @@ _SEGMENT = re.compile(r"^(?P<key>[^.\[\]]+)(?:\[(?P<selector>[^\]]+)\])?$")
 def _load(path: Path) -> object:
     with path.open(encoding="utf-8") as stream:
         return yaml.load(stream, Loader=DuplicateKeyLoader)
+
+
+def compiled_story_copy(tmp_path: Path, story: str = "continuity-initiative") -> Path:
+    """Copy a story's source tree with compiled ownership metadata into ``tmp_path``."""
+
+    source_root = Path(__file__).resolve().parents[2] / "data" / "stories" / story
+    destination = tmp_path / story
+    shutil.copytree(source_root / "source", destination / "source")
+    story_document = _load(source_root / "source" / "story.yaml")
+    ownership = {
+        "schema": 1,
+        "catalog": "compiled",
+        "scenes": {scene: "compiled" for scene in story_document["scenes"]},
+    }
+    (destination / "ownership.yaml").write_text(yaml.safe_dump(ownership, sort_keys=False), encoding="utf-8")
+    return destination
+
+
+def load_compiled_copy(root: Path) -> object:
+    """Load a compiled story copy through the story-package loader."""
+
+    from storygame.story_package.loader import load_story_package
+
+    return load_story_package(root)
 
 
 def copy_fixture(name: str, tmp_path: Path) -> Path:

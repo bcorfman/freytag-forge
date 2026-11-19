@@ -1,0 +1,1076 @@
+schema: 1
+scene: 3A
+location: detention_level
+objective: Join the uprising
+freytag_phase: crisis
+situation: 'The detention sector: rows of holding blocks, scattered stolen radios, and captives who are alert rather than passive. Security is tightening around the lower levels. Michelle is beside the captives.'
+pressure: Join the uprising
+turns:
+  min: 9
+  nudge: 10
+  handoff: 13
+scripted_opening: false
+companions:
+- brandon
+participants:
+- kristin
+- michelle
+- brandon
+- senior_official
+- rebecca
+items:
+- copied_janus_files
+- override_codes
+- stolen_radio
+- gate_status_panel
+- emergency_surface_gates
+- wrist_tags
+- checkpoint_reader
+setting: []
+prop_pool: []
+entry: 'A partly unsecured detention sector opened onto rows of captives. Secret messages crackled through stolen radios, and the prisoners moved with a discipline no captor had taught them - someone inside had been organizing this long before rescue arrived.
+
+
+  '
+entry_additions:
+- when:
+  - committed_to_rescue
+  text: The captives Kristin had freed from the transfer carts were already on this level. They stood among the organized rows as if they had always belonged there.
+- when:
+  - detention_sectors_sealed
+  text: The upload was still running. The other detention sectors had sealed the moment it started, and this was the one sector still open.
+entry_claims:
+- claim_id: k_scene_3a_entry
+  says: Supporting the uprising is the immediate priority.
+  entities:
+  - kristin
+  - michelle
+  - detention_level
+  reach: []
+  relevance:
+    entity_ids: []
+    priority: 0
+  audience:
+    kind: public
+    character_ids: []
+    player_visible: true
+  voiceable: true
+  repeatable: false
+brief: '**Setting:** Detention sectors and experimental laboratories within the facility
+
+
+  **Characters:**
+
+
+  * Kristin Schweitzer
+
+  * Dr. Michelle McGehee
+
+  * Brandon Corfman
+
+  * Imprisoned senior official
+
+
+  **Plot:** Kristin and Brandon descend into the detention levels while Michelle organizes the prisoners for an uprising.'
+outline:
+- id: 3A.1
+  anchor: scene-3a1--the-detention-block
+  title: The Detention Block
+  details:
+  - detention sector
+  - rows of captives
+  - scattered radios
+  - secret messages
+  - tightening security
+  prose: 'Kristin follows Michelle''s maintenance route into one partly unsecured detention sector, not a mass release. She expects rows of helpless captives. Instead, Michelle speaks into a stolen radio, coordinating prisoners through secret messages and sympathetic facility workers.
+
+
+    Michelle is beside the captives.
+
+
+    They are awake. The dose they were given is for the trip, and it wears off in the detention block. Michelle says waking them was the easy part. Getting them to trust the announcements took longer.
+
+
+    Each captive wears a plastic tag on the wrist, and every tag carries the same transfer date, a week old. They were all due out a week ago. They are alive because Michelle held them, one ticket at a time, from the medical terminal in the archive; she could reach nothing else. If Kristin has seen the held transfers, she knows the closing code on the tags, and she knows who wrote the tickets she could not place in 2B. If she freed a cart in 2C, the tags on the cart''s captives are the same.
+
+
+    The stolen radios are tuned to the facility''s own loop, the same ninety seconds that played in the park and at the freight terminal. Michelle''s secret messages ride inside it and change one word. The captives know the loop by heart, and the guards have stopped hearing it, so it is the one voice upstairs does not listen to. That is how she taught them to trust a voice they could not see. When the loop stops, Michelle says, everyone will know.
+
+
+    The reunion gets one unhurried moment before the purge countdown takes over again. Kristin and Michelle can speak to each other before anyone asks either of them for anything.
+
+
+    Kristin''s choice in 2C shows here. If she freed a cart of captives, they came down with her, and they join Michelle''s people. If she transmitted the evidence, the upload is still running, the other sectors are sealed, and Michelle''s route was the only way in.
+
+
+    Michelle explains that the facility contains only a fraction of the missing millions. Freeing them will matter only if the broadcast reveals the locations of the remaining sites. Michelle points toward the medical level, where the experiment records wait.'
+- id: 3A.2
+  anchor: scene-3a2--the-experiments
+  title: The Experiments
+  details:
+  - medical level
+  - neurological experiments
+  - behavioral experiments
+  - short-term memory
+  - targeted stimulation
+  - false recollections
+  prose: 'Michelle leads Kristin through a medical level where prisoners have been subjected to neurological and behavioral experiments.
+
+
+    Rebecca’s company has been testing methods for:
+
+
+    * Erasing short-term memory
+
+    * Increasing compliance through targeted stimulation
+
+    * Creating convincing false recollections
+
+    * Conditioning released captives to support official explanations
+
+    * Predicting resistance before it occurs
+
+
+    The people Charles intends to “rescue” during his broadcast have already been conditioned to endorse his version of events. The senior official waits among the government prisoners.
+
+
+    Kristin has just seen what the program can do to a memory, and she cannot be sure what was done to Michelle. If she read the calendar in Michelle''s kitchen, she can ask for something no record holds. Michelle answers without a pause: Saturday, circled, K, lemon cake. Then she says she is sorry she missed the birthday. The facility never saw that wall. Kristin stops watching her for a flaw.'
+- id: 3A.3
+  anchor: scene-3a3--the-unexpected-prisoner
+  title: The Unexpected Prisoner
+  details:
+  - senior official
+  - government prisoners
+  - fabricated evidence
+  - authorization codes
+  - emergency surface gates
+  - Charles’s broadcast
+  prose: 'Among the captives is a senior official publicly blamed for causing the catastrophe. He reveals that Charles imprisoned members of his own government and fabricated evidence against them.
+
+
+    He possesses authorization codes that can release the facility''s emergency surface gates once, but the codes will expire when Charles’s new authority is formally activated.
+
+
+    The rescue now has a strict deadline tied to Charles’s broadcast. Michelle turns toward the prisoners at the checkpoints.'
+- id: 3A.4
+  anchor: scene-3a4--the-uprising-begins
+  title: The Uprising Begins
+  details:
+  - coordinated disturbances
+  - disabled cameras
+  - isolated guards
+  - internal checkpoints
+  - sealed primary exits
+  - armed response teams
+  prose: 'Michelle hands Kristin the stolen radio. Kristin gives the signal. Coordinated disturbances break out across the detention sectors. Prisoners disable cameras, overwhelm isolated guards, and seize control of several internal checkpoints.
+
+
+    The uprising succeeds initially, but Charles seals the primary exits and redirects armed response teams toward the detention levels.
+
+
+    At the first checkpoint the door still answers to a guard''s badge. Brandon does not wait for one. He runs a card through the reader, and the door opens on the first pass. Michelle''s people watch him instead of the door. It is the same ease he showed at the facility gate, when he said the readers check only three things.
+
+
+    Kristin, Michelle, and Brandon must fight upward toward Rebecca’s office while the prisoners hold the lower levels.'
+facts:
+  michelle_reached:
+    purpose: Kristin has reached Michelle alive in the detention sector and joined her active prisoner resistance.
+    delivery:
+      source_kind: observation
+      source_entity: kristin
+      fallback_text: Kristin reaches Michelle among the holding blocks in the detention sector. They embrace and share one unhurried moment before Michelle turns back to the radio and the rescue.
+      cue_text: Michelle speaks into a stolen radio beside the captives.
+  wrist_tags_read:
+    purpose: Kristin has read the wrist tags showing the captives were due out a week ago.
+    on_assert: []
+  radio_loop_known:
+    purpose: Kristin knows Michelle's code words ride inside the facility's repeating message.
+    on_assert: []
+  michelle_private_proof:
+    purpose: Michelle has answered Kristin's private question about the kitchen calendar.
+    on_assert: []
+  checkpoint_opened:
+    purpose: Kristin has watched Brandon open the checkpoint reader on the first pass.
+    on_assert: []
+  uprising_prepared:
+    purpose: Kristin knows Michelle has organized an active prisoner resistance network.
+  conditioned_release_plan_known:
+    purpose: Kristin knows selected captives were being conditioned to support Charles’s public explanation.
+  behavioral_experiments_known:
+    purpose: Kristin knows the facility conducted the authored neurological/behavioral experiments.
+    on_assert:
+    - move: detention_medical_records
+      parent: medical_level
+      text: in the medical level
+  military_override_codes_available:
+    purpose: The resistance has secured the authorization codes that can release the emergency surface gates once.
+    on_assert:
+    - move: override_codes
+      parent: kristin
+    - reveal: override_codes
+    delivery:
+      source_kind: npc
+      source_entity: senior_official
+      fallback_text: The senior official Charles framed gives Kristin one-use authorization for the emergency surface gates. It will expire when Charles activates his new authority, so it creates a narrow escape window rather than a solution.
+      cue_text: A prisoner with an official access seal watches the gate-status panel cycle toward expiry.
+  detention_uprising_started:
+    purpose: Michelle’s resistance has openly begun coordinated action and the protagonists are committed to moving toward the command/broadcast levels.
+    on_assert:
+    - move: stolen_radio
+      parent: kristin
+      text: with Kristin
+    delivery:
+      source_kind: message
+      source_entity: michelle
+      fallback_text: Michelle hands Kristin the stolen radio and Kristin gives the signal. The uprising begins as prisoners rise, disable cameras, and seize internal checkpoints.
+      cue_text: Michelle turns toward prisoners gathering at the checkpoints. Several cameras show no picture.
+  override_codes_deadline_known:
+    purpose: Kristin and Michelle understand that the senior official’s authorization to release the emergency surface gates will expire when Charles activates his new authority, whether or not the codes are secured.
+  command_levels_assault_underway:
+    purpose: Michelle’s uprising is active and the protagonists are moving from the detention levels toward the command/broadcast levels.
+  charles_framed_officials_known:
+    purpose: Kristin knows Charles framed imprisoned officials for the catastrophe before the override deadline.
+  detention_lockdown_spreading:
+    purpose: Armed teams are sealing detention blocks and cutting the uprising's routes before it can reach the command levels.
+placements:
+  copied_janus_files:
+    parent: kristin
+  override_codes:
+    parent: senior_official
+  stolen_radio:
+    parent: detention_level
+    text: tuned to the facility's own message, played on repeat
+  gate_status_panel:
+    parent: detention_level
+  emergency_surface_gates:
+    parent: facility_escape
+  wrist_tags:
+    parent: detention_level
+    text: on the wrists of the captives, each stamped with the same transfer date, a week old
+  checkpoint_reader:
+    parent: detention_level
+    text: beside the checkpoint door at the top of the block
+  captives:
+    parent: detention_level
+  senior_official:
+    parent: captives
+  michelle:
+    parent: detention_level
+    text: beside the captives
+beats:
+- id: override_deadline_3a
+  at_turn: 9
+  sets:
+    override_codes_deadline_known: true
+  say:
+  - text: The emergency-gate authorization will expire soon.
+    verbatim: false
+- id: detention_lockdown_3a
+  at_turn: 8
+  sets:
+    detention_lockdown_spreading: true
+  say:
+  - text: Armored teams seal one holding block after another.
+    verbatim: false
+reveals:
+- id: sl_3a_a
+  storylet_id: SL-3A-A
+  title: Michelle Has Turned Sabotage Into an Uprising
+  guidance:
+    pressure_role: If Kristin focuses narrowly on extracting Michelle, her visible leadership reframes the objective and, after one unhurried moment, turns the reunion into coordinated action.
+    window:
+      earliest_turn: 0
+      target_turn: 2
+      latest_turn: 3
+    available_while: {}
+    boundaries:
+    - janus_phase_two
+  from_outline:
+  - 3A.1
+  notes:
+    available_when: '- Kristin reaches Michelle’s detention sector.
+
+      - Michelle is active and the purge countdown is running.'
+    participants: '- Kristin Schweitzer
+
+      - Dr. Michelle McGehee
+
+      - Brandon Corfman
+
+      - Prisoners
+
+      - Sympathetic facility workers
+
+      - Stolen radios'
+    dramatic_purpose: '- Pay off Michelle’s agency with an in-person reversal of Kristin’s rescue expectations.
+
+      - Pay off the earlier evidence of a small hidden resistance by showing what it has become in person.
+
+      - Reframe the immediate goal from “get Michelle out” to “help the organized captives expose the whole network.”'
+    possible_realizations: '- Kristin and Michelle share one unhurried moment before Michelle turns back to directing others.
+
+      - Kristin tries to prioritize Michelle; she redirects her to the national stakes.
+
+      - Prisoners treat Michelle as an organizer rather than a victim.
+
+      - Before this storylet, Michelle is reachable only through the coded route and must not be a direct dialogue speaker.
+
+      - The reunion can establish that Michelle is ready to launch coordinated disturbances, but the canonical launch waits until the experiment stakes and expiring-code deadline have been established (or equivalent validated free-text realizations occur).
+
+      - Brandon’s arrival may be met with distrust because of his history.'
+    effects: '- May set `michelle_reached`.
+
+      - May set `uprising_prepared`.
+
+      - May establish that the uprising is prepared; the canonical launch is gated later in the scene.
+
+      - May establish that national facility locations are required for the broadcast.
+
+      - May change relationship/trust facts consistent with the reunion.'
+    completion: '- Kristin accepts Michelle as an operational partner and understands the larger rescue requirement.'
+    abort: '- Scene pressure escalates directly into the uprising before the interaction fully resolves.'
+    protected_boundary: '- The final outcome of the broadcast and Brandon’s fate remain unknown.'
+  variants:
+    r1:
+      realization_id: SL-3A-A-R1
+      intent: Kristin reaches Michelle and recognizes her as the uprising organizer.
+      commits:
+        michelle_reached: true
+        uprising_prepared: true
+      helps_exit: []
+      claim_id: k_sl_3a_a_r1
+      says: Kristin and Michelle have reunited. Michelle coordinates the prisoners through stolen radios and secret messages.
+      entities: []
+      reach: []
+      relevance:
+        entity_ids: []
+        priority: 0
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: true
+      repeatable: false
+      text: 'Kristin joins Michelle beside the captives. They are awake: the dose they were given is for the trip, and it wears off in the detention block. Michelle looks up, goes completely still, and then pulls Kristin into a tight embrace. "You''re here," she says, her voice breaking. "You''re really here." Kristin holds on just as hard, and for one unhurried moment nobody asks anything of either of them. Then Michelle wipes her eyes, turns back to her secret messages, and points toward the medical level, where the experiment records wait.'
+      speaker_text:
+        michelle: I've been organizing everyone with secret announcements over our stolen radios.
+        brandon: Dr. McGehee's been organizing everyone with secret announcements over the stolen radios.
+        senior_official: Dr. McGehee's been organizing everyone with secret announcements over the stolen radios.
+      earn_when: finds Michelle in detention, frees the captives, or helps Michelle
+    r2:
+      realization_id: SL-3A-A-R2
+      intent: Kristin and Michelle share an unhurried moment, then Michelle reveals that her small sabotage network has become coordinated resistance.
+      commits:
+        michelle_reached: true
+        uprising_prepared: true
+      helps_exit: []
+      claim_id: k_sl_3a_a_r2
+      says: Michelle has explained that freeing this block means little without exposing the other sites.
+      entities: []
+      reach: []
+      relevance:
+        entity_ids: []
+        priority: 0
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: true
+      repeatable: false
+      text: Michelle looks up, goes completely still, and pulls Kristin into a tight embrace. "You're really here," she says, her voice breaking. For one unhurried moment nobody asks anything of either of them. Then she wipes her eyes and explains that freeing this block means little without exposing the other sites. Michelle points toward the medical level, where the experiment records wait.
+      speaker_text:
+        michelle: Freeing this block doesn't mean much unless we expose the other sites too.
+        brandon: Dr. McGehee says freeing this block means little unless we expose the other sites.
+        senior_official: Dr. McGehee says freeing this block means little unless we expose the other sites.
+      earn_when: asks Michelle about other sites
+- id: sl_3a_b
+  storylet_id: SL-3A-B
+  title: The “Rescued” Captives Were Being Prepared
+  guidance:
+    pressure_role: When the player wants to rush upward, make the medical level evidence matter by showing why exposure must include the conditioning program before a later encounter offers any escape authorization.
+    window:
+      earliest_turn: 0
+      target_turn: 6
+      latest_turn: 7
+    available_while:
+      michelle_reached: true
+    boundaries:
+    - janus_phase_two
+  from_outline:
+  - 3A.2
+  notes:
+    available_when: '- Kristin has reached Michelle and can move with her resistance network.
+
+      - Kristin and Michelle can pass through or access evidence from the medical level.
+
+      - The experiment program is not yet fully understood.'
+    participants: '- Kristin Schweitzer
+
+      - Dr. Michelle McGehee
+
+      - Medical/behavioral experiment records or equipment already present in the authored setting'
+    dramatic_purpose: '- Raise the moral and political stakes of Charles’s planned broadcast.
+
+      - Show that simply releasing selected prisoners could strengthen the conspiracy.'
+    possible_realizations: '- Michelle explains what she has observed while Kristin sees corroborating evidence.
+
+      - A conditioned “rescue” plan becomes visible through records or treatment setup.
+
+      - Kristin recognizes that public testimony itself has been engineered.'
+    effects: '- May set `behavioral_experiments_known`.
+
+      - May set `conditioned_release_plan_known`.
+
+      - May make the broadcast evidence more compelling.
+
+      - May increase danger or moral urgency.'
+    completion: '- Kristin understands why exposing the experiments must be part of the broadcast evidence.'
+    abort: '- Immediate security pressure makes the medical level inaccessible.'
+    protected_boundary: '- Do not invent successful mind control beyond the specific authored methods and goals.'
+  variants:
+    r1:
+      realization_id: SL-3A-B-R1
+      intent: Corroborate Michelle’s account with experiment records, establish that selected released captives were being conditioned for Charles’s narrative, and leave the framed official's separate revelation for later.
+      commits:
+        behavioral_experiments_known: true
+        conditioned_release_plan_known: true
+      helps_exit: []
+      claim_id: k_sl_3a_b_r1
+      says: Michelle shows Kristin experiment records proving planned "survivors" were conditioned to support Charles's story.
+      entities:
+      - detention_medical_records
+      reach: []
+      relevance:
+        entity_ids:
+        - detention_medical_records
+        priority: 0
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: true
+      repeatable: false
+      when:
+        michelle_reached: true
+      text: Michelle shows Kristin experiment records. They prove planned survivors were conditioned to support Charles's story. The senior official waits among the government prisoners.
+      speaker_text:
+        michelle: Those records prove the "survivors" were planned. They were conditioned to support Charles's story.
+        brandon: Those records prove the "survivors" were planned. They were conditioned to support Charles's story.
+        senior_official: Those records prove the "survivors" were planned. They were conditioned to support Charles's story.
+      earn_when: reads the experiment records
+    r2:
+      realization_id: SL-3A-B-R2
+      intent: Inspect treatment setup, establish the behavioral-experiment program without claiming guaranteed mind control, without yet resolving how the group will leave the facility.
+      commits:
+        behavioral_experiments_known: true
+      helps_exit: []
+      claim_id: k_sl_3a_b_r2
+      says: Michelle shows Kristin the medical level where prisoners were subjected to memory, compliance, and resistance experiments.
+      entities: []
+      reach: []
+      relevance:
+        entity_ids: []
+        priority: 0
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: true
+      repeatable: false
+      when:
+        michelle_reached: true
+      text: Michelle shows Kristin the medical level. The prisoners were subjected to memory, compliance, and resistance experiments. The senior official waits among the government prisoners.
+      speaker_text:
+        michelle: The medical level is where they ran memory, compliance, and resistance experiments on the prisoners.
+        brandon: The medical level is where they ran memory, compliance, and resistance experiments on the prisoners.
+        senior_official: The medical level is where they ran memory, compliance, and resistance experiments on the prisoners.
+      earn_when: enters the medical level
+- id: sl_3a_e
+  storylet_id: SL-3A-E
+  title: The Conditioning Records Confirm the Broadcast Plan
+  guidance:
+    pressure_role: After the medical level is entered, keep the records available as an optional confirmation of the conditioning plan without replaying the medical discovery or changing movement.
+    window:
+      earliest_turn: 0
+      target_turn: 6
+      latest_turn: 7
+    available_while:
+      michelle_reached: true
+      behavioral_experiments_known: true
+      conditioned_release_plan_known: false
+    boundaries:
+    - janus_phase_two
+  from_outline:
+  - 3A.2
+  notes:
+    available_when: '- Kristin has reached Michelle.
+
+      - Kristin knows the facility ran behavioral experiments.
+
+      - Kristin does not yet know the conditioning plan for released captives.'
+    participants: '- Kristin Schweitzer
+
+      - Dr. Michelle McGehee
+
+      - Detention medical records in the medical level'
+    dramatic_purpose: '- Keep the records as an optional second look after the medical level is entered.
+
+      - Show that the planned survivors were prepared to support Charles’s story.'
+    possible_realizations: '- Kristin reads the detention medical records with Michelle.
+
+      - The records confirm the conditioning plan without replaying the medical-level discovery.'
+    effects: '- Sets `conditioned_release_plan_known`.
+
+      - Does not move the group or repeat the medical-level discovery.'
+    completion: '- Kristin understands that the planned survivors were conditioned to support Charles’s story.'
+    abort: '- The conditioning plan is already known.'
+    protected_boundary: '- Do not invent successful mind control beyond the specific authored methods and goals.'
+  variants:
+    r1:
+      realization_id: SL-3A-E-R1
+      intent: Kristin reads the detention medical records with Michelle and confirms that planned survivors were conditioned to support Charles's story.
+      commits:
+        conditioned_release_plan_known: true
+      helps_exit: []
+      from_outline:
+      - 3A.2
+      claim_id: k_sl_3a_e_r1
+      says: Michelle shows Kristin experiment records proving planned "survivors" were conditioned to support Charles's story.
+      entities:
+      - detention_medical_records
+      reach: []
+      relevance:
+        entity_ids:
+        - detention_medical_records
+        priority: 10
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: true
+      repeatable: false
+      when:
+        michelle_reached: true
+        behavioral_experiments_known: true
+      text: Michelle shows Kristin experiment records. They prove planned survivors were conditioned to support Charles's story. The senior official waits among the government prisoners.
+      speaker_text:
+        michelle: Those records prove the "survivors" were planned. They were conditioned to support Charles's story.
+        brandon: Those records prove the "survivors" were planned. They were conditioned to support Charles's story.
+        senior_official: Those records prove the "survivors" were planned. They were conditioned to support Charles's story.
+      earn_when: reads the experiment records
+- id: sl_3a_d
+  storylet_id: SL-3A-D
+  title: The Framed Official's Window
+  guidance:
+    pressure_role: After the medical evidence lands, make the imprisoned official a concrete human consequence and give the group a narrow escape resource with time to decide how to spend it.
+    window:
+      earliest_turn: 0
+      target_turn: 8
+      latest_turn: 9
+    available_while:
+      michelle_reached: true
+      behavioral_experiments_known: true
+    boundaries:
+    - janus_phase_two
+  from_outline:
+  - 3A.3
+  notes:
+    available_when: '- Kristin has reached Michelle.
+
+      - The experiment stakes are understood.
+
+      - The imprisoned senior official can be reached.'
+    participants: '- Kristin Schweitzer
+
+      - Dr. Michelle McGehee
+
+      - The imprisoned senior official
+
+      - One-use emergency surface-gate authorization'
+    dramatic_purpose: '- Turn the political evidence into a human encounter with someone Charles framed and buried.
+
+      - Give the group a narrow escape resource early enough to react to its cost and deadline.'
+    possible_realizations: '- The official explains why Charles framed and detained him.
+
+      - He gives Kristin authorization that can release the emergency surface gates once.
+
+      - A limited system response makes the expiry tied to Charles’s authority activation visible.'
+    effects: '- May set `military_override_codes_available`.
+
+      - May set `charles_framed_officials_known`.
+
+      - May set `override_codes_deadline_known`.'
+    completion: '- The group has a one-use escape authorization and understands that it is a shrinking window, not a general solution.'
+    abort: '- The authority activation voids the code before it can be secured, requiring a declared alternate escape path.'
+    protected_boundary: '- The authorization cannot open the sealed detention sectors or replace the later broadcast controls.'
+    storylet_title: The Framed Official’s Window
+  variants:
+    r1:
+      realization_id: SL-3A-D-R1
+      intent: Kristin meets the official Charles framed, learns why he was hidden here, and receives the one-use emergency surface-gate authorization before Charles's new authority voids it.
+      commits:
+        military_override_codes_available: true
+        charles_framed_officials_known: true
+        override_codes_deadline_known: true
+      helps_exit: []
+      claim_id: k_sl_3a_d_r1
+      says: The senior official Charles framed gives Kristin one-use authorization for the emergency surface gates, which will expire when Charles activates his new authority.
+      entities: []
+      reach: []
+      relevance:
+        entity_ids: []
+        priority: 0
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: true
+      repeatable: false
+      when:
+        michelle_reached: true
+        behavioral_experiments_known: true
+      text: The senior official Charles framed gives Kristin one-use authority for the emergency surface gates. It expires when Charles activates his new authority. Michelle turns toward the prisoners at the checkpoints.
+      speaker_text:
+        michelle: That authorization opens the emergency surface gates, but only once. It expires when Charles activates his new authority.
+        brandon: That authorization opens the emergency surface gates, but only once. It expires when Charles activates his new authority.
+        senior_official: That authorization opens the emergency surface gates, but only once. It expires when Charles activates his new authority.
+      earn_when: speaks with the senior official
+    r2:
+      realization_id: SL-3A-D-R2
+      intent: The official proves the gate authorization is real with a limited system response, making its approaching expiry visible while leaving the final escape to the group.
+      commits:
+        military_override_codes_available: true
+        charles_framed_officials_known: true
+        override_codes_deadline_known: true
+      helps_exit: []
+      claim_id: k_sl_3a_d_r2
+      says: The framed official proves the emergency gate authorization is real, but its brief response makes clear that the one-use code is about to expire.
+      entities: []
+      reach: []
+      relevance:
+        entity_ids: []
+        priority: 0
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: true
+      repeatable: false
+      when:
+        michelle_reached: true
+        behavioral_experiments_known: true
+      text: The framed official proves the emergency gate authorization is real. The brief panel response shows the one-use code is about to expire. Michelle turns toward the prisoners at the checkpoints.
+      speaker_text:
+        michelle: The authorization is real, but the panel's brief response shows the one-use code is about to expire.
+        brandon: The authorization is real, but the panel's brief response shows the one-use code is about to expire.
+        senior_official: The authorization is real, but the panel's brief response shows the one-use code is about to expire.
+      earn_when: checks the gate-status panel
+- id: sl_3a_c
+  storylet_id: SL-3A-C
+  title: The Uprising Begins
+  guidance:
+    pressure_role: 'Convert the expiring authorization into forward motion: once the codes lose value with Charles’s new authority, Michelle’s prepared disturbances become the only viable route upward.'
+    window:
+      earliest_turn: 0
+      target_turn: 10
+      latest_turn: 11
+    available_while:
+      michelle_reached: true
+      uprising_prepared: true
+      military_override_codes_available: true
+    boundaries:
+    - janus_phase_two
+  from_outline:
+  - 3A.4
+  notes:
+    available_when: '- Kristin has reached Michelle.
+
+      - Michelle’s uprising preparation is in place.
+
+      - The one-use emergency surface-gate authorization is secured.
+
+      - Charles’s planned authority activation remains pending.'
+    participants: '- Kristin Schweitzer
+
+      - Dr. Michelle McGehee
+
+      - Brandon Corfman
+
+      - Organized prisoners across the detention sectors'
+    dramatic_purpose: '- Convert the expiring authorization deadline into forward motion toward the command levels.
+
+      - Commit the resistance to the coordinated assault that carries the story into Scene 3B.'
+    possible_realizations: '- Michelle hands Kristin the stolen radio, Kristin gives the signal, and the freed checkpoints become a route upward.
+
+      - The expiring authorization window itself forces the resistance to launch while the codes retain value.'
+    effects: '- Sets `detention_uprising_started`.
+
+      - May advance `override_codes_deadline_known` when the deadline forces the launch.
+
+      - Helps the Scene 3A → 3B transition under declared package rules.'
+    completion: '- The uprising is underway and the group is committed to fighting toward the command and broadcast levels.'
+    abort: '- Immediate security lockdown pins the resistance before the disturbances can begin.'
+    protected_boundary: '- The uprising does not by itself defeat JANUS, seize the broadcast, or resolve the national conspiracy.'
+  variants:
+    r1:
+      realization_id: SL-3A-C-R1
+      intent: Michelle hands Kristin the stolen radio, and Kristin gives the signal. The prisoners seize checkpoints and open a fighting route toward the command and broadcast levels.
+      commits:
+        detention_uprising_started: true
+      helps_exit:
+      - t_3a_3b
+      claim_id: k_sl_3a_c_r1
+      says: Michelle hands Kristin the stolen radio and Kristin gives the signal; prisoners seize checkpoints and open a fighting route toward the command and broadcast levels.
+      entities: []
+      reach: []
+      relevance:
+        entity_ids: []
+        priority: 0
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: true
+      repeatable: false
+      when:
+        michelle_reached: true
+        uprising_prepared: true
+        military_override_codes_available: true
+      text: Michelle hands Kristin the stolen radio and Kristin gives the signal. Prisoners seize checkpoints and open a fighting route toward the command and broadcast levels.
+      speaker_text:
+        michelle: Your signal worked. The prisoners have the checkpoints, and they're fighting their way up toward the command and broadcast levels.
+        brandon: The signal worked. The prisoners have the checkpoints, and they're fighting their way up toward the command and broadcast levels.
+        senior_official: The signal worked. The prisoners have the checkpoints, and they're fighting their way up toward the command and broadcast levels.
+      earn_when: Players may lead the prisoners to the checkpoints or surface gates.
+    r2:
+      realization_id: SL-3A-C-R2
+      intent: Michelle hands Kristin the stolen radio, and Kristin gives the signal because the gate authorization is about to expire.
+      commits:
+        detention_uprising_started: true
+      helps_exit:
+      - t_3a_3b
+      claim_id: k_sl_3a_c_r2
+      says: With the emergency-gate authorization about to expire under Charles's new authority, Michelle hands Kristin the stolen radio and Kristin gives the signal rather than wait.
+      entities: []
+      reach: []
+      relevance:
+        entity_ids: []
+        priority: 0
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: true
+      repeatable: false
+      when:
+        michelle_reached: true
+        uprising_prepared: true
+        military_override_codes_available: true
+        override_codes_deadline_known: true
+      text: Kristin warns Michelle that the emergency-gate authorization is about to expire. Michelle hands Kristin the stolen radio, and Kristin gives the signal because the authorization is about to expire.
+      speaker_text:
+        michelle: Good thing we didn't wait. That authorization was about to run out.
+        brandon: Dr. McGehee didn't wait. The authorization was about to expire.
+        senior_official: Dr. McGehee didn't wait. The authorization was about to expire.
+      earn_when: warns Michelle about expiring codes
+- id: sl_3a_f
+  storylet_id: SL-3A-F
+  title: The Wrist Tags
+  guidance:
+    pressure_role: Let Kristin read the wrist tags and learn what happened to the captives.
+    window:
+      earliest_turn: 0
+      target_turn: 8
+      latest_turn: 9
+    available_while:
+      michelle_reached: true
+    boundaries:
+    - janus_phase_two
+  from_outline:
+  - 3A.1
+  notes:
+    available_when: '- Michelle has been reached.'
+    participants: '- Kristin Schweitzer
+
+      - Wrist tags
+
+      - Detention captives'
+    dramatic_purpose: '- Let Kristin read the wrist tags and learn what happened to the captives.'
+    possible_realizations: '- Kristin reads the wrist tags.'
+    effects: '- Sets `wrist_tags_read`.'
+    completion: '- Kristin knows the wrist tags'' transfer date.'
+    abort: '- The scene is no longer `3A`.'
+    protected_boundary: '- JANUS''s later phase remains undisclosed.'
+  variants:
+    r1:
+      realization_id: SL-3A-F-R1
+      intent: Kristin reads the wrist tags.
+      commits:
+        wrist_tags_read: true
+      helps_exit: []
+      from_outline:
+      - 3A.1
+      claim_id: k_sl_3a_f_r1
+      says: The wrist tags show every captive was due out a week ago.
+      entities:
+      - kristin
+      - wrist_tags
+      - captives
+      - michelle
+      reach:
+      - wrist_tags
+      relevance:
+        entity_ids:
+        - wrist_tags
+        priority: -1
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: false
+      repeatable: false
+      when:
+        michelle_reached: true
+      text: Michelle says she held the transfer behind every tag, one ticket at a time, from a terminal in the archive, because it was all she could reach.
+      text_when:
+      - when:
+        - held_transfers_seen
+        text: 'The closing code on every tag is the same one on the held transfers Kristin saw in the archive: sensor fault. Michelle says she held them all, one ticket at a time, from a terminal in the archive, because it was all she could reach.'
+      earn_when: reads the wrist tags
+- id: sl_3a_g
+  storylet_id: SL-3A-G
+  title: The Loop in the Radios
+  guidance:
+    pressure_role: Let Kristin listen to the stolen radio and learn what the captives hear.
+    window:
+      earliest_turn: 0
+      target_turn: 8
+      latest_turn: 9
+    available_while:
+      michelle_reached: true
+    boundaries:
+    - janus_phase_two
+  from_outline:
+  - 3A.1
+  notes:
+    available_when: '- Michelle has been reached.'
+    participants: '- Kristin Schweitzer
+
+      - Stolen radio
+
+      - Dr. Michelle McGehee'
+    dramatic_purpose: '- Let Kristin listen to the stolen radio and learn what the captives hear.'
+    possible_realizations: '- Kristin listens to the stolen radio.'
+    effects: '- Sets `radio_loop_known`.'
+    completion: '- Kristin knows what the captives hear on repeat.'
+    abort: '- The scene is no longer `3A`.'
+    protected_boundary: '- JANUS''s later phase remains undisclosed.'
+  variants:
+    r1:
+      realization_id: SL-3A-G-R1
+      intent: Kristin listens to the stolen radio.
+      commits:
+        radio_loop_known: true
+      helps_exit: []
+      from_outline:
+      - 3A.1
+      claim_id: k_sl_3a_g_r1
+      says: Michelle's code words ride inside the facility's own repeating message.
+      entities:
+      - kristin
+      - stolen_radio
+      - michelle
+      reach:
+      - stolen_radio
+      relevance:
+        entity_ids:
+        - stolen_radio
+        priority: -1
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: false
+      repeatable: false
+      when:
+        michelle_reached: true
+      text: Michelle's code words ride inside the message and change one word. The captives know it by heart, and the guards no longer hear it. Michelle says that when it stops, everyone will know.
+      text_when:
+      - when:
+        - broadcast_loop_confirmed
+        text: It is the same ninety seconds Kristin timed on the truck radio. Michelle's code words ride inside it and change one word. The captives know it by heart, and the guards no longer hear it. Michelle says that when it stops, everyone will know.
+      earn_when: listens to the stolen radio
+- id: sl_3a_h
+  storylet_id: SL-3A-H
+  title: Michelle's Proof
+  guidance:
+    pressure_role: Let Kristin ask Michelle about the lemon cake or the calendar.
+    window:
+      earliest_turn: 0
+      target_turn: 8
+      latest_turn: 9
+    available_while:
+      michelle_reached: true
+      behavioral_experiments_known: true
+      lemon_cake_calendar_read: true
+    boundaries:
+    - janus_phase_two
+  from_outline:
+  - 3A.2
+  notes:
+    available_when: '- Michelle has been reached, the experiment program is known, and the kitchen calendar has been read.'
+    participants: '- Kristin Schweitzer
+
+      - Dr. Michelle McGehee'
+    dramatic_purpose: '- Let Kristin ask Michelle about the lemon cake or the calendar.'
+    possible_realizations: '- Kristin asks Michelle about the lemon cake or the calendar.'
+    effects: '- Sets `michelle_private_proof`.'
+    completion: '- Kristin has Michelle''s private answer.'
+    abort: '- The scene is no longer `3A`.'
+    protected_boundary: '- JANUS''s later phase remains undisclosed.'
+  variants:
+    r1:
+      realization_id: SL-3A-H-R1
+      intent: Kristin asks Michelle about the lemon cake or the calendar.
+      commits:
+        michelle_private_proof: true
+      helps_exit: []
+      from_outline:
+      - 3A.2
+      claim_id: k_sl_3a_h_r1
+      says: Michelle answers a question about the kitchen calendar that the facility never saw.
+      entities:
+      - kristin
+      - michelle
+      reach: []
+      relevance:
+        entity_ids:
+        - michelle
+        priority: -1
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: false
+      repeatable: false
+      when:
+        michelle_reached: true
+        behavioral_experiments_known: true
+        lemon_cake_calendar_read: true
+      text: 'Michelle answers without a pause and gets every detail right: Saturday, the circle, the lemon cake.'
+      earn_when: asks Michelle about the lemon cake or the calendar
+- id: sl_3a_i
+  storylet_id: SL-3A-I
+  title: The Reader Opens
+  guidance:
+    pressure_role: Let Kristin watch the checkpoint reader and Brandon's first pass.
+    window:
+      earliest_turn: 0
+      target_turn: 8
+      latest_turn: 9
+    available_while:
+      michelle_reached: true
+    boundaries:
+    - janus_phase_two
+  from_outline:
+  - 3A.4
+  notes:
+    available_when: '- Michelle has been reached.'
+    participants: '- Kristin Schweitzer
+
+      - Brandon Corfman
+
+      - Checkpoint reader'
+    dramatic_purpose: '- Let Kristin watch the checkpoint reader and Brandon''s first pass.'
+    possible_realizations: '- Kristin watches the checkpoint reader.'
+    effects: '- Sets `checkpoint_opened`.'
+    completion: '- Kristin knows the checkpoint reader opened on the first pass.'
+    abort: '- The scene is no longer `3A`.'
+    protected_boundary: '- JANUS''s later phase remains undisclosed.'
+    pacing_window: '- earliest: `turn 0`
+
+      - target: `turn 8`
+
+      - latest: `turn 9`
+
+
+      ## Storylets for [Scene 3B — The Battle for the Broadcast](plot.md#scene-3b--the-battle-for-the-broadcast)'
+  variants:
+    r1:
+      realization_id: SL-3A-I-R1
+      intent: Kristin watches the checkpoint reader.
+      commits:
+        checkpoint_opened: true
+      helps_exit: []
+      from_outline:
+      - 3A.4
+      claim_id: k_sl_3a_i_r1
+      says: Brandon opens the checkpoint reader on the first pass.
+      entities:
+      - kristin
+      - brandon
+      - checkpoint_reader
+      reach:
+      - checkpoint_reader
+      relevance:
+        entity_ids:
+        - checkpoint_reader
+        - brandon
+        priority: -1
+      audience:
+        kind: public
+        character_ids: []
+        player_visible: true
+      voiceable: false
+      repeatable: false
+      when:
+        michelle_reached: true
+      text: Brandon steps up to the reader. It clears on the first pass and the door opens. Michelle's people watch Brandon instead of the door.
+      text_when:
+      - when:
+        - badge_craft_noted
+        text: Brandon steps up to the reader. It clears on the first pass and the door opens. Michelle's people watch Brandon instead of the door. It is the same ease he showed at the gate.
+      earn_when: watches the checkpoint reader
+bridge:
+- id: bridge_3a_command_assault
+  kind: bridge
+  when:
+  - michelle_reached
+  - detention_uprising_started
+  - military_override_codes_available
+  commits:
+    command_levels_assault_underway: true
+  realized_by:
+  - sl_3a_a
+  - sl_3a_b
+  - sl_3a_d
+  - sl_3a_c
+  claim:
+    claim_id: k_bridge_3a_command_assault
+    says: The uprising is active, and the group is moving toward the command and broadcast levels.
+    entities:
+    - kristin
+    - michelle
+    - broadcast_relay
+    - detention_level
+    reach: []
+    relevance:
+      entity_ids: []
+      priority: 0
+    audience:
+      kind: public
+      character_ids: []
+      player_visible: true
+    voiceable: true
+    repeatable: false
+    commits_subset:
+      command_levels_assault_underway: true
+incidents: []
+exit:
+  id: t_3a_3b
+  to: 3B
+  priority: 10
+  when_all:
+  - command_levels_assault_underway
+  needs: []
+  bridge: Michelle's uprising disabled cameras and seized checkpoints, while Charles sealed the primary exits and sent armed teams downward. Kristin, Michelle, and Brandon fought upward through the security corridors.

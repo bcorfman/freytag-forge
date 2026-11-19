@@ -559,18 +559,14 @@ def provider_opening_story(tmp_path_factory: pytest.TempPathFactory, monkeypatch
     so this serves a copy without the flag wherever the real story would load.
     """
 
-    import shutil
     import sys
 
     from storygame.story_package import loader
+    from tests.story_source.helpers import compiled_story_copy, patch_source
 
     source = Path("data/stories/continuity-initiative").resolve()
-    root = tmp_path_factory.mktemp("provider-opening") / source.name
-    shutil.copytree(source, root)
-    plot = root / "plot.md"
-    text = plot.read_text(encoding="utf-8")
-    assert text.count("scripted_opening: true\n") == 1
-    plot.write_text(text.replace("scripted_opening: true\n", ""), encoding="utf-8")
+    root = compiled_story_copy(tmp_path_factory.mktemp("provider-opening"))
+    patch_source(root / "source", "scenes/1A.yaml", "scripted_opening", False)
     real_load = loader.load_story_package
 
     def load(path: Path | str, *args: Any, **kwargs: Any) -> Any:

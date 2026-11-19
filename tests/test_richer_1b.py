@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import yaml
-
 from storygame.runtime.candidate_matcher import uniquely_matched_authored_handoff
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
@@ -37,8 +35,7 @@ def _entries() -> dict:
 
 
 def _routes() -> dict:
-    data = yaml.safe_load((ROOT / "storylet-routes.yaml").read_text(encoding="utf-8"))
-    return {item["id"]: item for item in data["storylets"]}
+    return {route.id: route for route in PACKAGE.storylet_routes.storylets}
 
 
 def _engine(*, true_facts: tuple[str, ...] = ()) -> tuple[RuntimeState, RuntimeEngine]:
@@ -77,11 +74,11 @@ def test_the_park_things_are_declared_plainly_and_placed_in_1b():
 def test_three_new_optional_storylets_share_their_beats_earliest_turn():
     routes = _routes()
     for storylet_id in ("SL-1B-F", "SL-1B-G", "SL-1B-H"):
-        assert routes[storylet_id]["scene_id"] == "1B"
-        assert routes[storylet_id]["activation"]["pacing"]["earliest_turn"] == 0
-        assert len(routes[storylet_id]["realization_options"]) == 1
+        assert routes[storylet_id].scene_id == "1B"
+        assert routes[storylet_id].earliest_turn == 0
+        assert len(routes[storylet_id].realizations) == 1
     conditions = {
-        storylet_id: {(c["fact_id"], c.get("equals")) for c in routes[storylet_id]["activation"].get("conditions", [])}
+        storylet_id: {(condition.fact_id, condition.equals) for condition in routes[storylet_id].activation_conditions}
         for storylet_id in ("SL-1B-F", "SL-1B-G", "SL-1B-H")
     }
     assert conditions["SL-1B-F"] == set()

@@ -1,7 +1,7 @@
 """Tests for converting loaded storylet and realization records to source data."""
 
-# NOTE: The compiler feeds one reveal title/window into both package records, so
-# route title/window values win the legacy Storylet drift documented in NOTES.
+# NOTE: The route title/window remain runtime source values; legacy Storylet title/window
+# drift is preserved as reader-only notes and restored by the compiler.
 # NOTE: Reader-only sections, prose, and authoring handles are not package data;
 # the converter uses route IDs as stable reveal/variant handles.
 # NOTE: Entry, bridge, incident-observation, and ending claims are intentionally
@@ -10,11 +10,11 @@
 from collections import Counter
 from pathlib import Path
 
-from storygame.story_package.loader import load_story_package
+from storygame.story_package.loader import load_legacy_story_package
 from storygame.story_source.convert_reveals import RevealsResult, convert_reveals
 
 ROOT = Path(__file__).parents[2]
-PACKAGE = load_story_package(ROOT / "data" / "stories" / "continuity-initiative")
+PACKAGE = load_legacy_story_package(ROOT / "tests" / "fixtures" / "parity" / "continuity-initiative" / "legacy")
 RESULT = convert_reveals(PACKAGE)
 
 

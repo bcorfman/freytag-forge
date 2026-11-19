@@ -6,6 +6,7 @@ import pytest
 import yaml
 
 from storygame.audit import _markdown, audit_package
+from tests.story_source.helpers import compiled_story_copy
 
 
 def _package(tmp_path: Path, *, plot: str = "The house is quiet.", **files: object) -> Path:
@@ -30,8 +31,8 @@ def _checks(report: dict) -> set[str]:
     return {finding["check"] for finding in report["findings"]}
 
 
-def test_real_package_covers_all_scenes() -> None:
-    report = audit_package(Path("data/stories/continuity-initiative"))
+def test_real_package_covers_all_scenes(tmp_path: Path) -> None:
+    report = audit_package(compiled_story_copy(tmp_path))
     assert report["scenes"] == ["1A", "1B", "1C", "2A", "2B", "2C", "3A", "3B", "3C"]
 
 
@@ -116,9 +117,15 @@ def test_knowledge_statements_use_the_same_scene_rule(tmp_path: Path) -> None:
     assert _owned_findings(one) == []
 
 
-def test_real_package_has_no_ambiguous_owned_item() -> None:
-    report = audit_package(Path("data/stories/continuity-initiative"))
+def test_real_package_has_no_ambiguous_owned_item(tmp_path: Path) -> None:
+    report = audit_package(compiled_story_copy(tmp_path))
     assert "ambiguous_owned_item" not in _checks(report)
+
+
+def test_legacy_and_compiled_reports_match(tmp_path: Path) -> None:
+    legacy = audit_package(Path("data/stories/continuity-initiative"))
+    compiled = audit_package(compiled_story_copy(tmp_path))
+    assert legacy == compiled
 
 
 @pytest.mark.parametrize(

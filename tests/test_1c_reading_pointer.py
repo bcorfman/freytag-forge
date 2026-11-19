@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import yaml
-
 from storygame.runtime.candidate_matcher import _matches_all
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
@@ -18,9 +16,8 @@ NEW_SENTENCE = (
 )
 
 
-def _knowledge() -> dict[str, dict]:
-    raw = yaml.safe_load((PACKAGE_ROOT / "knowledge.yaml").read_text())
-    return {item["id"]: item for item in raw["knowledge"]}
+def _knowledge():
+    return PACKAGE.knowledge_indexes.by_id
 
 
 def _scene_1c_state() -> RuntimeState:
@@ -34,7 +31,7 @@ def _scene_1c_state() -> RuntimeState:
 
 def test_1c_a_deliveries_have_the_reading_pointer() -> None:
     knowledge = _knowledge()
-    assert knowledge["k_sl_1c_a_r1"]["delivery_text"] == (
+    assert knowledge["k_sl_1c_a_r1"].delivery_text == (
         "Kristin finds electrical load, fresh air from the vents, and signs of recent work. "
         "The freight terminal is still running. " + NEW_SENTENCE
     )
@@ -44,7 +41,7 @@ def test_1c_a_deliveries_have_the_reading_pointer() -> None:
 def test_1c_reading_pointer_matches_real_matcher() -> None:
     knowledge = _knowledge()
     ids = ("k_sl_1c_a_r1", "k_sl_1c_b_r1", "k_sl_1c_b_r2", "k_sl_1c_c_copy_numbers", "k_sl_1c_c_secure_route")
-    candidates = {item_id: tuple(tuple(group) for group in knowledge[item_id]["action_evidence"]) for item_id in ids}
+    candidates = {item_id: knowledge[item_id].action_evidence for item_id in ids}
     cases = {
         "k_sl_1c_b_r1": (
             "Study the prisoners through the observation shaft.",
@@ -76,17 +73,17 @@ def test_1c_reading_pointer_matches_real_matcher() -> None:
 
 def test_1c_b_r1_first_two_evidence_groups_are_unchanged() -> None:
     knowledge = _knowledge()
-    assert knowledge["k_sl_1c_b_r1"]["action_evidence"] == [
-        ["study", "watch", "observe", "look at", "inspect", "examine"],
-        [
+    assert knowledge["k_sl_1c_b_r1"].action_evidence == (
+        ("study", "watch", "observe", "look at", "inspect", "examine"),
+        (
             "prisoners",
             "captives",
             "people in the processing area",
             "processing line",
             "shaft view",
             "observation shaft",
-        ],
-    ]
+        ),
+    )
 
 
 def test_1c_a_delivery_is_accepted_after_facility_proof() -> None:

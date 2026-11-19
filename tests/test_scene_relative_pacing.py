@@ -1,16 +1,16 @@
 from __future__ import annotations
 
-import shutil
 from pathlib import Path
 
 import pytest
-import yaml
 
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeState
 from storygame.story_package import StoryPackageError, load_story_package
 from storygame.story_package.obligations import required_storylet_ids
+from storygame.story_source.diagnostics import SourceError
+from tests.story_source.helpers import compiled_story_copy, load_compiled_copy, patch_source
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 
@@ -214,45 +214,55 @@ def test_earned_forward_activation_never_crosses_scene_boundaries() -> None:
 
 
 def test_loader_rejects_handoff_sum_over_budget(tmp_path: Path) -> None:
-    root = tmp_path / "package"
-    shutil.copytree(Path("data/stories/continuity-initiative"), root)
-    source = root / "pacing.yaml"
-    source.write_text(source.read_text().replace("budget_seconds: 7200", "budget_seconds: 5399", 1))
+    root = compiled_story_copy(tmp_path)
+    patch_source(root / "source", "story.yaml", "budget_seconds", 5399)
 
-    with pytest.raises(StoryPackageError, match="handoff sum.*budget_seconds"):
-        load_story_package(root)
+    with pytest.raises((StoryPackageError, SourceError), match="handoff sum.*budget_seconds"):
+        load_compiled_copy(root)
 
 
 @pytest.mark.parametrize(
-    ("mutate", "message"),
+    ("message", "target"),
     [
         pytest.param(
-            lambda event: event["realizations"][-1].__setitem__(
-                "when", [{"fact_id": "patrol_return_pressure", "equals": True}]
-            ),
-            "pacing event 'patrol_arrives_1a'",
+            "patrol_arrives_1a.*last say entry",
+            "realization_last",
             id="loader_rejects_guarded_last_pacing_realization",
         ),
         pytest.param(
-            lambda event: event["realizations"][0].__setitem__("when", [{"fact_id": "no_such_fact", "equals": True}]),
-            "pacing event 'patrol_arrives_1a'",
+            "pacing event 'patrol_arrives_1a'.*unknown realization predicate",
+            "realization_unknown",
             id="loader_rejects_unknown_pacing_realization_fact",
         ),
         pytest.param(
-            lambda event: event.__setitem__("when", [{"fact_id": "no_such_fact", "equals": True}]),
-            "pacing event 'patrol_arrives_1a'.*unknown event guard predicate",
+            "patrol_arrives_1a.*fact 'no_such_fact' is not declared",
+            "event",
             id="loader_rejects_unknown_pacing_event_guard_fact",
         ),
     ],
 )
-def test_loader_rejects_invalid_pacing_event_guards(tmp_path: Path, mutate: object, message: str) -> None:
-    root = tmp_path / "package"
-    shutil.copytree(Path("data/stories/continuity-initiative"), root)
-    source = root / "pacing.yaml"
-    data = yaml.safe_load(source.read_text())
-    event = next(item for item in data["events"] if item["id"] == "patrol_arrives_1a")
-    mutate(event)  # type: ignore[operator]
-    source.write_text(yaml.safe_dump(data, sort_keys=False, allow_unicode=True))
+def test_loader_rejects_invalid_pacing_event_guards(tmp_path: Path, message: str, target: str) -> None:
+    root = compiled_story_copy(tmp_path)
+    event_address = "beats[patrol_arrives_1a]"
+    if target == "realization_last":
+        event_address += ".say[0].when"
+    if target == "event":
+        event_address += ".when"
+    if target == "realization_unknown":
+        event = next(event for event in PACKAGE.pacing.events if event.id == "patrol_arrives_1a")
+        text = event.realizations[0].text
+        patch_source(
+            root / "source",
+            "scenes/1A.yaml",
+            "beats[patrol_arrives_1a].say",
+            [
+                {"when": {"no_such_fact": True}, "text": text, "verbatim": True},
+                {"text": text, "verbatim": True},
+            ],
+        )
+    else:
+        patch = {"patrol_return_pressure": True} if "last say entry" in message else {"no_such_fact": True}
+        patch_source(root / "source", "scenes/1A.yaml", event_address, patch)
 
-    with pytest.raises(StoryPackageError, match=message):
-        load_story_package(root)
+    with pytest.raises((StoryPackageError, SourceError), match=message):
+        load_compiled_copy(root)

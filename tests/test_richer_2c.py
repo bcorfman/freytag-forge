@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import yaml
-
 from storygame.audit import audit_package
 from storygame.runtime.candidate_matcher import uniquely_matched_authored_handoff
 from storygame.runtime.engine import RuntimeEngine
@@ -32,8 +30,7 @@ def _entries() -> dict:
 
 
 def _routes() -> dict:
-    data = yaml.safe_load((ROOT / "storylet-routes.yaml").read_text(encoding="utf-8"))
-    return {item["id"]: item for item in data["storylets"]}
+    return {storylet.id: storylet for storylet in PACKAGE.storylet_routes.storylets}
 
 
 def _engine(*, true_facts: tuple[str, ...] = (), turn_index: int = 0) -> tuple[RuntimeState, RuntimeEngine]:
@@ -92,15 +89,14 @@ def test_three_new_optional_storylets_share_their_beats_windows_and_conditions()
     }
     for storylet_id, (conditions, source_beat) in expected.items():
         route = routes[storylet_id]
-        assert route["scene_id"] == "2C"
-        assert len(route["realization_options"]) == 1
-        realization = route["realization_options"][0]
-        pacing = route["activation"]["pacing"]
-        assert (pacing["earliest_turn"], pacing["target_turn"], pacing["latest_turn"]) == (0, 6, 6)
-        actual = {(item["fact_id"], item.get("equals")) for item in route["activation"].get("conditions", [])}
+        assert route.scene_id == "2C"
+        assert len(route.realizations) == 1
+        realization = route.realizations[0]
+        assert (route.earliest_turn, route.target_turn, route.latest_turn) == (0, 6, 6)
+        actual = {(item.fact_id, item.equals) for item in route.activation_conditions}
         assert actual == conditions
-        assert realization["id"] == f"{storylet_id}-R1"
-        assert realization["source_beats"] == [source_beat]
+        assert realization.id == f"{storylet_id}-R1"
+        assert realization.source_beats == (source_beat,)
 
 
 def test_the_new_reveals_are_quiet_short_and_exact():
@@ -158,8 +154,8 @@ def test_the_new_reveals_are_quiet_short_and_exact():
         assert not any(word in entry.delivery_text.casefold() for word in forbidden)
         assert all(phrase in entry.delivery_text.casefold() for phrase in phrases)
         assert {(operation.fact_id, operation.value) for operation in entry.establishes} == {(fact_id, True)}
-        realization = routes[storylet_id]["realization_options"][0]
-        assert realization["protected_knowledge_boundaries"] == ["janus_phase_two"]
+        realization = routes[storylet_id].realizations[0]
+        assert realization.protected_knowledge_boundaries == ("janus_phase_two",)
 
 
 def test_the_cart_tags_wait_for_the_held_transfers():

@@ -2,19 +2,25 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from bench.core import load_variation, package_and_state
 from scripts.ringer.stage7 import three_c_probe as probe
 from storygame.runtime.candidate_matcher import _matches_all
+from tests.story_source.helpers import compiled_story_copy, load_compiled_copy, patch_source
 
-ROOT = Path(__file__).resolve().parents[1]
+OLD_ENTRY = (
+    "The broadcast chamber lights steadied as Brandon's relay held open. "
+    "Outside, Charles's emergency deluge was filling the outer access level and forcing water toward the "
+    "maintenance routes; inside, the evidence was ready to leave for good.\n\n"
+)
+NEW_ENTRY = (
+    "The broadcast chamber lights are steady. Brandon's relay is open. Michelle's evidence package is ready to send. "
+    "Water is entering the outer access level.\n\n"
+)
 
 
-def _package(arm: str):
-    variation = (
-        probe.pre_adoption_variation() if arm == "pre-adoption" else load_variation(probe.variation_paths((arm,))[arm])
-    )
-    package, _state = package_and_state(variation, "3C")
-    return package
+def _package(arm: str, tmp_path: Path):
+    root = compiled_story_copy(tmp_path / arm)
+    patch_source(root, "source/scenes/3C.yaml", "entry", OLD_ENTRY if arm == "control" else NEW_ENTRY)
+    return load_compiled_copy(root)
 
 
 def _entry_text(package) -> str:
@@ -30,18 +36,14 @@ def _matched_ids(package, command: str) -> set[str]:
     }
 
 
-def test_entry_variation_replaces_plot_entry_text_exactly_once() -> None:
-    old_entry, new_entry = probe._entry_replacement()
-    plot = (ROOT / "tests/fixtures/continuity_initiative_pre_3c_adoption/plot.md").read_text(encoding="utf-8")
-    assert plot.count(old_entry) == 1
-    assert _entry_text(_package("entry")) == new_entry.removeprefix('entry_text: "').removesuffix('"').replace(
-        "\\n", "\n"
-    )
+def test_entry_variation_replaces_plot_entry_text_exactly_once(tmp_path: Path) -> None:
+    assert _entry_text(_package("control", tmp_path)) == OLD_ENTRY
+    assert _entry_text(_package("entry", tmp_path)) == NEW_ENTRY
 
 
-def test_first_player_screen_uses_control_or_entry_text() -> None:
-    control = _package("pre-adoption")
-    entry = _package("entry")
+def test_first_player_screen_uses_control_or_entry_text(tmp_path: Path) -> None:
+    control = _package("control", tmp_path)
+    entry = _package("entry", tmp_path)
     control_screen, _ = probe._player_screen(_entry_text(control), [])
     entry_screen, _ = probe._player_screen(_entry_text(entry), [])
     assert control_screen != entry_screen
@@ -49,7 +51,7 @@ def test_first_player_screen_uses_control_or_entry_text() -> None:
     assert _entry_text(entry).rstrip() in entry_screen
 
 
-def test_recorded_commands_and_negative_controls_match_identically() -> None:
+def test_recorded_commands_and_negative_controls_match_identically(tmp_path: Path) -> None:
     commands = [item["command"] for item in probe.recorded_commands()]
     commands += [
         "Transmit the evidence.",
@@ -58,8 +60,8 @@ def test_recorded_commands_and_negative_controls_match_identically() -> None:
         "Show Rebecca the evidence.",
         "Send the evidence package.",
     ]
-    control = _package("control")
-    entry = _package("entry")
+    control = _package("control", tmp_path)
+    entry = _package("entry", tmp_path)
     for command in commands:
         assert _matched_ids(control, command) == _matched_ids(entry, command)
 

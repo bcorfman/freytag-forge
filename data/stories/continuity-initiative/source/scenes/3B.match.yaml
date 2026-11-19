@@ -1,0 +1,695 @@
+schema: 1
+scene: 3B
+claims:
+  k_sl_3b_a_r1:
+    aliases:
+    - human security control
+    action_evidence:
+    - - trigger
+      - set off
+      - sound
+      - raise
+      - create
+      - plant
+      - feed
+      - send
+      - report
+      - fake
+      - stage
+      - simulate
+      - cause
+      - start
+      - trip
+      - activate
+      - use
+      - reset
+      - flood
+      - overwhelm
+      - trace
+      - follow
+      - exploit
+      - overload
+      - manipulate
+      - spoof
+      - falsify
+      - trigger
+      - inspect
+      - examine
+      - read
+      - check
+      - study
+      - watch
+      - monitor
+      - look at
+      - access
+      - open
+      - enter
+      - log into
+      - log in to
+      - go into
+    - - false alarm
+      - false alarms
+      - fake alarm
+      - fake alarms
+      - water-pressure alarm
+      - water-pressure alarms
+      - false water-pressure alarm
+      - false water-pressure alarms
+      - ventilation alarm
+      - ventilation alarms
+      - fake ventilation alarm
+      - fake ventilation alarms
+      - service-corridor alarm
+      - service-corridor alarms
+      - inspection console
+      - false alert
+      - false alerts
+      - fake alert
+      - fake alerts
+      - JANUS alert
+      - JANUS alerts
+      - Kristin's alarm
+      - Kristin's alarms
+      - Kristin's decoy
+      - Kristin's decoys
+      - empty service corridor
+      - empty service corridors
+      - false emergency
+      - false emergencies
+      - fake emergency
+      - fake emergencies
+      - false warning
+      - false warnings
+      - fake warning
+      - fake warnings
+      - ventilation warning
+      - ventilation warnings
+      - pressure alarm
+      - pressure alarms
+      - water-pressure warning
+      - water-pressure warnings
+      - pressure warning
+      - pressure warnings
+      - water and air alarm
+      - water and air alarms
+      - false water and air alarm
+      - false water and air alarms
+      - air alarm
+      - air alarms
+      - water alarm
+      - water alarms
+    must_convey: []
+  k_sl_3b_a_r2:
+    aliases:
+    - human security control
+    action_evidence:
+    - - cycle
+      - reroute
+      - take
+      - choose
+      - vary
+      - change
+      - switch
+      - scramble
+      - confuse
+      - evade
+      - outguess
+      - mislead
+      - zigzag
+      - weave
+      - reverse
+      - turn on
+      - turn off
+      - bypass
+      - open
+      - close
+      - flip
+    - - empty corridor
+      - empty corridors
+      - unused door
+      - unused doors
+      - door cycle
+      - door cycles
+      - light cycle
+      - light cycles
+      - corridor light
+      - corridor lights
+      - unpredictable route
+      - unpredictable routes
+      - random route
+      - random routes
+      - JANUS guidance
+      - JANUS prediction
+      - JANUS predictions
+      - JANUS forecast
+      - JANUS forecasts
+      - Kristin's route
+      - Kristin's routes
+      - Kristin's zigzag
+      - Kristin's zigzags
+      - on and off
+      - random pattern
+      - random patterns
+    must_convey: []
+  k_sl_3b_e_r1:
+    aliases:
+    - rebecca office reached
+    action_evidence:
+    - - go into
+      - walk into
+      - head into
+      - get into
+      - move into
+      - step into
+      - lead
+      - take
+      - bring
+      - guide
+      - enter
+      - break into
+      - slip into
+      - push into
+      - escort
+      - go to
+      - walk to
+      - head to
+      - reach
+      - go
+      - proceed to
+      - make my way to
+    - - executive office
+      - executive offices
+      - executive suite
+      - executive suites
+      - Rebecca's office
+      - Rebecca's offices
+      - Rebecca office
+      - Rebecca offices
+      - Rebecca's suite
+      - Rebecca's suites
+      - Rebecca suite
+      - Rebecca suites
+      - her office
+      - her offices
+      - her suite
+      - her suites
+      - CEO's office
+      - CEO's offices
+      - CEO office
+      - CEO offices
+      - the CEO's office
+      - the CEO's offices
+      - CEO's suite
+      - CEO's suites
+      - CEO suite
+      - CEO suites
+      - the CEO's suite
+      - the CEO's suites
+      - chief executive's office
+      - chief executive's offices
+    must_convey: []
+  k_sl_3b_b_r1:
+    aliases:
+    - detention locations offer known
+    - detention locations secured
+    action_evidence:
+    - - show
+      - confront
+      - accuse
+      - challenge
+      - question
+      - press
+      - explain
+      - present
+      - reveal
+      - expose
+      - bring
+      - hand
+      - give
+      - read
+      - cite
+      - prove
+      - verify
+      - ask
+    - - experiments
+      - experiment approval
+      - experiment approvals
+      - approved experiment
+      - approved experiments
+      - approval form
+      - approval forms
+      - signed approval
+      - signed approvals
+      - approval signature
+      - approval signatures
+      - Rebecca's approval
+      - Rebecca's approvals
+      - Rebecca approval
+      - Rebecca approvals
+      - her approval
+      - her approvals
+      - Rebecca's signature
+      - Rebecca's signatures
+      - her signature
+      - her signatures
+      - experiment file
+      - experiment files
+      - trial approval
+      - trial approvals
+      - human experiment
+      - human experiments
+      - test subject
+      - test subjects
+      - research approval
+      - research approvals
+      - project approval
+      - project approvals
+      - authorization form
+      - authorization forms
+    must_convey: []
+  k_sl_3b_b_r2:
+    aliases:
+    - detention locations offer known
+    - detention locations secured
+    action_evidence:
+    - - ask
+      - request
+      - demand
+      - get
+      - take
+      - copy
+      - save
+      - secure
+      - collect
+      - retrieve
+      - record
+      - photograph
+      - scan
+      - download
+      - write down
+      - verify
+      - send
+      - examine
+      - inspect
+      - read
+      - check
+      - study
+    - - detention site
+      - detention sites
+      - detention-site location
+      - detention-site locations
+      - site location
+      - site locations
+      - prison location
+      - prison locations
+      - prison address
+      - prison addresses
+      - holding site
+      - holding sites
+      - holding-site address
+      - holding-site addresses
+      - black site
+      - black sites
+      - black-site location
+      - black-site locations
+      - detention list
+      - detention lists
+      - Rebecca's list
+      - Rebecca's lists
+      - her list
+      - her lists
+      - Rebecca's locations
+      - her locations
+      - site directory
+      - site directories
+      - detention directory
+      - detention directories
+      - location sheet
+      - location sheets
+      - site map
+      - site maps
+      - site list
+      - marked site list
+      - Rebecca's marked site list
+      - the site list
+      - marked list
+    must_convey: []
+  k_sl_3b_d_r1:
+    aliases:
+    - charles abandoned rebecca
+    - real deluge
+    action_evidence:
+    - - answer
+      - ask
+      - speak
+      - call
+      - reply
+      - listen
+      - hear
+      - challenge
+      - address
+      - question
+      - respond
+      - contact
+      - lock
+      - unlock
+      - open
+      - close
+      - talk
+      - try
+      - access
+      - examine
+      - inspect
+      - read
+      - check
+      - confront
+      - demand
+      - message
+      - use
+      - connect to
+      - patch into
+      - tune into
+      - dial
+    - - remote channel
+      - remote channels
+      - Charles's channel
+      - Charles's channels
+      - his channel
+      - his channels
+      - remote call
+      - remote calls
+      - Charles's call
+      - Charles's calls
+      - his call
+      - his calls
+      - channel marked Charles
+      - remote channel marked Charles
+      - office lockdown
+      - office lockdowns
+      - office lock
+      - office locks
+      - executive-office lock
+      - executive-office locks
+      - remote screen
+      - remote screens
+      - Charles's screen
+      - Charles's screens
+      - his screen
+      - his screens
+      - Charles's voice
+      - his voice
+      - Charles's message
+      - Charles's messages
+      - his message
+      - his messages
+      - Rebecca's husband
+      - her husband
+      - come for her
+      - Charles's betrayal
+      - his betrayal
+      - Rebecca's fate
+      - her fate
+      - executive screen
+      - locked office door
+      - remote Charles channel
+      - Charles channel
+      - Charles channels
+      - channel to Charles
+    must_convey: []
+  k_sl_3b_d_r2:
+    aliases:
+    - charles abandoned rebecca
+    - real deluge
+    action_evidence:
+    - - read
+      - check
+      - inspect
+      - find
+      - view
+      - examine
+      - trace
+      - follow
+      - uncover
+      - review
+      - confirm
+      - verify
+      - monitor
+      - scan
+      - look at
+      - investigate
+    - - Charles's remote order
+      - Charles's remote orders
+      - remote flood order
+      - remote flood orders
+      - flood order
+      - flood orders
+      - outer access level
+      - flood alarm
+      - flood alarms
+      - outer access alarm
+      - outer access alarms
+      - outer-level alarm
+      - outer-level alarms
+      - floodgate order
+      - floodgate orders
+      - floodgate release
+      - floodgate releases
+      - deluge order
+      - deluge orders
+      - Charles's flood order
+      - Charles's flood orders
+      - his flood order
+      - his flood orders
+      - Charles's command
+      - Charles's commands
+      - his command
+      - his commands
+      - remote directive
+      - remote directives
+      - access-level flood
+      - outer-level flood
+      - flood notice
+      - flood notices
+      - Rebecca's trap
+      - her trap
+      - deluge warning
+      - deluge warnings
+      - flood warning
+      - flood warnings
+    must_convey: []
+  k_sl_3b_c_r1:
+    aliases:
+    - relay open
+    - brandon confession available
+    action_evidence:
+    - - tell
+      - ask
+      - order
+      - direct
+      - have
+      - get
+      - make
+      - cut
+      - cut off
+      - disconnect
+      - sever
+      - detach
+      - unlink
+      - isolate
+      - record
+      - confess
+      - write
+      - sign
+      - admit
+      - state
+      - send
+      - access the Brandon voice channel
+      - open the Brandon voice channel
+      - open the voice channel
+      - activate the voice channel
+      - use the voice channel
+      - voice channel
+      - Brandon voice channel
+      - Brandon channel
+      - voice channel marked Brandon
+      - channel marked Brandon
+    - - the relay
+      - external relay
+      - Broadcast relay
+      - relay link
+      - relay links
+      - relay connection
+      - relay connections
+      - JANUS link
+      - JANUS links
+      - JANUS connection
+      - JANUS connections
+      - JANUS tether
+      - JANUS tethers
+      - Brandon's relay
+      - his relay
+      - Brandon's confession
+      - his confession
+      - confession
+      - signed confession
+      - signed confessions
+      - recorded confession
+      - recorded confessions
+      - video confession
+      - video confessions
+      - audio confession
+      - audio confessions
+      - builder confession
+      - builder confessions
+      - JANUS confession
+      - JANUS confessions
+      - creator confession
+      - creator confessions
+      - Brandon's statement
+      - Brandon's statements
+      - his statement
+      - his statements
+      - admission
+      - admissions
+      - relay chamber
+      - part in JANUS
+      - role in JANUS
+      - voice
+    must_convey: []
+  k_sl_3b_c_r2:
+    aliases:
+    - relay open
+    - brandon confession available
+    action_evidence:
+    - - start
+      - begin
+      - launch
+      - initiate
+      - broadcast
+      - air
+      - transmit
+      - stream
+      - send
+      - publish
+      - release
+      - share
+      - play
+      - turn on
+      - open
+      - activate
+      - go live
+    - - broadcast
+      - public broadcast
+      - live broadcast
+      - emergency broadcast
+      - open broadcast
+      - broadcast feed
+      - broadcast feeds
+      - broadcast channel
+      - broadcast channels
+      - public channel
+      - public channels
+      - live channel
+      - live channels
+      - broadcast signal
+      - broadcast signals
+      - public signal
+      - public signals
+      - broadcast stream
+      - broadcast streams
+      - live stream
+      - live streams
+      - transmission
+      - transmissions
+      - public transmission
+      - public transmissions
+      - to the world
+      - Michelle's broadcast
+      - her broadcast
+      - Michelle's evidence
+      - her evidence
+      - broadcast launch
+      - broadcast start
+      - open relay
+      - held relay
+      - Michelle's transmission
+      - her transmission
+    must_convey: []
+  k_bridge_3b_broadcast:
+    aliases:
+    - broadcast started
+    - nationwide broadcast
+  k_scene_3b_entry:
+    aliases:
+    - JANUS
+deliveries:
+  relay_open:
+    must_convey:
+    - - Brandon holds the relay open
+      - Brandon's relay
+      - external communications relay
+      - Brandon kept the relay open
+      - Brandon held the relay open
+      - Brandon leaves the relay open
+    - - relay is open
+      - relay open
+      - broadcast connection
+      - open communications relay
+      - the connection stays open
+      - relay remains open
+  human_security_control:
+    must_convey:
+    - - Kristin overloads JANUS
+      - conflicting emergencies
+      - human operators
+      - JANUS is overloaded
+      - too many emergencies
+      - security emergencies conflict
+    - - human operators take control
+      - human security control
+      - people control security
+      - humans take over security
+      - operators control the corridors
+      - manual security takes over
+  charles_abandoned_rebecca:
+    must_convey:
+    - - Charles locks down Rebecca's office
+      - Charles abandons Rebecca
+      - Rebecca understands
+      - Charles cuts Rebecca off
+      - Rebecca learns he abandoned her
+      - Charles seals her office
+    - - was expendable
+      - Rebecca is expendable
+      - Charles left Rebecca
+      - Rebecca was abandoned
+      - Charles discarded Rebecca
+      - he left her to die
+  detention_locations_secured:
+    must_convey:
+    - - Rebecca offers
+      - Rebecca's location data
+      - Rebecca offers the locations
+      - Rebecca gives
+      - Rebecca's site list
+      - the locations Rebecca offers
+    - - detention locations
+      - every detention site
+      - locations of every detention site
+      - detention-site locations
+      - the prison sites
+      - all detention facilities
+  brandon_confession_available:
+    must_convey:
+    - - Brandon's confession
+      - Brandon admits
+      - Brandon transmits
+      - Brandon's admission
+      - Brandon confesses
+      - Brandon sends his confession
+    - - helped create JANUS
+      - role in creating JANUS
+      - authenticate Michelle's evidence
+      - helped build the AI
+      - JANUS development role
+      - his part in JANUS

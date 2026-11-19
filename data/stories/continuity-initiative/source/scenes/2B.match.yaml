@@ -1,0 +1,339 @@
+schema: 1
+scene: 2B
+claims:
+  k_sl_2b_a_r1:
+    aliases:
+    - Kristin's file read
+    - own file read
+    action_evidence:
+    - - pull
+      - pull up
+      - open
+      - read
+      - retrieve
+      - check
+      - examine
+      - inspect
+      - search
+      - find
+      - look up
+    - - Kristin's file
+      - my file
+      - own file
+      - personnel file
+      - her file
+      - own record
+      - my record
+    must_convey:
+    - - was bait
+      - Kristin was bait
+    - - Brandon Corfman
+      - author
+  k_sl_2b_c_r3:
+    aliases:
+    - Michelle reply received
+    - Michelle resistance known
+    action_evidence:
+    - - type
+      - write
+      - enter
+      - send
+      - reply
+      - answer
+    - - one reply
+      - reply
+      - message
+      - maintenance line
+      - medical terminal
+      - Shelly
+      - Michelle
+    must_convey:
+    - - Michelle
+      - Shelly
+      - private phrasing
+    - - alive
+      - alive inside the facility
+      - still alive
+    - - active
+      - working inside the facility
+      - acting from inside
+    - - will send a route
+      - send a route
+      - route
+  k_sl_2b_e_r1:
+    aliases:
+    - badge checks read
+    action_evidence:
+    - - read
+      - look at
+      - check
+      - examine
+      - inspect
+      - study
+      - open
+      - pull up
+    - - build record
+      - access section
+      - badge readers
+      - readers
+      - badge checks
+    must_convey:
+    - - badge readers
+    - - three
+    - - Brandon
+    leak_terms: []
+  k_sl_2b_f_r1:
+    aliases:
+    - held transfers seen
+    action_evidence:
+    - - read
+      - open
+      - check
+      - look at
+      - examine
+      - inspect
+      - study
+      - pull up
+    - - transfer queue
+      - queue
+      - transfers
+      - held transfers
+      - transfer listing
+    must_convey:
+    - - held
+    - - sensor fault
+    - - week
+  k_sl_2b_g_r1:
+    aliases:
+    - ticket header matched
+    action_evidence:
+    - - read
+      - look at
+      - check
+      - compare
+      - examine
+      - inspect
+      - study
+      - match
+    - - maintenance line
+      - ticket header
+      - header
+      - printout
+    must_convey:
+    - - ticket header
+    - - sensor fault
+    - - held transfers
+      - held
+  k_audit_recovery_ready:
+    aliases:
+    - audit recovery ready
+    action_evidence: []
+    must_convey: []
+    leak_terms: []
+  k_sl_2b_d_route_effects:
+    aliases:
+    - archive recovery route effects
+    action_evidence: []
+    must_convey:
+    - - archive recovery
+      - route effects
+  k_sl_2b_b_r4:
+    aliases:
+    - Brandon's name kept
+    - Kristin was bait
+    - JANUS evidence
+    action_evidence:
+    - - keep
+      - leave
+      - refuse
+      - refuse to erase
+      - preserve
+    - - Brandon's name
+      - Brandon Corfman
+      - author's name
+      - name in the build record
+      - his name
+      - name in the record
+      - the record
+    must_convey:
+    - - JANUS
+      - JANUS build record
+      - Brandon Corfman
+      - built JANUS
+      - helped write JANUS
+    - - keeps his name
+      - name stays
+      - keep Brandon's name
+    - - JANUS files copied
+      - copied files
+      - JANUS evidence
+    leak_terms:
+    - Brandon's name kept
+    - Kristin was bait
+    - JANUS evidence
+    - Kristin's own file
+    - Kristin's file
+    - predicted to lead investigators to CORFMAN
+    - JANUS build record
+    - Brandon Corfman
+    - built JANUS
+    - helped write JANUS
+    - was bait
+    - left behind as bait
+    - expected to lead investigators
+    - keeps his name
+    - name stays
+    - keep Brandon's name
+    - JANUS files copied
+    - copied files
+  k_sl_2b_b_r5:
+    aliases:
+    - Brandon's name erased
+    - Kristin was bait
+    - JANUS evidence
+    action_evidence:
+    - - let
+      - allow
+      - permit
+      - agree
+      - erase
+      - delete
+    - - Brandon's name
+      - Brandon Corfman
+      - author's name
+      - name in the build record
+      - his name
+      - name in the record
+      - the record
+    must_convey:
+    - - JANUS
+      - JANUS build record
+      - Brandon Corfman
+      - built JANUS
+      - helped write JANUS
+    - - erase his name
+      - name is gone
+      - delete his name
+    - - JANUS files copied
+      - copied files
+      - JANUS evidence
+    - - record now has a gap
+      - development record gap
+      - missing name from the development record
+    leak_terms:
+    - Brandon's name erased
+    - Kristin was bait
+    - JANUS evidence
+    - Kristin's own file
+    - Kristin's file
+    - predicted to lead investigators to CORFMAN
+    - JANUS build record
+    - Brandon Corfman
+    - built JANUS
+    - helped write JANUS
+    - was bait
+    - left behind as bait
+    - expected to lead investigators
+    - erase his name
+    - name is gone
+    - delete his name
+    - JANUS files copied
+    - copied files
+    - record now has a gap
+    - development record gap
+    - missing name from the development record
+  k_bridge_2b_archive_crisis:
+    aliases:
+    - archive crisis
+    - Michelle's resistance
+    leak_terms:
+    - Michelle's resistance
+  k_scene_2b_entry:
+    aliases:
+    - archive
+    - evidence
+  k_audit_window_missed:
+    aliases:
+    - audit window missed
+    - audit reaches the stacks
+    leak_terms: []
+deliveries:
+  janus_evidence:
+    must_convey:
+    - - Kristin's own file
+      - Kristin's file
+      - RETAINED
+    - - JANUS
+      - JANUS build record
+      - Brandon Corfman
+    - - predicted to lead investigators to Corfman
+      - left behind as bait
+  brandon_janus_role_known:
+    must_convey:
+    - - Brandon admits
+      - Brandon's confession
+      - Brandon says
+    - - helped write JANUS
+      - helped build JANUS
+      - helped develop the AI
+  brandon_claimed_reform_motive:
+    must_convey:
+    - - Brandon says
+      - Brandon's explanation
+      - Brandon claims
+    - - tried to destroy the project
+      - expose the program
+      - stop JANUS
+  kristin_was_bait:
+    must_convey:
+    - - Kristin was bait
+      - left Kristin behind
+      - retained
+    - - lead investigators to Brandon
+      - seek Brandon
+      - lead investigators to Corfman
+  brandon_name_kept:
+    must_convey:
+    - - keep Brandon's name
+      - Brandon's name stays
+      - name remains in the record
+    - - evidence intact
+      - record stays intact
+      - build record remains
+  brandon_name_erased:
+    must_convey:
+    - - erase Brandon's name
+      - Brandon's name erased
+      - delete Brandon's name
+    - - development record gap
+      - name is gone from the record
+      - record has a gap
+  michelle_resistance_known:
+    must_convey:
+    - - Michelle's resistance
+      - resistance inside the facility
+      - Michelle is active
+    - - coded maintenance messages
+      - hidden resistance
+      - sabotage
+  michelle_reply_received:
+    must_convey:
+    - - medical terminal
+      - maintenance line
+      - terminal message
+    - - Shelly
+      - Michelle
+    - - answers once
+      - replies once
+      - answers Kristin
+    - - alive
+      - working inside the facility
+      - will send a route
+  audit_window_missed:
+    must_convey:
+    - - audit reaches the stacks
+      - audit window closes
+      - audit reaches them
+    - - archive
+      - footsteps
+      - aisles

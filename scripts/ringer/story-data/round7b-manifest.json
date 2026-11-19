@@ -1,0 +1,29 @@
+{
+  "run_name": "story-data-round7b",
+  "workdir": "/home/bcorfman/dev/ringer-work/story-data-round7b",
+  "max_parallel": 1,
+  "worktrees": true,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "r7b-order-test-helpers",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=medium"
+      ],
+      "max_attempts": 2,
+      "timeout_s": 2400,
+      "check_timeout_s": 1200,
+      "ownership": [
+        "tests/test_incident_loader.py",
+        "tests/test_branch_report.py"
+      ],
+      "spec": "You are a Python engineer. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge (detached at HEAD). Edit files here directly. NEVER git commit, never touch /home/bcorfman/dev/freytag-forge itself, never run `uv`, never call a billed model or the network. FIRST run, in this order: [ -e .venv ] || ln -s /home/bcorfman/dev/freytag-forge/.venv .venv ; git apply /home/bcorfman/dev/ringer-work/story-data-round7/r7-scene-order.patch (this brings in round 7, which adds a scene-file key `order`; the patch is NOT yours to edit or undo). Run tests as `PYTHONPATH=$PWD:$PWD/packages/worldkeeper/src TMPDIR=/tmp .venv/bin/python -m pytest -q -p no:cacheprovider -n 0 <files>` (never pass --cov); ruff as `.venv/bin/python -m ruff check <files>` and `.venv/bin/python -m ruff format <files>` (line length 120, double quotes).\n\nBACKGROUND. The story source lives in `data/stories/continuity-initiative/source/scenes/<id>.yaml`. Round 7 added an optional top-level `order` key to a scene file: a mapping whose keys `storylets`, `deliveries`, `knowledge` and `pacing_events` each list ids of that scene's records, recording the order the compiled package must keep (read `.plans/story-data-schema-contract.md`, the new subsection about `order`, and `storygame/story_source/l2_order.py`). The check `L2.order_id` rejects an id in `order` that is not a record of that kind in that scene. Several tests copy the real source tree, delete a record from the copy to test a rejection or a report, and then compile or report. Since the copy's `order` list still names the deleted record, compile now fails first with `L2.order_id`, hiding the error or report the test is about.\n\nTHE FAILURES (reproduce with the pytest command above):\n- tests/test_branch_report.py::test_branch_without_trigger_is_reported_as_dead_end_and_clean_variant (deletes delivery `committed_to_transmit` from scenes/2C.yaml and 2C.match.yaml; error: `unknown deliveries order ID 'committed_to_transmit'`).\n- tests/test_incident_loader.py::test_incident_rejections_include_incident_and_offending_id for the cases `recovery has no extra fact` and `recovery awards both outcomes` (they remove claim `k_sl_2c_e_route_effects` via `_remove_match_claim`; error: `unknown knowledge order ID 'k_sl_2c_e_route_effects'`).\n\nYOUR JOB. Fix the TESTS, not the product: where a test helper removes a record (claim, delivery, storylet, pacing event) from a copied source tree, make the helper also remove that id from the same scene's `order` lists (and drop an `order` list or the whole `order` key if it becomes empty, matching how the converter would not write an empty list). Put the pruning in the shared helper the tests already use for removing (`_remove_match_claim`, the `_edit_source` callers) so every deletion path is covered, not only the three failing cases; read both files fully and also check every other place in these two files that deletes or renames a record id. Never make the product accept stale ids; never edit anything under storygame/, data/ or .plans/; never weaken an assertion; the expected error text each test checks must still be the one it checks today. Do not edit tests/story_source or tests/shard_durations.json.\n\nDONE WHEN the whole of tests/test_incident_loader.py and tests/test_branch_report.py passes, ruff is clean on them, and only those two files changed beyond the round 7 patch. If a failure needs more than test edits, write why in NOTES_r7b.txt (worktree root, never committed) and leave it failing.\n",
+      "check": "set -eo pipefail\n[ -e .venv ] || ln -s /home/bcorfman/dev/freytag-forge/.venv .venv\nexport PYTHONPATH=$PWD:$PWD/packages/worldkeeper/src TMPDIR=/tmp\n.venv/bin/python -m pytest -q -p no:cacheprovider -n 0 tests/test_incident_loader.py tests/test_branch_report.py tests/story_source 2>&1 | tail -15\n.venv/bin/python -m ruff check tests/test_incident_loader.py tests/test_branch_report.py\n.venv/bin/python -m ruff format --check tests/test_incident_loader.py tests/test_branch_report.py\ngit add -A -- storygame tests data .plans\ngit apply --numstat /home/bcorfman/dev/ringer-work/story-data-round7/r7-scene-order.patch | cut -f3 | sort -u > /tmp/r7b_round7_names.txt\nbad=$(git diff --cached --name-only | grep -v -x -f /tmp/r7b_round7_names.txt | grep -v -e '^tests/test_incident_loader.py$' -e '^tests/test_branch_report.py$' || true)\n[ -z \"$bad\" ] || { echo \"files outside ownership staged: $bad\"; exit 1; }\ngit diff --cached -- tests/test_incident_loader.py tests/test_branch_report.py > /home/bcorfman/dev/ringer-work/story-data-round7b/r7b-order-test-helpers.patch\ntest -s /home/bcorfman/dev/ringer-work/story-data-round7b/r7b-order-test-helpers.patch\n",
+      "expect_files": [],
+      "verified": "the three tests pass because their helpers prune deleted ids from order lists; product code untouched; only the two owned test files changed beyond the round 7 patch."
+    }
+  ]
+}

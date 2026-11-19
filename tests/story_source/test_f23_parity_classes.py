@@ -35,7 +35,13 @@ def _seeds() -> tuple[_DifferenceSeed, ...]:
     return (
         _DifferenceSeed("knowledge[k].operations", ["first", "second"], ["second", "first"], "op_order", False),
         _DifferenceSeed("knowledge[k].requires", ["first", "second"], ["second", "first"], "condition_order", False),
-        _DifferenceSeed("storylets[SL].realizations", ["1A", "2C"], ["2C", "1A"], "collection_order", False),
+        _DifferenceSeed(
+            "storylets[SL].realizations",
+            [{"id": "R1", "scene_id": "1A"}, {"id": "R2", "scene_id": "1A"}],
+            [{"id": "R2", "scene_id": "1A"}, {"id": "R1", "scene_id": "1A"}],
+            "representation",
+            True,
+        ),
         _DifferenceSeed("storylets[SL].title", "Legacy title", "Compiled title", "reader_only", True),
         _DifferenceSeed("world.facts[f]", ["f", "f"], ["f"], "dedupe", True),
         _DifferenceSeed("scenes[1A].prose", "same  prose", "same prose", "whitespace", True),
@@ -96,5 +102,5 @@ def test_parity_classes_are_classified_and_unreviewed_differences_fail(tmp_path:
         assert _field(difference, "reviewed") is (not seed.needs_review or seed.difference_class != "representation")
 
     summary = _field(report, "summary")
-    assert _field(summary, "unreviewed") == 1
+    assert _field(summary, "unreviewed") == 2
     assert _field(summary, "pass") is False

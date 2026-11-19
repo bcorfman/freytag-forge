@@ -3,7 +3,6 @@ from __future__ import annotations
 import importlib.util
 import json
 import os
-import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -12,6 +11,7 @@ import pytest
 
 from storygame.runtime.world_model import world_for
 from storygame.story_package.loader import load_story_package
+from tests.story_source.helpers import compiled_story_copy, patch_source
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "ringer" / "environment_narration" / "hidden_bench_1b2_capture.py"
@@ -29,16 +29,23 @@ def _module():
 @pytest.mark.nightly
 def test_tampered_1b2_details_are_reported_as_exposure(tmp_path: Path) -> None:
     # A public beat detail containing a hidden clue name must be visible in Findings.
-    tampered = tmp_path / "continuity-initiative"
-    shutil.copytree(PACKAGE_ROOT, tampered)
-    plot_path = tampered / "plot.md"
-    plot = plot_path.read_text(encoding="utf-8")
-    scene_heading = "### Scene 1B.2 — The Man Following Her"
-    heading_index = plot.splitlines().index(scene_heading)
-    original = next(line for line in plot.splitlines()[heading_index + 1 :] if line.startswith("**Details:**"))
-    replacement = f"{original}; hidden clue Michelle photograph"
-    assert original in plot
-    plot_path.write_text(plot.replace(original, replacement, 1), encoding="utf-8")
+    tampered = compiled_story_copy(tmp_path)
+    patch_source(
+        tampered,
+        "scenes/1B.yaml",
+        "outline[1B.2].details",
+        [
+            "stranger in the park",
+            "abandoned service tunnels",
+            "emergency patrol",
+            "Brandon Corfman",
+            "Continuity Initiative",
+            "the stranger mouthing the broadcast",
+            "hidden clue Michelle photograph",
+        ],
+    )
+    package = load_story_package(tampered)
+    assert "hidden clue Michelle photograph" in package.scenes[1].prose
 
     document = _module().capture_package(tampered)
     capture = next(

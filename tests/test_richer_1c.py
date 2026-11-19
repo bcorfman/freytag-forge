@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import yaml
-
 from storygame.audit import audit_package
 from storygame.runtime.candidate_matcher import uniquely_matched_authored_handoff
 from storygame.runtime.engine import RuntimeEngine
@@ -32,8 +30,7 @@ def _entries() -> dict:
 
 
 def _routes() -> dict:
-    data = yaml.safe_load((ROOT / "storylet-routes.yaml").read_text(encoding="utf-8"))
-    return {item["id"]: item for item in data["storylets"]}
+    return {storylet.id: storylet for storylet in PACKAGE.storylet_routes.storylets}
 
 
 def _engine(*, true_facts: tuple[str, ...] = ()) -> tuple[RuntimeState, RuntimeEngine]:
@@ -85,11 +82,10 @@ def test_three_new_optional_storylets_share_their_beats_windows_and_conditions()
     }
     for storylet_id, conditions in expected_conditions.items():
         route = routes[storylet_id]
-        assert route["scene_id"] == "1C"
-        assert len(route["realization_options"]) == 1
-        pacing = route["activation"]["pacing"]
-        assert (pacing["earliest_turn"], pacing["target_turn"], pacing["latest_turn"]) == (0, 2, 4)
-        actual = {(item["fact_id"], item.get("equals")) for item in route["activation"].get("conditions", [])}
+        assert route.scene_id == "1C"
+        assert len(route.realizations) == 1
+        assert (route.earliest_turn, route.target_turn, route.latest_turn) == (0, 2, 4)
+        actual = {(item.fact_id, item.equals) for item in route.activation_conditions}
         assert actual == conditions
 
 
@@ -203,7 +199,7 @@ def test_michelle_glimpse_contract_is_uncertain_and_preserves_its_metadata():
         term in uncertain_text
         for term in ("is michelle", "was michelle", "it was her", "found michelle", "confirmed", "recogni")
     )
-    routes_text = (ROOT / "storylet-routes.yaml").read_text(encoding="utf-8").casefold()
+    routes_text = repr(PACKAGE.storylet_routes.model_dump()).casefold()
     assert "michelle_confirmed" not in routes_text
     assert "michelle_found" not in routes_text
 

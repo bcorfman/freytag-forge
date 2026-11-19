@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-import shutil
 from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
-import yaml
 
 from storygame.runtime.candidate_matcher import uniquely_matched_authored_handoff
 from storygame.runtime.facts import FactStore
@@ -25,6 +23,8 @@ from storygame.story_package.models import (
     RouteOperation,
     WorldSource,
 )
+from storygame.story_source.diagnostics import SourceError
+from tests.story_source.helpers import compiled_story_copy, load_compiled_copy, patch_source
 
 PACKAGE_ROOT = Path("data/stories/continuity-initiative")
 PACKAGE = load_story_package(PACKAGE_ROOT)
@@ -155,13 +155,13 @@ def test_synthetic_reveal_reach_fails_open_when_the_protagonist_is_unplaced() ->
 
 
 def test_loader_rejects_an_unknown_reach_entity(tmp_path: Path) -> None:
-    destination = tmp_path / "package"
-    shutil.copytree(PACKAGE_ROOT, destination)
-    source = destination / "knowledge.yaml"
-    catalog = yaml.safe_load(source.read_text())
-    item = next(item for item in catalog["knowledge"] if item["id"] == REVEALS[0])
-    item["reach_entity_ids"] = ["undeclared_entity"]
-    source.write_text(yaml.safe_dump(catalog, sort_keys=False))
+    destination = compiled_story_copy(tmp_path)
+    patch_source(
+        destination / "source",
+        "scenes/1A.yaml",
+        "reveals[sl_1a_e].variants.r1.reach",
+        ["undeclared_entity"],
+    )
 
-    with pytest.raises(StoryPackageError, match="k_sl_1a_b_r0.*undeclared_entity"):
-        load_story_package(destination)
+    with pytest.raises((StoryPackageError, SourceError), match="k_sl_1a_b_r0.*undeclared_entity"):
+        load_compiled_copy(destination)

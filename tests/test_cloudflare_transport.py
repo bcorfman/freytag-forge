@@ -10,6 +10,7 @@ from types import SimpleNamespace
 from urllib.error import HTTPError, URLError
 
 import pytest
+import yaml
 
 from bench.core import advance_state_to_scene
 from storygame.runtime.cloudflare import (
@@ -28,10 +29,51 @@ from storygame.runtime.validation import ProposalValidationError, SelectedReveal
 from storygame.runtime.world_model import apply_scene_placements, apply_world_effects, world_for
 from storygame.story_package.loader import load_story_package
 from storygame.story_package.models import ItemPlacement
-from tests._legacy_package import legacy_package
+from tests.story_source.helpers import compiled_story_copy, load_compiled_copy, patch_source
 from tests.test_narration_json import FIXTURE_1, FIXTURE_2, FIXTURE_3
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
+
+
+@pytest.fixture
+def compiled_package(tmp_path: Path):
+    def make(knowledge_ids: set[str], *, strip_must_convey: bool = False):
+        root = compiled_story_copy(tmp_path)
+        for knowledge_id in knowledge_ids:
+            patch_source(
+                root,
+                "source/scenes/1A.yaml",
+                f"reveals[sl_1a_{knowledge_id.split('_')[3]}].variants.r{knowledge_id[-1]}.text",
+            )
+        if strip_must_convey:
+            for knowledge_id in knowledge_ids:
+                patch_source(root, "source/scenes/1A.match.yaml", f"claims.{knowledge_id}.must_convey", [])
+        return load_compiled_copy(root)
+
+    return make
+
+
+def _package_without_authored_fields(package, knowledge_ids: set[str], *, strip_must_convey: bool = False):
+    def update_item(item):
+        if item.id not in knowledge_ids:
+            return item
+        updates = {"delivery_text": None}
+        if strip_must_convey:
+            updates["must_convey"] = ()
+        return item.model_copy(update=updates)
+
+    knowledge = package.knowledge.model_copy(
+        update={"knowledge": tuple(update_item(item) for item in package.knowledge.knowledge)}
+    )
+    indexes = package.knowledge_indexes.model_copy(
+        update={
+            "by_id": {
+                **package.knowledge_indexes.by_id,
+                **{item_id: update_item(package.knowledge_indexes.by_id[item_id]) for item_id in knowledge_ids},
+            }
+        }
+    )
+    return package.model_copy(update={"knowledge": knowledge, "knowledge_indexes": indexes})
 
 
 def _activate_card_reading(state: RuntimeState) -> None:
@@ -125,8 +167,8 @@ class _Response:
         return self.body
 
 
-def test_transport_sends_bounded_context_and_optional_token(monkeypatch) -> None:
-    package = legacy_package(PACKAGE, {"k_sl_1a_c_r1", "k_sl_1a_c_r2"})
+def test_transport_sends_bounded_context_and_optional_token(monkeypatch, compiled_package) -> None:
+    package = compiled_package({"k_sl_1a_c_r1", "k_sl_1a_c_r2"})
     captured: dict[str, object] = {}
     attempts: list[int] = []
 
@@ -434,8 +476,8 @@ def test_transport_refuses_reply_with_only_malformed_segments(monkeypatch) -> No
         provider("Search the drawer.")
 
 
-def test_transport_keeps_selected_reveal_delivery_after_segment_cap(monkeypatch) -> None:
-    package = legacy_package(PACKAGE, {"k_sl_1a_c_r1", "k_sl_1a_c_r2"})
+def test_transport_keeps_selected_reveal_delivery_after_segment_cap(monkeypatch, compiled_package) -> None:
+    package = compiled_package({"k_sl_1a_c_r1", "k_sl_1a_c_r2"})
     state = RuntimeState.bootstrap(package)
     state.facts.assert_fact(Fact(predicate="michelle_warning_known", subject="story", value="true"))
     state.active_event_ids.add("SL-1A-C")
@@ -459,8 +501,8 @@ def test_transport_keeps_selected_reveal_delivery_after_segment_cap(monkeypatch)
     assert "reflective tape" in result["segments"][-1]["text"]
 
 
-def test_beat_covered_candidate_without_must_convey_keeps_its_statement() -> None:
-    package = legacy_package(PACKAGE, {"k_sl_1a_c_r1"}, strip_must_convey=True)
+def test_beat_covered_candidate_without_must_convey_keeps_its_statement(compiled_package) -> None:
+    package = compiled_package({"k_sl_1a_c_r1"}, strip_must_convey=True)
     state = RuntimeState.bootstrap(package)
     _assert_memory_card_in_custody(state)
     state.facts.assert_fact(Fact(predicate="michelle_warning_known", subject="story", value="true"))
@@ -957,9 +999,9 @@ def test_transport_recovers_once_from_a_reply_with_no_salvageable_segment(monkey
     assert "Your last answer was not valid." in payloads[1]["system"]
 
 
-def test_transport_recovers_once_when_provider_selects_unavailable_knowledge(monkeypatch) -> None:
+def test_transport_recovers_once_when_provider_selects_unavailable_knowledge(monkeypatch, compiled_package) -> None:
     payloads: list[dict[str, object]] = []
-    package = legacy_package(PACKAGE, {"k_sl_1a_a_r1"})
+    package = compiled_package({"k_sl_1a_a_r1"})
     state = RuntimeState.bootstrap(package)
     _assert_memory_card_in_custody(state)
     state.active_event_ids.add("SL-1A-A")
@@ -1006,11 +1048,11 @@ def test_transport_recovers_once_when_provider_selects_unavailable_knowledge(mon
     assert "empty list" in payloads[1]["system"]
 
 
-def test_transport_recovers_once_when_provider_grounds_on_unselected_knowledge(monkeypatch) -> None:
+def test_transport_recovers_once_when_provider_grounds_on_unselected_knowledge(monkeypatch, compiled_package) -> None:
     """Bad grounding must spend the single recovery, not fail the player's turn with HTTP 409."""
 
     payloads: list[dict[str, object]] = []
-    package = legacy_package(PACKAGE, {"k_sl_1a_a_r1"})
+    package = compiled_package({"k_sl_1a_a_r1"})
     state = RuntimeState.bootstrap(package)
     state.active_event_ids.add("SL-1A-A")
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
@@ -1055,9 +1097,9 @@ def test_transport_recovers_once_when_provider_grounds_on_unselected_knowledge(m
     assert "grounding_ids" in payloads[1]["system"]
 
 
-def test_transport_derives_grounding_without_a_recovery_request(monkeypatch) -> None:
+def test_transport_derives_grounding_without_a_recovery_request(monkeypatch, compiled_package) -> None:
     payloads: list[dict[str, object]] = []
-    package = legacy_package(PACKAGE, {"k_sl_1a_c_r1", "k_sl_1a_c_r2"})
+    package = compiled_package({"k_sl_1a_c_r1", "k_sl_1a_c_r2"})
     state = RuntimeState.bootstrap(package)
     state.facts.assert_fact(Fact(predicate="michelle_warning_known", subject="story", value="true"))
     state.active_event_ids.add("SL-1A-C")
@@ -1290,8 +1332,8 @@ def test_authored_handoff_with_positive_selection_example_uses_the_default_examp
     assert "k_sl_1a_b_r2" not in prompt["system"]
 
 
-def test_harness_selected_candidate_still_uses_the_normal_runtime_resolver(monkeypatch) -> None:
-    package = legacy_package(PACKAGE, {"k_sl_1a_c_r1", "k_sl_1a_c_r2"})
+def test_harness_selected_candidate_still_uses_the_normal_runtime_resolver(monkeypatch, compiled_package) -> None:
+    package = compiled_package({"k_sl_1a_c_r1", "k_sl_1a_c_r2"})
     state = RuntimeState.bootstrap(package)
     state.facts.assert_fact(Fact(predicate="michelle_warning_known", subject="story", value="true"))
     state.active_event_ids.add("SL-1A-C")
@@ -1508,11 +1550,11 @@ def test_transport_does_not_duplicate_existing_committed_grounding(monkeypatch) 
     assert result["segments"][0]["grounding_ids"].count("k_scene_1a_entry") == 1
 
 
-def test_transport_retries_a_reveal_the_narration_never_delivers(monkeypatch) -> None:
+def test_transport_retries_a_reveal_the_narration_never_delivers(monkeypatch, compiled_package) -> None:
     """Selecting a candidate without telling it must cost a guided retry, not the player's turn."""
 
     payloads: list[dict[str, object]] = []
-    package = legacy_package(PACKAGE, {"k_sl_1a_c_r1", "k_sl_1a_c_r2"})
+    package = compiled_package({"k_sl_1a_c_r1", "k_sl_1a_c_r2"})
     state = RuntimeState.bootstrap(package)
     state.facts.assert_fact(Fact(predicate="michelle_warning_known", subject="story", value="true"))
     state.active_event_ids.add("SL-1A-C")
@@ -1558,9 +1600,9 @@ def test_transport_retries_a_reveal_the_narration_never_delivers(monkeypatch) ->
     assert "would never learn it" in payloads[1]["system"]
 
 
-def test_transport_retries_a_partially_conveyed_reveal(monkeypatch) -> None:
+def test_transport_retries_a_partially_conveyed_reveal(monkeypatch, compiled_package) -> None:
     payloads: list[dict[str, object]] = []
-    package = legacy_package(PACKAGE, {"k_sl_1a_d_r1"})
+    package = compiled_package({"k_sl_1a_d_r1"})
     state = RuntimeState.bootstrap(package)
     _assert_memory_card_in_custody(state)
     state.active_event_ids.add("SL-1A-D")
@@ -1635,9 +1677,9 @@ def test_transport_drops_a_reveal_it_will_not_narrate_rather_than_committing_it(
     assert len(payloads) == 2
 
 
-def test_transport_accepts_grounding_on_the_selected_candidate(monkeypatch) -> None:
+def test_transport_accepts_grounding_on_the_selected_candidate(monkeypatch, compiled_package) -> None:
     payloads: list[dict[str, object]] = []
-    package = legacy_package(PACKAGE, {"k_sl_1a_c_r1", "k_sl_1a_c_r2"})
+    package = compiled_package({"k_sl_1a_c_r1", "k_sl_1a_c_r2"})
     state = RuntimeState.bootstrap(package)
     state.facts.assert_fact(Fact(predicate="michelle_warning_known", subject="story", value="true"))
     state.active_event_ids.add("SL-1A-C")
@@ -1713,7 +1755,7 @@ def test_transport_precheck_mirrors_the_resolver_rules(segments, selected) -> No
         provider._parse_eligible_proposal({"segments": segments, "selected_knowledge_ids": selected})
 
 
-def test_turn_prompt_matches_what_the_turn_actually_offers(monkeypatch) -> None:
+def test_turn_prompt_matches_what_the_turn_actually_offers(monkeypatch, compiled_package) -> None:
     """A quiet turn must not invite a selection, and an offered reveal must be claimed.
 
     Inventing an ID on a quiet turn costs the player the turn; declining an earned
@@ -1727,7 +1769,7 @@ def test_turn_prompt_matches_what_the_turn_actually_offers(monkeypatch) -> None:
         return _Response({"narration": '{"segments":[{"kind":"narration","text":"The room stays quiet."}]}'})
 
     monkeypatch.setattr("storygame.runtime.cloudflare.urlopen", open_request)
-    package = legacy_package(PACKAGE, {"k_sl_1a_c_r1", "k_sl_1a_c_r2"})
+    package = compiled_package({"k_sl_1a_c_r1", "k_sl_1a_c_r2"})
     state = RuntimeState.bootstrap(package)
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
 
@@ -2128,7 +2170,7 @@ def test_turn_omits_the_scene_entry_text_and_its_protected_beat(monkeypatch) -> 
         assert "janus" not in user.casefold(), f"{scene_id} leaked protected knowledge into an ordinary turn"
 
 
-def test_instruction_points_at_the_statement_for_a_candidate_with_no_groups(monkeypatch) -> None:
+def test_instruction_points_at_the_statement_for_a_candidate_with_no_groups(monkeypatch, compiled_package) -> None:
     """A reveal with no must_convey groups must still be deliverable.
 
     Fifty-three of the story's sixty-one reveals declare no groups. An earlier
@@ -2138,7 +2180,7 @@ def test_instruction_points_at_the_statement_for_a_candidate_with_no_groups(monk
     hosted playthroughs because nothing ever committed.
     """
 
-    package = legacy_package(PACKAGE, {"k_sl_1a_a_r1"}, strip_must_convey=True)
+    package = compiled_package({"k_sl_1a_a_r1"}, strip_must_convey=True)
     state = RuntimeState.bootstrap(package)
     _assert_memory_card_in_custody(state)
     state.active_event_ids.add("SL-1A-A")
@@ -2484,8 +2526,10 @@ def test_real_scene_1a_accepts_visible_carving_on_turns_one_through_four(monkeyp
 
 
 def test_scene_1a_hidden_canon_stays_out_of_beats_and_pre_reveal_prompts(monkeypatch) -> None:
-    plot = Path("data/stories/continuity-initiative/plot.md").read_text(encoding="utf-8")
-    hidden_canon = next(line for line in plot.splitlines() if line.startswith("**Hidden canon:**"))
+    scene_source = yaml.safe_load(
+        Path("data/stories/continuity-initiative/source/scenes/1A.yaml").read_text(encoding="utf-8")
+    )
+    hidden_canon = next(line for line in scene_source["brief"].splitlines() if line.startswith("**Hidden canon:**"))
     scene = PACKAGE.scenes[0]
     beat_text = " ".join(f"{beat.prose} {' '.join(beat.details)}" for beat in scene.beats.values()).casefold()
     assert hidden_canon.casefold() not in beat_text
@@ -2556,8 +2600,8 @@ def test_selection_duty_uses_one_random_choice_rule() -> None:
     )
 
 
-def test_candidate_prompt_includes_earning_cue_and_a_selected_example() -> None:
-    package = legacy_package(PACKAGE, {"k_sl_1a_a_r1"})
+def test_candidate_prompt_includes_earning_cue_and_a_selected_example(compiled_package) -> None:
+    package = compiled_package({"k_sl_1a_a_r1"})
     state = RuntimeState.bootstrap(package)
     engine = RuntimeEngine(state, lambda *_args, **_kwargs: {"segments": []})
     engine._activate_pacing()
@@ -2594,7 +2638,7 @@ def test_nonmatching_turn_hides_migrated_candidates_but_keeps_projection() -> No
 
 
 def test_model_selection_of_migrated_candidate_on_nonmatching_turn_does_not_commit(monkeypatch) -> None:
-    state = _staged_scene_1a_state(legacy_package(PACKAGE, {"k_sl_1a_a_r1"}))
+    state = _staged_scene_1a_state(_package_without_authored_fields(PACKAGE, {"k_sl_1a_a_r1"}))
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
     response = {
         "segments": [
@@ -2825,8 +2869,8 @@ def test_shadow_matcher_records_a_unique_candidate_without_changing_the_prompt()
     assert "action_evidence" not in provider._section_user_prompt(prompt["context"])
 
 
-def test_shadow_narrowing_hides_other_candidates_from_the_prompt_not_the_resolver() -> None:
-    package = legacy_package(PACKAGE, {"k_sl_1a_b_r1", "k_sl_1a_b_r2"})
+def test_shadow_narrowing_hides_other_candidates_from_the_prompt_not_the_resolver(compiled_package) -> None:
+    package = compiled_package({"k_sl_1a_b_r1", "k_sl_1a_b_r2"})
     state = RuntimeState.bootstrap(package)
     _activate_card_reading_at_laptop(state, package)
     provider = CloudflareTurnProvider(
@@ -2929,18 +2973,21 @@ def test_shipped_provider_player_block_contains_only_the_command() -> None:
 
 
 def test_a_characters_concealed_history_never_reaches_the_narrator() -> None:
-    """plot.md may state what a character hides; the narrator may not be told it.
+    """Authored character history may state what a character hides; the narrator may not be told it.
 
     Brandon Corfman's authored biography names the involvement he conceals, and
-    that is brandon_history, which world.yaml declares protected. Protected
+    that is brandon_history, which the source catalog declares protected. Protected
     knowledge is otherwise enforced only against fact mutation, so nothing but
     this substitution keeps it out of the prompt.
     """
 
     brandon = next(item for item in PACKAGE.characters if item.id == "brandon")
-    plot_text = Path("data/stories/continuity-initiative/plot.md").read_text(encoding="utf-8")
+    catalog_source = yaml.safe_load(
+        Path("data/stories/continuity-initiative/source/catalog.yaml").read_text(encoding="utf-8")
+    )
+    brandon_source = catalog_source["characters"]["brandon"]["narrator_bio"]
 
-    assert "conceals his own past involvement" in plot_text
+    assert "guarded about his own past" in brandon_source
     assert "brandon_history" in PACKAGE.world.protected_knowledge
     assert "conceals" not in brandon.bio
     assert "AI software" not in brandon.bio

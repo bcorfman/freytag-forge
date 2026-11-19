@@ -8,7 +8,6 @@ from pathlib import Path
 from storygame.story_package import loader
 from storygame.story_package.models import (
     Character,
-    FactPredicate,
     Incident,
     KnowledgeCatalog,
     PacingSource,
@@ -163,52 +162,10 @@ def _characters(story: Mapping, catalog: Mapping) -> tuple[Character, ...]:
 def _supply_transition_sources(
     pacing: PacingSource, incidents: Sequence[Incident], routes: Sequence[StoryletRoute]
 ) -> PacingSource:
-    """Ensure reduced source fixtures have a local transition producer."""
+    """Keep the monkeypatch hook while requiring authored transition producers."""
 
-    incident_producers: dict[str, set[str]] = {}
-    routes_by_id = {route.id: route for route in routes}
-    for incident in incidents:
-        route = routes_by_id[incident.outcomes[0].storylet_id]
-        realizations = {realization.id: realization for realization in route.realizations}
-        incident_producers.setdefault(incident.scene_id, set()).update(
-            operation.fact_id
-            for outcome in incident.outcomes
-            for operation in realizations[outcome.realization_id].operations
-            if operation.op == "assert" and operation.value is True
-        )
-
-    events = list(pacing.events)
-    incident_event_ids = {incident.missed_window_event_id for incident in incidents}
-    for transition in pacing.transitions:
-        existing = {
-            effect.fact_id
-            for event in events
-            if event.scene_id == transition.source_scene_id
-            for effect in event.effects
-            if effect.equals is True
-        }
-        existing.update(incident_producers.get(transition.source_scene_id, ()))
-        missing = [
-            trigger.fact_id
-            for trigger in transition.triggers
-            if trigger.equals is True and trigger.fact_id not in existing
-        ]
-        if not missing:
-            continue
-        index = next(
-            (
-                index
-                for index, event in enumerate(events)
-                if event.scene_id == transition.source_scene_id and event.id not in incident_event_ids
-            ),
-            None,
-        )
-        if index is None:
-            continue
-        event = events[index]
-        effects = (*event.effects, *(FactPredicate(fact_id=fact_id, equals=True) for fact_id in missing))
-        events[index] = event.model_copy(update={"effects": effects})
-    return pacing.model_copy(update={"events": tuple(events)})
+    # Tests patch this hook; real source must declare producers and the loader validates them.
+    return pacing
 
 
 def _run_loader_checks(package: StoryPackage) -> None:

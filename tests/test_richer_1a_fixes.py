@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import yaml
-
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.state import RuntimeState
 from storygame.story_package.loader import load_story_package
@@ -69,9 +67,8 @@ def test_the_kitchen_storylet_has_two_separate_reveals():
     assert "calendar" in walls.delivery_text and "lemon cake" in walls.delivery_text
     assert "photograph" in walls.delivery_text and "tea" not in walls.delivery_text
     assert set(walls.reach_entity_ids) == {"kitchen_calendar", "lake_photograph"}
-    routes = yaml.safe_load((ROOT / "storylet-routes.yaml").read_text(encoding="utf-8"))
-    storylet = next(item for item in routes["storylets"] if item["id"] == "SL-1A-G")
-    assert [option["id"] for option in storylet["realization_options"]] == ["SL-1A-G-R1", "SL-1A-G-R2"]
+    storylet = next(item for item in PACKAGE.storylet_routes.storylets if item.id == "SL-1A-G")
+    assert [realization.id for realization in storylet.realizations] == ["SL-1A-G-R1", "SL-1A-G-R2"]
     assert {operation.fact_id for operation in workstation.establishes} == {
         "kitchen_last_hour_read",
         "michelle_abduction_suspicion",
@@ -96,9 +93,8 @@ def test_a_calendar_command_offers_only_the_walls_reveal():
 def test_the_neighbor_does_not_depend_on_the_patrol_being_away():
     entry = _knowledge()["k_sl_1a_i_r1"]
     assert all(requirement.fact_id != "patrol_in_house" for requirement in entry.requires)
-    routes = yaml.safe_load((ROOT / "storylet-routes.yaml").read_text(encoding="utf-8"))
-    storylet = next(item for item in routes["storylets"] if item["id"] == "SL-1A-I")
-    assert all(item["fact_id"] != "patrol_in_house" for item in storylet["activation"].get("conditions", []))
+    storylet = next(item for item in PACKAGE.storylet_routes.storylets if item.id == "SL-1A-I")
+    assert all(condition.fact_id != "patrol_in_house" for condition in storylet.activation_conditions)
 
 
 def test_the_neighbor_is_offered_after_the_patrol_is_in_the_house():

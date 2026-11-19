@@ -1,1 +1,1 @@
-{"name":"stage7-3c-pre667","story_package":"data/stories/continuity-initiative","overrides":{"knowledge.yaml":{"replacements":[{"old":", broadcasting the reports, broadcasting reports, relay the reports, relaying the reports]","new":"]"}]}}}
+{"name":"stage7-3c-pre667","story_package":"data/stories/continuity-initiative","overrides":{"source/scenes/3C.match.yaml":{"replacements":[{"old":"      - broadcasting the reports\n      - broadcasting reports\n      - relay the reports\n      - relaying the reports\n","new":""}]}}}

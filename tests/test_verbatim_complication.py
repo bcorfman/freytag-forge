@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from shutil import copytree
 
 import pytest
 
@@ -11,8 +10,10 @@ from storygame.runtime.cloudflare import CloudflareTurnProvider
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeState
-from storygame.story_package.loader import StoryPackageError, load_story_package
+from storygame.story_package.loader import load_story_package
 from storygame.story_package.models import FactPredicate, PacingEvent, PacingRealization
+from storygame.story_source.diagnostics import SourceError
+from tests.story_source.helpers import compiled_story_copy, load_compiled_copy, patch_source
 
 PACKAGE_ROOT = Path("data/stories/continuity-initiative")
 PACKAGE = load_story_package(PACKAGE_ROOT)
@@ -62,12 +63,10 @@ def test_verbatim_defaults_false_and_loader_rejects_non_boolean(tmp_path: Path) 
     with pytest.raises(ValueError):
         PacingRealization(text="A pressure.", verbatim="true")  # type: ignore[arg-type]
 
-    package_copy = tmp_path / "continuity-initiative"
-    copytree(PACKAGE_ROOT, package_copy)
-    pacing = package_copy / "pacing.yaml"
-    pacing.write_text(pacing.read_text().replace("verbatim: true", 'verbatim: "true"', 1))
-    with pytest.raises(StoryPackageError):
-        load_story_package(package_copy)
+    package_copy = compiled_story_copy(tmp_path)
+    patch_source(package_copy / "source", "scenes/3C.yaml", "beats[collapse_3c].say[0].verbatim", "true")
+    with pytest.raises(SourceError, match=r"key 'verbatim' must be a boolean"):
+        load_compiled_copy(package_copy)
 
 
 def test_continuity_gap_realizations_are_verbatim_but_defaults_are_not() -> None:

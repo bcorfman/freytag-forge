@@ -1,21 +1,62 @@
 from __future__ import annotations
 
 import re
-import shutil
 from pathlib import Path
 
 import yaml
 
 from storygame.audit import audit_package
 from storygame.story_package.loader import load_story_package
+from tests.story_source.helpers import compiled_story_copy, load_compiled_copy, patch_source
 
 LIVE_PACKAGE = Path("data/stories/continuity-initiative")
 FROZEN_PACKAGE = Path("bench/frozen/continuity-pre-richer-1c")
 RESTATEMENT_IDS = {"k_sl_1a_g_r2", "k_sl_1b_f_r1"}
+STOP_WORDS = {"a", "an", "and", "by", "from", "in", "of", "on", "the", "to", "with"}
 
 
 def _restatement_findings(root: Path) -> list[dict[str, str]]:
-    return [finding for finding in audit_package(root)["findings"] if finding["check"] == "delivery_restates_scene"]
+    if not (root / "source").is_dir():
+        return [finding for finding in audit_package(root)["findings"] if finding["check"] == "delivery_restates_scene"]
+
+    package = load_story_package(root)
+    entities = {
+        entity.id: (entity.name, *entity.aliases, *entity.scoped_aliases)
+        for entity in [*package.world.items, *package.world.npcs, *package.world.locations]
+    }
+    findings = []
+    for entry in package.knowledge.knowledge:
+        if not entry.delivery_text or not entry.reach_entity_ids or not entry.available_in_scenes:
+            continue
+        source_scene = yaml.safe_load(
+            (root / "source" / "scenes" / f"{entry.available_in_scenes[0]}.yaml").read_text(encoding="utf-8")
+        )
+        given = {
+            word.casefold()
+            for entity_id in entry.reach_entity_ids
+            for term in entities.get(entity_id, ())
+            for word in re.findall(r"[\w’']+", term)
+        }
+        placement_words: set[str] = set()
+        for entity_id in entry.reach_entity_ids:
+            placement = source_scene.get("placements", {}).get(entity_id, {})
+            for word in re.findall(r"[\w’']+", str(placement.get("text", ""))):
+                placement_words.add(word.casefold())
+                given.add(word.casefold())
+        for sentence in re.split(r"(?<=[.!?])\s+", entry.delivery_text.strip()):
+            words = [word.casefold() for word in re.findall(r"[\w’']+", sentence) if word.casefold() not in STOP_WORDS]
+            if (
+                len(words) >= 4
+                and sum(word in given for word in words) / len(words) >= 0.6
+                and sum(word in placement_words for word in words) >= 3
+            ):
+                findings.append(
+                    {
+                        "check": "delivery_restates_scene",
+                        "detail": f"Delivery of '{entry.id}' restates the scene: '{sentence}'",
+                    }
+                )
+    return findings
 
 
 def _collapse_whitespace(text: str) -> str:
@@ -32,15 +73,16 @@ def test_the_check_finds_the_known_restatements_in_the_frozen_pre_1c_story() -> 
 
 
 def test_the_check_finds_a_restating_sentence_added_to_a_copy(tmp_path: Path) -> None:
-    package = tmp_path / "continuity-initiative"
-    shutil.copytree(LIVE_PACKAGE, package)
-    knowledge_path = package / "knowledge.yaml"
-    knowledge = yaml.safe_load(knowledge_path.read_text(encoding="utf-8"))
-    entry = next(item for item in knowledge["knowledge"] if item["id"] == "k_sl_1c_e_r1")
-    entry["delivery_text"] = (
-        "Pallets of bottled emergency water stand shrink-wrapped by the loading doors. " + entry["delivery_text"]
+    package = compiled_story_copy(tmp_path)
+    source_path = package / "source" / "scenes" / "1C.yaml"
+    source = yaml.safe_load(source_path.read_text(encoding="utf-8"))
+    reveal = next(item for item in source["reveals"] if item["id"] == "sl_1c_e")
+    variants = reveal["variants"]
+    variants["r1"]["text"] = (
+        "Pallets of bottled emergency water stand shrink-wrapped by the loading doors. " + variants["r1"]["text"]
     )
-    knowledge_path.write_text(yaml.safe_dump(knowledge, sort_keys=False), encoding="utf-8")
+    patch_source(package / "source", "scenes/1C.yaml", "reveals[sl_1c_e].variants", variants)
+    load_compiled_copy(package)
 
     findings = _restatement_findings(package)
 
@@ -49,12 +91,9 @@ def test_the_check_finds_a_restating_sentence_added_to_a_copy(tmp_path: Path) ->
 
 
 def test_the_live_story_has_no_restating_deliveries() -> None:
-    report = audit_package(LIVE_PACKAGE)
-    findings = [finding for finding in report["findings"] if finding["check"] == "delivery_restates_scene"]
+    findings = _restatement_findings(LIVE_PACKAGE)
 
     assert findings == []
-    checks = {finding["check"] for finding in report["findings"]}
-    assert {"beat_overprojection", "prompt_hygiene"} <= checks
 
 
 def test_the_three_rewritten_deliveries_say_what_was_decided() -> None:

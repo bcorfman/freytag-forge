@@ -1,0 +1,639 @@
+schema: 1
+scene: 3C
+claims:
+  k_sl_3c_a_r1:
+    aliases:
+    - truth no longer containable
+    action_evidence:
+    - - ask
+      - talk to
+      - send
+      - broadcast
+      - air
+      - play
+      - show
+      - share
+      - transmit
+      - stream
+      - publish
+      - release
+      - upload
+      - present
+      - display
+      - project
+      - screen
+      - put on
+      - run
+      - relay
+    - - detention-site locations
+      - detention site locations
+      - captives' video
+      - captive video
+      - captive videos
+      - prisoner video
+      - prisoner videos
+      - captives' footage
+      - captive footage
+      - prisoner footage
+      - JANUS records
+      - JANUS selection records
+      - selection records
+      - planning sessions
+      - planning session
+      - Charles and Rebecca
+      - Charles's planning
+      - Rebecca's planning
+      - broadcast evidence
+      - national broadcast
+      - national broadcasts
+      - independent networks
+      - independent network
+      - outside networks
+      - outside network
+      - public broadcast
+      - public broadcasts
+      - evidence package
+      - evidence packages
+      - detention locations
+      - prisoner locations
+      - captive locations
+      - detention-site list
+      - detention site list
+      - behavioral experiments
+      - behavioral experiment
+      - experiments
+      - experiment records
+      - experiment record
+      - detention site map
+      - detention-site map
+      - detention map
+    must_convey: []
+  k_sl_3c_a_r2:
+    aliases:
+    - truth no longer containable
+    action_evidence:
+    - - ask
+      - talk to
+      - answer
+      - respond
+      - reply
+      - counter
+      - challenge
+      - refute
+      - reject
+      - deny
+      - expose
+      - show
+      - display
+      - broadcast
+      - air
+      - play
+      - announce
+      - address
+      - confront
+      - rebut
+      - tell
+      - call
+      - put
+      - cut to
+      - switch to
+    - - Charles's terrorist claim
+      - terrorist claim
+      - terrorist claims
+      - terrorist charge
+      - terrorist charges
+      - terrorist label
+      - terrorist labels
+      - Charles's accusation
+      - Charles's accusations
+      - his accusation
+      - his accusations
+      - his terrorist claim
+      - his terrorist claims
+      - live revolts
+      - live revolt
+      - facility revolts
+      - facility revolt
+      - prison revolts
+      - prison revolt
+      - uprisings
+      - uprising
+      - live uprisings
+      - live uprising
+      - revolt footage
+      - uprising footage
+      - revolt images
+      - uprising images
+      - prisoner revolt
+      - prisoner revolts
+      - captive revolt
+      - captive revolts
+      - live feeds
+      - live feed
+      - revolts
+      - revolt
+      - riots
+      - riot
+      - the riots
+      - a liar
+      - is lying
+      - his lies
+      - Charles's lies
+      - Charles's claim
+      - his claim
+    must_convey: []
+  k_sl_3c_b_r1:
+    aliases:
+    - portable archive secured
+    - archive contains prisoner locations
+    - archive copies distributed
+    - rebecca captured
+    action_evidence:
+    - - ask
+      - talk to
+      - stop
+      - block
+      - hold
+      - grab
+      - take
+      - seize
+      - chase
+      - tackle
+      - corner
+      - run after
+      - catch
+      - pin
+      - restrain
+      - confront
+      - intercept
+      - prevent
+      - secure
+      - wrest
+      - wrestle
+      - wrestle away
+      - follow
+    - - data case
+      - data cases
+      - portable data case
+      - portable data cases
+      - Rebecca's data case
+      - Rebecca's data cases
+      - Rebecca data case
+      - Rebecca data cases
+      - her data case
+      - her data cases
+      - Rebecca's escape
+      - Rebecca escapes
+      - Rebecca fleeing
+      - Rebecca's flight
+      - Rebecca's exit
+      - Rebecca exits
+      - her escape
+      - her flight
+      - her exit
+      - Rebecca's hands
+      - her hands
+      - Rebecca's bag
+      - Rebecca's bags
+      - her bag
+      - her bags
+      - archive case
+      - archive cases
+      - portable case
+      - portable cases
+      - data briefcase
+      - data briefcases
+      - Rebecca's arm
+      - her arm
+      - follow Rebecca
+      - Rebecca's escape route
+    must_convey: []
+  k_sl_3c_b_r2:
+    aliases:
+    - portable archive secured
+    - archive copies distributed
+    - archive contains prisoner locations
+    - rebecca captured
+    action_evidence:
+    - - ask
+      - talk to
+      - copy
+      - send
+      - upload
+      - share
+      - publish
+      - release
+      - transmit
+      - distribute
+      - broadcast
+      - hand
+      - give
+      - turn over
+      - let
+      - give up
+      - deliver
+      - expose
+      - spread
+      - save
+      - push
+      - turn
+      - leave
+    - - Rebecca's archive
+      - her archive
+      - portable archive
+      - portable archives
+      - archive copies
+      - archive copy
+      - archive backup
+      - archive backups
+      - independent networks
+      - independent network
+      - outside networks
+      - outside network
+      - public servers
+      - public server
+      - the prisoners
+      - those prisoners
+      - prisoner group
+      - prisoner groups
+      - Rebecca's capture
+      - Rebecca captures
+      - her capture
+      - remote command site
+      - remote command sites
+      - Charles's command site
+      - his command site
+      - Charles's escape
+      - his escape
+      - archive upload
+      - archive uploads
+      - archive release
+      - archive releases
+      - copies of the archive
+    must_convey: []
+  k_evacuation_recovery_ready:
+    aliases:
+    - evacuation recovery ready
+    action_evidence: []
+    must_convey: []
+    leak_terms: []
+  k_sl_3c_h_route_effects:
+    aliases:
+    - evacuation recovery route effects
+    action_evidence: []
+    must_convey:
+    - - evacuation recovery
+      - route effects
+  k_sl_3c_d_r1:
+    aliases:
+    - national network fragmenting
+    action_evidence:
+    - - ask
+      - talk to
+      - check
+      - read
+      - watch
+      - view
+      - look at
+      - review
+      - inspect
+      - scan
+      - monitor
+      - follow
+      - search
+      - listen to
+      - track
+      - confirm
+      - count
+      - list
+      - tally
+      - compare
+      - scroll through
+      - broadcast the reports
+      - broadcast reports
+      - broadcasting the reports
+      - broadcasting reports
+      - relay the reports
+      - relaying the reports
+    - - other detention sites
+      - other detention site
+      - detention-site reports
+      - detention site reports
+      - facility reports
+      - facility report
+      - facilities surrendering
+      - facility surrender
+      - facility surrenders
+      - site surrender
+      - site surrenders
+      - site releases
+      - site release
+      - prison releases
+      - prison release
+      - national network
+      - national networks
+      - network fracture
+      - network fractures
+      - network collapse
+      - network collapses
+      - country reports
+      - national reports
+      - other facilities
+      - detention reports
+      - news reports
+      - site news
+      - surrender reports
+      - release reports
+      - facility news
+      - surrender
+      - surrendered
+      - the reports
+      - detention sites
+      - detention site
+    must_convey: []
+  k_sl_3c_d_r2:
+    aliases:
+    - community rescue efforts begun
+    action_evidence:
+    - - ask
+      - talk to
+      - call
+      - contact
+      - tell
+      - inform
+      - reach
+      - join
+      - help
+      - organize
+      - support
+      - meet
+      - work with
+      - coordinate
+      - speak to
+      - comfort
+      - greet
+      - visit
+      - find
+      - gather
+      - volunteer
+      - volunteer with
+      - broadcast updates
+      - answer the families with
+      - answer the families
+      - reassure the families
+      - respond to the families
+    - - the missing
+      - missing families
+      - missing family
+      - family members
+      - family member
+      - the families
+      - those families
+      - community rescues
+      - community rescue
+      - rescue efforts
+      - rescue effort
+      - rescue volunteers
+      - rescue volunteer
+      - volunteers organizing rescues
+      - rescue teams
+      - rescue team
+      - rescue groups
+      - rescue group
+      - local communities
+      - local community
+      - independent rescues
+      - independent rescue
+      - survivors' families
+      - survivor families
+      - missing survivors
+      - living missing
+      - still alive
+      - community volunteers
+      - community volunteer
+      - rescue organizers
+    must_convey: []
+  k_sl_3c_e_r1:
+    aliases:
+    - phase one label known
+    - phase two conflict plan known
+    - charles at large
+    action_evidence:
+    - - ask
+      - talk to
+      - open
+      - read
+      - review
+      - inspect
+      - check
+      - examine
+      - find
+      - recover
+      - unseal
+      - access
+      - search
+      - look at
+      - study
+      - decrypt
+      - decode
+      - restore
+      - repair
+      - piece together
+    - - recovered JANUS file
+      - recovered JANUS files
+      - JANUS file
+      - JANUS files
+      - JANUS document
+      - JANUS documents
+      - recovered document
+      - recovered documents
+      - Phase One
+      - Phase Two
+      - second plan
+      - second plans
+      - survivor conflict
+      - survivor conflicts
+      - survivors' conflict
+      - conflict among survivors
+      - disappearance plan
+      - disappearance plans
+      - missing-person plan
+      - missing-person plans
+      - Phase One plan
+      - Phase One plans
+      - Phase Two plan
+      - Phase Two plans
+      - JANUS phase
+      - JANUS phases
+      - conflict plan
+      - conflict plans
+      - hidden plan
+      - hidden plans
+      - recovered phase file
+      - recovered phase files
+    must_convey: []
+  k_sl_3c_e_r2:
+    aliases:
+    - phase two conflict plan known
+    - charles at large
+    action_evidence:
+    - - ask
+      - talk to
+      - trace
+      - search
+      - find
+      - track
+      - locate
+      - follow
+      - scan
+      - watch
+      - monitor
+      - check
+      - look for
+      - hunt
+      - seek
+      - investigate
+      - pursue
+      - probe
+      - map
+      - pinpoint
+    - - Charles's location
+      - Charles's locations
+      - his location
+      - his locations
+      - the feeds
+      - video feeds
+      - video feed
+      - remote feeds
+      - remote feed
+      - Charles's feed
+      - Charles's feeds
+      - his feed
+      - his feeds
+      - unknown location
+      - unknown locations
+      - hiding place
+      - hiding places
+      - Charles's hiding place
+      - his hiding place
+      - last known location
+      - last known locations
+      - Charles's signal
+      - Charles's signals
+      - his signal
+      - his signals
+      - remote signal
+      - remote signals
+      - the unrest
+      - national unrest
+      - public unrest
+      - restore order
+      - restored order
+      - Charles at large
+      - where Charles
+      - Charles went
+      - Charles is hiding
+      - Charles's last remote channel
+      - his last remote channel
+    must_convey: []
+  k_sl_3c_c_r1:
+    aliases:
+    - evacuation route open
+    - evacuation complete
+    - barrier held
+    action_evidence:
+    - - restore
+      - hold
+      - brace
+      - close
+      - repair
+      - fix
+      - start
+      - activate
+      - use
+      - operate
+    - - pumps
+      - drainage pumps
+      - drainage pump controls
+      - pump controls
+      - watertight barrier
+      - barrier
+  k_sl_3c_c_r2:
+    aliases:
+    - evacuation route open
+    - evacuation complete
+    - captives out costly
+    - lower levels lost
+    action_evidence:
+    - - give up
+      - abandon
+      - sacrifice
+      - flood
+      - seal
+      - let go
+      - give
+      - release
+      - accept
+    - - lower levels
+      - lower level
+      - detention levels
+      - detention level
+  k_resolution_escape:
+    aliases:
+    - captives reach the surface
+    - surviving captives
+  k_resolution_michelle_publishing:
+    aliases:
+    - Michelle publishing
+    - archive publication
+  k_resolution_charles_at_large:
+    aliases:
+    - charles at large
+  k_resolution_kristin_rescue:
+    aliases:
+    - rescue efforts
+    - remaining detention sites
+    leak_terms:
+    - remaining detention sites
+  k_scene_3c_entry:
+    aliases:
+    - escape route
+    - exposure
+    leak_terms: []
+deliveries:
+  truth_no_longer_containable:
+    must_convey:
+    - - national broadcast
+      - evidence package
+    - - Charles speaks over Michelle
+      - Charles's voice over Michelle
+  rebecca_captured:
+    must_convey:
+    - - Rebecca leaves the executive office
+      - Rebecca is leaving the executive office
+    - - Portable data case
+      - data case
+  evacuation_route_open:
+    must_convey:
+    - - water rises
+      - rising water
+    - - drainage pump controls
+      - pump controls
+  national_network_fragmenting:
+    must_convey:
+    - - reports from other detention sites
+      - detention site reports
+    - - broadcast chamber
+      - Michelle's broadcast
+  community_rescue_efforts_begun:
+    must_convey:
+    - - families of the missing
+      - missing families
+    - - ask
+      - for word
+  phase_two_conflict_plan_known:
+    must_convey:
+    - - recovered document
+      - recovered file
+    - - Charles's signal
+      - Charles's last remote channel

@@ -2,11 +2,11 @@
 
 from pathlib import Path
 
-from storygame.story_package.loader import load_story_package
+from storygame.story_package.loader import load_legacy_story_package
 from storygame.story_source import check_source_tree, compile_source_tree
 from storygame.story_source.convert import write_source_tree
 
-PACKAGE_ROOT = Path("data/stories/continuity-initiative")
+LEGACY_ROOT = Path("tests/fixtures/parity/continuity-initiative/legacy")
 
 
 def _assert_same_ids(label: str, expected: set[str], actual: set[str]) -> None:
@@ -18,7 +18,7 @@ def _assert_same_ids(label: str, expected: set[str], actual: set[str]) -> None:
 def test_default_story_tree_validates_compiles_and_preserves_ids(tmp_path: Path) -> None:
     """The assembled default tree is valid and retains every legacy record ID."""
 
-    legacy = load_story_package(PACKAGE_ROOT)
+    legacy = load_legacy_story_package(LEGACY_ROOT)
     first_root = tmp_path / "first"
     second_root = tmp_path / "second"
     write_source_tree(legacy, first_root)

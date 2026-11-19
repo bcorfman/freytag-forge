@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import re
-import shutil
 from pathlib import Path
 
 import pytest
@@ -10,41 +9,48 @@ import yaml
 from scripts.gap_rules import main
 from storygame.story_package.gap_rules import custody_checks, exit_transitions, render_rule_results, run_gap_rules
 from storygame.story_package.loader import load_story_package
+from tests.story_source.helpers import compiled_story_copy, load_compiled_copy
 
 ROOT = Path("data/stories/continuity-initiative")
 MODULE = Path("storygame/story_package/gap_rules.py")
 
 
 def _copy_package(tmp_path: Path) -> Path:
-    destination = tmp_path / "package"
-    shutil.copytree(ROOT, destination)
-    return destination
+    return compiled_story_copy(tmp_path)
 
 
-def _edit_yaml(root: Path, filename: str, edit) -> None:
-    path = root / filename
+def _edit_source(root: Path, filename: str, edit) -> None:
+    path = root / "source" / filename
     data = yaml.safe_load(path.read_text(encoding="utf-8"))
     edit(data)
     path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
 
 
 def _claim(data: dict, claim_id: str) -> dict:
-    return next(item for item in data["knowledge"] if item["id"] == claim_id)
+    return next(
+        variant
+        for reveal in data["reveals"]
+        for variant in reveal["variants"].values()
+        if variant.get("claim_id") == claim_id
+    )
 
 
 def _remove_asserted_fact(data: object, fact_id: str) -> None:
     if isinstance(data, dict):
         for key, value in data.items():
-            if key in {"effects", "establishes", "operations", "costs"} and isinstance(value, list):
-                data[key] = [
-                    item
-                    for item in value
-                    if not (
-                        isinstance(item, dict)
-                        and item.get("fact_id") == fact_id
-                        and (item.get("op") == "assert" or item.get("equals") is True)
-                    )
-                ]
+            if key in {"sets", "commits", "establishes", "operations", "costs"}:
+                if isinstance(value, dict) and value.get(fact_id) is True:
+                    del value[fact_id]
+                elif isinstance(value, list):
+                    data[key] = [
+                        item
+                        for item in value
+                        if not (
+                            isinstance(item, dict)
+                            and item.get("fact_id") == fact_id
+                            and (item.get("op") == "assert" or item.get("equals") is True)
+                        )
+                    ]
             _remove_asserted_fact(value, fact_id)
     elif isinstance(data, list):
         for item in data:
@@ -146,36 +152,36 @@ def test_no_strand_reports_already_true_effect() -> None:
 
 def test_custody_seeded_defect_and_clean_variant(tmp_path: Path) -> None:
     package_root = _copy_package(tmp_path)
-    _edit_yaml(
+    _edit_source(
         package_root,
-        "knowledge.yaml",
-        lambda data: _claim(data, "k_sl_1a_d_r1").update(
-            entity_ids=list(dict.fromkeys(_claim(data, "k_sl_1a_d_r1")["entity_ids"]))
-        ),
+        "scenes/1A.yaml",
+        lambda data: _claim(data, "k_sl_1a_d_r1")["entities"].append("memory_card"),
     )
     results = run_gap_rules(package_root, "officer_presses_1a", ["custody"])
     assert any(result.subject == "k_sl_1a_d_r1" and "memory_card" in result.summary for result in results)
 
     def clean(data: dict) -> None:
         claim = _claim(data, "k_sl_1a_d_r1")
-        claim["entity_ids"].remove("memory_card")
-        claim["relevance"]["entity_ids"].remove("memory_card")
+        claim["entities"] = [entity for entity in claim["entities"] if entity != "memory_card"]
+        claim["relevance"]["entity_ids"] = [
+            entity for entity in claim["relevance"]["entity_ids"] if entity != "memory_card"
+        ]
 
-    _edit_yaml(package_root, "knowledge.yaml", clean)
+    _edit_source(package_root, "scenes/1A.yaml", clean)
     results = run_gap_rules(package_root, "officer_presses_1a", ["custody"])
     assert not any(result.subject == "k_sl_1a_d_r1" for result in results)
 
 
 def test_co_location_seeded_defect_and_clean_variant(tmp_path: Path) -> None:
     package_root = _copy_package(tmp_path)
-    _edit_yaml(package_root, "knowledge.yaml", lambda data: _claim(data, "k_sl_1a_b_r1").update(reach_entity_ids=[]))
+    _edit_source(package_root, "scenes/1A.yaml", lambda data: _claim(data, "k_sl_1a_b_r1").update(reach=[]))
     results = run_gap_rules(package_root, "officer_presses_1a", ["co_location"])
     assert any(result.subject == "k_sl_1a_b_r1" and "kristin_laptop" in result.summary for result in results)
 
-    _edit_yaml(
+    _edit_source(
         package_root,
-        "knowledge.yaml",
-        lambda data: _claim(data, "k_sl_1a_b_r1").update(reach_entity_ids=["kristin_laptop"]),
+        "scenes/1A.yaml",
+        lambda data: _claim(data, "k_sl_1a_b_r1").update(reach=["kristin_laptop"]),
     )
     results = run_gap_rules(package_root, "officer_presses_1a", ["co_location"])
     assert not any(result.subject == "k_sl_1a_b_r1" for result in results)
@@ -188,10 +194,10 @@ def test_no_strand_seeded_defect_and_clean_variant(tmp_path: Path) -> None:
     )
 
     def add_non_item_gated_producer(data: dict) -> None:
-        event = next(item for item in data["events"] if item["id"] == "officer_presses_1a")
-        event["effects"].append({"fact_id": "michelle_lead_actionable", "equals": True})
+        event = next(item for item in data["beats"] if item["id"] == "officer_presses_1a")
+        event["sets"]["michelle_lead_actionable"] = True
 
-    _edit_yaml(package_root, "pacing.yaml", add_non_item_gated_producer)
+    _edit_source(package_root, "scenes/1A.yaml", add_non_item_gated_producer)
     results = run_gap_rules(package_root, "officer_presses_1a", ["no_strand"])
     assert not any(result.subject == "k_sl_1a_d_r1" for result in results)
 
@@ -200,10 +206,14 @@ def test_no_producer_seeded_defect_loads_and_clean_variant(tmp_path: Path) -> No
     package_root = _copy_package(tmp_path)
     assert not run_gap_rules(Path(ROOT), "pursuit_1b", ["no_producer"])
 
-    for filename in ("pacing.yaml", "knowledge.yaml", "storylet-routes.yaml", "handoffs.yaml"):
-        _edit_yaml(package_root, filename, lambda data: _remove_asserted_fact(data, "kristin_marked_by_patrol"))
+    for filename in ("1A.yaml", "1B.yaml", "1C.yaml", "2A.yaml", "2B.yaml", "2C.yaml", "3A.yaml", "3B.yaml", "3C.yaml"):
+        _edit_source(
+            package_root,
+            f"scenes/{filename}",
+            lambda data: _remove_asserted_fact(data, "kristin_marked_by_patrol"),
+        )
 
-    assert load_story_package(package_root)
+    assert load_compiled_copy(package_root)
     results = run_gap_rules(package_root, "pursuit_1b", ["no_producer"])
     assert any(result.subject == "kristin_marked_by_patrol" for result in results)
 
@@ -235,33 +245,40 @@ def test_single_reveal_strand_seeded_defect_and_clean_variant(tmp_path: Path) ->
     package_root = _copy_package(tmp_path)
 
     def remove_exit_fact(data: dict) -> None:
-        route = next(item for item in data["storylets"] if item["id"] == "SL-1A-E")
-        realization = next(item for item in route["realization_options"] if item["id"] == "SL-1A-E-R1")
-        operation = next(item for item in realization["operations"] if item["fact_id"] == "memory_card_recovered")
-        operation["fact_id"] = "drawer_opened"
+        realization = next(
+            variant
+            for reveal in data["reveals"]
+            for variant in reveal["variants"].values()
+            if variant.get("realization_id") == "SL-1A-E-R1"
+        )
+        realization["commits"]["drawer_opened"] = realization["commits"].pop("memory_card_recovered")
 
     def restore_exit_fact(data: dict) -> None:
-        route = next(item for item in data["storylets"] if item["id"] == "SL-1A-E")
-        realization = next(item for item in route["realization_options"] if item["id"] == "SL-1A-E-R1")
-        operation = next(item for item in realization["operations"] if item["fact_id"] == "drawer_opened")
-        operation["fact_id"] = "memory_card_recovered"
+        realization = next(
+            variant
+            for reveal in data["reveals"]
+            for variant in reveal["variants"].values()
+            if variant.get("realization_id") == "SL-1A-E-R1"
+        )
+        realization["commits"]["memory_card_recovered"] = realization["commits"].pop("drawer_opened")
 
     def edit_knowledge(data: dict, fact_id: str) -> None:
         claim = _claim(data, "k_sl_1a_b_r0")
-        effect = next(
-            item for item in claim["establishes"] if item["fact_id"] in {"memory_card_recovered", "drawer_opened"}
-        )
-        effect["fact_id"] = fact_id
+        old_fact = "memory_card_recovered" if fact_id == "drawer_opened" else "drawer_opened"
+        claim["commits_subset"] = {fact_id: claim["commits"].get(old_fact, True)}
 
-    _edit_yaml(package_root, "storylet-routes.yaml", remove_exit_fact)
-    _edit_yaml(package_root, "knowledge.yaml", lambda data: edit_knowledge(data, "drawer_opened"))
+    def remove_exit_and_edit_claim(data: dict) -> None:
+        remove_exit_fact(data)
+        edit_knowledge(data, "drawer_opened")
+
+    _edit_source(package_root, "scenes/1A.yaml", remove_exit_and_edit_claim)
     results = run_gap_rules(package_root, "t_1a_1b", ["single_reveal_strand"])
     assert any(
         result.subject == "SL-1A-E/SL-1A-E-R1" and "memory_card_recovered" in result.summary for result in results
     )
 
-    _edit_yaml(package_root, "storylet-routes.yaml", restore_exit_fact)
-    _edit_yaml(package_root, "knowledge.yaml", lambda data: edit_knowledge(data, "memory_card_recovered"))
+    _edit_source(package_root, "scenes/1A.yaml", restore_exit_fact)
+    _edit_source(package_root, "scenes/1A.yaml", lambda data: edit_knowledge(data, "memory_card_recovered"))
     results = run_gap_rules(package_root, "t_1a_1b", ["single_reveal_strand"])
     assert not any(result.subject == "SL-1A-E/SL-1A-E-R1" for result in results)
 
@@ -283,20 +300,21 @@ def test_ambiguous_anchor_uses_situation_trace_wording(tmp_path: Path) -> None:
     package_root = _copy_package(tmp_path)
 
     def duplicate(data: dict) -> None:
-        next(item for item in data["events"] if item["id"] == "officer_presses_1a")["id"] = "t_1b_1c"
+        next(item for item in data["beats"] if item["id"] == "officer_presses_1a")["id"] = "t_1b_1c"
 
-    _edit_yaml(package_root, "pacing.yaml", duplicate)
+    _edit_source(package_root, "scenes/1A.yaml", duplicate)
     with pytest.raises(ValueError, match=r"ambiguous anchor 't_1b_1c'.*pacing event.*transition"):
         run_gap_rules(package_root, "t_1b_1c")
 
 
 def test_output_and_inputs_are_deterministic_and_read_only() -> None:
-    before = {path.relative_to(ROOT): path.read_bytes() for path in ROOT.rglob("*") if path.is_file()}
+    source_root = ROOT / "source"
+    before = {path.relative_to(source_root): path.read_bytes() for path in source_root.rglob("*") if path.is_file()}
     first = run_gap_rules(ROOT, "officer_presses_1a")
     second = run_gap_rules(ROOT, "officer_presses_1a")
     assert first == second
     assert render_rule_results(first, "officer_presses_1a") == render_rule_results(second, "officer_presses_1a")
-    after = {path.relative_to(ROOT): path.read_bytes() for path in ROOT.rglob("*") if path.is_file()}
+    after = {path.relative_to(source_root): path.read_bytes() for path in source_root.rglob("*") if path.is_file()}
     assert before == after
 
 

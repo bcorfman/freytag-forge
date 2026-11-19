@@ -1,0 +1,212 @@
+schema: 1
+scene: 1C
+claims:
+  k_sl_1c_a_r1:
+    aliases:
+    - facility proof
+    action_evidence:
+    - - inspect
+      - examine
+      - check
+      - search
+      - study
+      - look at
+    - - loading docks
+      - power
+      - electrical load
+      - ventilation
+      - vents
+      - tire tracks
+    must_convey: []
+  k_sl_1c_b_r1:
+    aliases:
+    - captives confirmed alive
+    action_evidence:
+    - - study
+      - watch
+      - observe
+      - look at
+      - inspect
+      - examine
+    - - prisoners
+      - captives
+      - people in the processing area
+      - processing line
+      - shaft view
+      - observation shaft
+    must_convey: []
+  k_sl_1c_b_r2:
+    aliases:
+    - captives confirmed alive
+    - michelle possible sighting
+    action_evidence:
+    - - watch
+      - observe
+      - look at
+      - study
+      - inspect
+      - examine
+    - - Michelle
+      - woman who looks like Michelle
+    - - processing line
+      - processing area
+      - observation shaft
+    must_convey: []
+  k_sl_1c_d_r1:
+    aliases:
+    - follow Brandon through the service entrance
+    action_evidence:
+    - - follow
+      - enter
+      - use
+      - open
+      - move through
+    - - Brandon
+      - service entrance
+      - service level
+      - sweep
+    must_convey:
+    - - Brandon leads
+      - follow Brandon
+    - - service entrance
+      - service level
+    leak_terms: []
+  k_sl_1c_e_r1:
+    aliases:
+    - dock water matched
+    action_evidence:
+    - - look
+      - examine
+      - inspect
+      - read
+      - check
+      - search
+    - - pallets
+      - pallet
+      - bottles
+      - water
+      - label
+    must_convey:
+    - - pallets
+      - bottles
+    - - lot number
+    - - thermos
+  k_sl_1c_f_r1:
+    aliases:
+    - Brandon watches door
+    action_evidence:
+    - - watch
+      - study
+      - look at
+      - glance at
+      - notice
+    - - Brandon
+    must_convey:
+    - - Brandon
+    - - door
+  k_sl_1c_g_r1:
+    aliases:
+    - line broadcast heard
+    action_evidence:
+    - - listen
+      - hear
+    - - vents
+      - speaker
+      - sound
+      - statement
+      - announcement
+      - broadcast
+      - hum
+    must_convey:
+    - - speaker
+    - - statement
+      - broadcast
+    - - word for word
+  k_sl_1c_c_copy_numbers:
+    aliases:
+    - copy the prisoner numbers
+    action_evidence:
+    - - copy
+      - write down
+      - record
+      - photograph
+    - - prisoner numbers
+      - identification numbers
+      - numbers
+    must_convey:
+    - - prisoner numbers
+      - identification numbers
+    - - missing-person records
+      - missing records
+    leak_terms: []
+  k_sl_1c_c_secure_route:
+    aliases:
+    - ask Brandon about the transfer route
+    action_evidence:
+    - - ask
+      - talk to
+      - question
+      - open
+      - unlock
+      - use
+    - - Brandon
+      - transfer route
+      - service entrance
+      - transit token
+    must_convey:
+    - - Brandon
+      - Brandon's help
+    - - transfer route
+      - service entrance
+    leak_terms: []
+  k_bridge_1c_infiltration:
+    aliases:
+    - enter the facility
+    - deeper access
+    leak_terms:
+    - deeper access
+  k_scene_1c_entry:
+    aliases:
+    - facility
+    - regional facility
+deliveries:
+  facility_proof:
+    must_convey:
+    - - fresh tire tracks
+      - humming air vents
+      - heavy electrical service
+      - recent tire tracks
+      - working air vents
+      - electrical load
+    - - active facility
+      - underground complex
+      - site remains active
+      - the terminal is operating
+      - working facility
+      - operation beneath the terminal
+  captives_confirmed_alive:
+    must_convey:
+    - - observation shaft
+      - Kristin sees
+      - processing area
+      - the observation shaft
+      - saw the processing line
+      - prisoner processing area
+    - - sedated prisoners
+      - captives are alive
+      - prisoners alive
+      - living prisoners
+      - prisoners are alive
+      - living captives
+  processing_numbers_copied:
+    must_convey:
+    - - prisoner numbers
+      - identification numbers
+    - - missing-person records
+      - missing records
+  service_level_access_known:
+    must_convey:
+    - - Brandon
+      - Brandon's help
+    - - transfer route
+      - service entrance
