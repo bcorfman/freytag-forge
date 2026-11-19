@@ -1,0 +1,31 @@
+{
+  "run_name": "story-cli-8a2",
+  "workdir": "/home/bcorfman/dev/ringer-work/story-cli-8a2",
+  "max_parallel": 1,
+  "worktrees": true,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "yamlio-simplify-and-tests",
+      "task_type": "code-feature",
+      "engine": "codex",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=medium"
+      ],
+      "max_attempts": 2,
+      "timeout_s": 1500,
+      "check_timeout_s": 600,
+      "ownership": [
+        "storygame/story_source/yamlio.py",
+        "storygame/story_cmds/cmd_fmt.py",
+        "tests/story_source/test_yamlio.py",
+        "tests/story_source/test_cmd_fmt.py"
+      ],
+      "spec": "You are a Python engineer. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge (detached at HEAD). Edit files here directly. NEVER git commit, never touch /home/bcorfman/dev/freytag-forge itself, never run `uv`, never call a billed model or the network, never pass --cov. FIRST run: [ -e .venv ] || ln -s /home/bcorfman/dev/freytag-forge/.venv .venv . Run tests as `PYTHONPATH=$PWD:$PWD/packages/worldkeeper/src TMPDIR=/tmp .venv/bin/python -m pytest -q -p no:cacheprovider -n 0 <files>`; ruff as `.venv/bin/python -m ruff check <files>` and `.venv/bin/python -m ruff format <files>` (.py files only).\n\nCONTEXT. Round 8a added `storygame/story_source/yamlio.py` (round-trip YAML for the story source tree), `storygame/story_cmds/cmd_fmt.py` (`story fmt [<scene>] [--check]`) and command-module dispatch in `storygame/story_cli.py`. They work, but (1) yamlio is over-built: `_configure_source_style` guesses an indent style per file and `_restore_flow_nulls` patches flow-map nulls with regexes, only to make the odd hand-made `mini_ok` test fixture round-trip byte for byte; (2) the two test files the first task required were NEVER WRITTEN. Writing them is part of this task: you MAY and MUST create tests/story_source/test_yamlio.py and tests/story_source/test_cmd_fmt.py.\n\nDesign decision: there is ONE canonical style, the one the committed tree already has: ruamel round-trip, width 10000, allow_unicode, preserve_quotes, DEFAULT indentation (block sequences are not indented under their key). `story fmt` rewrites any file into that style; a hand-made fixture in another style is simply reformatted, that is what fmt is for.\n\nTASK.\n1. Simplify `storygame/story_source/yamlio.py`: delete `_configure_source_style`, `_restore_flow_nulls`, the regexes and the `_yamlio_*` attributes; keep `make_yaml()`, `load_document(path)`, `dumps_document(document)`, `dump_document(document, path)` with the plain configuration above. Keep the public names and signatures. `cmd_fmt.py` keeps working unchanged apart from any fix you need.\n2. Write tests/story_source/test_yamlio.py: (a) every `*.yaml` under data/stories/continuity-initiative/source loads and dumps back byte-identical (read the path from the repo root via Path(__file__).resolve().parents[2]); (b) a temp file with a full-line comment, a trailing comment and a specific key order keeps all three after one scalar value is changed and dumped; (c) a multi-line passage scalar (a block scalar `|` and a quoted scalar with a trailing blank line) has an identical value after load and dump (compare with yaml.safe_load of both texts).\n3. Write tests/story_source/test_cmd_fmt.py. Use `compiled_story_copy(tmp_path)` or a plain `shutil.copytree` of data/stories/continuity-initiative/source into tmp_path (never write into the real data tree), `monkeypatch.chdir(root)` to the copied source root (the CLI finds the source root when the cwd holds story.yaml), and call `storygame.story_cli.main([...])` the way tests/story_source/test_cli_core.py does with capsys: (a) on the untouched copy `fmt --check` exits 0 and prints nothing to change; (b) after inserting a comment line and changing one sequence in scenes/1A.yaml to indented style, `fmt --check` exits 1 and names `scenes/1A.yaml`, writes nothing; (c) plain `fmt` then rewrites exactly that file, a following `fmt --check` exits 0, the inserted comment survives and `yaml.safe_load` values equal the pre-reformat values; (d) `fmt 1A` limits itself to the 1A files and `fmt NOPE` exits 2; (e) `--json` prints {\"checked\": N, \"changed\": [...]} with the right paths.\n4. Keep everything ruff-clean and ruff-formatted.\n\nRULES. Own only the four listed files; edit no other file. Never weaken another test.\n\nDONE WHEN the four files are as described, the owned tests pass, the whole tests/story_source folder passes, ruff check and ruff format --check are clean on the owned files, and `.venv/bin/python -m storygame.story_cli fmt --check` from the worktree root exits 0.",
+      "check": "set -eo pipefail\n[ -e .venv ] || ln -s /home/bcorfman/dev/freytag-forge/.venv .venv\nexport PYTHONPATH=$PWD:$PWD/packages/worldkeeper/src TMPDIR=/tmp\ntest -f tests/story_source/test_yamlio.py && test -f tests/story_source/test_cmd_fmt.py\n! grep -q \"_restore_flow_nulls\\|_configure_source_style\" storygame/story_source/yamlio.py\n.venv/bin/python -m pytest -q -p no:cacheprovider -n 0 tests/story_source 2>&1 | tail -5\n.venv/bin/python -m storygame.story_cli fmt --check\n.venv/bin/python -m ruff check storygame/story_source/yamlio.py storygame/story_cmds/cmd_fmt.py tests/story_source/test_yamlio.py tests/story_source/test_cmd_fmt.py\n.venv/bin/python -m ruff format --check storygame/story_source/yamlio.py storygame/story_cmds/cmd_fmt.py tests/story_source/test_yamlio.py tests/story_source/test_cmd_fmt.py\ngit add -A -- storygame tests\nbad=$(git diff --cached --name-only | grep -v -x -e storygame/story_source/yamlio.py -e storygame/story_cmds/cmd_fmt.py -e tests/story_source/test_yamlio.py -e tests/story_source/test_cmd_fmt.py || true)\n[ -z \"$bad\" ] || { echo \"files outside ownership staged: $bad\"; exit 1; }\ngit diff --cached --binary > /home/bcorfman/dev/ringer-work/story-cli-8a2/round8a2.patch\ntest -s /home/bcorfman/dev/ringer-work/story-cli-8a2/round8a2.patch\n",
+      "expect_files": [],
+      "verified": "yamlio is one plain canonical style, byte-exact on the committed tree, and yamlio and `story fmt` have their tests."
+    }
+  ]
+}

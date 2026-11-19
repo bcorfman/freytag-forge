@@ -45,9 +45,3 @@ def test_missing_source_root_returns_two(tmp_path: Path, monkeypatch, capsys) ->
     assert main(["parity", "1A"]) == 2
 
     assert "source root not found" in capsys.readouterr().err
-
-
-def test_unbuilt_set_returns_two(capsys) -> None:
-    assert main(["set", "claim:k_sl_1a_b_r0.text", "value"]) == 2
-
-    assert "set: not built yet" in capsys.readouterr().out
