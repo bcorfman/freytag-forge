@@ -2,6 +2,7 @@
   "version": 1,
   "files": {
     "tests/story_source/test_cli_core.py": 0.5,
+    "tests/story_source/test_cmd_fmt.py": 7.86,
     "tests/story_source/test_compiled_story_copy.py": 2.0,
     "tests/story_source/test_compiler_core.py": 0.66,
     "tests/story_source/test_convert_catalog.py": 0.5,
@@ -58,6 +59,7 @@
     "tests/story_source/test_parity_within_scene_order.py": 0.08,
     "tests/story_source/test_reader.py": 0.24,
     "tests/story_source/test_scene_order_key.py": 5.51,
+    "tests/story_source/test_yamlio.py": 1.42,
     "tests/test_1a_arrival_glance.py": 4.66,
     "tests/test_1a_back_door_gap.py": 0.09,
     "tests/test_1a_departure_hold.py": 1.55,
