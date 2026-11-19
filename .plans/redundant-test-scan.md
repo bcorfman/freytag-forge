@@ -59,3 +59,13 @@ Removed (twin kept): `test_no_other_unique_1c_handoff_changes`, `test_2a_supervi
 Not duplicates, kept: `test_negation_scope` vs `test_command_split_negation` (different inputs). Consolidation candidates, not deletions: `test_the_richer_scene_adds_no_beat_overprojection` is copied across `test_richer_{1c,2a,2b,2c,3a}.py` with only scene constants changed (could be one parametrized test); `test_candidate_matcher` 2C rescue/transmit and the 2A/2C unrelated-action tests are 95% the same code over different data.
 
 Where the real saving is: the biggest line items are not redundancy but cost (`test_frozen_prompts` 377 s, `test_game_path_completion` 434 tests with no unique lines, `test_bench_item_facts` 206). Those are parametrized sweeps; shrinking them needs a view on what each sweep guards, not a coverage rule.
+
+## Stage 4: slow tests, measured without coverage (2026-11-19)
+
+The 377 s `test_frozen_prompts` figure came from the coverage run. Plain `pytest -n 4 --durations` on the eight heaviest files (125 s wall, 36 tests) shows where time really goes:
+
+- `test_narration_corpus.py::test_golden_ok_entries_remain_accepted`: 88 s, one test looping `RuntimeEngine.turn` over 479 entries. The cost is in production code (reference resolution and knowledge projection recompile regexes and re-check `_established` roughly 10,000 times per entry), not in the test. Speeding it up means optimising the engine, or splitting the test by scene so `-n` can spread it.
+- `test_persona_escalation.py`: a 59 s module fixture (`summaries`) paid once by the first test; shared, so no waste.
+- `test_recovery_after_choice.py::test_2c_commitment_is_exclusive_and_late_commitment_is_honoured`: 16 cases at about 6.5 s. When `read_observation` is False the body never reads `commitment`, so the `r3` and `r4` cases were exact duplicates. Now 12 cases (about 25 s saved per run). A parameter the body ignores is a pattern worth checking for in other sweeps.
+- `test_exit_audit.py` three tests at 9 to 13 s, `test_frozen_prompts.py` 18 s plus 9 s plus 7 s: real work, left alone.
+- `test_richer_*` overprojection copies folded into `tests/test_richer_overprojection.py`; one `audit_package` call instead of five.

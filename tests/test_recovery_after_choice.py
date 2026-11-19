@@ -147,14 +147,17 @@ def _start_at_2c() -> tuple[RuntimeState, _ScriptedProvider, RuntimeEngine]:
     return state, provider, engine
 
 
-@pytest.mark.parametrize("commitment", ["k_sl_2c_d_r3", "k_sl_2c_d_r4"])
 @pytest.mark.parametrize(
     ("commit_turn", "timing"),
     [(4, "before_5"), (5, "at_5"), (6, "at_6"), (7, "at_7")],
 )
-@pytest.mark.parametrize("read_observation", [True, False])
+@pytest.mark.parametrize(
+    ("read_observation", "commitment"),
+    [(True, "k_sl_2c_d_r3"), (True, "k_sl_2c_d_r4"), (False, None)],
+    ids=["read-r3", "read-r4", "no-read"],
+)
 def test_2c_commitment_is_exclusive_and_late_commitment_is_honoured(
-    commitment: str, commit_turn: int, timing: str, read_observation: bool
+    commitment: str | None, commit_turn: int, timing: str, read_observation: bool
 ) -> None:
     state, provider, engine = _start_at_2c()
 
