@@ -2,7 +2,11 @@
   "version": 1,
   "files": {
     "tests/story_source/test_cli_core.py": 0.5,
+    "tests/story_source/test_cli_rename.py": 13.27,
+    "tests/story_source/test_cli_set.py": 13.57,
     "tests/story_source/test_cmd_fmt.py": 7.86,
+    "tests/story_source/test_cmd_impact.py": 11.16,
+    "tests/story_source/test_cmd_new.py": 15.83,
     "tests/story_source/test_compiled_story_copy.py": 2.0,
     "tests/story_source/test_compiler_core.py": 0.66,
     "tests/story_source/test_convert_catalog.py": 0.5,

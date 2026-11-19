@@ -17,7 +17,6 @@ import yaml
 from storygame.story_cmds import discover
 
 _DEFAULT_STORY = "continuity-initiative"
-_STUB_COMMAND_NAMES = {"set", "rename", "impact", "new", "fmt"}
 
 
 def _add_global_options(parser: argparse.ArgumentParser, *, defaults: bool) -> None:
@@ -54,13 +53,6 @@ def _build_parser() -> argparse.ArgumentParser:
     command_modules = discover()
     for module in command_modules.values():
         module.add_parser(commands, _add_global_options)
-
-    for name in sorted(_STUB_COMMAND_NAMES - command_modules.keys()):
-        command = commands.add_parser(name, help=f"{name} (not built yet)")
-        _add_global_options(command, defaults=False)
-        command.add_argument("arguments", nargs="*")
-        command.add_argument("--add", action="append", default=[])
-        command.add_argument("--drop", action="append", default=[])
 
     return parser
 
@@ -337,11 +329,6 @@ def _expand(args: argparse.Namespace, root: Path) -> int:
     return 0
 
 
-def _not_built(name: str) -> int:
-    print(f"{name}: not built yet")
-    return 2
-
-
 def main(argv: list[str] | None = None) -> int:
     """Parse and run one story command, returning its process exit code."""
 
@@ -365,8 +352,6 @@ def main(argv: list[str] | None = None) -> int:
             else:
                 print(str(error), file=sys.stderr)
             return 2
-    if args.command in _STUB_COMMAND_NAMES:
-        return _not_built(args.command)
     root = _require_source_root(args.story)
     if root is None:
         return 2
