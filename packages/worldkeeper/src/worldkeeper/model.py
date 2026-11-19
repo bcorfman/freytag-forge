@@ -134,6 +134,60 @@ class WorldSchema:
         """Return whether a known kind is or descends from an ancestor kind."""
         return kind in self.kinds and ancestor in _ancestors(self.kinds, kind)
 
+    def can_represent(self, relation: str, subject_kind: str, object_kind: str | None = None) -> OpResult:
+        """Return whether the schema can represent a relation between entities of the given kinds."""
+        relations = {"exist", "hold", "reach", "hidden", "seated", "companion", "axis", "know"}
+        if relation not in relations:
+            return OpResult(False, f"unknown relation {relation}")
+        for kind in (subject_kind, object_kind):
+            if kind is not None and kind not in self.kinds:
+                return OpResult(False, f"unknown kind {kind}")
+
+        if relation == "exist" or relation == "axis":
+            return OpResult(True)
+        if relation == "hold":
+            if object_kind is None:
+                return OpResult(False, "hold needs an object kind")
+            if not self.kind_is(subject_kind, "thing"):
+                return OpResult(False, "hold needs a thing subject")
+            if not self.kind_is(object_kind, "character"):
+                return OpResult(False, "hold needs a character object")
+        elif relation == "reach":
+            if object_kind is None:
+                return OpResult(False, "reach needs an object kind")
+            if not self.kind_is(subject_kind, "character"):
+                return OpResult(False, "reach needs a character subject")
+            if not self.kind_is(object_kind, "area"):
+                return OpResult(False, "reach needs an area object")
+        elif relation == "hidden":
+            if object_kind is None:
+                return OpResult(False, "hidden needs an object kind")
+            if not self.kind_is(subject_kind, "thing"):
+                return OpResult(False, "hidden needs a thing subject")
+            if not self.kind_is(object_kind, "thing"):
+                return OpResult(False, "hidden needs a thing object")
+        elif relation == "seated":
+            if object_kind is None:
+                return OpResult(False, "seated needs an object kind")
+            if not self.kind_is(subject_kind, "character"):
+                return OpResult(False, "seated needs a character subject")
+            if not (
+                self.kind_is(object_kind, "container")
+                or self.kind_is(object_kind, "supporter")
+                or self.kind_enterable.get(object_kind, False)
+            ):
+                return OpResult(False, "seated needs an enterable object")
+        elif relation == "companion":
+            if object_kind is None:
+                return OpResult(False, "companion needs an object kind")
+            if not self.kind_is(subject_kind, "character"):
+                return OpResult(False, "companion needs a character subject")
+            if not self.kind_is(object_kind, "character"):
+                return OpResult(False, "companion needs a character object")
+        elif relation == "know" and not self.kind_is(subject_kind, "character"):
+            return OpResult(False, "know needs a character subject")
+        return OpResult(True)
+
     def is_fixed(self, entity_id: str) -> bool:
         """Return an entity's effective fixed flag."""
         entity = self.entities.get(entity_id)

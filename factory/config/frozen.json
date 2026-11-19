@@ -5,6 +5,7 @@
     "factory/verdicts.py",
     "factory/config/**",
     "factory/checks/**",
+    "factory/contracts/**",
     "factory/judges/**",
     "bench/calibration/**",
     "docs/jev-guard-rules.md",

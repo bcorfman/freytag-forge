@@ -1,0 +1,140 @@
+{
+  "act": "1",
+  "prior_bonds": ["brandon"],
+  "harm_ladder": [
+    {"rung": 1, "kind": "riskier_storylet", "harm": "The courier loses the safe route."},
+    {"rung": 2, "kind": "npc_harm", "harm": "The station porter is injured during the diversion."},
+    {"rung": 3, "kind": "captive_harm", "harm": "The detained analyst is moved before extraction."}
+  ],
+  "scenes": [
+    {
+      "scene_id": "1A",
+      "entry_prior_exit_sets_threat": false,
+      "feeling": "dread",
+      "clock": {
+        "running_out": "The midnight manifest is sealed at dawn.",
+        "bridge_hook": "A coded platform announcement points toward the freight hall."
+      },
+      "npc_in_the_way": {"character": "michelle", "named_in_entry": true},
+      "beats": [
+        {"id": "1a-entry", "kind": "entry", "turn": 1, "summary": "Michelle blocks the only quiet approach to the platform."},
+        {"id": "1a-pressure", "kind": "pressure", "turn": 3, "summary": "A watcher recognizes the courier's borrowed badge."},
+        {"id": "1a-relief", "kind": "relief", "turn": 7, "summary": "Michelle creates a brief blind spot at the ticket gate."},
+        {"id": "1a-reveal", "kind": "reveal", "turn": 7, "summary": "The manifest transfer is tied to the freight hall."},
+        {
+          "id": "1a-setpiece",
+          "kind": "setpiece",
+          "turn": 9,
+          "summary": "The courier must cross the watched platform.",
+          "outcomes": [
+            {"id": "1a-hold", "verb": "hold the line"},
+            {"id": "1a-break", "verb": "break cover"}
+          ]
+        },
+        {"id": "1a-exit", "kind": "exit", "turn": 11, "summary": "The courier reaches the freight-hall threshold."}
+      ],
+      "delay_costs": [
+        {
+          "id": "1a-porter-harm",
+          "window": "the platform blind spot",
+          "cost_kind": "npc_harm",
+          "passage_id": "passage-1a-porter-harm",
+          "cost_fact": "porter_injured",
+          "harmed": ["porter"],
+          "read_by_scene": "1B"
+        }
+      ],
+      "bond_beats": [
+        {"id": "1a-michelle-bond", "character": "michelle", "kind": "confession", "summary": "Michelle admits she has been watching the same courier route."},
+        {"id": "1a-porter-bond", "character": "porter", "kind": "favor", "summary": "The porter once hid a message for the courier."}
+      ],
+      "world_needs": [
+        {"id": "1a-need", "relation": "hold", "subject": "porter", "object": "platform-pass"}
+      ]
+    },
+    {
+      "scene_id": "1B",
+      "feeling": "suspicion",
+      "clock": {
+        "running_out": "The transfer train departs in twenty minutes.",
+        "bridge_hook": "A dead radio repeats a compartment number."
+      },
+      "npc_in_the_way": {"character": "porter", "named_in_entry": true},
+      "beats": [
+        {"id": "1b-entry", "kind": "entry", "turn": 1, "summary": "The porter pulls the courier into a service corridor."},
+        {"id": "1b-pressure", "kind": "pressure", "turn": 3, "summary": "The patrol changes its sweep after the radio repeats."},
+        {"id": "1b-relief", "kind": "relief", "turn": 7, "summary": "A maintenance alarm clears one stairwell."},
+        {"id": "1b-reveal", "kind": "reveal", "turn": 7, "summary": "The compartment number belongs to a sealed carriage."},
+        {
+          "id": "1b-setpiece",
+          "kind": "setpiece",
+          "turn": 9,
+          "summary": "The courier chooses how to pass the carriage inspection.",
+          "outcomes": [
+            {"id": "1b-divert", "verb": "divert the patrol"},
+            {"id": "1b-board", "verb": "board the carriage"}
+          ]
+        },
+        {"id": "1b-exit", "kind": "exit", "turn": 11, "summary": "The service corridor opens beside the sealed carriage."}
+      ],
+      "delay_costs": [
+        {
+          "id": "1b-route-slip",
+          "window": "the maintenance stairwell",
+          "cost_kind": "riskier_storylet",
+          "passage_id": "passage-1b-route-slip",
+          "riskier_storylet_id": "storylet-carriage-inspection"
+        }
+      ],
+      "bond_beats": [
+        {"id": "1b-porter-bond", "character": "porter", "kind": "habit", "summary": "The porter reveals the hand signal used by trusted crews."}
+      ],
+      "world_needs": [
+        {"id": "1b-need", "relation": "reach", "subject": "courier", "object": "sealed-carriage"}
+      ]
+    },
+    {
+      "scene_id": "1C",
+      "feeling": "resolve",
+      "clock": {
+        "running_out": "The train doors lock when the signal changes.",
+        "bridge_hook": "The analyst's coded knock answers from inside."
+      },
+      "npc_in_the_way": {"character": "brandon", "named_in_entry": true},
+      "beats": [
+        {"id": "1c-entry", "kind": "entry", "turn": 1, "summary": "Brandon meets the courier at the carriage junction."},
+        {"id": "1c-pressure", "kind": "pressure", "turn": 3, "summary": "The lock starts its final cycle before departure."},
+        {"id": "1c-relief", "kind": "relief", "turn": 7, "summary": "Brandon holds the door for one last exchange."},
+        {"id": "1c-reveal", "kind": "reveal", "turn": 7, "summary": "The analyst's evidence is already in the next act's route."},
+        {
+          "id": "1c-setpiece",
+          "kind": "setpiece",
+          "turn": 9,
+          "summary": "The courier commits to the extraction under the carriage lights.",
+          "outcomes": [
+            {"id": "1c-extract", "verb": "extract the analyst"},
+            {"id": "1c-signal", "verb": "signal the safe crew"}
+          ]
+        },
+        {"id": "1c-exit", "kind": "exit", "turn": 11, "summary": "The carriage leaves the station with the evidence aboard."}
+      ],
+      "delay_costs": [
+        {
+          "id": "1c-captive-move",
+          "window": "the final lock cycle",
+          "cost_kind": "captive_harm",
+          "passage_id": "passage-1c-captive-move",
+          "cost_fact": "analyst_relocated",
+          "harmed": ["brandon"],
+          "read_by_scene": "2A"
+        }
+      ],
+      "bond_beats": [
+        {"id": "1c-brandon-bond", "character": "brandon", "kind": "confession", "summary": "Brandon confesses which evidence he kept from the station chief."}
+      ],
+      "world_needs": [
+        {"id": "1c-need", "relation": "axis", "subject": "courier", "axis": "extraction", "pole": "analyst"}
+      ]
+    }
+  ]
+}
