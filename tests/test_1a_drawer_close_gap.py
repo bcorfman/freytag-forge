@@ -13,27 +13,21 @@ from storygame.runtime.knowledge import KnowledgeProjector
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.world_model import world_for
 from storygame.story_package.loader import load_story_package
+from storygame.story_source.lookup import story_text
 from tests.test_observation_mode import _state_at
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 OPEN_IDS = ("k_sl_1a_f_r1",)  # k_sl_1a_b_r0w is the witnessed card recovery, not an open-drawer reply
-OPEN_TEXT = "The drawer slides out. It holds a stapler, spare batteries, pens, and binder clips."
+OPEN_TEXT = story_text("claim:k_sl_1a_f_r1.text", package=PACKAGE)
 CLOSE_ID = "k_sl_1a_f_r3"
-CLOSE_TEXT = (
-    "Kristin slides the drawer shut. It rides high in its frame. A thin gap beneath its lower edge is wide enough "
-    "for Kristin's fingers."
-)
+CLOSE_TEXT = story_text("claim:k_sl_1a_f_r3.text", package=PACKAGE)
 GAP_FACT = "drawer_gap_pointed_out"
 OPENED_FACT = "drawer_opened"
 CARD_FACT = "memory_card_recovered"
 STORYLET = "SL-1A-F"
 CARD_FIND = "k_sl_1a_b_r0"
 RAM_EVENT = "reyes_rams_drawer_1a"
-RAM_TEXT = (
-    "Reyes tugs at the workstation drawer. It sticks. Frustrated, he rams it back into place with the heel of his "
-    "hand, and it sits high in its frame. A thin gap shows beneath its lower edge, wide enough for Kristin's fingers. "
-    "Reyes never looks down. Only Kristin sees it."
-)
+RAM_TEXT = story_text("beat:reyes_rams_drawer_1a.say[0].text", package=PACKAGE)
 BARE_DRAWER_COMMANDS = (
     "Inspect the drawer.",
     "Examine the drawer.",

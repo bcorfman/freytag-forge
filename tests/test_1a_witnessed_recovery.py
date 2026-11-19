@@ -15,6 +15,7 @@ from storygame.runtime.knowledge import KnowledgeProjector
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.world_model import apply_world_effects, world_for
 from storygame.story_package.loader import load_story_package
+from storygame.story_source.lookup import story_text
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 CARD_REVEAL = "k_sl_1a_b_r0"
@@ -22,9 +23,9 @@ WITNESSED_CARD_REVEAL = "k_sl_1a_b_r0w"
 STORYLET = "SL-1A-E"
 COMMAND = "Feel under the drawer."
 CHALLENGE = '"What have you got there?"'
-WITNESSED_STATEMENT = "An officer saw Kristin take Michelle's memory card and asked what it is."
-DEFAULT_PURSUIT = "The pursuers are closing in through the park. The pursuit is not over."
-MARKED_PURSUIT = "The pursuers already have a description of Kristin. They are closing in through the park."
+WITNESSED_STATEMENT = story_text("claim:k_sl_1a_b_r0w.says", package=PACKAGE)
+DEFAULT_PURSUIT = story_text("beat:pursuit_1b.say[1].text", package=PACKAGE)
+MARKED_PURSUIT = story_text("beat:pursuit_1b.say[0].text", package=PACKAGE)
 
 
 class _Response:

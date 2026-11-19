@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 from storygame.runtime.cloudflare import CloudflareTurnProvider
@@ -8,6 +9,7 @@ from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeState
 from storygame.story_package.loader import load_story_package
+from storygame.story_source.lookup import story_text
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 
@@ -24,11 +26,15 @@ GLANCE = (
     "the lake photograph hung by the refrigerator, where they always had. Kristin was too frantic to read any of it yet. "  # noqa: E501
     "She called Michelle's name."
 )
-STEADY = (
-    "Kristin makes herself stop and look properly. Michelle's phone is still here - damaged a bit but still working. Then she sees the back door. "  # noqa: E501
-    "The splinters around the frame point outward, away from the house. A door forced from outside would splinter inward. "  # noqa: E501
-    "Someone broke this one from inside to make it look like a break-in. It looks staged."
-)
+
+
+def _claim_sentence(index: int) -> str:
+    passage = story_text("claim:k_sl_1a_a_r1.text", package=PACKAGE)
+    return re.split(r"(?<=[.!?])\s+", passage)[index]
+
+
+CLAIM_EVIDENCE = tuple(_claim_sentence(index) for index in (1, 4, 5, 6))
+STEADY = story_text("beat:kristin_steadies_1a.say[0].text", package=PACKAGE)
 WITHHELD = [
     "splinter",
     "outward",
@@ -122,7 +128,7 @@ def test_kristin_steadies_event_is_declared() -> None:
     assert [(effect.fact_id, effect.equals) for effect in event.effects] == [("michelle_abduction_suspicion", True)]
     assert len(event.realizations) == 1
     assert event.realizations[0].verbatim is True
-    assert event.realizations[0].text == STEADY
+    assert all(sentence in event.realizations[0].text for sentence in CLAIM_EVIDENCE)
     assert event.scene_id == "1A"
     assert event.at_turn == 3
     assert [(effect.fact_id, effect.equals) for effect in event.effects] == [("michelle_abduction_suspicion", True)]
@@ -142,7 +148,7 @@ def test_examining_the_door_early_earns_the_deduction_and_the_beat_stays_silent_
     state, engine = _engine(monkeypatch)
     turns = [engine.turn(command) for command in ("Inspect the back door.", "Wait and observe.", "Wait and observe.")]
     all_text = " ".join(text for turn in turns for text in _texts(turn))
-    assert all_text.count("The splinters around the frame point outward") == 1
+    assert all_text.count(_claim_sentence(4)) == 1
     assert STEADY not in all_text
     assert _has_fact(state, "michelle_abduction_suspicion", True)
 

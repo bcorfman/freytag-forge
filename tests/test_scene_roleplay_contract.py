@@ -14,6 +14,7 @@ from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import ProposalValidationError
 from storygame.runtime.world_model import world_for
 from storygame.story_package.loader import load_story_package
+from storygame.story_source.lookup import story_text
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 POLICY_INPUTS = (
@@ -40,11 +41,7 @@ def _selection_provider(state: RuntimeState, calls: list[str]) -> Callable[[str]
             "segments": [
                 {
                     "kind": "narration",
-                    "text": (
-                        "The card holds Michelle's saved files and a damaged recording. The recording warns, "
-                        '"Do not trust the emergency broadcasts." The files name the Continuity Initiative and point '
-                        "to a dead drop at a bench in the park."
-                    ),
+                    "text": story_text("claim:k_sl_1a_b_r1.text"),
                     "grounding_ids": ["k_sl_1a_b_r1"],
                 }
             ],

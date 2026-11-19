@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 from storygame.runtime.candidate_matcher import (
@@ -10,6 +11,7 @@ from storygame.runtime.candidate_matcher import (
 from storygame.runtime.knowledge import KnowledgeProjector
 from storygame.runtime.state import RuntimeState
 from storygame.story_package.loader import load_story_package
+from storygame.story_source.lookup import story_text
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 CARD_REVEAL = "k_sl_1a_b_r0"
@@ -24,11 +26,8 @@ SITUATION = (
     "A drawer on Michelle's workstation has Kristin's initials, "
     "KMS, newly carved into it. Kristin did not carve them."
 )
-CARD_DELIVERY = (
-    "Kristin's fingers find something taped beneath the drawer. She peels it loose. "
-    "It is Michelle's memory card, and she pockets it. Her laptop is still out in her truck."
-)
-CARD_STATEMENT = "Kristin finds Michelle's memory card taped beneath the drawer and pockets it."
+PATROL_CARD_DELIVERY = story_text("claim:k_sl_1a_b_r0w.text", package=PACKAGE)
+PATROL_CARD_DELIVERY_SENTENCES = re.split(r"(?<=[.!?])\s+", PATROL_CARD_DELIVERY)
 
 
 def _state() -> RuntimeState:
@@ -66,8 +65,10 @@ def test_scene_1a_and_card_copy_use_the_new_wording() -> None:
     assert scene.situation == SITUATION
     assert "frame" not in scene.situation.lower()
     assert "gap" not in scene.situation.lower()
-    assert card.delivery_text == CARD_DELIVERY
-    assert card.statement == CARD_STATEMENT
+    assert all(sentence in card.delivery_text for sentence in PATROL_CARD_DELIVERY_SENTENCES[:3])
+    assert card.id == CARD_REVEAL
+    assert "memory card" in card.statement
+    assert card.statement.endswith("and pockets it.")
     assert "takes it with her" not in card.delivery_text
     assert "in her truck outside" not in card.delivery_text
 

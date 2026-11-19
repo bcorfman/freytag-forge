@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import pytest
@@ -12,6 +13,7 @@ from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import ProposalValidationError
 from storygame.story_package.loader import load_story_package
 from storygame.story_source.diagnostics import SourceError
+from storygame.story_source.lookup import story_text
 from tests.story_source.helpers import compiled_story_copy, load_compiled_copy, patch_source
 
 PACKAGE_ROOT = Path("data/stories/continuity-initiative")
@@ -129,7 +131,8 @@ def test_rejected_turn_restores_security_pacing_then_accepted_turn_fires_it() ->
     assert "transfer_window_1c" in state.fired_event_ids
     assert Fact(predicate="transfer_window_missed", subject="story", value="true") in state.facts.asserted
     assert state.last_turn_delivery.complication_text == (
-        'The view down the observation shaft goes dark. Brandon says, "That chance is gone. '
+        re.split(r"(?<=[.!?])\s+", story_text("beat:transfer_window_1c.say[0].text"))[0]
+        + ' Brandon says, "That chance is gone. '
         "We can still try the service entrance. Follow me through it if you want to try. "
         'We will have to risk the sweep."'
     )

@@ -14,15 +14,11 @@ from storygame.runtime.world_model import world_for
 from storygame.story_package.loader import load_story_package
 from storygame.story_package.models import PacingEvent
 from storygame.story_source.diagnostics import SourceError
+from storygame.story_source.lookup import story_text
 from tests.story_source.helpers import compiled_story_copy, patch_source
 
 PACKAGE_DIR = Path(__file__).parents[1] / "data/stories/continuity-initiative"
-ARRIVAL_TEXT = (
-    "A federal emergency patrol pulls up outside Michelle's house. Two officers get out. "
-    "One walks to the front door. The other looks over the street."
-)
 LEAVING_TEXT = "The patrol pulls away from the curb."
-ENTERING_TEXT = "The front door opens. An officer walks in and heads straight for Michelle's workstation."
 COMMANDS = (
     "Turn on the phone.",
     "Unlock the phone.",
@@ -35,6 +31,14 @@ COMMANDS = (
     "Wait and observe.",
     "Wait and observe.",
 )
+
+
+def _arrival_text(package: object) -> str:
+    return story_text("beat:patrol_arrives_1a.say[0].text", package=package)
+
+
+def _entering_text(package: object) -> str:
+    return story_text("beat:patrol_enters_1a.say[0].text", package=package)
 
 
 class _Response:
@@ -144,8 +148,8 @@ def test_trailing_arrival_request_sees_pre_event_world(tmp_path: Path, monkeypat
     state, observations, proposals = _run_commands(monkeypatch, package, turns=7)
     assert observations[7] == "outside_house"
     assert world_for(package, state.facts).parent("patrol_officer") == "kitchen"
-    assert _texts(proposals[5]).count(ARRIVAL_TEXT) == 1
-    assert _texts(proposals[6]).count(ENTERING_TEXT) == 1
+    assert _texts(proposals[5]).count(_arrival_text(package)) == 1
+    assert _texts(proposals[6]).count(_entering_text(package)) == 1
 
 
 def test_trailing_event_rolled_back_with_snapshot(tmp_path: Path, monkeypatch) -> None:

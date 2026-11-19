@@ -8,6 +8,7 @@ from storygame.runtime.candidate_matcher import uniquely_matched_authored_handof
 from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import KnowledgeProjector
 from storygame.story_package.loader import load_story_package
+from storygame.story_source.lookup import story_text
 from tests.test_observation_mode import _state_at
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
@@ -20,9 +21,7 @@ OPEN_DRAWER = "k_sl_1a_f_r1"
 GAP_STORYLET = "SL-1A-F"
 GAP_FACT = "drawer_gap_pointed_out"
 CARD_FACT = "memory_card_recovered"
-NUDGE_TEXT = (
-    "The drawer rides high in its frame. A thin gap beneath its lower edge is wide enough for Kristin's fingers."
-)
+NUDGE_TEXT = story_text("claim:k_sl_1a_f_r2.text")
 
 BARE_DRAWER_COMMANDS = (
     "Inspect the drawer.",

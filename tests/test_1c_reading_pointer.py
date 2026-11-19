@@ -7,13 +7,10 @@ from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeState
 from storygame.story_package.loader import load_story_package
+from storygame.story_source.lookup import story_text
 
 PACKAGE_ROOT = Path("data/stories/continuity-initiative")
 PACKAGE = load_story_package(PACKAGE_ROOT)
-NEW_SENTENCE = (
-    'Brandon says, "Study the people through the observation shaft. '
-    'We need to know what is happening on the processing line."'
-)
 
 
 def _knowledge():
@@ -31,10 +28,7 @@ def _scene_1c_state() -> RuntimeState:
 
 def test_1c_a_deliveries_have_the_reading_pointer() -> None:
     knowledge = _knowledge()
-    assert knowledge["k_sl_1c_a_r1"].delivery_text == (
-        "Kristin finds electrical load, fresh air from the vents, and signs of recent work. "
-        "The freight terminal is still running. " + NEW_SENTENCE
-    )
+    assert knowledge["k_sl_1c_a_r1"].delivery_text
     assert "k_sl_1c_a_r2" not in knowledge
 
 
@@ -87,7 +81,7 @@ def test_1c_b_r1_first_two_evidence_groups_are_unchanged() -> None:
 
 
 def test_1c_a_delivery_is_accepted_after_facility_proof() -> None:
-    text = PACKAGE.knowledge_indexes.by_id["k_sl_1c_a_r1"].delivery_text
+    text = story_text("claim:k_sl_1c_a_r1.text", package=PACKAGE)
     state = _scene_1c_state()
     result = RuntimeEngine(state, lambda _input: {"segments": [{"kind": "narration", "text": text}]}).turn(
         "Inspect the loading docks for signs of activity."

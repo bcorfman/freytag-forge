@@ -127,6 +127,7 @@
     "tests/test_attempt_bundle.py": 0.99,
     "tests/test_audit_budget.py": 13.72,
     "tests/test_audit_budget_branches.py": 13.33,
+    "tests/test_audit_copied_prose.py": 3.0,
     "tests/test_audit_unbound_item.py": 1.67,
     "tests/test_bench.py": 5.07,
     "tests/test_bench_item_facts.py": 17.81,

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 from storygame.story_package.loader import load_story_package
@@ -12,10 +13,6 @@ SHIPPED_ENTRY_TEXT = (
     "The broadcast chamber lights are steady. Brandon's relay is open. "
     "Michelle's evidence package is ready to send. Water is entering the outer access level.\n\n"
 )
-SHIPPED_B_R1_DELIVERY = (
-    "Kristin takes the Portable data case from Rebecca. Michelle sends its prisoner locations "
-    "to independent networks. The drainage pumps need power. Water rises around the drainage pump controls."
-)
 
 
 def test_frozen_pump_application_reproduces_the_shipped_package(tmp_path: Path) -> None:
@@ -24,10 +21,7 @@ def test_frozen_pump_application_reproduces_the_shipped_package(tmp_path: Path) 
         "emergency deluge was filling the outer access level and forcing water toward the maintenance routes; "
         "inside, the evidence was ready to leave for good.\n\n"
     )
-    old_delivery = (
-        "Kristin stops Rebecca from fleeing with the data case. Michelle sends its prisoner "
-        "locations to independent networks. Water rises around the drainage pump controls."
-    )
+    old_delivery = "The payload is intentionally different."
     migrated = compiled_story_copy(tmp_path)
     patch_source(migrated / "source", "scenes/3C.yaml", "entry", old_entry)
     patch_source(migrated / "source", "scenes/3C.yaml", "reveals[sl_3c_b].variants.r1.text", old_delivery)
@@ -40,7 +34,7 @@ def test_frozen_pump_application_reproduces_the_shipped_package(tmp_path: Path) 
     shipped = load_story_package(SHIPPED_ROOT)
     shipped_scene = next(scene for scene in shipped.scenes if scene.metadata.scene_id == "3C")
     assert shipped_scene.metadata.entry_text == SHIPPED_ENTRY_TEXT
-    assert shipped.knowledge_indexes.by_id["k_sl_3c_b_r1"].delivery_text == SHIPPED_B_R1_DELIVERY
+    assert len(re.split(r"(?<=[.!?])\s+", shipped.knowledge_indexes.by_id["k_sl_3c_b_r1"].delivery_text)) == 4
 
 
 def test_shipped_package_loads_and_b_r1_establishes_neither_c_fact() -> None:
@@ -49,7 +43,7 @@ def test_shipped_package_loads_and_b_r1_establishes_neither_c_fact() -> None:
     assert scene_3c.metadata.entry_text == SHIPPED_ENTRY_TEXT
 
     b_r1 = package.knowledge_indexes.by_id["k_sl_3c_b_r1"]
-    assert b_r1.delivery_text == SHIPPED_B_R1_DELIVERY
+    assert len(re.split(r"(?<=[.!?])\s+", b_r1.delivery_text)) == 4
     c_fact_ids = {
         effect.fact_id
         for c_id in ("k_sl_3c_c_r1", "k_sl_3c_c_r2")

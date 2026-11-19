@@ -14,6 +14,7 @@ from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import KnowledgeProjector
 from storygame.runtime.state import RuntimeState
 from storygame.story_package.loader import load_story_package
+from storygame.story_source.lookup import story_text
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 CARD_REVEAL = "k_sl_1a_b_r0"
@@ -22,10 +23,8 @@ F_R2 = "k_sl_1a_f_r2"
 F_STORYLET = "SL-1A-F"
 CARD_STORYLET = "SL-1A-E"
 NEW_FACT = "drawer_gap_pointed_out"
-R1_DELIVERY = "The drawer slides out. It holds a stapler, spare batteries, pens, and binder clips."
-R2_DELIVERY = (
-    "The drawer rides high in its frame. A thin gap beneath its lower edge is wide enough for Kristin's fingers."
-)
+R1_DELIVERY = story_text("claim:k_sl_1a_f_r1.text", package=PACKAGE)
+R2_DELIVERY = story_text("claim:k_sl_1a_f_r2.text", package=PACKAGE)
 
 
 def _state() -> RuntimeState:

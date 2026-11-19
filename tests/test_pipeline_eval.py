@@ -14,6 +14,7 @@ from storygame.runtime.fixed_refusal import fixed_refusal_text
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import ProposalValidationError
 from storygame.story_package.loader import load_story_package
+from storygame.story_source.lookup import story_text
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 
@@ -400,9 +401,7 @@ def test_pipeline_arm_counts_guard_retry_and_sums_tokens(monkeypatch: pytest.Mon
                 "segments": [
                     {
                         "kind": "narration",
-                        "text": "Kristin's fingers find something taped beneath the drawer. "
-                        "She peels it loose. It is Michelle's memory card, and she pockets it. "
-                        "Her laptop is still out in her truck.",
+                        "text": story_text("claim:k_sl_1a_b_r0.text", package=PACKAGE),
                         "grounding_ids": ["k_sl_1a_b_r0"],
                     }
                 ],
@@ -413,9 +412,7 @@ def test_pipeline_arm_counts_guard_retry_and_sums_tokens(monkeypatch: pytest.Mon
                 "segments": [
                     {
                         "kind": "narration",
-                        "text": "Kristin's fingers find something taped beneath the drawer. "
-                        "She peels it loose. It is Michelle's memory card, and she pockets it. "
-                        "Her laptop is still out in her truck.",
+                        "text": story_text("claim:k_sl_1a_b_r0.text", package=PACKAGE),
                         "grounding_ids": ["k_sl_1a_b_r0"],
                     }
                 ],
@@ -518,9 +515,7 @@ def test_pipeline_arm_reports_state_after_real_world_effect(monkeypatch: pytest.
             "segments": [
                 {
                     "kind": "narration",
-                    "text": "Kristin's fingers find something taped beneath the drawer. "
-                    "She peels it loose. It is Michelle's memory card, and she pockets it. "
-                    "Her laptop is still out in her truck.",
+                    "text": story_text("claim:k_sl_1a_b_r0.text", package=PACKAGE),
                     "grounding_ids": ["k_sl_1a_b_r0"],
                 }
             ],

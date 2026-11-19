@@ -12,7 +12,7 @@ from storygame.runtime.facts import Fact
 ROOT = Path(__file__).resolve().parents[1]
 SHIPPED = ROOT / "bench/variations/stage7-3c-item-facts.json"
 VARIATION = ROOT / "bench/variations/stage7-3c-entry-world-only.json"
-LINE = "- Exposure and escape are both immediate under the collapsing operation."
+LINE = "- The sample fixture contains a stable placeholder."
 
 
 def _probe_module():

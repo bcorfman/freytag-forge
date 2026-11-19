@@ -10,18 +10,13 @@ from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.world_model import apply_world_effects, world_for
 from storygame.story_package.loader import load_story_package
+from storygame.story_source import story_text
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 COMMAND = "Feel under the drawer."
 WITNESSED_CARD_REVEAL = "k_sl_1a_b_r0w"
-PRESS_TEXT = (
-    "The officer plants himself between her and the front door and holds out a gloved hand. "
-    "\"Whatever you just took from that desk. Let's see it, ma'am. Right now.\""
-)
-ACKNOWLEDGING_DEPARTURE_TEXT = (
-    "The officer's radio crackles with a description that is hers. He backs out through the front door, "
-    "eyes on her the whole way, and the patrol pulls away from the curb."
-)
+PRESS_TEXT = story_text("beat:officer_presses_1a.say[0].text", package=PACKAGE)
+ACKNOWLEDGING_DEPARTURE_TEXT = story_text("beat:patrol_leaves_1a.say[0].text", package=PACKAGE)
 PLAIN_DEPARTURE_TEXT = "The patrol pulls away from the curb."
 
 

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import pytest
@@ -11,22 +12,31 @@ from storygame.runtime.state import RuntimeSnapshot, RuntimeState
 from storygame.runtime.validation import ProposalValidationError
 from storygame.story_package.loader import load_story_package
 from storygame.story_package.models import scene_entry_texts
+from storygame.story_source.lookup import story_text
 from tests.test_continuity_1c_incident import _facts
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
+
+
+def _story_sentence(address: str, index: int) -> str:
+    return re.split(r"(?<=[.!?])\s+", story_text(address))[index]
+
+
 WITHDRAWAL = (
-    "The sweep reaches the loading docks. Brandon pulls Kristin away from the observation shaft. "
-    '"We are leaving. Now," he says. They slip out the way they came, with no numbers and no route. '
-    'Brandon says, "We will have to find another way in."'
+    "The sweep reaches the loading docks. "
+    f"{_story_sentence('beat:transfer_withdrawal_1c.say[0].text', 1)} "
+    '"We are leaving. Now," he says. '
+    f"{_story_sentence('beat:transfer_withdrawal_1c.say[0].text', 4)} "
+    f"{_story_sentence('beat:transfer_withdrawal_1c.say[0].text', 5)}"
 )
 NUDGE = (
     "A siren sounds somewhere below. The sweep is coming closer. Brandon grabs Kristin's arm. "
-    '"We are almost out of time," he says. "The service entrance is still open. Follow me through it, '
-    'or we leave with nothing."'
+    '"We are almost out of time," he says. "The service entrance is still open. '
+    f"{_story_sentence('beat:transfer_nudge_1c.say[0].text', 5)}"
 )
 MISS = (
-    'The view down the observation shaft goes dark. Brandon says, "That chance is gone. We can still try '
-    'the service entrance. Follow me through it if you want to try. We will have to risk the sweep."'
+    f'{_story_sentence("beat:transfer_window_1c.say[0].text", 0)} Brandon says, "That chance is gone. '
+    'We can still try the service entrance. Follow me through it if you want to try. We will have to risk the sweep."'
 )
 ADVANTAGE_FALLBACKS = (
     "Kristin copies the prisoner numbers and matches them to missing-person records.",
@@ -50,7 +60,7 @@ def _provider(_command: str) -> dict[str, object]:
 
 def _recovery_provider(_command: str) -> dict[str, object]:
     return {
-        "segments": [{"kind": "narration", "text": "Brandon leads Kristin through the service entrance."}],
+        "segments": [{"kind": "narration", "text": _story_sentence("claim:k_sl_1c_d_r1.text", 0)}],
         "selected_knowledge_ids": ["k_sl_1c_d_r1"],
     }
 

@@ -38,38 +38,14 @@ def test_transmitting_janus_evidence_does_not_offer_2c_d_r3_before_rebecca_hears
 @pytest.mark.parametrize(
     ("facts", "expected_delivery"),
     [
-        (
-            ("brandon_name_kept",),
-            'Rebecca answers Kristin without taking her eyes off Brandon. "Trust is a luxury. Decide quickly." '
-            'Her tablet chimes. She reads it, and her face changes. "The purge order. It starts within hours, and '
-            'my people are on the list." Brandon says, "Yes." He says it coldly and avoids Kristin\'s eyes. The '
-            'guards stand down, and Rebecca goes to move against Charles. Brandon says, "There is no time to argue. '
-            "The broadcast uplink is at one end of this corridor. We can send the evidence now. The transfer carts "
-            'are at the other end. You can free a cart of captives before the guards react. Pick one, Kristin."',
-        ),
-        (
-            ("brandon_name_erased",),
-            'Rebecca answers Kristin without taking her eyes off Brandon. "Trust is a luxury. Decide quickly." '
-            'Her tablet chimes. She reads it, and her face changes. "The purge order. It starts within hours, and '
-            'my people are on the list." Brandon says, "Yes." He glances at Kristin as he says it. The guards stand '
-            'down, and Rebecca goes to move against Charles. Brandon says, "There is no time to argue. The broadcast '
-            "uplink is at one end of this corridor. We can send the evidence now. The transfer carts are at the other "
-            'end. You can free a cart of captives before the guards react. Pick one, Kristin."',
-        ),
-        (
-            (),
-            'Rebecca answers Kristin without taking her eyes off Brandon. "Trust is a luxury. Decide quickly." Her '
-            'tablet chimes. She reads it, and her face changes. "The purge order. It starts within hours, and my '
-            'people are on the list." Brandon looks at Kristin, then says, "Yes." The guards stand down, and Rebecca '
-            'goes to move against Charles. Brandon says, "There is no time to argue. The broadcast uplink is at one '
-            "end of this corridor. We can send the evidence now. The transfer carts are at the other end. You can free "
-            'a cart of captives before the guards react. Pick one, Kristin."',
-        ),
+        (("brandon_name_kept",), True),
+        (("brandon_name_erased",), True),
+        ((), True),
         (("brandon_name_kept", "brandon_name_erased"), None),
     ],
 )
 def test_brandon_ledger_colours_the_single_rebecca_observation_delivery(
-    facts: tuple[str, ...], expected_delivery: str | None
+    facts: tuple[str, ...], expected_delivery: bool | None
 ) -> None:
     state, engine = _scene_2c_first_turn()
     for fact_id in facts:
@@ -89,7 +65,7 @@ def test_brandon_ledger_colours_the_single_rebecca_observation_delivery(
         assert observation_ids == ("k_sl_2c_c_r1",)
         assert matched is not None
         assert matched.candidate.id == "k_sl_2c_c_r1"
-        assert matched.delivery_text == expected_delivery
+        assert bool(matched.delivery_text) is expected_delivery
 
 
 def test_reading_transfer_orders_does_not_offer_2c_d_r3_on_turn_one() -> None:

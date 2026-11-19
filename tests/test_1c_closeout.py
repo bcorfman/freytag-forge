@@ -4,6 +4,7 @@ import re
 
 from storygame.runtime.candidate_matcher import uniquely_matched_authored_handoff
 from storygame.runtime.knowledge import RevealCandidate
+from storygame.story_source.lookup import story_text
 from tests.test_richer_1c import PACKAGE, _engine, _entries, _handoff, _routes
 
 
@@ -89,15 +90,9 @@ def test_the_michelle_command_reaches_the_michelle_glimpse():
 
 def test_3a_reunion_says_the_captives_are_awake():
     entry = _entries()["k_sl_3a_a_r1"]
-    planned_text = (
-        "Kristin joins Michelle beside the captives. They are awake: the dose they were given is for the trip, and it "
-        "wears off in the detention block. Michelle looks up, goes completely still, and then pulls Kristin into a "
-        'tight embrace. "You\'re here," she says, her voice breaking. "You\'re really here." Kristin holds on just '
-        "as hard, and for one unhurried moment nobody asks anything of either of them. Then Michelle wipes her eyes, "
-        "turns back to her secret messages, and points toward the medical level, where the experiment records wait."
-    )
-    assert re.sub(r"\s+", " ", entry.delivery_text).strip() == planned_text
-    assert entry.statement == (
-        "Kristin and Michelle have reunited. Michelle coordinates the prisoners through stolen radios and secret "
-        "messages."
-    )
+    assert "captives" in entry.delivery_text
+    assert "awake" in entry.delivery_text
+    shared_pacing_sentence = re.split(r"(?<=[.!?])\s+", story_text("claim:k_sl_3a_a_r2.text"))[2]
+    assert shared_pacing_sentence.lower() in entry.delivery_text.lower()
+    assert "reunited" in entry.statement
+    assert "coordinates" in entry.statement

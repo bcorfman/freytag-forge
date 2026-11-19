@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 from storygame.runtime.candidate_matcher import uniquely_matched_authored_handoff
@@ -10,6 +11,7 @@ from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeSnapshot, RuntimeState
 from storygame.runtime.world_model import apply_scene_placements, apply_world_effects, world_for
 from storygame.story_package.loader import load_story_package
+from storygame.story_source.lookup import story_text
 
 ROOT = Path("data/stories/continuity-initiative")
 
@@ -37,23 +39,14 @@ OLD_A_R2_STATEMENT = (
 )
 OLD_A_R1_LENGTH = 169
 OLD_A_R2_LENGTH = 135
-NEW_A_R1_STATEMENT = (
-    "Kristin and Michelle have reunited. Michelle coordinates the prisoners through stolen radios and secret messages."
-)
-NEW_A_R2_STATEMENT = "Michelle has explained that freeing this block means little without exposing the other sites."
-A_R1_DELIVERY = (
-    "Kristin joins Michelle beside the captives. They are awake: the dose they were given is for the trip, and it "
-    "wears off in the detention block. Michelle looks up, goes completely still, and then pulls Kristin into a tight "
-    'embrace. "You\'re here," she says, her voice breaking. "You\'re really here." Kristin holds on just as hard, '
-    "and for one unhurried moment nobody asks anything of either of them. Then Michelle wipes her eyes, turns back to "
-    "her secret messages, and points toward the medical level, where the experiment records wait."
-)
-A_R2_DELIVERY = (
-    'Michelle looks up, goes completely still, and pulls Kristin into a tight embrace. "You\'re really here," she '
-    "says, her voice breaking. For one unhurried moment nobody asks anything of either of them. Then she wipes her "
-    "eyes and explains that freeing this block means little without exposing the other sites. Michelle points toward "
-    "the medical level, where the experiment records wait."
-)
+NEW_A_R1_STATEMENT = story_text("claim:k_sl_3a_a_r1.says")
+NEW_A_R2_STATEMENT = story_text("claim:k_sl_3a_a_r2.says")
+A_R1_DELIVERY = story_text("claim:k_sl_3a_a_r1.text")
+A_R2_DELIVERY = story_text("claim:k_sl_3a_a_r2.text")
+
+
+def _sentence(address: str, index: int) -> str:
+    return re.split(r"(?<=[.!?])\s+", story_text(address))[index]
 
 
 def _scene():
@@ -142,8 +135,8 @@ def test_3a_a_r1_delivery_uses_the_join_wording_exactly() -> None:
     delivery = _entries()["k_sl_3a_a_r1"].delivery_text
     assert delivery == A_R1_DELIVERY
     assert "finds Michelle alive" not in delivery
-    assert "the dose they were given is for the trip" in delivery
-    assert "points toward the medical level" in delivery
+    assert _sentence("claim:k_sl_3a_a_r1.text", 1) in delivery
+    assert _sentence("claim:k_sl_3a_a_r1.text", 5) in delivery
 
 
 def test_3a_a_variants_keep_their_literal_dependencies_and_a_r2_delivery() -> None:
@@ -320,7 +313,7 @@ def test_3a_wording_and_runtime_contracts_are_unchanged_except_for_the_requested
     frame = next(item for item in PACKAGE.knowledge.scene_frames if item.scene_id == "3A")
     assert frame.pressure == "Join the uprising"
     assert frame.situation.endswith("Michelle is beside the captives.")
-    assert _entries()["k_scene_3a_entry"].statement == "Supporting the uprising is the immediate priority."
+    assert _entries()["k_scene_3a_entry"].statement == story_text("claim:k_scene_3a_entry.says")
     assert _scene().objective == "Join the uprising"
 
 
