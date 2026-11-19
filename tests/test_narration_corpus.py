@@ -6,6 +6,8 @@ import copy
 import json
 from pathlib import Path
 
+import pytest
+
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeState
@@ -87,11 +89,18 @@ def test_corpus_and_snapshot_have_identical_ids() -> None:
     )
 
 
-def test_golden_ok_entries_remain_accepted() -> None:
+def test_corpus_scenes_all_have_a_prepared_state() -> None:
+    assert {entry["scene"] for entry in load_corpus()} <= set(_SCENE_STATES)
+
+
+@pytest.mark.parametrize("scene", sorted({entry["scene"] for entry in load_corpus()}), ids=lambda scene: scene)
+def test_golden_ok_entries_remain_accepted(scene: str) -> None:
     corpus = load_corpus()
     golden = load_verdicts()
     offenders = []
     for entry in corpus:
+        if entry["scene"] != scene:
+            continue
         if golden[entry["id"]] != "ok":
             continue
         current = verdict(entry)

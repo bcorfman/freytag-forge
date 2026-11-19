@@ -69,3 +69,4 @@ The 377 s `test_frozen_prompts` figure came from the coverage run. Plain `pytest
 - `test_recovery_after_choice.py::test_2c_commitment_is_exclusive_and_late_commitment_is_honoured`: 16 cases at about 6.5 s. When `read_observation` is False the body never reads `commitment`, so the `r3` and `r4` cases were exact duplicates. Now 12 cases (about 25 s saved per run). A parameter the body ignores is a pattern worth checking for in other sweeps.
 - `test_exit_audit.py` three tests at 9 to 13 s, `test_frozen_prompts.py` 18 s plus 9 s plus 7 s: real work, left alone.
 - `test_richer_*` overprojection copies folded into `tests/test_richer_overprojection.py`; one `audit_package` call instead of five.
+- `test_golden_ok_entries_remain_accepted` split into nine per-scene cases (longest 25 s instead of one 88 s test) so `-n` can spread it; same checks, plus a guard that every corpus scene has a prepared state.
