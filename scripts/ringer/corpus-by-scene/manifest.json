@@ -1,0 +1,28 @@
+{
+  "run_name": "corpus-by-scene",
+  "workdir": "/home/bcorfman/dev/ringer-work/corpus-by-scene",
+  "max_parallel": 1,
+  "worktrees": true,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "split-corpus-by-scene",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=low"
+      ],
+      "max_attempts": 2,
+      "timeout_s": 900,
+      "check_timeout_s": 400,
+      "ownership": [
+        "tests/test_narration_corpus.py"
+      ],
+      "spec": "You are a Python engineer. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge (detached at HEAD). Edit files here directly. NEVER git commit, never touch /home/bcorfman/dev/freytag-forge itself, never run `uv`, never call a billed model or the network. FIRST run: [ -e .venv ] || ln -s /home/bcorfman/dev/freytag-forge/.venv .venv . Run tests as `PYTHONPATH=$PWD:$PWD/packages/worldkeeper/src TMPDIR=/tmp .venv/bin/python -m pytest -q -p no:cacheprovider -n 0 <files>` (never pass --cov); ruff as `.venv/bin/python -m ruff check <files>` and `.venv/bin/python -m ruff format <files>`.\n\nTASK. In tests/test_narration_corpus.py, `test_golden_ok_entries_remain_accepted` loops over all 479 corpus entries in one test (88 s), so a parallel pytest run cannot spread it. Split it by scene without losing any check:\n- Parametrize it over the scene ids present in the corpus: `sorted({entry[\"scene\"] for entry in load_corpus()})` (nine scenes today), with the scene id as the test id and a `scene` parameter.\n- For each scene it checks only the corpus entries of that scene whose golden verdict is \"ok\", with exactly the same offender collection and the same assertion message as now.\n- Add one small separate test `test_corpus_scenes_all_have_a_prepared_state` asserting every scene id in the corpus is a key of `_SCENE_STATES` (so a new scene cannot silently skip).\n- Keep every other test and helper unchanged. Edit no other file; never weaken any other test.\n\nDONE WHEN the owned file passes, ruff check and ruff format --check are clean, and the golden test collects 9 cases.",
+      "check": "set -eo pipefail\n[ -e .venv ] || ln -s /home/bcorfman/dev/freytag-forge/.venv .venv\nexport PYTHONPATH=$PWD:$PWD/packages/worldkeeper/src TMPDIR=/tmp\nF=\"tests/test_narration_corpus.py\"\n.venv/bin/python -m pytest -q -p no:cacheprovider -n 4 $F 2>&1 | tail -4\nn=$(.venv/bin/python -m pytest --collect-only -q -p no:cacheprovider -n 0 $F 2>&1 | grep -c \"test_golden_ok_entries_remain_accepted\\[\" || true)\n[ \"$n\" = \"9\" ] || { echo \"expected 9 collected golden cases, got $n\"; exit 1; }\n.venv/bin/python -m ruff check $F\n.venv/bin/python -m ruff format --check $F\ngit add -A -- tests\nbad=$(git diff --cached --name-only | grep -v -x -e tests/test_narration_corpus.py || true)\n[ -z \"$bad\" ] || { echo \"files outside ownership staged: $bad\"; exit 1; }\ngit diff --cached --binary > /home/bcorfman/dev/ringer-work/corpus-by-scene/corpus.patch\ntest -s /home/bcorfman/dev/ringer-work/corpus-by-scene/corpus.patch\n",
+      "expect_files": [],
+      "verified": "the 88 s golden-corpus test is nine per-scene cases with identical checks, plus a guard that every scene has a prepared state."
+    }
+  ]
+}
