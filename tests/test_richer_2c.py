@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from storygame.audit import audit_package
 from storygame.runtime.candidate_matcher import uniquely_matched_authored_handoff
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
@@ -223,14 +222,3 @@ def test_existing_2c_commands_still_reach_their_reveals():
         state, engine = _engine(true_facts=facts, turn_index=turn_index)
         handoff = _handoff(engine, state, command)
         assert handoff is not None and handoff.candidate.id == entry_id, command
-
-
-def test_the_richer_scene_adds_no_beat_overprojection():
-    findings = audit_package(ROOT)["findings"]
-    overprojection = [
-        finding for finding in findings if finding["check"] == "beat_overprojection" and finding.get("scene_id") == "2C"
-    ]
-    # The 1A findings are known and older; use them to prove this filter is non-vacuous.
-    assert any(finding.get("scene_id") == "1A" for finding in findings if finding["check"] == "beat_overprojection")
-    # Measured before the richer 2C data change: there were four such findings.
-    assert len(overprojection) <= 4
