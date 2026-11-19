@@ -14,8 +14,10 @@ from typing import Any
 
 import yaml
 
+from storygame.story_cmds import discover
+
 _DEFAULT_STORY = "continuity-initiative"
-_STUB_COMMANDS = ("set", "rename", "impact", "new", "fmt")
+_STUB_COMMAND_NAMES = {"set", "rename", "impact", "new", "fmt"}
 
 
 def _add_global_options(parser: argparse.ArgumentParser, *, defaults: bool) -> None:
@@ -49,7 +51,11 @@ def _build_parser() -> argparse.ArgumentParser:
     _add_global_options(expand, defaults=False)
     expand.add_argument("scene")
 
-    for name in _STUB_COMMANDS:
+    command_modules = discover()
+    for module in command_modules.values():
+        module.add_parser(commands, _add_global_options)
+
+    for name in sorted(_STUB_COMMAND_NAMES - command_modules.keys()):
         command = commands.add_parser(name, help=f"{name} (not built yet)")
         _add_global_options(command, defaults=False)
         command.add_argument("arguments", nargs="*")
@@ -344,7 +350,22 @@ def main(argv: list[str] | None = None) -> int:
         args = parser.parse_args(argv)
     except SystemExit as error:
         return int(error.code)
-    if args.command in _STUB_COMMANDS:
+    command_modules = discover()
+    if args.command in command_modules:
+        root = _require_source_root(args.story)
+        if root is None:
+            return 2
+        try:
+            return command_modules[args.command].run(args, root)
+        except Exception as error:
+            from storygame.story_source.diagnostics import SourceError
+
+            if isinstance(error, SourceError):
+                _print_source_error(error)
+            else:
+                print(str(error), file=sys.stderr)
+            return 2
+    if args.command in _STUB_COMMAND_NAMES:
         return _not_built(args.command)
     root = _require_source_root(args.story)
     if root is None:
