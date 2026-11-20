@@ -38,9 +38,10 @@ def _carry_failure_output(report) -> str:
     if len(output) <= 4000:
         return output
     first_stuck = next((line for line in lines if line.startswith("STUCK ")), None)
-    not_run = next((line for line in lines if line.startswith("NOT RUN ")), None)
-    if first_stuck and not_run:
-        return f"{first_stuck}\n{not_run}"
+    unreachable = [line for line in lines if line.startswith("UNREACHABLE ")]
+    preserved = ([first_stuck] if first_stuck else []) + unreachable
+    if preserved:
+        return "\n".join(preserved)
     return _tail(output)
 
 
@@ -151,7 +152,7 @@ def free_gates_handler(
                 return StationResult(False, "carry_matrix", str(error))
             except Exception as error:
                 return StationResult(False, "carry_matrix", str(error) or error.__class__.__name__)
-            if report.stuck:
+            if report.stuck or report.unreachable:
                 return StationResult(False, "carry_matrix", _carry_failure_output(report))
 
         python_paths = [path for path in payload.get("paths", []) if isinstance(path, str) and path.endswith(".py")]
