@@ -176,7 +176,6 @@
     "tests/test_door_ask_player_cap.py": 0.14,
     "tests/test_drain_condition_corpus.py": 0.01,
     "tests/test_drain_condition_heldout.py": 0.45,
-    "tests/test_drain_details_capture.py": 13.77,
     "tests/test_drain_scene_state_payload.py": 0.02,
     "tests/test_drawer_avoidance_repro.py": 0.0,
     "tests/test_drawer_gap_nudge.py": 0.5,
