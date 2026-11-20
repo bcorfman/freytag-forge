@@ -32,19 +32,22 @@ def test_persona_summary_is_json_serializable(name: str, summaries: dict[str, di
     json.dumps(summaries[name])
 
 
-def test_persona_cli_writes_json(
-    summaries: dict[str, dict[str, object]], monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
+def test_persona_cli_writes_json(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    stand_ins = {name: {"stand_in": f"summary for {name}"} for name in PERSONAS}
     output = tmp_path / "persona-summary.json"
-    monkeypatch.setattr(storygame.personas, "run_persona", lambda name, package: summaries[name])
+    monkeypatch.setattr(storygame.personas, "run_persona", lambda name, package: stand_ins[name])
     monkeypatch.setattr(sys, "argv", ["storygame.personas", "--out", str(output)])
     storygame.personas.main()
     payload = json.loads(output.read_text(encoding="utf-8"))
     assert set(payload) == set(PERSONAS)
-    assert {"resolution_complete", "scenes"} <= set(payload["thorough"])
-    assert {"resolution_complete", "scenes"} <= set(payload["staller"])
-    assert {"resolution_complete", "scenes"} <= set(payload["wrong_lead"])
+    assert payload == stand_ins
+
+
+@pytest.mark.nightly
+def test_persona_real_runs_complete(summaries: dict[str, dict[str, object]]) -> None:
+    for name in PERSONAS:
+        assert {"resolution_complete", "scenes"} <= set(summaries[name])
     for name in ("staller", "wrong_lead"):
-        row = _rows(payload[name])["1C"]
+        row = _rows(summaries[name])["1C"]
         assert row["turns_to_exit"] == 8
         assert row["costs_applied"] == []
