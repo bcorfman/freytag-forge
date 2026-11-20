@@ -61,6 +61,7 @@ class FactoryState:
     run_id: str = field(default_factory=lambda: uuid.uuid4().hex)
     started_at: str | None = None
     lanes: dict[str, str] = field(default_factory=dict)
+    limited_since: dict[str, str] = field(default_factory=dict)
     done_keys: list[str] = field(default_factory=list)
     breaker: dict[str, bool | str | None] = field(
         default_factory=lambda: {"tripped": False, "reason": None, "at": None}
@@ -84,6 +85,7 @@ class FactoryState:
             run_id=data["run_id"],
             started_at=data.get("started_at"),
             lanes=dict(data.get("lanes", {})),
+            limited_since=dict(data.get("limited_since", {})),
             done_keys=list(data.get("done_keys", [])),
             breaker=breaker,
         )
@@ -95,6 +97,7 @@ class FactoryState:
                 "run_id": self.run_id,
                 "started_at": self.started_at,
                 "lanes": self.lanes,
+                "limited_since": self.limited_since,
                 "done_keys": self.done_keys,
                 "breaker": {
                     "tripped": self.breaker.get("tripped", False),
@@ -104,9 +107,22 @@ class FactoryState:
             },
         )
 
-    def sleep_lane(self, provider: str, until: datetime | str) -> None:
+    def sleep_lane(self, provider: str, until: datetime | str, *, since: datetime | str | None = None) -> None:
         self.lanes[provider] = _iso_or_string(until)
+        if provider not in self.limited_since:
+            self.limited_since[provider] = _iso_or_string(since if since is not None else until)
         self.save()
+
+    def lane_succeeded(self, provider: str) -> None:
+        self.lanes.pop(provider, None)
+        self.limited_since.pop(provider, None)
+        self.save()
+
+    def wake(self, provider: str) -> bool:
+        was_sleeping = provider in self.lanes
+        self.lanes.pop(provider, None)
+        self.save()
+        return was_sleeping
 
     def lane_ready(self, provider: str, now: datetime) -> bool:
         until = self.lanes.get(provider)

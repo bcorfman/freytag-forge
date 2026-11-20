@@ -67,7 +67,7 @@ bad=$(git diff --cached --name-only | while read -r f; do case " $allowed " in *
 .venv/bin/python -m ruff check factory tests/test_factory_*.py
 .venv/bin/python -m ruff format --check factory tests/test_factory_*.py
 .venv/bin/python -m factory drill | tee "$WORK/drill.out"
-grep -qi "pass.*paid_usage" "$WORK/drill.out" || {{ echo "drill does not pass paid_usage"; exit 1; }}
+grep -qiE "paid_usage[ |]+pass" "$WORK/drill.out" || {{ echo "drill does not pass paid_usage"; exit 1; }}
 # independent probe: real line, real breakers, probes every 30 minutes past a reported reset
 .venv/bin/python - <<'PY'
 import tempfile

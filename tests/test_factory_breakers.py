@@ -72,6 +72,40 @@ def test_budget_spent_trips_at_cap(tmp_path):
     assert [trip.name for trip in trips] == ["budget_spent"]
 
 
+def test_budget_reason_marks_unknown_rows_as_minimum(tmp_path):
+    queue, state, ledger = _setup(tmp_path)
+    ledger.record(Usage(NOW, "provider", "model", "station", "scene", "dollars", 10, 1.0))
+    ledger.record(Usage(NOW, "provider", "model", "station", "scene", "unknown", 10, None, cost_kind="unknown"))
+
+    trips = check_breakers(
+        queue=queue, state=state, ledger=ledger, caps=_caps(total=1.0), config=BreakerConfig(), now=NOW
+    )
+
+    assert "a minimum: 1 calls of unknown cost" in trips[0].reason
+
+
+def test_paid_usage_trips_with_recorded_reasons(tmp_path):
+    queue, state, ledger = _setup(tmp_path)
+    ledger.record(
+        Usage(
+            NOW,
+            "codex",
+            "model",
+            "station",
+            "scene",
+            "paid",
+            10,
+            None,
+            cost_kind="subscription",
+            paid_usage="credits dropped",
+        )
+    )
+
+    trips = check_breakers(queue=queue, state=state, ledger=ledger, caps=_caps(), config=BreakerConfig(), now=NOW)
+
+    assert [(trip.name, trip.reason) for trip in trips] == [("paid_usage", "credits dropped")]
+
+
 def test_budget_one_cent_under_does_not_trip(tmp_path):
     queue, state, ledger = _setup(tmp_path)
     _record(ledger, usd=0.99)
@@ -168,20 +202,21 @@ def test_sleeping_ticket_does_not_trip_ticket_breakers(tmp_path):
 
 def test_provider_overdue_trips_at_deadline(tmp_path):
     queue, state, ledger = _setup(tmp_path)
-    state.lanes["provider"] = (NOW - timedelta(seconds=86400)).isoformat()
+    state.limited_since["provider"] = (NOW - timedelta(seconds=86400)).isoformat()
     trips = check_breakers(queue=queue, state=state, ledger=ledger, caps=_caps(), config=BreakerConfig(), now=NOW)
     assert [trip.name for trip in trips] == ["provider_overdue"]
+    assert state.limited_since["provider"] in trips[0].reason
 
 
 def test_provider_one_second_before_overdue_does_not_trip(tmp_path):
     queue, state, ledger = _setup(tmp_path)
-    state.lanes["provider"] = (NOW - timedelta(seconds=86399)).isoformat()
+    state.limited_since["provider"] = (NOW - timedelta(seconds=86399)).isoformat()
     assert check_breakers(queue=queue, state=state, ledger=ledger, caps=_caps(), config=BreakerConfig(), now=NOW) == []
 
 
 def test_sleeping_lane_does_not_trip_before_overdue(tmp_path):
     queue, state, ledger = _setup(tmp_path)
-    state.lanes["provider"] = (NOW - timedelta(seconds=3600)).isoformat()
+    state.limited_since["provider"] = (NOW - timedelta(seconds=3600)).isoformat()
     assert check_breakers(queue=queue, state=state, ledger=ledger, caps=_caps(), config=BreakerConfig(), now=NOW) == []
 
 
@@ -212,7 +247,7 @@ def test_trip_order_is_fixed(tmp_path):
     queue.add(_ticket("canary", status=Status.PASSED))
     for index in range(5):
         queue.add(_ticket(f"token-{index}", tokens=1))
-    state.lanes["provider"] = (NOW - timedelta(seconds=86400)).isoformat()
+    state.limited_since["provider"] = (NOW - timedelta(seconds=86400)).isoformat()
     trips = check_breakers(
         queue=queue,
         state=state,

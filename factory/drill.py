@@ -16,6 +16,7 @@ from factory.tickets import Station, Status, Ticket, TicketQueue
 BREAKER_NAMES: tuple[str, ...] = (
     "budget_spent",
     "spend_rate",
+    "paid_usage",
     "repeat_failure",
     "token_outlier",
     "provider_overdue",
@@ -87,6 +88,21 @@ def _inject_fault(
         _record_spend(ledger, now, caps.total_budget_usd, "budget")
     elif name == "spend_rate":
         _record_spend(ledger, now, caps.rate_max_usd + 0.01, "rate")
+    elif name == "paid_usage":
+        ledger.record(
+            Usage(
+                at=now,
+                provider="drill-provider",
+                model_id="drill-model",
+                station="drill",
+                scene="drill",
+                ticket_id="paid-usage",
+                tokens=1,
+                usd=None,
+                cost_kind="subscription",
+                paid_usage="drill: codex credits dropped from 10.0 to 9.5",
+            )
+        )
     elif name == "repeat_failure":
         queue.add(_ticket("repeat", now))
         for _ in range(config.repeat_failures):
@@ -102,6 +118,7 @@ def _inject_fault(
         state.sleep_lane(
             "drill-provider",
             now - timedelta(seconds=config.provider_overdue_s),
+            since=now - timedelta(seconds=config.provider_overdue_s),
         )
     elif name == "canary_passed":
         queue.add(_ticket("canary", now))

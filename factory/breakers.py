@@ -115,10 +115,13 @@ def check_breakers(
     trips: list[BreakerTrip] = []
     total_usd = ledger.total_usd()
     if total_usd >= caps.total_budget_usd and not delivered:
+        unknown_rows = ledger.unknown_cost_rows()
+        unknown_note = f" (a minimum: {unknown_rows} calls of unknown cost)" if unknown_rows > 0 else ""
         trips.append(
             BreakerTrip(
                 "budget_spent",
-                f"total spend {total_usd:.6f} USD reached the budget cap of {caps.total_budget_usd:.6f} USD.",
+                f"total spend {total_usd:.6f} USD reached the budget cap of {caps.total_budget_usd:.6f} USD."
+                f"{unknown_note}",
             )
         )
 
@@ -132,6 +135,10 @@ def check_breakers(
             )
         )
 
+    paid_reasons = ledger.paid_usage_reasons()
+    if paid_reasons:
+        trips.append(BreakerTrip("paid_usage", "; ".join(paid_reasons[:5])))
+
     repeat_trip, token_trip, canary_trip = _ticket_breaker_trips(queue, config, canary_ids)
     if repeat_trip is not None:
         trips.append(repeat_trip)
@@ -141,8 +148,8 @@ def check_breakers(
     overdue_provider = next(
         (
             provider
-            for provider, sleep_until in state.lanes.items()
-            if _parse_datetime(sleep_until) + timedelta(seconds=config.provider_overdue_s) <= now
+            for provider, limited_since in state.limited_since.items()
+            if _parse_datetime(limited_since) + timedelta(seconds=config.provider_overdue_s) <= now
         ),
         None,
     )
@@ -150,7 +157,7 @@ def check_breakers(
         trips.append(
             BreakerTrip(
                 "provider_overdue",
-                f"provider {overdue_provider} remained unavailable past its overdue deadline.",
+                f"provider {overdue_provider} has been unavailable since {state.limited_since[overdue_provider]}.",
             )
         )
 

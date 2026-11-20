@@ -10,6 +10,7 @@ def test_all_breakers_pass_the_real_drill(tmp_path):
     results = run_drill(tmp_path, NOW)
 
     assert [result.name for result in results] == list(BREAKER_NAMES)
+    assert "paid_usage" in [result.name for result in results]
     assert drill_passed(results)
     assert all(result.passed for result in results)
 

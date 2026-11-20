@@ -98,7 +98,35 @@ def _status(root: Path, config_path: Path, now: datetime) -> int:
         print(f"breaker: tripped ({state.breaker_reason() or 'unknown reason'})")
     else:
         print("breaker: clear")
-    print(f"total spend: {ledger.total_usd():.6f} USD")
+    total_usd = ledger.total_usd()
+    unknown_rows = ledger.unknown_cost_rows()
+    unknown_note = f" (a minimum: {unknown_rows} calls of unknown cost)" if unknown_rows > 0 else ""
+    print(f"total spend: {total_usd:.6f} USD{unknown_note}")
+    providers = set(config.get("caps", {}).get("providers", {}))
+    providers.update(config.get("caps", {}).get("daily_cap_usd", {}))
+    for provider in sorted(providers):
+        report = ledger.last_limits(provider)
+        if report is None:
+            continue
+        windows = ", ".join(
+            f"{window.name} {round(window.used * 100):.0f}%"
+            for window in sorted(report.windows, key=lambda item: item.name)
+        )
+        print(f"{provider} windows: {windows}")
+    for provider, limited_since in sorted(state.limited_since.items()):
+        print(f"{provider} limited since {limited_since}")
+    return 0
+
+
+def _wake(root: Path, config_path: Path, provider: str, now: datetime) -> int:
+    config = _load_config(config_path)
+    paths = _paths(root, config)
+    state = FactoryState.load(paths["state"])
+    queue = TicketQueue(paths["tickets"])
+    was_sleeping = state.wake(provider)
+    woken = queue.wake_provider(provider, now)
+    lane_status = "lane cleared" if was_sleeping else "lane was not sleeping"
+    print(f"{provider}: {lane_status}, {woken} ticket(s) ready")
     return 0
 
 
@@ -183,6 +211,8 @@ def main(
     subparsers.add_parser("status")
     run_parser = subparsers.add_parser("run")
     run_parser.add_argument("--handlers")
+    wake_parser = subparsers.add_parser("wake")
+    wake_parser.add_argument("provider")
     subparsers.add_parser("drill")
     args = parser.parse_args(argv)
     args.root = args.root.resolve()
@@ -196,6 +226,8 @@ def main(
         return _status(args.root, args.config, clock())
     if args.command == "run":
         return _run_factory(args, clock)
+    if args.command == "wake":
+        return _wake(args.root, args.config, args.provider, clock())
 
     with tempfile.TemporaryDirectory(prefix="factory-drill-") as directory:
         if drill_fn is None:

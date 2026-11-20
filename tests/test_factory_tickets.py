@@ -135,6 +135,30 @@ def test_limit_hit_does_not_change_attempts_or_failures(tmp_path) -> None:
     assert queue.next_ready(resume_at).id == "limited"
 
 
+def test_wake_provider_wakes_only_matching_sleeping_tickets(tmp_path) -> None:
+    queue = TicketQueue(tmp_path)
+    matching = make_ticket("matching")
+    matching.status = Status.SLEEPING
+    matching.provider = "codex"
+    matching.sleep_until = (NOW + timedelta(hours=1)).isoformat()
+    other = make_ticket("other")
+    other.status = Status.SLEEPING
+    other.provider = "claude"
+    other.sleep_until = (NOW + timedelta(hours=1)).isoformat()
+    queued = make_ticket("queued")
+    queue.add(matching)
+    queue.add(other)
+    queue.add(queued)
+
+    woken = queue.wake_provider("codex", NOW)
+
+    assert woken == 1
+    assert queue.get("matching").sleep_until == NOW.isoformat()
+    assert queue.get("matching").updated_at == NOW.isoformat()
+    assert queue.get("other").sleep_until == (NOW + timedelta(hours=1)).isoformat()
+    assert queue.get("queued").status is Status.QUEUED
+
+
 def test_repeat_failure_count_uses_only_the_final_signature() -> None:
     failures = [
         Failure("gate", output_hash("one"), "a"),

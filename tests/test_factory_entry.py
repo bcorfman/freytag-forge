@@ -1,11 +1,15 @@
 import json
 import sys
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import factory.preflight as preflight_module
 from factory.__main__ import main
-from factory.tickets import Station, Ticket, TicketQueue
+from factory.guard import SpendLedger, Usage
+from factory.limits import LimitReport, Window
+from factory.line import FactoryLine, StationResult
+from factory.state import FactoryState
+from factory.tickets import Station, Status, Ticket, TicketQueue
 from tests.test_factory_preflight import make_config, successful_command
 
 NOW = datetime(2026, 11, 16, 12, tzinfo=UTC)
@@ -45,6 +49,77 @@ def test_status_reports_empty_state_and_breaker(tmp_path, capsys):
     state.trip_breaker("test breaker", NOW)
     assert main(args, now_fn=lambda: NOW) == 0
     assert "breaker: tripped (test breaker)" in capsys.readouterr().out
+
+
+def test_wake_clears_lane_and_makes_provider_tickets_ready(tmp_path, capsys):
+    config = make_config(tmp_path)
+    state = FactoryState.load(tmp_path / "factory/state/state.json")
+    state.sleep_lane("codex", NOW + datetime.resolution, since=NOW - datetime.resolution)
+    queue = TicketQueue(tmp_path / "factory/state/tickets")
+    ticket = Ticket("sleeping", "scene", Station.PROSE, 100, NOW.isoformat(), NOW.isoformat())
+    ticket.status = Status.SLEEPING
+    ticket.provider = "codex"
+    ticket.sleep_until = (NOW + datetime.resolution).isoformat()
+    queue.add(ticket)
+
+    args = ["--root", str(tmp_path), "--config", str(config), "wake", "codex"]
+    assert main(args, now_fn=lambda: NOW) == 0
+    assert "codex: lane cleared, 1 ticket(s) ready" in capsys.readouterr().out
+    assert state.load(tmp_path / "factory/state/state.json").limited_since == {
+        "codex": (NOW - datetime.resolution).isoformat()
+    }
+    assert queue.get("sleeping").sleep_until == NOW.isoformat()
+
+    called = []
+    line = FactoryLine(
+        queue=queue,
+        state=FactoryState.load(tmp_path / "factory/state/state.json"),
+        handlers={Station.PROSE: lambda ticket, now: called.append(ticket.id) or StationResult(True, "ok", "ok")},
+        provider_for=lambda ticket: ticket.provider,
+        check_breakers=lambda now: [],
+    )
+    assert line.step(NOW).kind == "advanced"
+    assert called == ["sleeping"]
+
+
+def test_wake_reports_non_sleeping_lane(tmp_path, capsys):
+    config = make_config(tmp_path)
+
+    assert main(["--root", str(tmp_path), "--config", str(config), "wake", "codex"], now_fn=lambda: NOW) == 0
+    assert "codex: lane was not sleeping, 0 ticket(s) ready" in capsys.readouterr().out
+
+
+def test_status_reports_unknown_minimum_limits_and_limited_since(tmp_path, capsys):
+    config = make_config(tmp_path)
+    state = FactoryState.load(tmp_path / "factory/state/state.json")
+    state.sleep_lane("codex", NOW + datetime.resolution, since=NOW - timedelta(hours=2))
+    ledger = SpendLedger(tmp_path / "factory/state/ledger.jsonl")
+    ledger.record(Usage(NOW, "codex", "model", "station", "scene", "unknown", 1, None, cost_kind="unknown"))
+    ledger.record(
+        Usage(
+            NOW,
+            "codex",
+            "model",
+            "station",
+            "scene",
+            "limits",
+            1,
+            None,
+            cost_kind="subscription",
+            limits=LimitReport(
+                "codex",
+                (Window("seven_day", 0.06, None, False), Window("five_hour", 0.19, None, False)),
+                None,
+                10.0,
+            ),
+        )
+    )
+
+    assert main(["--root", str(tmp_path), "--config", str(config), "status"], now_fn=lambda: NOW) == 0
+    output = capsys.readouterr().out
+    assert "total spend: 0.000000 USD (a minimum: 1 calls of unknown cost)" in output
+    assert "codex windows: five_hour 19%, seven_day 6%" in output
+    assert f"codex limited since {(NOW - timedelta(hours=2)).isoformat()}" in output
 
 
 def test_run_refusals_and_one_passing_ticket(tmp_path, monkeypatch, capsys):

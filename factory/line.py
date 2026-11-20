@@ -106,13 +106,14 @@ class FactoryLine:
             result = handler(ticket, now)
         except LimitSleep as error:
             resume_at = error.resume_at or now + timedelta(seconds=self.probe_s)
-            if provider is not None:
-                self.state.sleep_lane(provider, resume_at)
-                self.state.save()
+            lane = provider if provider is not None else error.provider
+            self.state.sleep_lane(lane, resume_at, since=error.resume_at or now)
             self.queue.record_limit_hit(ticket.id, error.provider, resume_at, now)
             self._check_breakers(now)
             return StepOutcome("slept", ticket.id)
 
+        if provider is not None:
+            self.state.lane_succeeded(provider)
         self.queue.record_tokens(ticket.id, result.tokens)
         if result.passed:
             if ticket.station is Station.DELIVER:
