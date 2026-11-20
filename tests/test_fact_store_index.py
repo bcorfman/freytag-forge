@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from storygame.runtime.facts import Fact, FactStore
+from storygame.runtime.knowledge import knowledge_guards_for
 from storygame.runtime.state import RuntimeState
 from storygame.story_package.loader import load_story_package
 
@@ -27,8 +28,29 @@ def test_index_tracks_assert_retract_and_direct_replacement() -> None:
 
     replacement = fact("other_fact")
     store.asserted = {replacement}
+    assert isinstance(store.asserted, set)
     assert store.matching("lead_known") == ()
     assert store.matching("other_fact") == (replacement,)
+
+
+def test_in_place_asserted_mutations_rebuild_index_and_invalidate_guards() -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    added = fact("added_fact")
+    guards_before = knowledge_guards_for(state)
+    version_before = state.facts.version
+
+    state.facts.asserted.add(added)
+
+    assert state.facts.matching("added_fact") == (added,)
+    assert state.facts.version == version_before + 1
+    guards_after_add = knowledge_guards_for(state)
+    assert guards_after_add is not guards_before
+
+    state.facts.asserted.discard(added)
+
+    assert state.facts.matching("added_fact") == ()
+    assert state.facts.version == version_before + 2
+    assert knowledge_guards_for(state) is not guards_after_add
 
 
 def test_index_is_independent_through_clone_and_pydantic_round_trips() -> None:
