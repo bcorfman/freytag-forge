@@ -188,9 +188,11 @@ def test_free_gates_carry_matrix_failure_is_station_check(tmp_path: Path, monkey
         searches=1,
         turns=1,
         memo_hits=0,
-        stuck=[StuckCell("1A", 0, (), "main", "no_path", 1, ("lead",))],
+        cache_hits=0,
+        stuck=[],
         seconds=0.01,
         seconds_by_scene={"1A": 0.01},
+        unreachable={"2C": "1A"},
     )
     monkeypatch.setattr("factory.stations.free_gates.load_story_package", lambda _root: object())
     monkeypatch.setattr("factory.stations.free_gates.carry_matrix", lambda *args, **kwargs: report)
@@ -204,7 +206,7 @@ def test_free_gates_carry_matrix_failure_is_station_check(tmp_path: Path, monkey
     assert result.output == report.lines()[0]
 
 
-def test_free_gates_carry_matrix_tail_keeps_first_stuck_and_not_run(tmp_path: Path, monkeypatch) -> None:
+def test_free_gates_carry_matrix_tail_keeps_first_stuck_and_every_unreachable(tmp_path: Path, monkeypatch) -> None:
     baseline, anchor = gap_baseline(tmp_path)
     report = CarryReport(
         mode="one_branch",
@@ -213,13 +215,14 @@ def test_free_gates_carry_matrix_tail_keeps_first_stuck_and_not_run(tmp_path: Pa
         searches=100,
         turns=100,
         memo_hits=0,
+        cache_hits=0,
         stuck=[
             StuckCell("3A", index, (), f"t{index}:candidate", "no_path", 1, ("carried-fact",) * 8)
             for index in range(100)
         ],
         seconds=0.01,
         seconds_by_scene={"3A": 0.01},
-        not_run=["3B", "3C"],
+        unreachable={"3B": "3A", "3C": "3A"},
     )
     monkeypatch.setattr("factory.stations.free_gates.load_story_package", lambda _root: object())
     monkeypatch.setattr("factory.stations.free_gates.carry_matrix", lambda *args, **kwargs: report)
@@ -229,7 +232,7 @@ def test_free_gates_carry_matrix_tail_keeps_first_stuck_and_not_run(tmp_path: Pa
     )
 
     assert not result.passed
-    assert result.output == f"{report.lines()[0]}\n{report.lines()[-1]}"
+    assert result.output == "\n".join([report.lines()[0], report.lines()[-2], report.lines()[-1]])
 
 
 def test_build_handlers_and_factory_line_advance(tmp_path: Path) -> None:

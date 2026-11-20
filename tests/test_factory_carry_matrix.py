@@ -9,7 +9,7 @@ import factory.checks.carry_matrix as carry_matrix_module
 from storygame.runtime.facts import Fact, FactStore
 from storygame.runtime.state import CueStage, RuntimeState, TurnRecord
 from storygame.story_package.loader import load_story_package
-from storygame.story_package.models import FactPredicate
+from storygame.story_package.models import FactPredicate, RouteOperation
 from storygame.story_source import compile_source_tree
 from tests.story_source.helpers import copy_fixture
 
@@ -72,7 +72,7 @@ def test_state_key_drops_unread_flag_and_keeps_world_parent(mini_package) -> Non
     assert carry_matrix_module.state_key(base, read_ids) != carry_matrix_module.state_key(world_changed, read_ids)
 
 
-def test_seeded_transition_defect_reports_main_no_path(mini_package) -> None:
+def test_static_check_proves_seeded_exit_defect_without_turns(mini_package) -> None:
     impossible = "carry_matrix_never_produced"
     transitions = tuple(
         transition.model_copy(
@@ -89,11 +89,121 @@ def test_seeded_transition_defect_reports_main_no_path(mini_package) -> None:
     report = carry_matrix_module.carry_matrix(defect, scenes=["1A"], workers=1, search_budget=40)
 
     assert any(
-        cell.scene == "1A" and cell.label == "main" and cell.reason in {"no_path", "budget"} for cell in report.stuck
+        cell.scene == "1A" and cell.label == "main" and cell.reason == "no_exit_possible" for cell in report.stuck
     )
+    assert report.static_stuck >= 1
+    assert report._turns_by_scene["1A"] == 0
 
 
-def test_default_budget_bounds_seeded_stuck_search(mini_package) -> None:
+def test_static_check_says_maybe_when_a_producer_can_fire(mini_package) -> None:
+    produced = "seeded_static_producer"
+    storylet = next(item for item in mini_package.storylet_routes.storylets if item.scene_id == "1A")
+    realization = storylet.realizations[0].model_copy(
+        update={"operations": (*storylet.realizations[0].operations, RouteOperation(op="assert", fact_id=produced))}
+    )
+    route = storylet.model_copy(update={"realizations": (realization, *storylet.realizations[1:])})
+    routes = mini_package.storylet_routes.model_copy(
+        update={
+            "storylets": tuple(
+                route if item.id == route.id else item for item in mini_package.storylet_routes.storylets
+            )
+        }
+    )
+    transitions = tuple(
+        transition.model_copy(update={"triggers": (FactPredicate(fact_id=produced, equals=True),)})
+        if transition.source_scene_id == "1A"
+        else transition
+        for transition in mini_package.pacing.transitions
+    )
+    seeded = mini_package.model_copy(
+        update={
+            "pacing": mini_package.pacing.model_copy(update={"transitions": transitions}),
+            "storylet_routes": routes,
+        }
+    )
+    package = carry_matrix_module._legacy_package(seeded)
+    state = RuntimeState.bootstrap(package)
+
+    assert carry_matrix_module.static_exit_possible(package, state, "1A")
+
+
+def test_seeded_deviation_trap_is_stuck_not_undecided(mini_package) -> None:
+    storylet = next(item for item in mini_package.storylet_routes.storylets if item.scene_id == "1A")
+    realization = storylet.realizations[0].model_copy(
+        update={
+            "operations": (
+                *storylet.realizations[0].operations,
+                RouteOperation(op="assert", fact_id="seeded_exit_ready", value=True),
+            ),
+        }
+    )
+    route = storylet.model_copy(update={"realizations": (realization, *storylet.realizations[1:])})
+    routes = mini_package.storylet_routes.model_copy(
+        update={
+            "storylets": tuple(
+                route if item.id == route.id else item for item in mini_package.storylet_routes.storylets
+            )
+        }
+    )
+    default_knowledge = next(item for item in mini_package.knowledge.knowledge if item.id == "k_sl_1a_b_r0")
+    default_knowledge = default_knowledge.model_copy(
+        update={
+            "establishes": (
+                *default_knowledge.establishes,
+                RouteOperation(op="assert", fact_id="seeded_exit_ready", value=True),
+            ),
+        }
+    )
+    trap_knowledge = next(item for item in mini_package.knowledge.knowledge if item.id == "k_sl_1a_b_r0w")
+    trap_knowledge = trap_knowledge.model_copy(
+        update={"requires": (FactPredicate(fact_id="patrol_in_house", equals=False),)}
+    )
+    knowledge = mini_package.knowledge.model_copy(
+        update={
+            "knowledge": tuple(
+                default_knowledge
+                if item.id == default_knowledge.id
+                else trap_knowledge
+                if item.id == trap_knowledge.id
+                else item
+                for item in mini_package.knowledge.knowledge
+            )
+        }
+    )
+    transitions = tuple(
+        transition.model_copy(
+            update={"triggers": (*transition.triggers, FactPredicate(fact_id="seeded_exit_ready", equals=True))}
+        )
+        if transition.source_scene_id == "1A"
+        else transition
+        for transition in mini_package.pacing.transitions
+    )
+    pacing = mini_package.pacing.model_copy(update={"transitions": transitions})
+    defect = mini_package.model_copy(update={"pacing": pacing, "storylet_routes": routes, "knowledge": knowledge})
+    report = carry_matrix_module.carry_matrix(defect, scenes=["1A"], workers=1, search_budget=40)
+
+    assert any(cell.label == "t0:k_sl_1a_b_r0w" and cell.reason == "no_path" for cell in report.stuck)
+    assert not any(cell.label == "main" for cell in report.stuck)
+    assert report.undecided == 0
+
+
+def test_exit_longer_than_budget_is_undecided_then_earned(mini_package) -> None:
+    report = carry_matrix_module.carry_matrix(mini_package, scenes=["1A"], workers=1, search_budget=1)
+
+    assert report.undecided >= 1
+    assert not report.stuck
+    assert report.max_unbounded_points >= 1
+
+
+def test_unbounded_research_replays_no_turns(mini_package) -> None:
+    default = carry_matrix_module.carry_matrix(mini_package, workers=1)
+    constrained = carry_matrix_module.carry_matrix(mini_package, workers=1, search_budget=1)
+
+    assert constrained.turns <= default.turns * 1.05
+    assert constrained.cache_hits >= 1
+
+
+def test_stuck_scene_makes_later_scenes_unreachable(mini_package) -> None:
     impossible = "carry_matrix_never_produced"
     transitions = tuple(
         transition.model_copy(
@@ -106,39 +216,12 @@ def test_default_budget_bounds_seeded_stuck_search(mini_package) -> None:
     defect = mini_package.model_copy(
         update={"pacing": mini_package.pacing.model_copy(update={"transitions": transitions})}
     )
-    package = carry_matrix_module._legacy_package(defect)
-    state = RuntimeState.bootstrap(package)
-    worker = carry_matrix_module._SearchWorker(
-        package,
-        "1A",
-        carry_matrix_module.forward_reads(package, "1A"),
-        carry_matrix_module.DEFAULT_SEARCH_BUDGET,
-    )
 
-    result = worker.search(carry_matrix_module._Point(state.snapshot()))
+    report = carry_matrix_module.carry_matrix(defect, workers=1, search_budget=40)
 
-    assert result.points_used <= carry_matrix_module.DEFAULT_SEARCH_BUDGET
-    report = carry_matrix_module.carry_matrix(defect, workers=1)
-
-    assert report.search_budget == (carry_matrix_module.DEFAULT_SEARCH_BUDGET)
-    assert report.not_run == [mini_package.pacing.scenes[1].scene_id]
-
-
-def test_seeded_deviation_trap_is_reported_with_its_label(mini_package, monkeypatch) -> None:
-    original = carry_matrix_module._SearchWorker.deviations
-
-    def trap_one_deviation(worker, path):
-        results = list(original(worker, path))
-        if results:
-            first = results[0]
-            results[0] = carry_matrix_module._DeviationResult(first.label, "no_path", first.turns)
-        return tuple(results)
-
-    monkeypatch.setattr(carry_matrix_module._SearchWorker, "deviations", trap_one_deviation)
-    report = carry_matrix_module.carry_matrix(mini_package, scenes=["1A"], workers=1, search_budget=40)
-
-    assert any(cell.label.startswith("t") and cell.reason == "no_path" for cell in report.stuck)
-    assert not any(cell.label == "main" for cell in report.stuck)
+    assert report.unreachable["2C"] == "1A"
+    assert "UNREACHABLE 2C: every way in is stuck in 1A" in report.lines()
+    assert report.stuck
 
 
 def test_second_search_reuses_good_memo_without_new_turns(mini_package) -> None:
@@ -179,13 +262,14 @@ def test_pairwise_two_scene_fixture_is_marked_nightly_until_a_three_scene_fixtur
 
 
 def test_cli_exit_codes_and_json_shape(tmp_path: Path, monkeypatch, capsys) -> None:
-    clean = carry_matrix_module.CarryReport("one_branch", {}, {}, 0, 0, 0, [], 0.01, {})
+    clean = carry_matrix_module.CarryReport("one_branch", {}, {}, 0, 0, 0, 0, [], 0.01, {})
     stuck = carry_matrix_module.CarryReport(
         "one_branch",
         {"1A": 1},
         {"1A": 1},
         1,
         1,
+        0,
         0,
         [carry_matrix_module.StuckCell("1A", 0, (), "main", "no_path", 0, ())],
         0.01,
@@ -205,18 +289,23 @@ def test_cli_exit_codes_and_json_shape(tmp_path: Path, monkeypatch, capsys) -> N
         "searches",
         "turns",
         "memo_hits",
+        "cache_hits",
         "stuck",
         "seconds",
         "seconds_by_scene",
         "search_budget",
         "max_search_points",
-        "not_run",
+        "undecided",
+        "static_stuck",
+        "max_unbounded_points",
+        "unreachable",
         "entry_choices",
     } == set(json.loads(output.read_text(encoding="utf-8")))
     assert (
         "TOTAL entry_states=1 searches=1 turns=1 memo_hits=0 "
         f"search_budget={carry_matrix_module.DEFAULT_SEARCH_BUDGET} "
-        "max_search_points=0 stuck=1"
+        "max_search_points=0 stuck=1 undecided=0 static_stuck=0 "
+        "max_unbounded_points=0 cache_hits=0"
     ) in capsys.readouterr().out
 
 
