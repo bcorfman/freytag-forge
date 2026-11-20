@@ -1,0 +1,136 @@
+# ruff: noqa: E501  (spec strings are prose briefs for a worker)
+"""Round 11c-2: honest spend in the guard and ledger (unknown cost stays unknown, subscription windows, in-call retries, paid-usage rows).
+
+One Codex task, free, no model call. Needs round 11c-1 (`factory/limits.py`) committed. Usage: build_round11c2_manifest.py
+"""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+REPO = "/home/bcorfman/dev/freytag-forge"
+WORK = "/home/bcorfman/dev/ringer-work/factory-honest-spend-guard"
+
+OWNED = [
+    "factory/guard.py",
+    "factory/preflight.py",
+    "factory/config/factory.json",
+    "factory/config/frozen.json",
+    "tests/test_factory_guard.py",
+    "tests/test_factory_preflight.py",
+]
+
+SPEC = f"""You are a Python engineer. Your current working directory IS a git worktree of {REPO} (detached at HEAD). Edit files here directly. NEVER git commit, never touch {REPO} itself, never run `uv`, never call a model, never run `claude` or `codex`, never use the network, never read the real home directory. FIRST run: [ -e .venv ] || ln -s {REPO}/.venv .venv . Ruff: `.venv/bin/python -m ruff check <files>` and `.venv/bin/python -m ruff format <files>` (line length 120, double quotes, Python 3.12, standard library only). Never pass --cov to pytest. Run tests as `PYTHONPATH=$PWD:$PWD/packages/worldkeeper/src TMPDIR=/tmp .venv/bin/python -m pytest -q -p no:cacheprovider -n 0 <test files>`.
+
+BACKGROUND. The dark factory calls models only through `guarded_call` in `factory/guard.py`, which checks the model allowlist, the spend caps, records one `Usage` row per call in a JSON-lines `SpendLedger`, and turns a provider's `ProviderLimit` into `LimitSleep` (the caller then sleeps that provider's lane). Today `CallResult.usd` and `Usage.usd` are required floats and every cap sums them. That is wrong for two of the three providers: `claude_code` (Opus, Sonnet) and `codex` (Luna) are subscriptions, paid monthly; a call costs no dollars but uses up a five-hour window and a weekly window. Only `cloudflare` (narrator, judge) is real dollar spend. A subscription call recorded as $0, or at Claude's list price (`total_cost_usd`, which is NOT what the owner pays), would make the dollar breakers lie. Rule from the plan: unknown cost is unknown, never zero.
+
+Round 11c-1 added `factory/limits.py` (read it first, with its tests `tests/test_factory_limits.py`): `Window(name, used, resets_at, rejected)`, `LimitReport(provider, windows, overage, credits)`, `read_claude_stream`, `read_codex_session`, `find_codex_session`, `SleepDecision(sleep, until, reason)`, `window_sleep(report, ceilings)` and `paid_usage(before, after)`. Use them; do not edit limits.py. Also read `factory/guard.py`, `factory/preflight.py`, `factory/config/factory.json`, `tests/test_factory_guard.py` and `tests/test_factory_preflight.py` before you start, and grep `factory/` and `tests/` for every use of `Usage(`, `CallResult(`, `Caps(` and `ledger.` so your changes stay backward compatible: `factory/breakers.py`, `factory/drill.py`, `factory/__main__.py` and their tests must keep passing UNCHANGED (you do not own them; a later task updates them).
+
+YOUR TASK, in `factory/guard.py`:
+1. Provider kinds. New `@dataclass(frozen=True) class ProviderPolicy`: `kind: str` (`"subscription"` or `"reported"`), `ceilings: dict[str, float]` (window name to fraction, for example `{{"five_hour": 0.8, "seven_day": 0.8}}`; empty for reported). `Caps` gains `providers: dict[str, ProviderPolicy]` with a default of empty; `Caps.from_dict` reads it from an optional `providers` key inside the caps dict. A provider not listed is `reported`. An unknown kind or a ceiling outside (0, 1] for a subscription raises ValueError in `from_dict`, except that 0.0 ceilings are allowed to load (preflight rejects them; see below).
+2. Cost kinds. `CallResult` becomes `CallResult(output, tokens, usd: float | None = None, limits: LimitReport | None = None)`. `Usage` gains, after `usd` and all with defaults so old positional and keyword construction still works: `usd: float | None`, `cost_kind: str = "dollars"` (`"dollars"`, `"subscription"`, or `"unknown"`), `list_usd: float | None = None`, `limits: LimitReport | None = None`, `paid_usage: str | None = None`. Validation in `__post_init__`: `cost_kind == "dollars"` requires a number in `usd`; the other two require `usd is None`. In `guarded_call`: for a subscription provider the row is `cost_kind="subscription"`, `usd=None`, and any number the call returned moves to `list_usd` (information only, never summed). For a reported provider a number gives `cost_kind="dollars"`; `None` gives `cost_kind="unknown"`.
+3. Ledger. `SpendLedger.record` writes the new fields (`cost_kind`, `list_usd`, `paid_usage`, and `limits` as `{{"provider", "overage", "credits", "windows": [{{"name", "used", "resets_at" (ISO or null), "rejected"}}]}}` or null); `_read` accepts old rows that lack them (old rows are `dollars`). `total_usd`, `day_usd` and `usd_in_window` sum only `dollars` rows. New: `unknown_cost_rows() -> int` (rows with `cost_kind == "unknown"`; a dollar total is then a minimum, not the total), `last_limits(provider) -> LimitReport | None` (the latest row of that provider that has limits), and `paid_usage_reasons() -> list[str]` (every non-null `paid_usage`, in order).
+4. Pace before the wall. In `guarded_call`, for a subscription provider, before calling `fn`: take `ledger.last_limits(provider)`; if `window_sleep(report, policy.ceilings)` says sleep and its `until` is later than `now`, raise `LimitSleep(provider, until)` without calling `fn`. (A report whose resets are all in the past is stale; call `fn`.) Keep every existing cap check as it is, and do not apply the dollar caps (`total_budget_usd`, `daily_cap_usd`, rate) to subscription rows; call caps still apply to every provider.
+5. In-call retries. New exceptions `RateLimited(Exception)` (a short 429) and `Overloaded(Exception)` (provider busy), raised by `fn`. `guarded_call` gains keyword-only `sleep: Callable[[float], None] = time.sleep` and `rand: Callable[[], float] = random.random`. RateLimited: retry the same `fn` up to 5 more times, waiting `45 + 15 * rand()` seconds before each retry; if every retry is rate limited, raise `LimitSleep(provider, None)`. Overloaded: retry with waits of 45, 90, 180 and 300 seconds; if still overloaded, raise `LimitSleep(provider, None)`. A mix counts each kind on its own schedule. Retries never write a ledger row; only the final successful call writes one row. `ProviderLimit` keeps its current meaning (quota or window spent) and gains an optional `report: LimitReport | None = None`; when `resume_at` is None and a report is given, use `window_sleep(report, policy.ceilings).until` (a rejected window gives its reset).
+6. Paid usage. After a successful subscription call that returned `limits`, compute `paid_usage(ledger.last_limits(provider), result.limits)` BEFORE recording the row, and store the reason (or None) in the row's `paid_usage`. Never raise for it; the breaker task reads it from the ledger.
+
+`factory/config/factory.json`: add `"providers"` inside `"caps"`: `claude_code` and `codex` as `{{"kind": "subscription", "ceilings": {{"five_hour": 0.0, "seven_day": 0.0}}}}` (zero means "not set yet", like the zero budgets), `cloudflare` as `{{"kind": "reported", "ceilings": {{}}}}`. Keep the existing `daily_cap_usd` keys.
+
+`factory/config/frozen.json`: add `"factory/limits.py"` after `"factory/guard.py"`.
+
+`factory/preflight.py`, the `caps_set` item: daily dollar caps are required (above zero) only for providers whose kind is `reported` (cloudflare today), not for subscriptions; every subscription provider must have both `five_hour` and `seven_day` ceilings in (0, 1), strictly below 1 so the owner keeps some of each window. The success message says which. Update `tests/test_factory_preflight.py` for that rule (a filled config there must now set ceilings; a zero ceiling fails naming the provider and window; a missing claude_code daily cap no longer fails).
+
+TESTS, `tests/test_factory_guard.py` (keep all existing tests passing; add): a subscription call with `usd=0.0028` records `cost_kind subscription`, `usd None`, `list_usd 0.0028`, tokens counted, and `total_usd()` unchanged; a reported call with `usd=None` gives `unknown` and `unknown_cost_rows() == 1`; old ledger lines without the new keys still read; a `seven_day` use above the ceiling in the last recorded report sleeps the next call to its `resets_at` without calling `fn`; a stale report (reset in the past) does not; one RateLimited then success gives one ledger row, one sleep call of 45 to 60 seconds, no LimitSleep; six RateLimited give LimitSleep(provider, None) after five sleeps; Overloaded four times then success sleeps 45, 90, 180, 300; five Overloaded give LimitSleep; `ProviderLimit(None, report)` with a rejected seven_day window sleeps to its reset; a credit drop between two Codex calls stores a paid_usage reason in the second row, and `paid_usage_reasons()` returns it; Claude `overage True` does the same; the dollar caps ignore subscription rows (a subscription row with list_usd above the total budget does not raise BudgetExhausted). Use the fixture files `tests/fixtures/factory/claude_stream.jsonl` and `codex_session.jsonl` through the 11c-1 readers for at least one test each. Inject `sleep` and `rand`; no test may really sleep.
+
+HARD LIMITS. Edit only the six files above. Never edit `factory/limits.py`, `factory/breakers.py`, `factory/drill.py`, `factory/__main__.py`, `factory/state.py`, `factory/line.py` or their tests. Do not add dependencies. Write NOTES_11c2.txt (worktree root, never committed) listing every rule you found ambiguous and the choice you made.
+"""
+
+CHECK = f"""set -eo pipefail
+WORK={WORK}
+mkdir -p "$WORK"
+export PYTHONPATH=$PWD:$PWD/packages/worldkeeper/src TMPDIR=/tmp
+[ -e .venv ] || ln -s {REPO}/.venv .venv
+git add -A -- factory tests
+bad=$(git diff --cached --name-only | grep -vxF -e factory/guard.py -e factory/preflight.py -e factory/config/factory.json -e factory/config/frozen.json -e tests/test_factory_guard.py -e tests/test_factory_preflight.py || true)
+[ -z "$bad" ] || {{ echo "files outside ownership staged: $bad"; exit 1; }}
+.venv/bin/python -m pytest -q -p no:cacheprovider -n 0 tests/test_factory_limits.py tests/test_factory_guard.py tests/test_factory_preflight.py tests/test_factory_breakers.py tests/test_factory_drill.py tests/test_factory_entry.py tests/test_factory_line.py tests/test_factory_state.py tests/test_factory_frozen.py tests/test_factory_stations.py
+.venv/bin/python -m ruff check factory/guard.py factory/preflight.py tests/test_factory_guard.py tests/test_factory_preflight.py
+.venv/bin/python -m ruff format --check factory/guard.py factory/preflight.py tests/test_factory_guard.py tests/test_factory_preflight.py
+.venv/bin/python -m factory drill
+# independent probe
+.venv/bin/python - <<'PY'
+import json, tempfile
+from datetime import UTC, datetime, timedelta
+from pathlib import Path
+from factory.guard import CallResult, Caps, LimitSleep, ModelGuard, Overloaded, RateLimited, SpendLedger, guarded_call
+from factory.limits import LimitReport, Window
+
+cfg = json.loads(Path("factory/config/factory.json").read_text())
+assert cfg["caps"]["providers"]["codex"]["kind"] == "subscription", cfg
+assert "factory/limits.py" in json.loads(Path("factory/config/frozen.json").read_text())["frozen"]
+caps = Caps.from_dict({{**cfg["caps"], "total_budget_usd": 1.0, "rate_max_usd": 1.0, "daily_cap_usd": {{"cloudflare": 1.0}}, "providers": {{"codex": {{"kind": "subscription", "ceilings": {{"five_hour": 0.8, "seven_day": 0.8}}}}, "cloudflare": {{"kind": "reported", "ceilings": {{}}}}}}}})
+guard = ModelGuard.from_file("factory/config/allowlist.json")
+ledger = SpendLedger(Path(tempfile.mkdtemp()) / "l.jsonl")
+now = datetime(2026, 11, 20, tzinfo=UTC)
+reset = now + timedelta(days=3)
+slept = []
+def call(fn):
+    return guarded_call(guard=guard, ledger=ledger, caps=caps, station="world_need", model_id="gpt-5.6-luna", effort="high", scene="1A", ticket_id="t", now=now, fn=fn, sleep=slept.append, rand=lambda: 0.0)
+r1 = LimitReport("codex", (Window("five_hour", 0.1, now + timedelta(hours=2), False), Window("seven_day", 0.5, reset, False)), None, 10.0)
+call(lambda: CallResult("ok", 100, 5.0, r1))
+assert ledger.total_usd() == 0.0, ledger.total_usd()
+seq = iter([RateLimited(), Overloaded()])
+def flaky():
+    e = next(seq, None)
+    if e: raise e
+    r2 = LimitReport("codex", (Window("five_hour", 0.1, now + timedelta(hours=2), False), Window("seven_day", 0.85, reset, False)), None, 9.0)
+    return CallResult("ok", 50, None, r2)
+call(flaky)
+assert len(slept) == 2 and 45 <= slept[0] <= 60 and slept[1] == 45, slept
+rows = [json.loads(l) for l in ledger.path.read_text().splitlines()]
+assert len(rows) == 2 and rows[0]["cost_kind"] == "subscription" and rows[0]["usd"] is None and rows[0]["list_usd"] == 5.0, rows
+assert rows[1]["paid_usage"] and ledger.paid_usage_reasons() == [rows[1]["paid_usage"]], rows
+called = []
+try:
+    call(lambda: called.append(1) or CallResult("ok", 1))
+    raise SystemExit("expected LimitSleep at the seven_day ceiling")
+except LimitSleep as e:
+    assert e.resume_at == reset and not called, (e.resume_at, called)
+print("probe ok")
+PY
+git diff --cached > {WORK}/guard.patch
+test -s {WORK}/guard.patch
+"""
+
+
+def build() -> dict:
+    return {
+        "run_name": "factory-honest-spend",
+        "workdir": WORK,
+        "max_parallel": 1,
+        "worktrees": True,
+        "repo": REPO,
+        "tasks": [
+            {
+                "key": "guard-ledger",
+                "task_type": "code-feature",
+                "engine": "codex",
+                "engine_args": ["-c", "model_reasoning_effort=high"],
+                "max_attempts": 2,
+                "timeout_s": 2400,
+                "check_timeout_s": 600,
+                "ownership": OWNED,
+                "spec": SPEC,
+                "check": CHECK,
+                "expect_files": [],
+                "verified": "Guard, preflight and neighbouring factory suites green unchanged; drill passes; probe shows subscription rows unpriced with list price kept, in-call retries without extra rows, a credit drop stored as paid usage, and a sleep at the weekly ceiling without calling the model; ruff clean; only six files changed.",
+            }
+        ],
+    }
+
+
+if __name__ == "__main__":
+    out = Path(__file__).with_name("round11c2-manifest.json")
+    out.write_text(json.dumps(build(), indent=2) + "\n", encoding="utf-8")
+    print(out)
