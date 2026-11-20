@@ -69,8 +69,6 @@ def _cue_state(monkeypatch: pytest.MonkeyPatch) -> tuple[RuntimeState, RuntimeEn
     state = _state()
     engine, provider = _engine(monkeypatch, state)
     engine.turn("Open the drawer.")
-    state.fired_event_ids.discard("SL-1A-F")
-    state.active_event_ids.add("SL-1A-F")
     engine.turn("Close the drawer.")
     return state, engine, provider
 
@@ -110,6 +108,7 @@ def test_late_scene_cue_survives_saturated_turn_record_ids(monkeypatch: pytest.M
     monkeypatch.setenv("FREYTAG_SEMANTIC_REVEAL", "0")
     state = _state()
     engine, _provider = _engine(monkeypatch, state)
+    activate_pacing = engine._activate_pacing
     monkeypatch.setattr(engine, "_activate_pacing", lambda **_kwargs: None)
 
     for _ in range(30):
@@ -117,10 +116,9 @@ def test_late_scene_cue_survives_saturated_turn_record_ids(monkeypatch: pytest.M
 
     assert len({record.id for record in state.turn_records[-3:]}) == 1
     state.scene_entered_at_turn = state.turn_index
+    monkeypatch.setattr(engine, "_activate_pacing", activate_pacing)
 
     engine.turn("Open the drawer.")
-    state.fired_event_ids.discard("SL-1A-F")
-    state.active_event_ids.add("SL-1A-F")
     engine.turn("Close the drawer.")
     result = engine.turn("Search the gap.")
 
@@ -164,8 +162,6 @@ def test_rejected_turn_does_not_expire_cue(monkeypatch: pytest.MonkeyPatch) -> N
     provider = CloudflareTurnProvider(worker_url="https://worker.example/turn", token="", state=state)
     engine = RuntimeEngine(state, provider)
     engine.turn("Open the drawer.")
-    state.fired_event_ids.discard("SL-1A-F")
-    state.active_event_ids.add("SL-1A-F")
     engine.turn("Close the drawer.")
     record_count = len(state.turn_records)
 

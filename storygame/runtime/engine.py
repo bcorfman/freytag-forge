@@ -48,7 +48,12 @@ from storygame.runtime.reference_resolution import (
     clarification_text,
     resolve_references,
 )
-from storygame.runtime.reveal_eligibility import ALREADY_ESTABLISHED, STORYLET_SPENT, explain_reveal
+from storygame.runtime.reveal_eligibility import (
+    ALREADY_ESTABLISHED,
+    STORYLET_SPENT,
+    explain_reveal,
+    is_follow_up_realization,
+)
 from storygame.runtime.state import CueStage as RuntimeCueStage
 from storygame.runtime.state import RuntimeState, TurnDelivery, TurnRecord
 from storygame.runtime.traversal import match_traversal_command, resolve_traversal
@@ -1322,11 +1327,23 @@ class RuntimeEngine(CanonicalEventMixin):
 
         turns_since_entry = self.state.turn_index - self.state.scene_entered_at_turn
         required_ids = required_storylet_ids(self.state.package)
+        follow_up_storylet_ids = {
+            item.source.storylet_id
+            for item in self.state.package.knowledge.knowledge
+            if item.source.realization_id in self.state.package.follow_up_realization_ids
+        }
         for storylet in self.state.package.storylet_routes.storylets:
             if storylet.scene_id != self.state.current_scene_id:
                 continue
             if storylet.id not in required_ids and turns_since_entry > storylet.latest_turn:
                 self.state.active_event_ids.discard(storylet.id)
+                continue
+            if storylet.id in self.state.fired_event_ids:
+                self.state.active_event_ids.discard(storylet.id)
+                if storylet.id in follow_up_storylet_ids and all(
+                    self._predicate_matches(predicate) for predicate in storylet.activation_conditions
+                ):
+                    self.state.active_event_ids.add(storylet.id)
                 continue
             earlier_storylets = tuple(
                 earlier
@@ -1624,7 +1641,10 @@ class RuntimeEngine(CanonicalEventMixin):
                 knowledge.audience.kind != "world_only"
                 or self.state.current_scene_id not in knowledge.available_in_scenes
                 or knowledge.source.storylet_id not in self.state.active_event_ids
-                or knowledge.source.storylet_id in self.state.fired_event_ids
+                or (
+                    knowledge.source.storylet_id in self.state.fired_event_ids
+                    and not is_follow_up_realization(self.state, knowledge)
+                )
                 or not all(predicate_matches(predicate, self.state.facts) for predicate in knowledge.requires)
                 or not any(
                     self._knowledge_effect_established(effect.fact_id, effect.op, effect.value)
@@ -1818,7 +1838,10 @@ class RuntimeEngine(CanonicalEventMixin):
                 knowledge.audience.kind != "world_only"
                 or self.state.current_scene_id not in knowledge.available_in_scenes
                 or knowledge.source.storylet_id not in self.state.active_event_ids
-                or knowledge.source.storylet_id in self.state.fired_event_ids
+                or (
+                    knowledge.source.storylet_id in self.state.fired_event_ids
+                    and not is_follow_up_realization(self.state, knowledge)
+                )
                 or not all(predicate_matches(predicate, facts) for predicate in knowledge.requires)
                 or all(
                     self._fact_operation_established(facts, effect.op, effect.fact_id, effect.value)

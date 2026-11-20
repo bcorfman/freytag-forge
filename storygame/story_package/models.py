@@ -911,6 +911,40 @@ class StoryPackage(_Model):
     deliveries: tuple[FactDelivery, ...]
     incidents: tuple[Incident, ...] = ()
     connections: tuple[Connection, ...] = ()
+    follow_up_realization_ids: frozenset[str] = Field(default_factory=frozenset, exclude=True)
+
+    @model_validator(mode="after")
+    def index_follow_up_realizations(self) -> StoryPackage:
+        sibling_effects: dict[tuple[str, str], set[str]] = {}
+        for item in self.knowledge.knowledge:
+            source = item.source
+            if source.kind != "storylet_realization" or source.storylet_id is None or source.realization_id is None:
+                continue
+            sibling_effects.setdefault((source.storylet_id, source.realization_id), set()).update(
+                effect.fact_id
+                for effect in item.establishes
+                if effect.op == "assert" and str(effect.value).lower() == "true"
+            )
+        follow_ups = {
+            item.source.realization_id
+            for item in self.knowledge.knowledge
+            if item.source.kind == "storylet_realization"
+            and item.source.storylet_id is not None
+            and item.source.realization_id is not None
+            and any(
+                (predicate.equals is True or str(predicate.equals).lower() == "true")
+                and predicate.fact_id
+                in {
+                    fact_id
+                    for (storylet_id, realization_id), fact_ids in sibling_effects.items()
+                    if storylet_id == item.source.storylet_id and realization_id != item.source.realization_id
+                    for fact_id in fact_ids
+                }
+                for predicate in item.requires
+            )
+        }
+        object.__setattr__(self, "follow_up_realization_ids", frozenset(follow_ups))
+        return self
 
     @property
     def fact_ids(self) -> frozenset[str]:
