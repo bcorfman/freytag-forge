@@ -1,4 +1,4 @@
-"""Run the free deterministic gates; the carry-matrix gate is deferred."""
+"""Run the free deterministic gates, including the station-5 carry matrix."""
 
 from __future__ import annotations
 
@@ -10,8 +10,10 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from factory.checks.carry_matrix import CarryMatrixTooLarge, carry_matrix
 from factory.checks.gap_delta import DEFAULT_ROOT, load_baseline, new_results, snapshot
 from factory.line import StationHandler, StationResult
+from storygame.story_package.loader import load_story_package
 from storygame.story_source import check_source_tree, compile_source_tree
 
 
@@ -28,6 +30,18 @@ def _resolve(root: Path, value: object) -> Path:
 
 def _tail(output: str) -> str:
     return output[-4000:]
+
+
+def _carry_failure_output(report) -> str:
+    lines = report.lines()
+    output = "\n".join(lines)
+    if len(output) <= 4000:
+        return output
+    first_stuck = next((line for line in lines if line.startswith("STUCK ")), None)
+    not_run = next((line for line in lines if line.startswith("NOT RUN ")), None)
+    if first_stuck and not_run:
+        return f"{first_stuck}\n{not_run}"
+    return _tail(output)
 
 
 def _diagnostic_line(diagnostic: Any) -> str:
@@ -126,6 +140,19 @@ def free_gates_handler(
         gap_lines.extend(f"ERROR {error}" for error in current.get("__errors__", []))
         if gap_lines:
             return StationResult(False, "gap_delta", _tail("\n".join(gap_lines)))
+
+        if payload.get("carry_matrix", True) is not False:
+            try:
+                package = load_story_package(story_root)
+                carry_scenes = payload.get("carry_scenes")
+                selected_scenes = carry_scenes if isinstance(carry_scenes, list) else None
+                report = carry_matrix(package, scenes=selected_scenes, mode="one_branch")
+            except CarryMatrixTooLarge as error:
+                return StationResult(False, "carry_matrix", str(error))
+            except Exception as error:
+                return StationResult(False, "carry_matrix", str(error) or error.__class__.__name__)
+            if report.stuck:
+                return StationResult(False, "carry_matrix", _carry_failure_output(report))
 
         python_paths = [path for path in payload.get("paths", []) if isinstance(path, str) and path.endswith(".py")]
         if python_paths:

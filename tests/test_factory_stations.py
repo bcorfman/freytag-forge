@@ -3,6 +3,7 @@ import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
 
+from factory.checks.carry_matrix import CarryReport, StuckCell
 from factory.checks.gap_delta import DEFAULT_ROOT, all_anchors, save_baseline, snapshot
 from factory.checks.world_need import check_needs, tickets_for
 from factory.line import FactoryLine
@@ -100,6 +101,7 @@ def test_free_gates_run_in_order_and_all_pass(tmp_path: Path) -> None:
         "source_root": str(DEFAULT_ROOT / "source"),
         "gap_baseline": str(baseline),
         "anchors": [anchor],
+        "carry_matrix": False,
         "paths": ["factory/line.py", "README.md"],
         "tests": ["tests/test_factory_line.py"],
     }
@@ -120,6 +122,7 @@ def test_free_gates_stop_at_ruff_failure_and_keep_tail(tmp_path: Path) -> None:
     payload = {
         "gap_baseline": str(baseline),
         "anchors": [anchor],
+        "carry_matrix": False,
         "paths": ["changed.py", "notes.md"],
         "tests": ["tests/test_factory_line.py"],
     }
@@ -136,7 +139,12 @@ def test_free_gates_stop_at_ruff_failure_and_keep_tail(tmp_path: Path) -> None:
 def test_free_gates_filter_non_python_paths_and_timeout_is_failure(tmp_path: Path) -> None:
     baseline, anchor = gap_baseline(tmp_path)
     runner = Runner([subprocess.TimeoutExpired("ruff", 1)])
-    payload = {"gap_baseline": str(baseline), "anchors": [anchor], "paths": ["notes.md", "changed.py"]}
+    payload = {
+        "gap_baseline": str(baseline),
+        "anchors": [anchor],
+        "carry_matrix": False,
+        "paths": ["notes.md", "changed.py"],
+    }
 
     result = free_gates_handler(ROOT, runner)(make_ticket(payload, station=Station.FREE_GATES), NOW)
 
@@ -155,7 +163,11 @@ def test_free_gates_gap_delta_reports_new_result_and_missing_key(tmp_path: Path)
     runner = Runner([])
 
     result = free_gates_handler(ROOT, runner)(
-        make_ticket({"gap_baseline": str(baseline), "anchors": [anchor]}, station=Station.FREE_GATES), NOW
+        make_ticket(
+            {"gap_baseline": str(baseline), "anchors": [anchor], "carry_matrix": False},
+            station=Station.FREE_GATES,
+        ),
+        NOW,
     )
     missing = free_gates_handler(ROOT, runner)(make_ticket({}, station=Station.FREE_GATES), NOW)
 
@@ -165,6 +177,59 @@ def test_free_gates_gap_delta_reports_new_result_and_missing_key(tmp_path: Path)
     assert not missing.passed and missing.check == "gap_delta"
     assert "missing payload key: gap_baseline" in missing.output
     assert runner.calls == []
+
+
+def test_free_gates_carry_matrix_failure_is_station_check(tmp_path: Path, monkeypatch) -> None:
+    baseline, anchor = gap_baseline(tmp_path)
+    report = CarryReport(
+        mode="one_branch",
+        entry_states={"1A": 1},
+        branches={"1A": 1},
+        searches=1,
+        turns=1,
+        memo_hits=0,
+        stuck=[StuckCell("1A", 0, (), "main", "no_path", 1, ("lead",))],
+        seconds=0.01,
+        seconds_by_scene={"1A": 0.01},
+    )
+    monkeypatch.setattr("factory.stations.free_gates.load_story_package", lambda _root: object())
+    monkeypatch.setattr("factory.stations.free_gates.carry_matrix", lambda *args, **kwargs: report)
+
+    result = free_gates_handler(ROOT, Runner([]))(
+        make_ticket({"gap_baseline": str(baseline), "anchors": [anchor]}, station=Station.FREE_GATES), NOW
+    )
+
+    assert not result.passed
+    assert result.check == "carry_matrix"
+    assert result.output == report.lines()[0]
+
+
+def test_free_gates_carry_matrix_tail_keeps_first_stuck_and_not_run(tmp_path: Path, monkeypatch) -> None:
+    baseline, anchor = gap_baseline(tmp_path)
+    report = CarryReport(
+        mode="one_branch",
+        entry_states={"3A": 100},
+        branches={"3A": 100},
+        searches=100,
+        turns=100,
+        memo_hits=0,
+        stuck=[
+            StuckCell("3A", index, (), f"t{index}:candidate", "no_path", 1, ("carried-fact",) * 8)
+            for index in range(100)
+        ],
+        seconds=0.01,
+        seconds_by_scene={"3A": 0.01},
+        not_run=["3B", "3C"],
+    )
+    monkeypatch.setattr("factory.stations.free_gates.load_story_package", lambda _root: object())
+    monkeypatch.setattr("factory.stations.free_gates.carry_matrix", lambda *args, **kwargs: report)
+
+    result = free_gates_handler(ROOT, Runner([]))(
+        make_ticket({"gap_baseline": str(baseline), "anchors": [anchor]}, station=Station.FREE_GATES), NOW
+    )
+
+    assert not result.passed
+    assert result.output == f"{report.lines()[0]}\n{report.lines()[-1]}"
 
 
 def test_build_handlers_and_factory_line_advance(tmp_path: Path) -> None:

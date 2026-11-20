@@ -1,0 +1,30 @@
+name: carry matrix nightly
+
+on:
+  schedule:
+    - cron: 47 7 * * *
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  carry-matrix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    steps:
+      - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: latest
+      - name: Install dependencies
+        run: uv sync --locked
+      - name: Run pairwise carry matrix
+        run: TMPDIR=/tmp uv run python -m factory.checks.carry_matrix --mode pairwise --json carry-matrix-pairwise.json
+      - name: Upload pairwise carry matrix
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: carry-matrix-pairwise
+          path: carry-matrix-pairwise.json
+          if-no-files-found: warn
