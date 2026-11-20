@@ -99,7 +99,7 @@ def _true_facts(state: RuntimeState) -> frozenset[str]:
 
 
 def _resolution_complete(state: RuntimeState) -> bool:
-    return _RESOLUTION_FACT in _true_facts(state)
+    return state.story_complete or _RESOLUTION_FACT in _true_facts(state)
 
 
 def _bridge(package: StoryPackage, state: RuntimeState):
