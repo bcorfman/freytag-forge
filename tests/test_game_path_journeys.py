@@ -40,9 +40,15 @@ for _item in PACKAGE.knowledge.knowledge:
 # A realization that needs an earlier alternative of the same scene to be offered first.
 CHAINS: dict[str, tuple[str, ...]] = {
     "k_sl_1a_d_r1": ("k_sl_1a_b_r2", "k_sl_1a_d_r1"),
+    "k_sl_1a_f_r2": ("k_sl_1a_f_r1", "k_sl_1a_f_r3", "k_sl_1a_f_r2"),
+    "k_sl_1a_f_r3": ("k_sl_1a_f_r1", "k_sl_1a_f_r3"),
+    "k_sl_1a_j_r3": ("k_sl_1a_j_r1", "k_sl_1a_j_r3"),
+    "k_sl_1a_b_r1": ("k_sl_1a_b_r0", "k_sl_1a_b_r1"),
     "k_sl_1b_a_r1": ("k_sl_1b_d_r1", "k_sl_1b_a_r1"),
     "k_sl_1b_a_r2": ("k_sl_1b_d_r1", "k_sl_1b_a_r2"),
     "k_sl_1b_b_r1": ("k_sl_1b_d_r1", "k_sl_1b_b_r1"),
+    "k_sl_2b_g_r1": ("k_sl_2b_f_r1", "k_sl_2b_g_r1"),
+    "k_sl_2c_g_r1": ("k_sl_2b_f_r1", "k_sl_2c_g_r1"),
 }
 
 # Named issues N-1 and N-2 were fixed by widening the two bridge activations.
