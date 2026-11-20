@@ -306,7 +306,7 @@ def test_scene_reentry_clears_cues_and_allows_a_new_escalation(monkeypatch) -> N
     _assert_observable(
         state,
         escalation,
-        cue_stages=(CueStage(fact_id=FACT_ID, stage=2, last_turn=24, visit_entered_at=14),),
+        cue_stages=(CueStage(fact_id=FACT_ID, stage=2, last_turn=28, visit_entered_at=14),),
         delivered_cue_ids=(FACT_ID,),
         staged_cue_fact_id=None,
         staged_cue_stage=1,

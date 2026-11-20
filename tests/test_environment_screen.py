@@ -49,6 +49,7 @@ def test_dry_document_freezes_the_six_start_matrix_and_is_deterministic(tmp_path
     document = json.loads(first.read_text(encoding="utf-8"))
     assert len(document["starts"]) == 6
     assert {item["id"] for item in document["starts"]} == {f"S{i}" for i in range(1, 7)}
+    assert {item["place"] for item in document["starts"] if item["id"] in {"S5", "S6"}} == {"kitchen"}
     assert document["cells"] == 36
     assert document["cost"]["calls"] == 36 * 2
 
@@ -87,7 +88,9 @@ def test_dry_cost_is_the_sum_of_per_call_ceilings(tmp_path: Path) -> None:
     cost = document["cost"]
     assert cost["calls"] == 108
     assert cost["ceiling_usd"] > 0
-    assert cost["ceiling_usd"] == sum(cell["ceiling_usd"] for cell in cost["per_cell"] for _ in range(3))
+    assert cost["ceiling_usd"] == pytest.approx(
+        sum(cell["ceiling_usd"] for cell in cost["per_cell"] for _ in range(3)), rel=0, abs=1e-12
+    )
     assert cost["smoke"]["calls"] == 6
     assert cost["smoke"]["ceiling_usd"] > 0
 

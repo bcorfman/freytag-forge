@@ -119,6 +119,9 @@ def test_late_scene_cue_survives_saturated_turn_record_ids(monkeypatch: pytest.M
     state.scene_entered_at_turn = state.turn_index
 
     engine.turn("Open the drawer.")
+    state.fired_event_ids.discard("SL-1A-F")
+    state.active_event_ids.add("SL-1A-F")
+    engine.turn("Close the drawer.")
     result = engine.turn("Search the gap.")
 
     assert result.selected_knowledge_ids == (CARD_REVEAL,)

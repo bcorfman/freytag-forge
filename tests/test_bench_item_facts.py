@@ -3524,7 +3524,7 @@ def test_scene_exit_reply_does_not_override_next_scene_placements(monkeypatch):
 
 
 @pytest.mark.nightly
-def test_invalid_proposal_after_recovery_is_a_rejected_turn(monkeypatch):
+def test_invalid_proposal_after_recovery_is_a_rejected_turn(monkeypatch, provider_opening_story):
     calls = []
 
     def request(_provider, payload):
