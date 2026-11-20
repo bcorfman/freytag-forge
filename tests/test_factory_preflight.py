@@ -15,6 +15,8 @@ def make_config(tmp_path: Path, *, budget: float = 10.0, notifier: dict | None =
     data = json.loads((SOURCE_CONFIG / "factory.json").read_text(encoding="utf-8"))
     data["caps"]["total_budget_usd"] = budget
     data["caps"]["daily_cap_usd"] = {"claude_code": 5.0, "codex": 5.0, "cloudflare": 5.0}
+    for provider in ("claude_code", "codex"):
+        data["caps"]["providers"][provider]["ceilings"] = {"five_hour": 0.8, "seven_day": 0.8}
     if notifier is not None:
         data["notifier"] = notifier
     path = config_dir / "factory.json"
@@ -48,6 +50,33 @@ def test_real_caps_pass_all_checks(tmp_path, monkeypatch):
     items = run_preflight(tmp_path, config, run_command=successful_command)
 
     assert preflight_ok(items)
+
+
+def test_subscription_provider_does_not_need_a_daily_dollar_cap(tmp_path, monkeypatch):
+    config = make_config(tmp_path)
+    data = json.loads(config.read_text(encoding="utf-8"))
+    del data["caps"]["daily_cap_usd"]["claude_code"]
+    del data["caps"]["daily_cap_usd"]["codex"]
+    config.write_text(json.dumps(data), encoding="utf-8")
+    patch_harness(monkeypatch)
+
+    items = run_preflight(tmp_path, config, run_command=successful_command)
+
+    assert next(item for item in items if item.name == "caps_set").ok
+
+
+def test_zero_subscription_ceiling_names_provider_and_window(tmp_path, monkeypatch):
+    config = make_config(tmp_path)
+    data = json.loads(config.read_text(encoding="utf-8"))
+    data["caps"]["providers"]["claude_code"]["ceilings"]["five_hour"] = 0.0
+    config.write_text(json.dumps(data), encoding="utf-8")
+    patch_harness(monkeypatch)
+
+    items = run_preflight(tmp_path, config, run_command=successful_command)
+    caps_item = next(item for item in items if item.name == "caps_set")
+
+    assert not caps_item.ok
+    assert "claude_code.five_hour" in caps_item.detail
 
 
 def test_preflight_items_fail_independently(tmp_path, monkeypatch):

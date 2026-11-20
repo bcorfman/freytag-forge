@@ -2,7 +2,8 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from factory.guard import LimitSleep
+from factory.breakers import BreakerConfig, check_breakers
+from factory.guard import Caps, LimitSleep, SpendLedger
 from factory.line import FactoryLine, StationResult
 from factory.state import FactoryState
 from factory.tickets import LadderRung, Station, Status, Ticket, TicketQueue
@@ -171,6 +172,7 @@ def test_sleeping_lane_resumes_at_deadline(tmp_path):
     assert line.step(NOW).kind == "idle"
     assert line.step(NOW + timedelta(seconds=5)).kind == "advanced"
     assert "alpha" not in state.lanes
+    assert "alpha" not in state.limited_since
 
 
 def test_breaker_halts_next_step_and_survives_reload(tmp_path):
@@ -265,7 +267,7 @@ def test_tokens_accumulate(tmp_path):
     assert queue.get("tokens").tokens_used == 10
 
 
-def test_provider_for_none_never_sleeps_a_lane(tmp_path):
+def test_provider_for_none_sleeps_error_provider_lane(tmp_path):
     ticket = make_ticket("script")
 
     def handler(ticket, now):
@@ -279,7 +281,8 @@ def test_provider_for_none_never_sleeps_a_lane(tmp_path):
     )
 
     assert line.step(NOW).kind == "slept"
-    assert state.lanes == {}
+    assert state.lanes == {"unused": (NOW + timedelta(seconds=5)).isoformat()}
+    assert state.limited_since == {"unused": (NOW + timedelta(seconds=5)).isoformat()}
 
 
 def test_run_stops_when_no_ticket_can_progress(tmp_path):
@@ -300,3 +303,83 @@ def test_initial_breaker_returns_halted_without_running_ticket(tmp_path):
 
     assert line.step(NOW).kind == "halted"
     assert queue.get("already-halted").status is Status.QUEUED
+
+
+def test_provider_overdue_uses_first_limit_through_repeated_probes(tmp_path):
+    ticket = make_ticket("overdue")
+    ticket.payload["provider"] = "codex"
+    reset = NOW
+    calls = 0
+    queue = TicketQueue(tmp_path / "tickets")
+    queue.add(ticket)
+    state = FactoryState.load(tmp_path / "state.json")
+    ledger = SpendLedger(tmp_path / "ledger.jsonl")
+    caps = Caps(100.0, {}, [], 3600, 100.0)
+    config = BreakerConfig(provider_overdue_s=86400)
+
+    def handler(ticket, now):
+        nonlocal calls
+        calls += 1
+        raise LimitSleep("codex", reset if calls == 1 else None)
+
+    def breaker_reasons(now):
+        return [
+            trip.reason
+            for trip in check_breakers(
+                queue=queue,
+                state=state,
+                ledger=ledger,
+                caps=caps,
+                config=config,
+                now=now,
+            )
+        ]
+
+    line = FactoryLine(
+        queue=queue,
+        state=state,
+        handlers={Station.ACT_CONTRACTS: handler},
+        provider_for=lambda ticket: ticket.payload.get("provider"),
+        check_breakers=breaker_reasons,
+        probe_s=1800,
+    )
+
+    assert line.step(reset).kind == "slept"
+    for offset in range(30 * 60, 24 * 3600, 30 * 60):
+        assert line.step(reset + timedelta(seconds=offset)).kind == "slept"
+        assert not state.is_tripped()
+    assert line.step(reset + timedelta(hours=24)).kind == "slept"
+    assert state.is_tripped()
+    assert "provider codex" in state.breaker_reason()
+    assert reset.isoformat() in state.breaker_reason()
+
+
+def test_weekly_reset_limit_does_not_trip_before_reset(tmp_path):
+    ticket = make_ticket("weekly")
+    reset = NOW + timedelta(days=6)
+    queue = TicketQueue(tmp_path / "tickets")
+    queue.add(ticket)
+    state = FactoryState.load(tmp_path / "state.json")
+    ledger = SpendLedger(tmp_path / "ledger.jsonl")
+    caps = Caps(100.0, {}, [], 3600, 100.0)
+    config = BreakerConfig(provider_overdue_s=86400)
+    line = FactoryLine(
+        queue=queue,
+        state=state,
+        handlers={Station.ACT_CONTRACTS: lambda ticket, now: (_ for _ in ()).throw(LimitSleep("codex", reset))},
+        provider_for=lambda ticket: ticket.payload.get("provider"),
+        check_breakers=lambda now: [],
+    )
+
+    assert line.step(NOW).kind == "slept"
+    for hour in range(1, 6 * 24):
+        now = NOW + timedelta(hours=hour)
+        trips = check_breakers(
+            queue=queue,
+            state=state,
+            ledger=ledger,
+            caps=caps,
+            config=config,
+            now=now,
+        )
+        assert not any(trip.name == "provider_overdue" for trip in trips)

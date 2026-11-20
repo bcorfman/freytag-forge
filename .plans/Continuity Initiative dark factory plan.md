@@ -208,19 +208,27 @@ The factory stops and messages you only on a circuit breaker:
 
 - The total budget set at pre-flight is spent before delivery.
 - The same ticket fails the same check with the same output three times in a row.
-- Tokens per ticket run far above the running median.
-- A provider is still unavailable 24 hours after its expected reset.
+- Tokens or calls per ticket run far above the running median, counted for every provider, including those with no dollar cost.
+- A provider is still unavailable 24 hours after the reset time it reported. A spent weekly window is a normal sleep of up to a week, not a fault; the clock starts at the reported reset, or at the first limit when no reset was reported, and later probes do not move it. (Built in round 11c: the breaker counts from `limited_since`.)
+- A subscription's weekly use passes the ceiling set at pre-flight (see "How spend is measured").
+- Paid usage appears: the Codex credit balance drops, or Claude reports `isUsingOverage: true`. The factory runs on the plans' windows only.
 - The state machine itself crashes.
 
 ### Sleep mode: limits are a wait, not a stop
 
 A rate limit, a daily quota or a daily spend cap puts that provider's lane to sleep. It does not stop the factory or message you. State is on disk, so a sleeping lane costs nothing and resumes at the same station.
 
-- **Short rate limits** (a 429 with a retry time): back off and retry that one call.
-- **Daily quotas and daily spend caps:** sleep until the reset. The narrator's `AI_QUOTA_EXCEEDED` and `AI_DAILY_BUDGET_EXCEEDED` clear at 00:00 UTC, per your runbook.
-- **Subscription windows** (Codex, Claude Code): sleep, then probe with one cheap call on a slow timer when the error gives no reset time.
+Limits come in three kinds, handled at two levels. The first two are retried inside `guarded_call`, so the ticket and the lane never see them unless every retry fails.
+
+- **Rate limit** (a 429, short): retry the same call at least five times, about 45 seconds apart with jitter.
+- **Overload** (the provider is busy): retry the same call with growing waits of 45, 90, 180 and 300 seconds, then treat it as a quota.
+- **Quota or window** (a subscription window, a daily cap): the lane sleeps until the provider's own reset time. Both subscriptions report it on every call (see "How spend is measured"), so the factory sleeps to the exact time instead of guessing. Only when no reset time is known does it probe with one cheap call, waiting 5 minutes at first and growing to 15. The narrator's `AI_QUOTA_EXCEEDED` and `AI_DAILY_BUDGET_EXCEEDED` clear at 00:00 UTC, per your runbook.
+- **Pace before the wall.** A lane also sleeps to its window's reset when the reported use passes its pre-flight ceiling, so the factory does not run a window to zero and lock you out of your own Claude Code or Codex.
 - **Other lanes keep working.** Compiles, lints, gap rules and scripted journeys need no model.
-- **A limit is never a failed attempt.** It does not count toward a ticket's three tries or the repeat-failure breaker.
+- **A limit is never a failed attempt.** It does not count toward a ticket's three tries or the repeat-failure breaker. The lane keeps its reported reset time (or `first_limited_at` when none was reported) until a call succeeds, for the 24-hour breaker.
+- **Both plans are subscription-only, with extra usage turned off (2026-11-19).** A spent window means a sleep, possibly for days. If you add credits or reset a limit yourself, `python -m factory wake <provider>` clears that lane's sleep so it resumes on its next step; a failed call after a wake just sleeps the lane again.
+
+This follows how Archon's engine handles provider limits (`coleam00/Archon`, `docs/getting-started/operate.md` and `guides/loop-nodes.md`, read 2026-11-19): retry at the provider's reset time, retry rate limits in place with jitter, and never charge a limit to an attempt.
 
 The honest consequence: with no human in the loop, the two possible end states are a delivered game or a stop at the budget with a report of what is still red.
 
@@ -325,6 +333,21 @@ The largest saving is removing the long-lived orchestrator session; the rest is 
 8. **Expensive prose, tiny volume.** Authored text for nine scenes is on the order of tens of thousands of tokens once. That is small next to one day of playtests.
 9. **Route by scoreboard.** Ringer logs tokens and first-try pass rate per model. Start each task type on the cheapest model and move up only where the pass rate says so.
 10. **Cost per merged ticket** is the factory's own metric. It feeds the circuit breakers during the run and the cost report at delivery.
+11. **Unknown cost is unknown, never zero.** A ledger row's `usd` is a number only when real money was spent; otherwise it is empty and the row says why. Dollar breakers count only dollar rows, and a dollar total that includes an empty row is reported as a minimum, not the total.
+
+### How spend is measured
+
+Each provider declares in `factory.json` what its limit is, and the factory reads that limit from the provider itself. Checked 2026-11-19 with one tiny call each.
+
+| Provider | Kind | What limits it | Where the factory reads it |
+| --- | --- | --- | --- |
+| Claude Code (Opus, Sonnet) | `subscription` | Five-hour and weekly windows | Headless `claude -p --output-format stream-json --verbose` emits a `rate_limit_event` per call: `unifiedWindows.five_hour` and `seven_day`, each with `utilization` (0.19 means 19%), `resetsAt` and `status` (`rejected` when the window is spent) |
+| Codex (Luna) | `subscription` (ChatGPT Plus, through `codex login`; not API tokens) | Five-hour and weekly windows | `codex exec --json` gives tokens only. The run's session log (`~/.codex/sessions/YYYY/MM/DD/rollout-*-<thread_id>.jsonl`) carries `rate_limits`: `primary` (300 min) and `secondary` (10080 min), each with `used_percent` and `resets_at`, plus `credits.balance` |
+| Cloudflare (narrator, Jev) | `reported` | Daily neuron allowance and gateway spend | The narrator's quota errors and the gateway's spend; unchanged from today |
+
+- Claude's `total_cost_usd` is priced at list (`"costBasis": "list"`), not what you pay. The ledger keeps it as information and never counts it toward a budget.
+- Every row records tokens and, for subscriptions, the window figures the call reported. The breakers read the latest figures, not a sum.
+- The Codex plan has a paid credit balance beside its windows. The factory must not spend it: any drop in `credits.balance` across a call trips a breaker. Brandon turned off Codex's automatic credit use on 2026-11-19, so a spent window now stops Codex instead of drawing credits; the breaker stays as a tripwire in case that setting changes.
 
 ## Order of work
 
@@ -433,10 +456,20 @@ Steps 1 to 4 build the factory, and you may still be steering there as you do to
 
 **Step 5 prep, round 11b: station 6, prompt snapshot, 2026-11-19 (branch `factory-stations`).** One Ringer task (`build_round11b_manifest.py`, 196k tokens over two attempts) built `factory/stations/prompt_snapshot.py`, free and with no model call. `python -m factory.stations.prompt_snapshot record --scene S --out DIR` saves the entry prompt and every beat prompt from `bench prompt`; the handler captures the ticket's scene again, diffs it against the payload's `baseline_dir`, and passes only when every added or removed line matches the payload's `allowed_changes` (a capture name, `entry`, a beat id or `*`, plus the substrings that are allowed; `new_capture: true` lets a capture appear or vanish). With no `allowed_changes`, nothing may change. Station 4 is meant to record the baseline before wiring starts. The failure again came from my probe (a `\n` inside an f-string became a real newline), not the worker; I fixed it and ran the check in the surviving worktree: 47 tests pass, ruff clean, and the probe recorded a real 1B baseline, passed it unchanged, failed it on one added line naming the capture, and passed it when that line was allowed. `build_handlers()` now returns stations 2, 5 and 6. A harmless `runpy` warning appears when the module runs as `-m` because the package `__init__` imports it. Not built: stations 0, 1, 3, 4, 7, 8, 9 and the carry-matrix gate.
 
+**Round 11c: honest spend and limit waits, 2026-11-19 (branch `plan-subscription-spend`, committed, not merged).** Three Ringer tasks run in order, all free with no model call (`build_round11c1_manifest.py` to `11c3`, run name `factory-honest-spend`, 389k tokens in total). 11c-1 and 11c-2 passed first try. 11c-3 failed both attempts on my own check: it grepped the drill output for `PASS ... paid_usage`, but the drill prints a table row, `paid_usage | PASS`. I fixed the grep and ran the whole check in the surviving worktree, and it passed.
+- **11c-1, `factory/limits.py`** (now frozen): reads Claude's last `rate_limit_event` and Codex's last session-log `rate_limits` into one `LimitReport`. Both providers use the window names `five_hour` and `seven_day`, with use as a fraction. `window_sleep` sleeps when a window is rejected or at its ceiling, until the latest reset. `paid_usage` flags Claude overage or a drop in Codex credits. The fixtures are trimmed copies of the real 2026-11-19 samples.
+- **11c-2, guard and ledger:** each ledger row has a `cost_kind`: `dollars`, `subscription` (`usd` empty, Claude's list price kept as `list_usd` for information) or `unknown` (a reported provider that returned no cost). Dollar caps and breakers sum dollar rows only. `factory.json` has `caps.providers`: `claude_code` and `codex` are subscriptions, and their ceilings ship at 0.0, which means "not set"; `cloudflare` is `reported`. Before each subscription call, the guard sleeps the lane to its reset if the last report is past a ceiling. 429s retry five times about 45 to 60 seconds apart, and overloads retry at 45, 90, 180 and 300 seconds. Neither retry writes a ledger row. A `ProviderLimit` that carries a report sleeps to the rejected window's reset. A credit drop or overage is stored on the row as `paid_usage`. Preflight now needs both window ceilings in (0, 1) for each subscription, and daily dollar caps only for reported providers.
+- **11c-3, lanes and breakers:** `FactoryState.limited_since` keeps the reported reset, or the first limit when none was reported. Later probes never move it, and it is cleared on the next normal return from that lane. `provider_overdue` counts from it. The probe drove a real line, probing every 30 minutes past a six-day reset, and the breaker fired exactly at reset + 24 h. A new breaker, `paid_usage`, reads the ledger. The budget reason says "a minimum" when some rows have unknown cost. `python -m factory wake PROVIDER` clears the lane and wakes its sleeping tickets. It keeps `limited_since`, so the overdue clock survives a wake. `status` shows window use and limited lanes. The drill now trips nine breakers.
+- **Lesson for the manifests:** before a run, test every grep in the check against real output from the command it reads.
+- Known edge: a lane named only by `LimitSleep.provider` (the ticket has no provider) is slept, but a later success does not clear its `limited_since`, because the line only knows the ticket's provider. No station hits this today.
+- Not built: stations 0, 1, 3, 4, 7, 8, 9, the carry-matrix gate, the generated per-scene reading view, pass 2 (lexicon), and per-scene examples files. The station handlers must build `CallResult.limits` from the readers: the Claude stream for Opus and Sonnet, and `find_codex_session(thread_id)` for Luna.
+
 ### Pre-flight: everything you do, all before start
 
 - [ ] Confirm headless Claude Code runs Opus and Sonnet on your subscription, not on API billing
-- [ ] Set the total budget, the daily spend cap per provider, and the subscription call caps
+- [ ] Set the total dollar budget (Cloudflare) and its daily cap
+- [ ] Set the weekly and five-hour use ceilings for Claude Code and for Codex, leaving room for your own use of both, and the Opus call caps
+- [x] Turn off paid extra usage on Codex and Claude (done 2026-11-19); recheck that both are still off before start
 - [ ] Give the factory a way to reach you for a circuit breaker
 - [ ] Write the judge lock (`python -m factory.judges.lock write`) so the frozen judge questions are fixed
 - [ ] Press start
@@ -455,7 +488,7 @@ After delivery: play the game, then promote it to production if you like it.
 | Lexicon derivation may not reproduce today's matcher and guard lists | Parity fails, or overrides pile up. About half of 1A's matcher words are bespoke, and 3A to 3C have almost no repetition to remove | Pass 1 keeps explicit lists, so parity never depends on derivation. Pass 2 is per scene, starts on 1A to 2C, and a field with more than a third overridden stays explicit |
 | New gap-rule results block factory changes | It amends the spirit of D3 | On for the factory; CI stays non-blocking |
 | No human reads code diffs | Ringer's README advises against it | Fresh-context diff reviewer for engine and Worldkeeper; ownership lists; coverage gate |
-| Opus, Sonnet and Luna call volume on subscriptions | Rate limits or overage could stall or cost | Call caps, backoff, and the circuit breakers |
+| Opus, Sonnet and Luna call volume on subscriptions | A spent window stalls the factory and locks you out of your own tools; Codex credits could be drawn | Live window figures from each call, use ceilings below 100%, sleep to the reported reset, credit-drop breaker |
 | Old saves | The migration changes package identity | Stale saves are rejected, as the loader does today |
 
 ### What I did not verify

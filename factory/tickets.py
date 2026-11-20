@@ -292,6 +292,18 @@ class TicketQueue:
         self.save(ticket)
         return ticket
 
+    def wake_provider(self, provider: str, now: datetime) -> int:
+        now_iso = _utc_iso(now)
+        woken = 0
+        for ticket in self.all():
+            if ticket.status is not Status.SLEEPING or ticket.provider != provider:
+                continue
+            ticket.sleep_until = now_iso
+            ticket.updated_at = now_iso
+            self.save(ticket)
+            woken += 1
+        return woken
+
     def record_tokens(self, ticket_id: str, n: int) -> Ticket:
         ticket = self.get(ticket_id)
         ticket.tokens_used += n

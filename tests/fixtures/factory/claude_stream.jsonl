@@ -1,0 +1,4 @@
+{"type": "system", "subtype": "init", "session_id": "s1", "model": "claude-haiku-5-5"}
+{"type": "assistant", "message": {"content": [{"type": "text", "text": "ok"}]}, "session_id": "s1"}
+{"type": "rate_limit_event", "rate_limit_info": {"status": "allowed", "resetsAt": 1795138200, "rateLimitType": "five_hour", "overageStatus": "allowed", "overageResetsAt": 1796083200, "isUsingOverage": false, "unifiedWindows": {"five_hour": {"utilization": 0.1, "resetsAt": 1795138200, "status": "allowed"}, "seven_day": {"utilization": 0.19, "resetsAt": 1795442400, "status": "allowed"}}}, "uuid": "u1", "session_id": "s1"}
+{"type": "result", "subtype": "success", "total_cost_usd": 0.00282399, "usage": {"input_tokens": 2, "output_tokens": 4, "cache_read_input_tokens": 9719, "cache_creation_input_tokens": 13623}, "modelUsage": {"claude-haiku-5-5": {"costUSD": 0.00282399, "costBasis": "list"}}, "session_id": "s1"}

@@ -1,6 +1,7 @@
 {
   "frozen": [
     "factory/guard.py",
+    "factory/limits.py",
     "factory/frozen.py",
     "factory/verdicts.py",
     "factory/config/**",
