@@ -102,7 +102,7 @@ def test_resolved_incident_outcome_none_a_b_and_first_when_both_true() -> None:
     facts.assert_fact(Fact(predicate="boat_route_known", subject="story", value="true"))
     assert resolved_incident_outcome(incident, facts).id == "learn_route"
 
-    facts.asserted.add(Fact(predicate="chart_copied", subject="story", value="true"))
+    facts.assert_fact(Fact(predicate="chart_copied", subject="story", value="true"))
     assert resolved_incident_outcome(incident, facts).id == "copy_chart"
 
 

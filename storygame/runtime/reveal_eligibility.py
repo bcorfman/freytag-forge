@@ -47,6 +47,16 @@ def _visible_to(item: KnowledgeDefinition, audience_id: str) -> bool:
     return item.audience.kind == "public" or audience_id in item.audience.character_ids
 
 
+def is_follow_up_realization(state: RuntimeState, item: KnowledgeDefinition) -> bool:
+    """A fired storylet may expose only indexed sibling-dependent realizations."""
+
+    return (
+        item.source.kind == "storylet_realization"
+        and item.source.storylet_id in state.fired_event_ids
+        and item.source.realization_id in getattr(state.package, "follow_up_realization_ids", ())
+    )
+
+
 def together_or_unplaced(world, protagonist_id: str, entity_id: str) -> bool:
     """Treat an unplaced protagonist or an entity in the same root area as reachable."""
     protagonist_area = world.area(protagonist_id)
@@ -72,7 +82,8 @@ def explain_reveal(state: RuntimeState, audience_id: str, item: KnowledgeDefinit
         return RevealEligibility(False, ALREADY_ESTABLISHED, item.id)
     if not _visible_to(item, audience_id):
         return RevealEligibility(False, NOT_VISIBLE, audience_id)
-    if (not item.repeatable or not established) and item.source.storylet_id in state.fired_event_ids:
+    follow_up = is_follow_up_realization(state, item)
+    if (not item.repeatable or not established) and item.source.storylet_id in state.fired_event_ids and not follow_up:
         return RevealEligibility(False, STORYLET_SPENT, item.source.storylet_id or "")
     for predicate in item.requires:
         if not predicate_matches(predicate, state.facts):
@@ -83,7 +94,8 @@ def explain_reveal(state: RuntimeState, audience_id: str, item: KnowledgeDefinit
             if not together_or_unplaced(world, state.package.world.protagonist_id, entity_id):
                 return RevealEligibility(False, NOT_REACHABLE, entity_id)
     if (not item.repeatable or not established) and (
-        item.source.kind != "storylet_realization" or item.source.storylet_id not in state.active_event_ids
+        item.source.kind != "storylet_realization"
+        or (item.source.storylet_id not in state.active_event_ids and not follow_up)
     ):
         return RevealEligibility(False, SOURCE_INACTIVE, item.source.storylet_id or item.source.kind)
     return RevealEligibility(True, ELIGIBLE)

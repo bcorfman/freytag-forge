@@ -379,7 +379,13 @@ class ProgressionValidator:
             storylet.id for storylet in self.package.storylets if storylet.scene_id == state.current_scene_id
         }
         for event in proposal.events:
-            if event.event_id not in state.active_event_ids or event.event_id in state.fired_event_ids:
+            follow_up = (
+                event.event_id in state.fired_event_ids
+                and event.realization_id in self.package.follow_up_realization_ids
+            )
+            if event.event_id not in state.active_event_ids or (
+                event.event_id in state.fired_event_ids and not follow_up
+            ):
                 raise ProposalValidationError(
                     f"storylet event '{event.event_id}' is not active in scene {state.current_scene_id}",
                     code="inactive_storylet_event",

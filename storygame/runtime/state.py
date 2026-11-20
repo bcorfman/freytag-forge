@@ -225,7 +225,10 @@ class RuntimeState(BaseModel):
         for operation in proposal.operations:
             self._apply_operation(candidate_facts, operation)
         for event in proposal.events:
-            if event.event_id not in candidate_active or event.event_id in candidate_fired:
+            follow_up = (
+                event.event_id in candidate_fired and event.realization_id in self.package.follow_up_realization_ids
+            )
+            if event.event_id not in candidate_active or (event.event_id in candidate_fired and not follow_up):
                 raise RuntimeStateError("event is not eligible")
             for operation in event.operations:
                 self._apply_operation(candidate_facts, operation)

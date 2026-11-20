@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 
 import pytest
+import yaml
 
 from storygame.runtime.world_model import world_for
 from storygame.story_package.loader import load_story_package
@@ -30,19 +31,15 @@ def _module():
 def test_tampered_1b2_details_are_reported_as_exposure(tmp_path: Path) -> None:
     # A public beat detail containing a hidden clue name must be visible in Findings.
     tampered = compiled_story_copy(tmp_path)
+    scene = yaml.safe_load((tampered / "source" / "scenes" / "1B.yaml").read_text(encoding="utf-8"))
+    beat_index, current_details = next(
+        (index, beat["details"]) for index, beat in enumerate(scene["outline"]) if beat["id"] == "1B.2"
+    )
     patch_source(
-        tampered,
+        tampered / "source",
         "scenes/1B.yaml",
-        "outline[1B.2].details",
-        [
-            "stranger in the park",
-            "abandoned service tunnels",
-            "emergency patrol",
-            "Brandon Corfman",
-            "Continuity Initiative",
-            "the stranger mouthing the broadcast",
-            "hidden clue Michelle photograph",
-        ],
+        f"outline[{beat_index}].details",
+        [*current_details, "hidden clue Michelle photograph"],
     )
     package = load_story_package(tampered)
     assert "hidden clue Michelle photograph" in package.scenes[1].prose

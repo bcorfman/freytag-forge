@@ -3,17 +3,33 @@
 from __future__ import annotations
 
 import re
+from functools import lru_cache
 
 from worldkeeper import WorldSchema
 
 from storygame.runtime.contracts import NarrationSegment, ResolvedTurnProposal
-from storygame.runtime.knowledge import KnowledgeGuards, KnowledgeProjector, TurnKnowledgeContext
+from storygame.runtime.knowledge import KnowledgeProjector, TurnKnowledgeContext, knowledge_guards_for
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.validation import ProposalValidationError
-from storygame.runtime.world_model import world_schema_data
+from storygame.runtime.world_model import world_schema_for
 from storygame.story_package.loader import guarded_narration_terms
 
 _WORD_BOUNDARY = r"(?<!\w){form}(?!\w)"
+
+
+@lru_cache(maxsize=4096)
+def _word_boundary_pattern(form: str) -> re.Pattern[str]:
+    return re.compile(_WORD_BOUNDARY.format(form=re.escape(form)))
+
+
+@lru_cache(maxsize=4096)
+def _optional_plural_pattern(form: str) -> re.Pattern[str]:
+    words = form.split()
+    pattern = r"(?<!\w)" + r"\s+".join(re.escape(word) for word in words[:-1])
+    if pattern:
+        pattern += r"\s+"
+    pattern += re.escape(words[-1]) + r"s?(?!\w)"
+    return re.compile(pattern)
 
 
 class NarrationSafetyValidator:
@@ -29,7 +45,7 @@ class NarrationSafetyValidator:
     ) -> TurnKnowledgeContext:
         post_projection = projector.project(candidate_state, "player", player_input)
         self._validate_selection_backing(state, proposal)
-        schema = WorldSchema.from_data(world_schema_data(state.package))
+        schema = world_schema_for(state.package)
         self._validate_segments(
             state, candidate_state, proposal.segments, post_projection, projector, player_input, schema
         )
@@ -104,7 +120,7 @@ class NarrationSafetyValidator:
             for term in group
             if len(term.split()) > 1
         }
-        guards = KnowledgeGuards(candidate_state)
+        guards = knowledge_guards_for(candidate_state)
         earned_ids = guards.earned_ids
         earned_entity_ids = {
             entity_id for knowledge_id in earned_ids for entity_id in indexes.by_id[knowledge_id].entity_ids
@@ -278,19 +294,16 @@ class NarrationSafetyValidator:
     def _contains(text: str, form: str) -> bool:
         normalized_text = NarrationSafetyValidator._normalize(text)
         normalized_form = NarrationSafetyValidator._normalize(form)
-        return bool(re.search(_WORD_BOUNDARY.format(form=re.escape(normalized_form)), normalized_text))
+        return bool(_word_boundary_pattern(normalized_form).search(normalized_text))
 
     @staticmethod
     def _contains_optional_plural(text: str, form: str) -> bool:
         normalized_text = NarrationSafetyValidator._normalize(text)
-        words = NarrationSafetyValidator._normalize(form).split()
+        normalized_form = NarrationSafetyValidator._normalize(form)
+        words = normalized_form.split()
         if not words:
             return False
-        pattern = r"(?<!\w)" + r"\s+".join(re.escape(word) for word in words[:-1])
-        if pattern:
-            pattern += r"\s+"
-        pattern += re.escape(words[-1]) + r"s?(?!\w)"
-        return bool(re.search(pattern, normalized_text))
+        return bool(_optional_plural_pattern(normalized_form).search(normalized_text))
 
     @staticmethod
     def _normalize(value: str) -> str:
@@ -328,7 +341,7 @@ class NarrationSafetyValidator:
         """Return entities that the current scene may name."""
 
         if schema is None:
-            schema = WorldSchema.from_data(world_schema_data(package))
+            schema = world_schema_for(package)
         metadata = scene.metadata
         entity_ids = {metadata.location_id, *metadata.participant_ids, *metadata.item_ids}
         entity_ids.update(schema.related_areas(metadata.location_id))

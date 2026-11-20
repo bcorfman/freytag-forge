@@ -103,6 +103,13 @@ def _find_named(entries: Any, wanted: str, label: str) -> str:
     return matches[0]
 
 
+def _find_id(entries: Any, wanted: str, label: str) -> str:
+    matches = [entry.id for entry in entries if str(getattr(entry, "id", "")) == wanted]
+    if len(matches) != 1:
+        raise ScreenError(f"expected one {label} named {wanted!r}, found {matches}")
+    return matches[0]
+
+
 def _find_item(package: Any, *, name: str | None = None, kind: str | None = None, label: str) -> str:
     matches = []
     for item in package.world.items:
@@ -120,7 +127,7 @@ def _ids(package: Any) -> dict[str, str]:
     return {
         "protagonist": package.world.protagonist_id,
         "outside": _find_named(package.world.locations, "outside the house", "outside location"),
-        "kitchen": _find_named(package.world.locations, "kitchen", "kitchen location"),
+        "kitchen": _find_id(package.world.locations, "kitchen", "kitchen location"),
         "truck": _find_item(package, name="Kristin's truck", kind="vehicle", label="truck"),
         "passenger_seat": _find_item(package, name="passenger seat", kind="seat", label="passenger seat"),
         "laptop": _find_item(package, name="Kristin's laptop", label="laptop"),
@@ -142,24 +149,33 @@ def _copy_package(
     source: Path, target: Path, *, add_view: bool = False, complete_drawer: bool = False, ids: dict[str, str]
 ) -> None:
     shutil.copytree(source, target)
-    world_path = target / "world.yaml"
-    world = yaml.safe_load(world_path.read_text(encoding="utf-8"))
-    items = world.get("items", [])
+    package_path = target / "world.yaml"
+    package = yaml.safe_load(package_path.read_text(encoding="utf-8")) if package_path.exists() else None
+    if package is None:
+        package_path = target / "source/catalog.yaml"
+        package = yaml.safe_load(package_path.read_text(encoding="utf-8"))
+    items = package.get("items", [])
+
+    def find_item(item_id: str) -> dict[str, Any] | None:
+        if isinstance(items, dict):
+            return items.get(item_id)
+        return next((item for item in items if item.get("id") == item_id), None)
+
     if add_view:
-        truck = next((item for item in items if item.get("id") == ids["truck"]), None)
+        truck = find_item(ids["truck"])
         _assert(truck is not None, "copied package lost the discovered truck")
         truck["view"] = [{"from": ids["outside"]}]
         # Worldkeeper evaluates each enterable ancestor.  The passenger seat
         # is an enterable boundary too, so the same unobstructed window view
         # must be declared on it for a laptop resting on that seat.
-        passenger_seat = next((item for item in items if item.get("id") == ids["passenger_seat"]), None)
+        passenger_seat = find_item(ids["passenger_seat"])
         _assert(passenger_seat is not None, "copied package lost the passenger seat")
         passenger_seat["view"] = [{"from": ids["outside"]}]
     if complete_drawer:
-        drawer = next((item for item in items if item.get("id") == ids["drawer"]), None)
+        drawer = find_item(ids["drawer"])
         _assert(drawer is not None, "copied package lost the discovered drawer")
         drawer["contents_complete"] = True
-    world_path.write_text(yaml.safe_dump(world, sort_keys=False), encoding="utf-8")
+    package_path.write_text(yaml.safe_dump(package, sort_keys=False), encoding="utf-8")
 
 
 def _assert_start_facts(

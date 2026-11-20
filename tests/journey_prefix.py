@@ -18,12 +18,18 @@ from storygame.runtime.contracts import RuntimeContractError
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.state import RuntimeSnapshot, RuntimeState
 from storygame.runtime.validation import ProposalValidationError
+from storygame.runtime.world_model import apply_world_effects, world_for
 from storygame.story_package.loader import load_story_package
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 PLAYED = _legacy_package(PACKAGE)
 
 BENCH_DISCOVERY_REQUIRED = frozenset({"k_sl_1b_a_r1", "k_sl_1b_a_r2", "k_sl_1b_b_r1"})
+ACTION_COMMANDS = {
+    "k_sl_1b_g_r1": "Watch the stranger.",
+    "k_sl_2a_g_r1": "Trace the return line.",
+    "k_sl_2a_h_r1": "Look at the camera.",
+}
 
 
 @dataclass(frozen=True)
@@ -96,17 +102,36 @@ def _preferred_selection(preferred, offered, picked):
     )
 
 
+def _preferred_command(preferred: tuple[str, ...], picked: list[str] | tuple[str, ...]) -> str:
+    return next(
+        (ACTION_COMMANDS[item_id] for item_id in preferred if item_id not in picked and item_id in ACTION_COMMANDS),
+        "",
+    )
+
+
+def _move_to_truck(state: RuntimeState) -> None:
+    world = world_for(PLAYED, state.facts)
+    assert world.move("kristin", "outside_house").ok
+    assert world.move("kristin", "truck_driver_seat").ok
+    apply_world_effects(PLAYED, state.facts)
+    assert world_for(PLAYED, state.facts).parent("kristin") == "truck_driver_seat"
+
+
+def _fact_true(state: RuntimeState, predicate: str) -> bool:
+    return any(fact.predicate == predicate and fact.value == "true" for fact in state.facts.asserted)
+
+
 def _with_bench_discovery(preferred: tuple[str, ...]) -> tuple[str, ...]:
     if BENCH_DISCOVERY_REQUIRED.intersection(preferred) and "k_sl_1b_d_r1" not in preferred:
         return ("k_sl_1b_d_r1", *preferred)
     return preferred
 
 
-def _offered(engine: RuntimeEngine, state: RuntimeState, blocked: set[str]):
+def _offered(engine: RuntimeEngine, state: RuntimeState, blocked: set[str], player_input: str = ""):
     engine._activate_pacing()
     return tuple(
         candidate
-        for candidate in engine.projector.project(state, "player", "").candidates
+        for candidate in engine.projector.project(state, "player", player_input).candidates
         if candidate.id not in blocked
     )
 
@@ -123,18 +148,20 @@ def _turn(
     blocked: set[str],
     offered=None,
 ) -> None:
+    action_input = _preferred_command(preferred, picked)
     if offered is None:
-        offered = _offered(engine, state, blocked)
+        offered = _offered(engine, state, blocked, action_input)
     wanted = _preferred_selection(preferred, offered, picked)
     selected = wanted or _select_thorough(PLAYED, state, offered)
     provider.selected = (selected,) if selected else ()
     scene_before = state.current_scene_id
+    player_input = action_input or PERSONAS["thorough"]
     try:
-        result = engine.turn(PERSONAS["thorough"])
+        result = engine.turn(player_input)
     except (ProposalValidationError, RuntimeContractError):
         provider.selected = ()
         selected = None
-        engine.turn(PERSONAS["thorough"])
+        engine.turn(player_input)
     if selected and engine.last_attempt.outcome == "committed":
         picked.append(selected)
     if state.current_scene_id != scene_before:
@@ -208,7 +235,11 @@ def run(preferred: tuple[str, ...] = ()) -> JourneyRun:
     checkpoint_index = None
     for index, checkpoint in enumerate(default.checkpoints):
         state.restore_snapshot(checkpoint.snapshot)
-        offered = _offered(engine, state, blocked)
+        needs_b_truck = "k_sl_1a_b_r1" in preferred and "k_sl_1a_b_r0" in checkpoint.picked
+        needs_k_truck = "k_sl_1a_k_r1" in preferred and _fact_true(state, "michelle_lead_actionable")
+        if (needs_b_truck or needs_k_truck) and state.current_scene_id == "1A":
+            _move_to_truck(state)
+        offered = _offered(engine, state, blocked, _preferred_command(preferred, checkpoint.picked))
         wanted = _preferred_selection(preferred, offered, checkpoint.picked)
         desired_selection = wanted or _select_thorough(PLAYED, state, offered)
         if desired_selection != checkpoint.default_selection:
@@ -227,6 +258,10 @@ def run(preferred: tuple[str, ...] = ()) -> JourneyRun:
 
     checkpoint = default.checkpoints[checkpoint_index]
     state.restore_snapshot(checkpoint.snapshot)
+    needs_b_truck = "k_sl_1a_b_r1" in preferred and "k_sl_1a_b_r0" in checkpoint.picked
+    needs_k_truck = "k_sl_1a_k_r1" in preferred and _fact_true(state, "michelle_lead_actionable")
+    if (needs_b_truck or needs_k_truck) and state.current_scene_id == "1A":
+        _move_to_truck(state)
     provider.selected = checkpoint.provider_selected
     provider.handoff_ids = list(checkpoint.provider_handoff_ids)
     picked = list(checkpoint.picked)

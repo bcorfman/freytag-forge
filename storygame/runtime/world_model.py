@@ -1,6 +1,7 @@
 """The storygame adapter for the story-agnostic worldkeeper library."""
 
 import logging
+import weakref
 from dataclasses import dataclass
 
 from worldkeeper import IncidentalPolicy, PropTemplate, World, WorldSchema
@@ -10,6 +11,7 @@ from storygame.story_package.models import ItemPlacement, StoryPackage, WorldEff
 from storygame.story_package.world_schema import world_source_schema_data
 
 WORLD_EFFECTS_APPLIED = "world_effects_applied"
+_WORLD_SCHEMA_CACHE: dict[int, tuple[weakref.ReferenceType[StoryPackage], WorldSchema]] = {}
 
 
 @dataclass(frozen=True)
@@ -29,6 +31,28 @@ class ScenePlacementRefusal:
 
 def world_schema_data(package: StoryPackage) -> dict:
     return world_source_schema_data(package.world)
+
+
+def _discard_world_schema(reference: weakref.ReferenceType[StoryPackage], package_id: int) -> None:
+    cached = _WORLD_SCHEMA_CACHE.get(package_id)
+    if cached is not None and cached[0] is reference:
+        del _WORLD_SCHEMA_CACHE[package_id]
+
+
+def world_schema_for(package: StoryPackage) -> WorldSchema:
+    """Return the schema cached for this package object."""
+
+    package_id = id(package)
+    cached = _WORLD_SCHEMA_CACHE.get(package_id)
+    if cached is not None and cached[0]() is package:
+        return cached[1]
+    schema = WorldSchema.from_data(world_schema_data(package))
+    try:
+        reference = weakref.ref(package, lambda ref: _discard_world_schema(ref, package_id))
+    except TypeError:
+        return schema
+    _WORLD_SCHEMA_CACHE[package_id] = (reference, schema)
+    return schema
 
 
 def incidental_policy_for(package: StoryPackage) -> IncidentalPolicy | None:
@@ -59,7 +83,7 @@ def incidental_policy_for(package: StoryPackage) -> IncidentalPolicy | None:
 
 
 def world_for(package: StoryPackage, facts: FactStore) -> World:
-    return World(WorldSchema.from_data(world_schema_data(package)), facts, make_fact=Fact)
+    return World(world_schema_for(package), facts, make_fact=Fact)
 
 
 def _true(facts: FactStore, fact_id: str) -> bool:

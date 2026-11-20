@@ -13,8 +13,9 @@ import pytest
 from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import KnowledgeProjector, TurnKnowledgeContext
 from storygame.runtime.narration_safety import NarrationSafetyValidator
+from storygame.runtime.reveal_eligibility import together_or_unplaced
 from storygame.runtime.state import RuntimeState
-from storygame.runtime.world_model import apply_scene_placements, apply_world_effects
+from storygame.runtime.world_model import apply_scene_placements, apply_world_effects, world_for
 from storygame.story_package.loader import load_story_package
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
@@ -63,6 +64,30 @@ def _positioned_state(scene: object, local_storylets: tuple[object, ...]) -> Run
     )
     apply_scene_placements(PACKAGE, state.facts, metadata.scene_id)
     return state
+
+
+def _position_for_item(state: RuntimeState, item: object) -> None:
+    reach_entity_ids = tuple(getattr(item, "reach_entity_ids", ()))
+    if not reach_entity_ids:
+        return
+
+    world = world_for(PACKAGE, state.facts)
+    protagonist_id = PACKAGE.world.protagonist_id
+    reach_places = [world.area(entity_id) for entity_id in reach_entity_ids]
+    missing_places = [
+        entity_id for entity_id, place in zip(reach_entity_ids, reach_places, strict=True) if place is None
+    ]
+    if missing_places:
+        raise AssertionError(f"matrix fixture has no reachable place for {item.id!r}: {missing_places}")
+
+    destination = reach_places[0]
+    assert destination is not None
+    result = world.move(protagonist_id, destination)
+    assert result.ok, f"matrix fixture could not move {protagonist_id!r} to {destination!r}: {result.reason}"
+    if not all(together_or_unplaced(world, protagonist_id, entity_id) for entity_id in reach_entity_ids):
+        raise AssertionError(
+            f"matrix fixture could not place {protagonist_id!r} within reach of {item.id!r}: {list(reach_entity_ids)}"
+        )
 
 
 def _probe_command(item: object) -> str:
@@ -175,6 +200,7 @@ def _build_leakage_matrix() -> tuple[_MatrixObservation, ...]:
         for audience_id in dict.fromkeys(audience_ids):
             state = _positioned_state(scene, local_storylets)
             for item in local_storylets:
+                _position_for_item(state, item)
                 player_input = _probe_command(item)
                 before = projector.project(state, audience_id, player_input)
                 observations.append(
