@@ -6,6 +6,26 @@
       "codex": 0.0,
       "cloudflare": 0.0
     },
+    "providers": {
+      "claude_code": {
+        "kind": "subscription",
+        "ceilings": {
+          "five_hour": 0.0,
+          "seven_day": 0.0
+        }
+      },
+      "codex": {
+        "kind": "subscription",
+        "ceilings": {
+          "five_hour": 0.0,
+          "seven_day": 0.0
+        }
+      },
+      "cloudflare": {
+        "kind": "reported",
+        "ceilings": {}
+      }
+    },
     "call_caps": [],
     "rate_window_s": 3600,
     "rate_max_usd": 0.0

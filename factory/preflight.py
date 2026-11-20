@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any
 
 from factory.frozen import changed_paths, load_patterns, touches_frozen
-from factory.guard import Caps, ModelGuard, ModelNotAllowed
+from factory.guard import Caps, ModelGuard, ModelNotAllowed, ProviderPolicy
 
 
 @dataclass(frozen=True)
@@ -96,16 +96,41 @@ def run_preflight(
         problems: list[str] = []
         if caps.total_budget_usd <= 0:
             problems.append("total_budget_usd must be above zero")
+        providers = tuple(dict.fromkeys(("claude_code", "codex", "cloudflare", *caps.daily_cap_usd, *caps.providers)))
         missing_or_zero = [
             provider
-            for provider in ("claude_code", "codex", "cloudflare")
+            for provider in providers
+            if caps.providers.get(provider, ProviderPolicy("reported", {})).kind == "reported"
             if caps.daily_cap_usd.get(provider, 0.0) <= 0
         ]
         if missing_or_zero:
-            problems.append("daily caps must be above zero for: " + ", ".join(missing_or_zero))
+            problems.append("reported daily caps must be above zero for: " + ", ".join(missing_or_zero))
+        missing_or_invalid_ceilings = []
+        for provider, policy in caps.providers.items():
+            if policy.kind != "subscription":
+                continue
+            for window in ("five_hour", "seven_day"):
+                ceiling = policy.ceilings.get(window)
+                if ceiling is None or ceiling <= 0 or ceiling >= 1:
+                    missing_or_invalid_ceilings.append(f"{provider}.{window}")
+        if missing_or_invalid_ceilings:
+            problems.append(
+                "subscription ceilings must be above zero and below one for: " + ", ".join(missing_or_invalid_ceilings)
+            )
         if problems:
             raise ValueError("; ".join(problems))
-        return "budget and provider daily caps are set"
+        reported = [
+            provider
+            for provider in providers
+            if caps.providers.get(provider, ProviderPolicy("reported", {})).kind == "reported"
+        ]
+        subscriptions = [provider for provider, policy in caps.providers.items() if policy.kind == "subscription"]
+        return (
+            "budget set; reported daily caps set for: "
+            + ", ".join(reported)
+            + "; subscription ceilings set for: "
+            + ", ".join(subscriptions)
+        )
 
     items.append(_item("caps_set", check_caps))
 
