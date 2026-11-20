@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict, Field
+from collections.abc import Mapping
+from typing import Any, Self
+
+from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 
 
 class Fact(BaseModel):
@@ -24,24 +27,59 @@ class FactStore(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
     asserted: set[Fact] = Field(default_factory=set)
+    _by_predicate: dict[str, set[Fact]] = PrivateAttr(default_factory=dict)
+    _version: int = PrivateAttr(default=0)
+    _knowledge_guards_cache: tuple[int, int, Any] | None = PrivateAttr(default=None)
+
+    def model_post_init(self, __context: Any) -> None:
+        self._rebuild_index()
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        super().__setattr__(name, value)
+        if name == "asserted" and "asserted" in self.__dict__:
+            self._rebuild_index()
+            self._version += 1
+            self._knowledge_guards_cache = None
+
+    def _rebuild_index(self) -> None:
+        by_predicate: dict[str, list[Fact]] = {}
+        for fact in self.asserted:
+            by_predicate.setdefault(fact.predicate, []).append(fact)
+        self._by_predicate = {predicate: set(facts) for predicate, facts in by_predicate.items()}
+
+    @property
+    def version(self) -> int:
+        """Monotonic version for caches derived from the asserted facts."""
+
+        return self._version
 
     def matching(self, predicate: str, subject: str | None = None) -> tuple[Fact, ...]:
-        return tuple(
-            sorted(
-                (
-                    fact
-                    for fact in self.asserted
-                    if fact.predicate == predicate and (subject is None or fact.subject == subject)
-                ),
-                key=lambda fact: fact.key,
-            )
-        )
+        candidates = self._by_predicate.get(predicate, ())
+        if subject is not None:
+            candidates = (fact for fact in candidates if fact.subject == subject)
+        return tuple(sorted(candidates, key=lambda fact: fact.key))
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, FactStore):
+            return self.asserted == other.asserted
+        return super().__eq__(other)
 
     def assert_fact(self, fact: Fact) -> None:
         self.asserted.add(fact)
+        self._rebuild_index()
+        self._version += 1
+        self._knowledge_guards_cache = None
 
     def retract_fact(self, fact: Fact) -> None:
         self.asserted.discard(fact)
+        self._rebuild_index()
+        self._version += 1
+        self._knowledge_guards_cache = None
+
+    def model_copy(self, *, update: Mapping[str, Any] | None = None, deep: bool = False) -> Self:
+        copied = super().model_copy(update=update, deep=deep)
+        copied.asserted = set(copied.asserted)
+        return copied
 
     def clone(self) -> FactStore:
         """Return an independent candidate store for all-or-nothing turns."""

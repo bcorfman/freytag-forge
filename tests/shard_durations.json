@@ -203,6 +203,7 @@
     "tests/test_evidence_penalty.py": 1.08,
     "tests/test_exit_audit.py": 30.94,
     "tests/test_exit_backstop_invariant.py": 2.85,
+    "tests/test_fact_store_index.py": 0.04,
     "tests/test_factory_breakers.py": 0.45,
     "tests/test_factory_canary.py": 0.04,
     "tests/test_factory_carry_matrix.py": 8.15,

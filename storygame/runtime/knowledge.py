@@ -149,7 +149,20 @@ class KnowledgeGuards:
         )
 
 
-def entity_is_protected(state: RuntimeState, entity_id: str) -> bool:
+def knowledge_guards_for(state: RuntimeState) -> KnowledgeGuards:
+    """Return guards cached for the package and current fact-store version."""
+
+    facts = state.facts
+    cache = facts._knowledge_guards_cache
+    package_id = id(state.package)
+    if cache is not None and cache[:2] == (package_id, facts.version):
+        return cache[2]
+    guards = KnowledgeGuards(state)
+    facts._knowledge_guards_cache = (package_id, facts.version, guards)
+    return guards
+
+
+def entity_is_protected(state: RuntimeState, entity_id: str, *, guards: KnowledgeGuards | None = None) -> bool:
     """Return whether the narration guard still blocks this entity's authored terms."""
 
     indexes = state.package.knowledge_indexes
@@ -157,7 +170,7 @@ def entity_is_protected(state: RuntimeState, entity_id: str) -> bool:
     fixed_scene_item = entity_id in scene.metadata.item_ids and any(
         item.id == entity_id and item.fixed is True for item in state.package.world.items
     )
-    guards = KnowledgeGuards(state)
+    guards = knowledge_guards_for(state) if guards is None else guards
     entity_terms = {term for term, entity_ids in indexes.entity_alias_to_entities.items() if entity_id in entity_ids}
     leak_knowledge_ids = {
         knowledge_id for term in entity_terms for knowledge_id in indexes.leak_term_to_knowledge.get(term, ())
