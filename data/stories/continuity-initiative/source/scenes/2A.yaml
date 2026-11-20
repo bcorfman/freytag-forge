@@ -159,6 +159,8 @@ outline:
 
     Kristin and Brandon do not know their infiltration has been compromised.'
 facts:
+  supervisor_impatient:
+    purpose: The shift supervisor has shown at the gate that his patience is running out.
   manifold_fault_found:
     purpose: Kristin has found the cooling-water pressure fault at the manifold.
   badge_craft_noted:
@@ -250,6 +252,16 @@ placements:
     parent: facility_perimeter
     text: walking out from the facility gate with a tablet and the work order
 beats:
+- id: supervisor_impatience_2a
+  at_turn: 3
+  sets:
+    supervisor_impatient: true
+  say:
+  - text: The shift supervisor checks the time on his tablet. He is waiting for an answer.
+    verbatim: true
+  when:
+    inspection_window_missed: false
+    restricted_corridor_access: false
 - id: inspection_window_2a
   at_turn: 5
   sets:
