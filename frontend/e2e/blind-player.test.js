@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { aggregate, aggregateByScene, analyseRun, askPlayer, bundlesCategory, collectBundles, collectPrompts, formatMarkdown, gameBreakPolicy, handleGameBreak, playerPrompt, profileInfo, promptsCategory, sceneIdsForRun, turnLog, turnRecord, unseenTerms, validateCommand } from "./blind-player.js";
+import { aggregate, aggregateByScene, analyseRun, askPlayer, artifactReport, bundlesCategory, collectBundles, collectPrompts, formatMarkdown, gameBreakPolicy, handleGameBreak, playerModel, playerPrompt, profileInfo, promptsCategory, sceneIdsForRun, turnLog, turnRecord, unseenTerms, validateCommand } from "./blind-player.js";
 import { resolveWarningIfPresent } from "./helpers.js";
 
-const response = (command) => ({ ok: true, status: 200, json: async () => ({ output_text: JSON.stringify({ command }) }) });
+const response = (command, usage) => ({ ok: true, status: 200, json: async () => ({ output_text: JSON.stringify({ command }), ...(usage === undefined ? {} : { usage }) }) });
 const fakeMap = { scenes: [{ scene_id: "SECRET", location: { name: "Vault" }, gates: [{ sources: [{ id: "SECRET_SOURCE", player_earned: true }] }] }] };
 
 test("player prompt contains only screen data", () => {
@@ -185,6 +185,59 @@ test("askPlayer handles key, cap, retry, and invalid responses", async () => {
   const retryCounter = { calls: 0 };
   assert.equal(await askPlayer({ transcript: "", status: "", environment: { OPENAI_API_KEY: "x" }, counter: retryCounter, fetchImpl: async () => response(++calls === 1 ? "I search." : "Search the desk.") }), "Search the desk.");
   await assert.rejects(() => askPlayer({ transcript: "", status: "", environment: { OPENAI_API_KEY: "x" }, fetchImpl: async () => response("Wait.") }), /twice/);
+});
+
+test("askPlayer accumulates usage across calls and retries", async () => {
+  const counter = { calls: 0 };
+  let calls = 0;
+  const usage = [
+    { input_tokens: 100, input_tokens_details: { cached_tokens: 20 }, output_tokens: 7 },
+    { input_tokens: 50, input_tokens_details: { cached_tokens: 5 }, output_tokens: 3 },
+  ];
+  await askPlayer({ environment: { OPENAI_API_KEY: "x" }, counter, fetchImpl: async () => response("Search the desk.", usage[calls++]) });
+  await askPlayer({ environment: { OPENAI_API_KEY: "x" }, counter, fetchImpl: async () => response("Open the door.", usage[calls++]) });
+  assert.deepEqual(counter, { calls: 2, input_tokens: 150, cached_input_tokens: 25, output_tokens: 10 });
+
+  const retryCounter = { calls: 0 };
+  calls = 0;
+  assert.equal(await askPlayer({ environment: { OPENAI_API_KEY: "x" }, counter: retryCounter, fetchImpl: async () => response(calls++ === 0 ? "I search." : "Search the desk.", usage[calls - 1]) }), "Search the desk.");
+  assert.deepEqual(retryCounter, { calls: 2, input_tokens: 150, cached_input_tokens: 25, output_tokens: 10 });
+});
+
+test("askPlayer ignores missing or malformed usage and bills a distinct total counter", async () => {
+  const counter = { calls: 0 };
+  const totalCounter = { calls: 0 };
+  let calls = 0;
+  const responses = [
+    response("Search the desk."),
+    response("Open the door.", { input_tokens: "bad", input_tokens_details: { cached_tokens: Infinity }, output_tokens: -1 }),
+    response("Read the note.", { input_tokens: 10, input_tokens_details: { cached_tokens: 2 }, output_tokens: 4 }),
+  ];
+  for (const expected of ["Search the desk.", "Open the door.", "Read the note."]) {
+    assert.equal(await askPlayer({ environment: { OPENAI_API_KEY: "x" }, counter, totalCounter, fetchImpl: async () => responses[calls++] }), expected);
+  }
+  assert.deepEqual(counter, { calls: 3, input_tokens: 10, cached_input_tokens: 2, output_tokens: 4 });
+  assert.deepEqual(totalCounter, { calls: 3, input_tokens: 10, cached_input_tokens: 2, output_tokens: 4 });
+});
+
+test("askPlayer does not add usage for a failed HTTP response", async () => {
+  const counter = { calls: 0 };
+  const totalCounter = { calls: 0 };
+  await assert.rejects(() => askPlayer({ environment: { OPENAI_API_KEY: "x" }, counter, totalCounter, fetchImpl: async () => ({ ok: false, status: 503, json: async () => ({ usage: { input_tokens: 99 } }) }) }), /HTTP 503/);
+  assert.deepEqual(counter, { calls: 1 });
+  assert.deepEqual(totalCounter, { calls: 1 });
+});
+
+test("playerModel and artifact reports preserve player usage", () => {
+  assert.equal(playerModel({ E2E_PLAYER_MODEL: "test-player" }), "test-player");
+  assert.equal(playerModel({}), "gpt-5.6-luna");
+  const usage = { model: "test-player", calls: 2, input_tokens: 10, cached_input_tokens: 3, output_tokens: 4 };
+  const single = artifactReport({ scene: "1A", replicates: [{ scene: "1A", prompts: [], bundles: [], player_usage: usage }] }, false);
+  assert.deepEqual(single.replicates[0].player_usage, usage);
+  assert.equal(Object.hasOwn(single.replicates[0], "prompts"), false);
+  const all = artifactReport({ scene: "all", replicates: [{ scenes: [{ scene: "1A", prompts: [], bundles: [], player_usage: usage }] }] }, true);
+  assert.deepEqual(all.replicates[0].scenes[0].player_usage, usage);
+  assert.equal(Object.hasOwn(all.replicates[0].scenes[0], "bundles"), false);
 });
 
 const scene = { scene_id: "A", gates: [{ affordances: [{ entity_id: "door", name: "door", terms: ["door"] }], sources: [{ id: "reveal", player_earned: true }] }] };

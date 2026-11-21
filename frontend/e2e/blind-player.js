@@ -79,6 +79,10 @@ export const PROFILES = {
   raw: { name: "raw", system: RAW_PLAYER_SYSTEM },
 };
 
+export function playerModel(environment = process.env) {
+  return environment.E2E_PLAYER_MODEL || "gpt-5.6-luna";
+}
+
 export function profileInfo(profile = process.env.BLIND_PLAYER_PROFILE) {
   const requested = profile == null || profile === "" ? "canonical" : String(profile);
   const known = Object.hasOwn(PROFILES, requested);
@@ -151,7 +155,7 @@ export async function askPlayer({ transcript, status, profile, environment = pro
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${environment.OPENAI_API_KEY}` },
       body: JSON.stringify({
-        model: environment.E2E_PLAYER_MODEL || "gpt-5.6-luna",
+        model: playerModel(environment),
         store: false,
         input: [{ role: "system", content: prompt.system }, { role: "user", content: user }],
         text: { format: { type: "json_schema", name: "blind_player_command", strict: true, schema: PLAYER_SCHEMA } },
@@ -159,6 +163,14 @@ export async function askPlayer({ transcript, status, profile, environment = pro
     });
     if (!response.ok) throw new Error(`Blind player request failed with HTTP ${response.status}.`);
     const payload = await response.json();
+    for (const [field, usageField] of [["input_tokens", "input_tokens"], ["cached_input_tokens", "input_tokens_details.cached_tokens"], ["output_tokens", "output_tokens"]]) {
+      const value = usageField === "input_tokens_details.cached_tokens"
+        ? payload?.usage?.input_tokens_details?.cached_tokens
+        : payload?.usage?.[usageField];
+      const amount = Number.isFinite(value) && value >= 0 ? value : 0;
+      counter[field] = (counter[field] || 0) + amount;
+      if (billedCounter !== counter) billedCounter[field] = (billedCounter[field] || 0) + amount;
+    }
     let result;
     try { result = JSON.parse(outputText(payload)); } catch (error) { throw new Error("Blind player returned invalid JSON.", { cause: error }); }
     const checked = validateCommand(result?.command, selected.profile);
@@ -476,4 +488,15 @@ export function formatMarkdown(report) {
     replicates: runs.map(({ prompts, bundles, ...run }) => run),
   };
   return `# blind-player E2E evaluation\n\nProfile: ${aggregate.profile ?? "unknown"}${aggregate.profile === "mixed" ? " (run contains multiple profiles)" : ""}\n\nRejected turns: ${rejectedCount}\n\nPlay exit rate: ${aggregate.play_exit_rate ?? "unknown"}\nForced exit rate: ${aggregate.forced_exit_rate ?? "unknown"}\nTimer exit rate: ${aggregate.timer_exit_rate ?? "unknown"}\n\n## Exits\n\n${exitLines.length ? exitLines.join("\n") : "None"}\n\n${unseen.length ? `## Unseen commands\n\n${unseen.join("\n")}\n\n` : ""}${turnSections.length ? turnSections.join("\n\n") : "## Turns\n\nNone"}\n\n${semanticSections.length ? semanticSections.join("\n\n") : "## Semantic reveal fallback\n\nThe server did not return it."}\n\n${JSON.stringify(markdownReport, null, 2)}\n`;
+}
+
+export function artifactReport(report, allMode = report?.scene === "all") {
+  return {
+    ...report,
+    replicates: (report.replicates || []).map((replicate) => {
+      if (allMode) return { ...replicate, scenes: (replicate.scenes || []).map(({ prompts, bundles, ...scene }) => scene) };
+      const { prompts, bundles, ...scene } = replicate;
+      return scene;
+    }),
+  };
 }

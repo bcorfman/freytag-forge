@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
 import subprocess
 import urllib.request
@@ -23,7 +24,7 @@ from datetime import UTC, datetime, time, timedelta
 from pathlib import Path
 from typing import Any
 
-from factory.guard import LimitSleep, ProviderLimit
+from factory.guard import BudgetExhausted, Caps, LimitSleep, ProviderLimit, SpendLedger, Usage
 from factory.limits import LimitReport
 from factory.line import StationHandler, StationResult
 
@@ -47,6 +48,102 @@ _DEFAULTS: dict[str, Any] = {
     "item_facts_unplaced": [],
     "flags": [],
 }
+
+
+def load_prices(path: str | Path) -> dict:
+    """Load the model price table, returning an empty table when it is unreadable."""
+
+    try:
+        value = json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError, TypeError):
+        return {}
+    return value if isinstance(value, dict) else {}
+
+
+def _nonnegative_number(value: object) -> bool:
+    if not isinstance(value, (int, float)) or isinstance(value, bool):
+        return False
+    try:
+        return math.isfinite(float(value)) and value >= 0
+    except (OverflowError, ValueError):
+        return False
+
+
+def _usage_values(player_usage: object) -> tuple[str, int, int, int, int] | None:
+    if not isinstance(player_usage, dict) or not isinstance(player_usage.get("model"), str):
+        return None
+    fields = ("calls", "input_tokens", "cached_input_tokens", "output_tokens")
+    if any(
+        isinstance(player_usage.get(field), bool)
+        or not isinstance(player_usage.get(field), int)
+        or player_usage.get(field) < 0
+        for field in fields
+    ):
+        return None
+    return (
+        player_usage["model"],
+        player_usage["calls"],
+        player_usage["input_tokens"],
+        player_usage["cached_input_tokens"],
+        player_usage["output_tokens"],
+    )
+
+
+def usage_cost_usd(player_usage: dict, prices: dict) -> float | None:
+    """Calculate a player's usage cost from an explicit per-million-token price."""
+
+    values = _usage_values(player_usage)
+    if values is None or not isinstance(prices, dict):
+        return None
+    model, _calls, input_tokens, cached_input_tokens, output_tokens = values
+    models = prices.get("models", prices)
+    price = models.get(model) if isinstance(models, dict) else None
+    if not isinstance(price, dict):
+        return None
+    fields = ("input", "cached_input", "output")
+    if any(not _nonnegative_number(price.get(field)) for field in fields):
+        return None
+    cached_input_tokens = min(cached_input_tokens, input_tokens)
+    return (
+        (input_tokens - cached_input_tokens) * price["input"]
+        + cached_input_tokens * price["cached_input"]
+        + output_tokens * price["output"]
+    ) / 1_000_000
+
+
+def collect_player_usage(report: object) -> list[dict]:
+    """Collect player usage from every scene run in either report shape."""
+
+    return [
+        scene_run["player_usage"]
+        for _replicate, scene_run in _scene_runs(report)
+        if isinstance(scene_run.get("player_usage"), dict)
+    ]
+
+
+def player_spend(report: object, prices: dict) -> tuple[float | None, int, int, int]:
+    """Return ``(usd, tokens, calls, missing_runs)`` for all scene runs."""
+
+    runs = _scene_runs(report)
+    if not runs:
+        return None, 0, 0, 0
+    total_usd = 0.0
+    total_tokens = 0
+    total_calls = 0
+    missing = 0
+    for _replicate, scene_run in runs:
+        usage = scene_run.get("player_usage")
+        values = _usage_values(usage)
+        cost = usage_cost_usd(usage, prices) if isinstance(usage, dict) else None
+        if values is None or cost is None:
+            missing += 1
+        if values is not None:
+            _model, calls, input_tokens, _cached_input_tokens, output_tokens = values
+            total_calls += calls
+            total_tokens += input_tokens + output_tokens
+        if cost is not None:
+            total_usd += cost
+    return (None if missing else total_usd), total_tokens, total_calls, missing
 
 
 def _valid_replicate(value: object) -> bool:
@@ -190,12 +287,21 @@ def _gate_passes(summary: dict) -> bool:
     )
 
 
-def _summary_line(summary: dict, packets: list[dict]) -> str:
+def _summary_line(
+    summary: dict,
+    packets: list[dict],
+    player_usd: float | None = None,
+    player_calls: int = 0,
+) -> str:
     line = (
         f"runs={summary.get('scenes', 0)} turns={summary.get('turns', 0)} "
         f"stuck={summary.get('stuck_turns', 0)} rejected={summary.get('rejected', 0)} "
         f"game_breaks={summary.get('game_breaks', 0)}"
     )
+    if player_usd is None:
+        line += " openai spend unknown"
+    else:
+        line += f" openai ${player_usd:.4f} ({player_calls} calls)"
     if packets:
         line += " failing=" + ",".join(packet["key"] for packet in packets)
     return line
@@ -214,6 +320,78 @@ def _resolve(root: Path, value: object) -> Path:
         raise ValueError("path must be a string")
     path = Path(value)
     return path if path.is_absolute() else root / path
+
+
+def _factory_config(root: Path) -> dict[str, Any]:
+    config_path = root / "factory/config/factory.json"
+    if not config_path.is_file():
+        config_path = Path(__file__).resolve().parents[2] / "factory/config/factory.json"
+    return _load_json(config_path) or {}
+
+
+def _prices_for_root(root: Path) -> dict:
+    prices_path = root / "factory/config/prices.json"
+    if not prices_path.is_file():
+        prices_path = Path(__file__).resolve().parents[2] / "factory/config/prices.json"
+    return load_prices(prices_path)
+
+
+def _utc_day(value: datetime):
+    current = value if value.tzinfo is not None and value.utcoffset() is not None else value.replace(tzinfo=UTC)
+    return current.astimezone(UTC).date()
+
+
+def _pre_run_budget_gate(ledger: SpendLedger, caps: Caps, now: datetime) -> str | None:
+    if ledger.total_usd() >= caps.total_budget_usd:
+        raise BudgetExhausted("total model budget exhausted")
+    rate_usd = ledger.usd_in_window(now, caps.rate_window_s)
+    if rate_usd > caps.rate_max_usd:
+        raise BudgetExhausted(f"rate-of-spend breaker exceeded: {rate_usd} USD in {caps.rate_window_s} seconds")
+
+    utc_day = _utc_day(now)
+    for provider in ("openai", "cloudflare"):
+        daily_cap = caps.daily_cap_usd.get(provider)
+        if daily_cap is None:
+            return f"missing daily cap for {provider}"
+        if ledger.day_usd(provider, utc_day) >= daily_cap:
+            raise LimitSleep(provider, _next_midnight(now))
+    return None
+
+
+def _record_player_spend(
+    ledger: SpendLedger,
+    report: dict | None,
+    prices: dict,
+    *,
+    now: datetime,
+    scene: str,
+    ticket_id: str,
+) -> tuple[float | None, int, int]:
+    model_id = "gpt-5.6-luna"
+    if report is not None:
+        usages = collect_player_usage(report)
+        for usage in usages:
+            if isinstance(usage.get("model"), str) and usage["model"]:
+                model_id = usage["model"]
+                break
+    if report is None or not _scene_runs(report):
+        spend, tokens, calls = None, 0, 0
+    else:
+        spend, tokens, calls, _missing = player_spend(report, prices)
+    ledger.record(
+        Usage(
+            at=now,
+            provider="openai",
+            model_id=model_id,
+            station="live_playtest",
+            scene=scene,
+            ticket_id=ticket_id,
+            tokens=tokens,
+            usd=spend,
+            cost_kind="dollars" if spend is not None else "unknown",
+        )
+    )
+    return spend, tokens, calls
 
 
 def _now() -> datetime:
@@ -287,6 +465,7 @@ def live_playtest_handler(
     runner: Callable[[dict[str, str], int], Any] | None = None,
     fetch_version: Callable[[str], dict[str, Any]] | None = None,
     now_fn: Callable[[], datetime] = _now,
+    ledger: SpendLedger | None = None,
 ) -> StationHandler:
     """Return the station-7 grader with an injectable version fetch and runner."""
 
@@ -319,7 +498,8 @@ def live_playtest_handler(
             if not summary["runs"]:
                 return StationResult(False, "live_playtest", "report has no valid scene runs", turns=None)
             packets = report_to_packets(report)
-            output = _summary_line(summary, packets)
+            spend, _tokens, calls, _missing = player_spend(report, _prices_for_root(repository_root))
+            output = _summary_line(summary, packets, spend, calls)
             if _gate_passes(summary) and not packets:
                 return StationResult(True, "live_playtest", output)
             return StationResult(False, "live_playtest", output, turns=packets or None)
@@ -342,6 +522,19 @@ def live_playtest_handler(
             or version.get("sha") != expected_sha
         ):
             return StationResult(False, "live_playtest", "staging identity mismatch", turns=None)
+
+        config = _factory_config(repository_root)
+        try:
+            caps = Caps.from_dict(config["caps"])
+            configured_ledger = ledger or SpendLedger(_resolve(repository_root, config["paths"]["ledger"]))
+        except (KeyError, TypeError, ValueError) as error:
+            return StationResult(False, "live_playtest", f"invalid factory budget configuration: {error}", turns=None)
+        budget_error = _pre_run_budget_gate(configured_ledger, caps, now)
+        if budget_error is not None:
+            return StationResult(False, "live_playtest", budget_error, turns=None)
+
+        prices = _prices_for_root(repository_root)
+        ticket_id = str(getattr(ticket, "id", ""))
 
         started_at = _as_timestamp(now_fn())
         artifact_dir = repository_root / "artifacts"
@@ -367,21 +560,45 @@ def live_playtest_handler(
             combined = "\n".join(str(getattr(completed, field, "") or "") for field in ("stdout", "stderr"))
             _raise_quota(combined, now)
         except (LimitSleep, ProviderLimit):
+            _record_player_spend(
+                configured_ledger,
+                _fresh_report(repository_root, started_at),
+                prices,
+                now=now,
+                scene=scene,
+                ticket_id=ticket_id,
+            )
             raise
         except Exception as error:
+            _record_player_spend(
+                configured_ledger,
+                _fresh_report(repository_root, started_at),
+                prices,
+                now=now,
+                scene=scene,
+                ticket_id=ticket_id,
+            )
             _raise_quota(str(error), now)
             return StationResult(False, "live_playtest", f"runner failed: {error}", turns=None)
 
+        report = _fresh_report(repository_root, started_at)
+        spend, _tokens, calls = _record_player_spend(
+            configured_ledger,
+            report,
+            prices,
+            now=now,
+            scene=scene,
+            ticket_id=ticket_id,
+        )
         if getattr(completed, "returncode", 0) != 0:
             return StationResult(False, "live_playtest", "live playtest runner failed", turns=None)
-        report = _fresh_report(repository_root, started_at)
         if report is None:
             return StationResult(False, "live_playtest", "no fresh e2e-blind-player report", turns=None)
         summary = playtest_summary(report)
         if not summary["runs"]:
             return StationResult(False, "live_playtest", "fresh report has no valid scene runs", turns=None)
         packets = report_to_packets(report)
-        output = _summary_line(summary, packets)
+        output = _summary_line(summary, packets, spend, calls)
         if _gate_passes(summary) and not packets:
             return StationResult(True, "live_playtest", output)
         return StationResult(False, "live_playtest", output, turns=packets or None)
