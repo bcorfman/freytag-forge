@@ -60,10 +60,101 @@ def test_ticket_walks_all_stations_and_is_delivered(tmp_path):
     handlers = {station: passing for station in Station}
     line, queue, _ = make_line(tmp_path, [ticket], handlers)
 
-    outcomes = [line.step(NOW) for _ in range(10)]
+    outcomes = [line.step(NOW) for _ in range(9)]
 
-    assert [outcome.kind for outcome in outcomes] == ["advanced"] * 9 + ["delivered"]
+    assert [outcome.kind for outcome in outcomes] == ["advanced"] * 8 + ["delivered"]
     assert queue.get("walk").status is Status.PASSED
+
+
+def test_live_playtest_failure_with_turns_moves_to_triage(tmp_path):
+    ticket = make_ticket("triage", station=Station.LIVE_PLAYTEST)
+    ticket.attempts = 2
+    ticket.ladder_rung = LadderRung.OPUS_REFRESH
+    ticket.sleep_until = (NOW + timedelta(hours=1)).isoformat()
+    ticket.return_after = (NOW + timedelta(hours=2)).isoformat()
+    turns = [{"key": "1A/r2/t1", "scene": "1A", "stuck": True}]
+    line, queue, _ = make_line(
+        tmp_path,
+        [ticket],
+        {Station.LIVE_PLAYTEST: lambda ticket, now: StationResult(False, "playtest", "bad", turns=turns)},
+    )
+
+    outcome = line.step(NOW)
+
+    saved = queue.get("triage")
+    assert outcome.kind == "to_triage"
+    assert saved.station is Station.TRIAGE
+    assert saved.status is Status.QUEUED
+    assert saved.attempts == 0
+    assert saved.ladder_rung is LadderRung.LUNA_RETRY
+    assert saved.provider is None
+    assert saved.sleep_until is None
+    assert saved.return_after is None
+    assert saved.payload["provider"] == "alpha"
+    assert saved.payload["turns"] == turns
+
+
+def test_live_playtest_infrastructure_failure_retries(tmp_path):
+    ticket = make_ticket("playtest-retry", station=Station.LIVE_PLAYTEST)
+    line, queue, _ = make_line(
+        tmp_path,
+        [ticket],
+        {Station.LIVE_PLAYTEST: lambda ticket, now: StationResult(False, "playtest", "runner failed")},
+    )
+
+    assert line.step(NOW).kind == "failed_attempt"
+    assert queue.get("playtest-retry").station is Station.LIVE_PLAYTEST
+    assert queue.get("playtest-retry").attempts == 1
+
+
+def test_triage_pass_opens_followups_and_passes_parent(tmp_path):
+    ticket = make_ticket("triage-parent", station=Station.TRIAGE)
+    routing = {
+        "routed": [{"key": "a", "scene": "1A", "class": "story_data", "rule": "R2"}],
+        "escalations": [],
+        "turns": [{"key": "a", "scene": "1A"}],
+    }
+    line, queue, _ = make_line(
+        tmp_path,
+        [ticket],
+        {Station.TRIAGE: lambda ticket, now: StationResult(True, "triage", "ok", routing=routing)},
+    )
+
+    outcome = line.step(NOW)
+
+    assert outcome.kind == "triaged"
+    assert outcome.detail == "triage-parent-1A-story_data"
+    assert queue.get("triage-parent").status is Status.PASSED
+    assert queue.get("triage-parent-1A-story_data").station is Station.WIRING
+    assert all(saved.station is not Station.DELIVER for saved in queue.all())
+
+
+def test_triage_pass_without_routing_passes_without_followups(tmp_path):
+    ticket = make_ticket("triage-empty", station=Station.TRIAGE)
+    line, queue, _ = make_line(
+        tmp_path,
+        [ticket],
+        {Station.TRIAGE: lambda ticket, now: StationResult(True, "triage", "nothing")},
+    )
+
+    outcome = line.step(NOW)
+
+    assert outcome == outcome.__class__("triaged", "triage-empty", "")
+    assert queue.get("triage-empty").status is Status.PASSED
+    assert len(queue.all()) == 1
+
+
+def test_triage_failure_retries(tmp_path):
+    ticket = make_ticket("triage-retry", station=Station.TRIAGE)
+    line, queue, _ = make_line(
+        tmp_path,
+        [ticket],
+        {Station.TRIAGE: lambda ticket, now: StationResult(False, "triage", "still unclear")},
+    )
+
+    assert line.step(NOW).kind == "failed_attempt"
+    assert queue.get("triage-retry").station is Station.TRIAGE
+    assert queue.get("triage-retry").attempts == 1
 
 
 def test_failure_retries_and_increments_attempts(tmp_path):

@@ -162,6 +162,28 @@ def test_handler_passes_writes_output_and_reports_escalation(tmp_path: Path) -> 
     assert saved["escalations"][0]["count"] == 3
 
 
+def test_handler_pass_result_carries_routing_and_original_turns(tmp_path: Path) -> None:
+    turns = [packet("first", stuck=True), packet("second", flags=["missed_change"])]
+
+    result = triage_handler(tmp_path)(make_ticket({"turns": turns}), datetime(2026, 1, 1, tzinfo=UTC))
+
+    assert result.passed
+    assert result.routing == {
+        "routed": [
+            {
+                "key": "first",
+                "scene": "1B",
+                "class": "story_data",
+                "rule": "R2",
+                "reasons": ["stuck with no candidates_offered"],
+            },
+            {"key": "second", "scene": "1B", "class": "world_model", "rule": "R7", "reasons": ["flag:missed_change"]},
+        ],
+        "escalations": [],
+        "turns": turns,
+    }
+
+
 def test_handler_failures_name_bad_input_and_unclear_keys(tmp_path: Path) -> None:
     handler = triage_handler(tmp_path)
     missing = handler(make_ticket({}), datetime.now(UTC))

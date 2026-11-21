@@ -1,0 +1,144 @@
+# ruff: noqa: E501  (spec strings are prose briefs for a worker)
+"""Round 14: line wiring for stations 7 and 8, no model call: failed playtest turns flow into triage, routed turns open follow-up tickets, a triage pass never delivers.
+
+One Codex task. Usage: build_round14_wiring_manifest.py
+"""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+REPO = "/home/bcorfman/dev/freytag-forge"
+WORK = "/home/bcorfman/dev/ringer-work/factory-wiring"
+
+OWNED = [
+    "factory/line.py",
+    "factory/followups.py",
+    "factory/stations/triage.py",
+    "tests/test_factory_line.py",
+    "tests/test_factory_followups.py",
+    "tests/test_factory_triage.py",
+    "tests/shard_durations.json",
+]
+
+SPEC = """You are a Python engineer. Your current working directory IS a git worktree of @REPO@ (detached at HEAD). Edit files here directly. NEVER git commit, never touch @REPO@ itself, never run `uv`, never call a model or the network. FIRST run: [ -e .venv ] || ln -s @REPO@/.venv .venv . Ruff: `.venv/bin/python -m ruff check <files>` and `.venv/bin/python -m ruff format <files>` (line length 120, double quotes, Python 3.12, standard library only). Never pass --cov to pytest. Run tests as `PYTHONPATH=$PWD:$PWD/packages/worldkeeper/src TMPDIR=/tmp .venv/bin/python -m pytest -q -p no:cacheprovider -n 0 <test files>`.
+
+BACKGROUND. `factory/line.py` (`FactoryLine.step`) drives persisted tickets (`factory/tickets.py`: `Ticket`, `TicketQueue`, `Station`, `Status`, `TicketClass`, `LadderRung`) through fixed stations with handlers returning `StationResult(passed, check, output, tokens=0)`. Today a passing handler advances the ticket to `Station(station + 1)`, and a failing one goes through `queue.record_failure` (retry ladder). `factory/stations/triage.py` (station 8, `Station.TRIAGE`) routes failing playtest turns to a class and already has `route`, `escalations`, `append_log`, `read_log` and `triage_handler`. Read all of these, and `tests/test_factory_line.py`, `tests/test_factory_triage.py` and `tests/test_factory_stations.py`, first. Station 7 (live playtest) is not built yet; this task wires the line so that its failures flow into station 8 and station 8 results become tickets. This round builds NO model call.
+
+THE DESIGN (decided by the product owner; implement exactly this).
+1. `StationResult` gets two optional fields with defaults, appended after `tokens`: `turns: list[dict] | None = None` (failing-turn packets, the format in the triage module) and `routing: dict | None = None` (`{"routed": [...], "escalations": [...], "turns": [original packets]}`). Existing constructions keep working.
+2. Station 7 failure with turns. In `FactoryLine.step`, when the ticket is at `Station.LIVE_PLAYTEST`, the result did not pass and `result.turns` is a non-empty list: do NOT call `record_failure`. Move the ticket to `Station.TRIAGE`, status QUEUED, attempts 0, `ladder_rung` LUNA_RETRY, provider/sleep_until/return_after None, and set `payload["turns"] = result.turns` (keep the other payload keys). The step outcome kind is `"to_triage"`. A station 7 failure with no turns (an infrastructure failure) keeps the normal `record_failure` path.
+3. Station 7 pass skips triage: the ticket goes to `Station.DELIVER` (a clean playtest has nothing to triage). Every other station still advances by one.
+4. Station 8 pass never advances to station 9. A triage ticket exists only because turns failed. When the handler passes, the line calls `open_followups(queue, ticket, result.routing, now)` (new module, below) and then marks the parent ticket PASSED via `queue.record_pass`; the outcome kind is `"triaged"`, and `detail` is the comma-joined ids of the tickets opened (empty string if none). If `result.routing` is None on a station 8 pass, mark the parent PASSED and open nothing. Station 8 failing (still-unclear turns) keeps the normal retry ladder.
+5. `triage_handler` in `factory/stations/triage.py` must return the routing on pass: `StationResult(True, "triage", summary, tokens=0, routing={"routed": routed, "escalations": escalation_list, "turns": [the validated original packets in input order]})`. Its other behaviour is unchanged.
+
+NEW MODULE `factory/followups.py`: `open_followups(queue: TicketQueue, parent: Ticket, routing: dict, now: datetime) -> list[Ticket]` (returns the tickets it created; pure bookkeeping, deterministic, never raises for a malformed routing: return [] for a non-dict or missing keys). Rules:
+- Group the routed turns by (scene, class), ignoring class "unclear". One ticket per group, with `ticket_class` set to the TicketClass, `scene` the group's scene, `token_budget` the parent's, `created_at`/`updated_at` now (UTC ISO string like the queue does), id `f"{parent.id}-{scene}-{class}"` (so a rerun is idempotent: if `queue` already holds that id, skip it and do not return it). Payload: `{"parent": parent.id, "class": <class value>, "failing_turns": [the original packets of the group's turns, matched by key, in routed order], "rules": {key: rule id}}`.
+- Restart station by class: story_data -> `Station.WIRING`; narrator_prompt -> `Station.WIRING`; world_model -> `Station.WORLD_NEED` (a Worldkeeper ticket: its failing test is the point); engine -> NO restart station exists, so the ticket is created with `Status.FAILED` (the line never runs it) and `payload["needs"] = "engine_plan"`, which is the planner's to pick up. Put the class-to-station mapping in a module constant.
+- Escalation. For each entry in `routing["escalations"]` (`{"scene","class","count","keys"}`) create ONE planner ticket at `Station.CONTRACT_REFRESH`, id `f"{parent.id}-{scene}-{class}-escalation"`, `ticket_class` the entry's class, payload `{"parent", "scene", "class", "count", "keys", "failing_turns": [packets whose keys are in keys], "reason": "three failures of one class in one scene"}`. While a scene has any escalation, story work on it stops: do NOT create the story_data or narrator_prompt follow-up tickets for that scene in this call (world_model and engine tickets for it are still created). The escalation's packets carry the evidence instead.
+- Ticket ids must be filesystem-safe (the queue writes `<id>.json`): replace any character outside letters, digits, `-`, `_` and `.` in the id with `_`.
+
+TESTS. Edit `tests/test_factory_line.py`: the existing test `test_ticket_walks_all_stations_and_is_delivered` assumes a passing station 8 advances to 9; update it to the new rules (a clean walk goes 0..7, then 7 -> 9 skipping 8, then delivered) and update any other existing test that asserted the old station 8 behaviour. Add line tests: station 7 failing with turns moves to station 8 with `payload["turns"]` set, attempts 0 and outcome "to_triage"; station 7 failing without turns still retries; station 8 pass with routing opens the follow-up tickets, marks the parent PASSED, never creates a station 9 step, and reports "triaged" with the ids; station 8 pass without routing marks PASSED and opens nothing; station 8 failing retries. Create `tests/test_factory_followups.py`: one ticket per (scene, class) with the exact restart station for each of the four classes (engine is FAILED with needs engine_plan and is never picked by `queue.next_ready`); the payload contents; "unclear" ignored; idempotent rerun (second call returns []); an escalation creates one station 1 ticket with the packets and suppresses that scene's story_data and narrator_prompt tickets while keeping its world_model ticket and another scene's story ticket; unsafe characters in ids; malformed routing returns []. Add to `tests/test_factory_triage.py` one test that the handler's pass result carries `routing` with routed, escalations and the original packets. Add one end-to-end test in `tests/test_factory_followups.py` driving a real `FactoryLine` with a stub station 7 handler that fails with two turns (one story_data-routed by rule R2, one world_model-routed by flag missed_change), the real `triage_handler` at station 8 (with a tmp_path root, no log), and passing stubs elsewhere, `step`ping until idle: assert the station 7 ticket ends PASSED via triage, a station 4 ticket and a station 2 ticket exist with the failing turns in their payloads, and nothing reached DELIVER. TIME BUDGET: the new test file and the edited files each run in under 10 seconds with small literal packets and tmp_path only; no network, no model, no bench, no story loading. Add the new test file's entry to `tests/shard_durations.json` by running `PYTHONPATH=$PWD:$PWD/packages/worldkeeper/src .venv/bin/python scripts/regen_shard_durations.py --missing-only` (it must change only that file's entry).
+
+HARD LIMITS. Edit only the seven files above. Never edit `bench/`, `factory/config/`, `factory/checks/`, `factory/tickets.py`, `factory/stations/__init__.py`, other factory modules or other tests, and add no dependencies. Never import or call a model client. Write NOTES_14.txt (worktree root, never committed) listing every rule you found ambiguous and the choice you made.
+"""
+
+CHECK = """set -e
+WORK=@WORK@
+mkdir -p "$WORK/out"
+export PYTHONPATH=$PWD:$PWD/packages/worldkeeper/src TMPDIR=/tmp
+[ -e .venv ] || ln -s @REPO@/.venv .venv
+git add -A -- factory tests
+bad=$(git diff --cached --name-only | grep -vxF -e factory/line.py -e factory/followups.py -e factory/stations/triage.py -e tests/test_factory_line.py -e tests/test_factory_followups.py -e tests/test_factory_triage.py -e tests/shard_durations.json || true)
+[ -z "$bad" ] || { echo "files outside ownership staged: $bad"; exit 1; }
+for f in factory/followups.py tests/test_factory_followups.py; do [ -s "$f" ] || { echo "missing $f"; exit 1; }; done
+grep -q 'test_factory_followups.py' tests/shard_durations.json || { echo "tests/shard_durations.json has no entry for test_factory_followups.py"; exit 1; }
+if grep -n -i -E "anthropic|openai|claude|requests|urllib|httpx" factory/followups.py; then echo "followups.py must not reference a model client or the network"; exit 1; fi
+start=$(date +%s)
+.venv/bin/python -m pytest -q -p no:cacheprovider -n 0 tests/test_factory_followups.py tests/test_factory_line.py tests/test_factory_triage.py
+took=$(( $(date +%s) - start ))
+echo "wiring tests took $took s (budget 30 s)"
+[ "$took" -le 30 ] || { echo "wiring tests over the 30 s budget"; exit 1; }
+.venv/bin/python -m pytest -q -p no:cacheprovider -n 0 tests/test_factory_stations.py tests/test_factory_frozen.py tests/test_factory_tickets.py tests/test_factory_entry.py tests/test_regen_shard_durations.py
+.venv/bin/python -m ruff check factory/line.py factory/followups.py factory/stations tests/test_factory_line.py tests/test_factory_followups.py tests/test_factory_triage.py
+.venv/bin/python -m ruff format --check factory/line.py factory/followups.py factory/stations tests/test_factory_line.py tests/test_factory_followups.py tests/test_factory_triage.py
+# independent probe: a real line, a stub failing station 7, the real triage handler, real tickets on disk
+tmp=$(mktemp -d)
+out="$WORK/out/probe.out"
+.venv/bin/python - "$tmp" > "$out" 2>&1 <<'PY'
+import sys
+from datetime import UTC, datetime
+from pathlib import Path
+from factory.breakers import check_breakers
+from factory.line import FactoryLine, StationResult
+from factory.state import FactoryState
+from factory.stations.triage import triage_handler
+from factory.tickets import Station, Status, Ticket, TicketQueue
+
+tmp = Path(sys.argv[1])
+now = datetime(2026, 1, 1, tzinfo=UTC)
+stamp = now.isoformat()
+turns = [
+    {"key": "s/t1", "scene": "1B", "stuck": True, "candidates_offered": []},
+    {"key": "s/t2", "scene": "1B", "flags": ["missed_change"]},
+    {"key": "s/t3", "scene": "1B", "engine_error": "boom"},
+]
+queue = TicketQueue(tmp / "tickets")
+queue.add(Ticket(id="play", scene="1B", station=Station.LIVE_PLAYTEST, token_budget=1000, created_at=stamp, updated_at=stamp))
+state = FactoryState.load(tmp / "state.json")
+handlers = {
+    Station.LIVE_PLAYTEST: lambda t, n: StationResult(False, "playtest", "3 stuck", turns=turns),
+    Station.TRIAGE: triage_handler(Path(sys.argv[1])),
+}
+line = FactoryLine(queue=queue, state=state, handlers=handlers, provider_for=lambda t: None, check_breakers=lambda n: [])
+kinds = [line.step(now).kind for _ in range(2)]
+print("kinds", kinds)
+assert kinds == ["to_triage", "triaged"], kinds
+by_id = {t.id: t for t in queue.all()}
+print(sorted(by_id))
+assert by_id["play"].status is Status.PASSED
+assert by_id["play-1B-story_data"].station is Station.WIRING
+assert by_id["play-1B-world_model"].station is Station.WORLD_NEED
+assert by_id["play-1B-engine"].status is Status.FAILED and by_id["play-1B-engine"].payload["needs"] == "engine_plan"
+assert all(t.station is not Station.DELIVER for t in by_id.values())
+assert by_id["play-1B-story_data"].payload["failing_turns"][0]["key"] == "s/t1"
+print("probe ok")
+PY
+cat "$out"
+grep -q "probe ok" "$out" || { echo "probe failed"; exit 1; }
+git diff --cached > $WORK/out/wiring.patch
+test -s $WORK/out/wiring.patch
+"""
+
+
+def build() -> dict:
+    return {
+        "run_name": "factory-wiring",
+        "workdir": WORK,
+        "max_parallel": 1,
+        "worktrees": True,
+        "repo": REPO,
+        "tasks": [
+            {
+                "key": "line-wiring",
+                "task_type": "code-feature",
+                "engine": "codex",
+                "engine_args": ["-c", "model_reasoning_effort=high"],
+                "max_attempts": 2,
+                "timeout_s": 2400,
+                "check_timeout_s": 600,
+                "ownership": OWNED,
+                "spec": SPEC.replace("@REPO@", REPO),
+                "check": CHECK.replace("@REPO@", REPO).replace("@WORK@", WORK),
+                "expect_files": [],
+                "verified": "Wiring, line, triage tests under a 30 s budget plus station, frozen, ticket, entry and shard suites green; the probe sends a failing station 7 through the real triage handler and opens station 4, station 2 and parked engine tickets without ever reaching deliver; no model client referenced; ruff clean; only seven files changed.",
+            }
+        ],
+    }
+
+
+if __name__ == "__main__":
+    out = Path(__file__).with_name("round14-wiring-manifest.json")
+    out.write_text(json.dumps(build(), indent=2) + "\n", encoding="utf-8")
+    print(out)

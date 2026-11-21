@@ -398,7 +398,13 @@ def triage_handler(
         if still_unclear:
             keys = ", ".join(str(item["key"]) for item in still_unclear)
             return StationResult(False, "triage", f"model resolver is needed for unclear turns: {keys}")
-        return StationResult(True, "triage", _summary(routed, escalation_list), tokens=0)
+        return StationResult(
+            True,
+            "triage",
+            _summary(routed, escalation_list),
+            tokens=0,
+            routing={"routed": routed, "escalations": escalation_list, "turns": list(turns)},
+        )
 
     return handle
 
