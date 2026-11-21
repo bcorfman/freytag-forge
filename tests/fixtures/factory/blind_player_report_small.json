@@ -1,0 +1,137 @@
+{
+  "story_id": "continuity_initiative",
+  "scene": "1A",
+  "profile": "canonical",
+  "ending_reached": false,
+  "replicates": [
+    {
+      "replicate": 1,
+      "scene": "1A",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "Search the desk.",
+          "raw_input": "Search the desk.",
+          "text": "The desk is dusty but intact.",
+          "rejected": false,
+          "rejection": null,
+          "story_complete": false,
+          "scene_id": "1A",
+          "semantic_match": null,
+          "grounding_ids": ["desk"],
+          "transition_cause": "earned",
+          "outcome": "committed",
+          "game_break": null
+        }
+      ],
+      "turn_count": 1,
+      "player_usage": {
+        "model": "gpt-5.6-luna",
+        "calls": 1,
+        "input_tokens": 100,
+        "cached_input_tokens": 40,
+        "output_tokens": 20
+      },
+      "stuck_turns": [],
+      "stuck_runs": [],
+      "rejected_turns": [],
+      "rejected_count": 0,
+      "game_break_count": 0,
+      "exit_cause": "play",
+      "transition_fired": true,
+      "affordances": [],
+      "stopped_on_rejections": false
+    },
+    {
+      "replicate": 2,
+      "scene": "1A",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "Look around.",
+          "raw_input": "Look around.",
+          "text": "The line hums.",
+          "rejected": false,
+          "rejection": null,
+          "story_complete": false,
+          "scene_id": "1A",
+          "semantic_match": null,
+          "grounding_ids": [],
+          "transition_cause": null,
+          "outcome": "committed",
+          "game_break": null
+        }
+      ],
+      "turn_count": 1,
+      "stuck_turns": [1],
+      "stuck_runs": [],
+      "rejected_turns": [],
+      "rejected_count": 0,
+      "game_break_count": 0,
+      "exit_cause": "none",
+      "transition_fired": false,
+      "affordances": [],
+      "stopped_on_rejections": false
+    },
+    {
+      "replicate": 3,
+      "scene": "1A",
+      "turns": [
+        {
+          "turn": 1,
+          "input": "Open the panel.",
+          "raw_input": "Open the panel.",
+          "text": "That action was rejected.",
+          "rejected": true,
+          "rejection": "narration did not validate",
+          "story_complete": false,
+          "scene_id": null,
+          "semantic_match": null,
+          "candidates_offered": ["panel"],
+          "matched_candidate": null,
+          "grounding_ids": [],
+          "transition_cause": "none",
+          "outcome": "rejected",
+          "game_break": null
+        },
+        {
+          "turn": 2,
+          "input": "Pull the lever.",
+          "raw_input": "Pull the lever.",
+          "text": "The warning panel flashes.",
+          "rejected": false,
+          "rejection": null,
+          "story_complete": false,
+          "scene_id": "1A",
+          "semantic_match": null,
+          "candidates_offered": ["lever"],
+          "matched_candidate": "lever",
+          "grounding_ids": ["panel"],
+          "transition_cause": "forced",
+          "outcome": "committed",
+          "game_break": {
+            "warning_id": "w1",
+            "outcome": "returned"
+          }
+        }
+      ],
+      "turn_count": 2,
+      "player_usage": {
+        "model": "gpt-5.6-luna",
+        "calls": 2,
+        "input_tokens": 200,
+        "cached_input_tokens": 80,
+        "output_tokens": 30
+      },
+      "stuck_turns": [],
+      "stuck_runs": [],
+      "rejected_turns": [1],
+      "rejected_count": 1,
+      "game_break_count": 1,
+      "exit_cause": "forced",
+      "transition_fired": true,
+      "affordances": [],
+      "stopped_on_rejections": false
+    }
+  ]
+}

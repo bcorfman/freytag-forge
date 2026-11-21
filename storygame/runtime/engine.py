@@ -1042,11 +1042,17 @@ class RuntimeEngine(CanonicalEventMixin):
         raw_reveal_selection = getattr(self.provider, "last_reveal_selection", None)
         reveal_selection = None
         if isinstance(raw_reveal_selection, dict) and isinstance(raw_reveal_selection.get("outcome"), str):
+            shortlist_ids = tuple(
+                candidate_id
+                for candidate_id in raw_reveal_selection.get("shortlist_ids", ())
+                if isinstance(candidate_id, str)
+            )
             reveal_selection = RevealSelection(
                 outcome=raw_reveal_selection["outcome"],
                 matched=raw_reveal_selection.get("matched"),
                 universe_size=raw_reveal_selection.get("universe_size", 0),
                 shortlist_size=raw_reveal_selection.get("shortlist_size", 0),
+                shortlist_ids=shortlist_ids,
             )
         contract_shadow = getattr(self.provider, "last_contract_shadow", None)
         bundle = AttemptBundle(

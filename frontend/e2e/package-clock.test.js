@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -17,6 +17,26 @@ function withFixture(source, callback) {
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }
+}
+
+function withSourceFixture(sceneSources, callback, storyScenes = Object.keys(sceneSources)) {
+  const directory = mkdtempSync(join(tmpdir(), "freytag-source-pacing-"));
+  const sourceDirectory = join(directory, "data", "stories", "fixture-story", "source");
+  const scenesDirectory = join(sourceDirectory, "scenes");
+  mkdirSync(scenesDirectory, { recursive: true });
+  writeFileSync(join(sourceDirectory, "story.yaml"), `scenes:\n${storyScenes.map((id) => `- ${id}`).join("\n")}\n`);
+  for (const [sceneId, source] of Object.entries(sceneSources)) {
+    writeFileSync(join(scenesDirectory, `${sceneId}.yaml`), source);
+  }
+  try {
+    return callback(directory);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+}
+
+function sourceScene(sceneId, turns = "min: 0\n  nudge: 1\n  handoff: 2", beats = "") {
+  return `scene: ${sceneId}\nturns:\n  ${turns}\nbeats:\n${beats}`;
 }
 
 function escapeRegExp(value) {
@@ -55,6 +75,8 @@ test("loads the real package and resolves turn milestones", () => {
   const projection = loadPackagePacing({ storyId: "continuity_initiative", repoRoot });
 
   assert.deepEqual(projection.sceneOrder, ["1A", "1B", "1C", "2A", "2B", "2C", "3A", "3B", "3C"]);
+  assert.equal(projection.scenePoint("1A", "handoff").target_turn, 15);
+  assert.equal(projection.eventOrder[0], "kristin_steadies_1a");
   assert.deepEqual(projection.scenePoint("1B", "min"), {
     kind: "scene_point",
     scene_id: "1B",
@@ -97,19 +119,23 @@ test("loads the real package and resolves turn milestones", () => {
   assert.deepEqual(
     [...projection.eventOrder],
     [
+      "kristin_steadies_1a",
       "patrol_arrives_1a",
       "patrol_enters_1a",
       "officer_presses_1a",
+      "reyes_rams_drawer_1a",
       "patrol_leaves_1a",
       "patrol_returns_1a",
+      "home_search_narrows_1a",
       "pursuit_1b",
+      "park_lockdown_1b",
       "transfer_window_1c",
       "transfer_nudge_1c",
       "transfer_withdrawal_1c",
+      "supervisor_impatience_2a",
       "inspection_window_2a",
       "inspection_nudge_2a",
       "inspection_recovery_2a",
-      "collapse_3c",
       "audit_window_2b",
       "audit_nudge_2b",
       "audit_recovery_2b",
@@ -117,14 +143,61 @@ test("loads the real package and resolves turn milestones", () => {
       "purge_nudge_2c",
       "purge_recovery_2c",
       "override_deadline_3a",
-      "destruction_3b",
-      "home_search_narrows_1a",
-      "park_lockdown_1b",
       "detention_lockdown_3a",
+      "destruction_3b",
       "relay_power_3b",
+      "collapse_3c",
+      "evacuation_window_3c",
+      "evacuation_recovery_3c",
+      "evacuation_nudge_3c",
       "routes_collapse_3c",
     ],
   );
+});
+
+test("loads pacing from the compiled source tree", () => {
+  withSourceFixture({
+    A: sourceScene("A", "min: 1\n  nudge: 2\n  handoff: 3", "- id: first\n  at_turn: 1\n  when:\n    ready: true\n- id: second\n  at_turn: 3\n"),
+    B: sourceScene("B"),
+  }, (directory) => {
+    const pacing = loadPackagePacing({ storyId: "fixture_story", repoRoot: directory });
+    assert.deepEqual(pacing.sceneOrder, ["A", "B"]);
+    assert.equal(pacing.scenePoint("A", "min").target_turn, 1);
+    assert.equal(pacing.scenePoint("A", "handoff").target_turn, 3);
+    assert.deepEqual(pacing.eventOrder, ["first", "second"]);
+    assert.equal(pacing.eventPoint("first").target_turn, 1);
+    assert.equal(pacing.isConditional("first"), true);
+    assert.equal(pacing.isConditional("second"), false);
+  });
+});
+
+test("validates source pacing with the legacy pacing errors", () => {
+  const assertSourceError = (scenes, expected) => withSourceFixture(scenes, (directory) => {
+    assert.throws(() => loadPackagePacing({ storyId: "fixture_story", repoRoot: directory }), new RegExp(expected));
+  });
+  assertSourceError({ A: sourceScene("A", "min: 2\n  nudge: 1\n  handoff: 3") }, "turn points must be ordered");
+  assertSourceError({ A: sourceScene("A", "min: -1\n  nudge: 1\n  handoff: 3") }, "min_turns must be a non-negative integer");
+  assertSourceError({ A: "scene: A\nbeats: []\n" }, "missing turns block");
+  assertSourceError({ A: sourceScene("A", "min: 0\n  nudge: 1\n  handoff: 2", "- id: duplicate\n  at_turn: 0\n- id: duplicate\n  at_turn: 1\n") }, "duplicate event id");
+  assertSourceError({ A: sourceScene("A", "min: 0\n  nudge: 1\n  handoff: 2", "- id: late\n  at_turn: 3\n") }, "at_turn must fall within");
+  assertSourceError({ A: "scene: B\nturns:\n  min: 0\n  nudge: 1\n  handoff: 2\n" }, "undeclared scene");
+  withSourceFixture({ A: sourceScene("A") }, (directory) => {
+    assert.throws(() => loadPackagePacing({ storyId: "fixture_story", repoRoot: directory }), /duplicate scene id/);
+  }, ["A", "A"]);
+  withSourceFixture({ A: sourceScene("A") }, (directory) => {
+    assert.throws(() => loadPackagePacing({ storyId: "fixture_story", repoRoot: directory, pacingPath: join(directory, "missing.yaml") }), /pacing\.yaml could not be read/);
+  }, ["A", "A"]);
+});
+
+test("prefers legacy pacing and an explicit pacingPath over source pacing", () => {
+  withSourceFixture({ A: sourceScene("A") }, (directory) => {
+    const legacyPath = join(directory, "data", "stories", "fixture-story", "pacing.yaml");
+    writeFileSync(legacyPath, validScene.replaceAll("scene_id: A", "scene_id: LEGACY"));
+    assert.equal(loadPackagePacing({ storyId: "fixture_story", repoRoot: directory }).sceneOrder[0], "LEGACY");
+    const explicitPath = join(directory, "explicit.yaml");
+    writeFileSync(explicitPath, validScene.replaceAll("scene_id: A", "scene_id: EXPLICIT"));
+    assert.equal(loadPackagePacing({ storyId: "fixture_story", repoRoot: directory, pacingPath: explicitPath }).sceneOrder[0], "EXPLICIT");
+  });
 });
 
 test("reports conditional events in the real package pacing", () => {
@@ -140,12 +213,12 @@ test("selects pending real-package events by conditionality and turn", () => {
   const pacing = loadPackagePacing({ storyId: "continuity_initiative", repoRoot });
 
   const atTurnFive = nextPendingEvent(pacing, "1A", 5, new Set());
-  assert.equal(atTurnFive?.event_id, "patrol_leaves_1a");
+  assert.equal(atTurnFive?.event_id, "patrol_arrives_1a");
   assert.notEqual(atTurnFive?.event_id, "officer_presses_1a");
 
   const atTurnFour = nextPendingEvent(pacing, "1A", 4, new Set());
   assert.equal(atTurnFour?.event_id, "patrol_arrives_1a");
-  assert.equal(atTurnFour?.target_turn, 4);
+  assert.equal(atTurnFour?.target_turn, 6);
   assert.equal(pacing.isConditional(atTurnFour.event_id), false);
 
   const afterPatrolArrives = nextPendingEvent(

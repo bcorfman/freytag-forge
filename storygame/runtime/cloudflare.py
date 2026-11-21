@@ -370,6 +370,7 @@ class CloudflareTurnProvider:
             "matched": None,
             "universe_size": 0,
             "shortlist_size": 0,
+            "shortlist_ids": [],
             "reference_names": [],
             "recent_cue_owner": None,
         }
@@ -492,6 +493,7 @@ class CloudflareTurnProvider:
             "matched": None,
             "universe_size": 0,
             "shortlist_size": 0,
+            "shortlist_ids": [],
             "reference_names": [],
             "recent_cue_owner": None,
         }
@@ -639,6 +641,7 @@ class CloudflareTurnProvider:
                 "matched": None,
                 "universe_size": 0,
                 "shortlist_size": 0,
+                "shortlist_ids": [],
                 "reference_names": [],
                 "recent_cue_owner": None,
             }
@@ -647,6 +650,7 @@ class CloudflareTurnProvider:
         visible_ids = {candidate.id for candidate in self.last_projection.candidates}
         eligible_candidates = tuple(candidate for candidate in eligible_candidates if candidate.id in visible_ids)
         self.last_reveal_selection["shortlist_size"] = min(6, len(eligible_candidates))
+        self.last_reveal_selection["shortlist_ids"] = [candidate.id for candidate in eligible_candidates[:6]]
         if (
             self.semantic_ask is None
             or getenv("FREYTAG_SEMANTIC_REVEAL", "1") == "0"

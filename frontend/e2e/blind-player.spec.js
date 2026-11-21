@@ -2,7 +2,7 @@ import { test } from "@playwright/test";
 import { readdir } from "node:fs/promises";
 import { resolve } from "node:path";
 import { loadAffordanceMap, firstStepAffordances, laterAffordances, exploreInput } from "./affordances.js";
-import { askPlayer, analyseRun, aggregate, aggregateByScene, bundlesCategory, collectBundles, collectPrompts, formatMarkdown, gameBreakPolicy, handleGameBreak, profileInfo, promptsCategory, sceneIdsForRun, turnLog, turnRecord } from "./blind-player.js";
+import { askPlayer, analyseRun, aggregate, aggregateByScene, artifactReport, bundlesCategory, collectBundles, collectPrompts, formatMarkdown, gameBreakPolicy, handleGameBreak, playerModel, profileInfo, promptsCategory, sceneIdsForRun, turnLog, turnRecord } from "./blind-player.js";
 import { startSceneSession, submitTurn, resolveWarningIfPresent, writeCategoryReport } from "./helpers.js";
 import { loadPackagePacing } from "./package-clock.js";
 import { walkScenes } from "./scene-walk.js";
@@ -98,6 +98,13 @@ async function playScene({ page, map, pacing, sceneId, openingText, totalCounter
     turns: turnLog(turns),
     turn_count: turns.filter((entry) => entry.question_turn !== true).length,
     stopped_on_game_break_timeout: stoppedOnGameBreakTimeout,
+    player_usage: {
+      model: playerModel(),
+      calls: counter.calls,
+      input_tokens: counter.input_tokens || 0,
+      cached_input_tokens: counter.cached_input_tokens || 0,
+      output_tokens: counter.output_tokens || 0,
+    },
     ...analyseRun({ sceneEntry, nextSceneEntry, turns, firstStep, later, openingText, profile: selectedProfile.profile, stopped_on_rejections: stoppedOnRejections, sceneMapSources: sceneEntry.gates?.flatMap((gate) => gate.sources || []) || [] }),
   };
 }
@@ -195,13 +202,6 @@ test("a player who only reads the screen can leave the scene @blind-player", asy
     })),
   };
   await writeCategoryReport(bundlesCategory(category), bundleReport);
-  const mainReport = {
-    ...report,
-    replicates: report.replicates.map((replicate) => {
-      if (allMode) return { ...replicate, scenes: replicate.scenes.map(({ prompts, bundles, ...scene }) => scene) };
-      const { prompts, bundles, ...scene } = replicate;
-      return scene;
-    }),
-  };
+  const mainReport = artifactReport(report, allMode);
   await writeCategoryReport(category, { ...mainReport, markdown: formatMarkdown(mainReport) });
 });
