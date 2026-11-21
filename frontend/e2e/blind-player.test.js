@@ -151,12 +151,35 @@ test("turnLog emits the contract without prompt, delivery, or state", () => {
   const withoutMatch = { turn: 3, input: "Open the door.", text: "The door opens.", state: { scene_id: "B" }, grounding_ids: ["door"], semantic_match: undefined };
   const result = turnLog([normal, rejectedTurn, withoutMatch]);
   assert.deepEqual(result, [
-    { turn: 1, input: "Search the desk.", raw_input: "Search the desk.", profile: "canonical", text: "The desk is here.", rejected: false, story_complete: false, rejection: null, scene_id: "A", semantic_match: { ran: true, matched: "desk" }, grounding_ids: ["desk"], transition_cause: "earned", outcome: "committed", game_break: null },
-    { turn: 2, input: "Search the room.", raw_input: "Search the room.", profile: "canonical", text: "", rejected: true, story_complete: false, rejection: "bad response", scene_id: null, semantic_match: null, grounding_ids: [], transition_cause: "none", outcome: "rejected", game_break: null },
-    { turn: 3, input: "Open the door.", raw_input: "Open the door.", profile: "canonical", text: "The door opens.", rejected: false, story_complete: false, rejection: null, scene_id: "B", semantic_match: null, grounding_ids: ["door"], transition_cause: null, outcome: null, game_break: null },
+    { turn: 1, input: "Search the desk.", raw_input: "Search the desk.", profile: "canonical", text: "The desk is here.", rejected: false, story_complete: false, rejection: null, scene_id: "A", semantic_match: { ran: true, matched: "desk" }, grounding_ids: ["desk"], candidates_offered: [], matched_candidate: null, transition_cause: "earned", outcome: "committed", game_break: null },
+    { turn: 2, input: "Search the room.", raw_input: "Search the room.", profile: "canonical", text: "", rejected: true, story_complete: false, rejection: "bad response", scene_id: null, semantic_match: null, grounding_ids: [], candidates_offered: [], matched_candidate: null, transition_cause: "none", outcome: "rejected", game_break: null },
+    { turn: 3, input: "Open the door.", raw_input: "Open the door.", profile: "canonical", text: "The door opens.", rejected: false, story_complete: false, rejection: null, scene_id: "B", semantic_match: null, grounding_ids: ["door"], candidates_offered: [], matched_candidate: null, transition_cause: null, outcome: null, game_break: null },
   ]);
-  for (const entry of result) assert.deepEqual(Object.keys(entry).sort(), ["game_break", "grounding_ids", "input", "outcome", "profile", "raw_input", "rejected", "rejection", "scene_id", "semantic_match", "story_complete", "text", "transition_cause", "turn"]);
+  for (const entry of result) assert.deepEqual(Object.keys(entry).sort(), ["candidates_offered", "game_break", "grounding_ids", "input", "matched_candidate", "outcome", "profile", "raw_input", "rejected", "rejection", "scene_id", "semantic_match", "story_complete", "text", "transition_cause", "turn"]);
   assert.equal(JSON.stringify(result).includes("prompt"), false);
+});
+
+test("turnLog records reveal candidates defensively", () => {
+  const logged = turnLog([
+    { turn: 1, attempt_bundle: { reveal_selection: { shortlist_ids: ["a", "b"], matched: null } } },
+    { turn: 2, attempt_bundle: { reveal_selection: { shortlist_ids: ["a", "b"], matched: "b" } } },
+    { turn: 3, attempt_bundle: { reveal_selection: { shortlist_ids: ["a", "b"], matched: "c" } } },
+    { turn: 4, attempt_bundle: { reveal_selection: { matched: "k" } } },
+    { turn: 5, rejected: true },
+    { turn: 6, attempt_bundle: { reveal_selection: { shortlist_ids: "a", matched: "k" } } },
+    { turn: 7, attempt_bundle: { reveal_selection: { shortlist_ids: [1, 2], matched: "k" } } },
+    { turn: 8, attempt_bundle: { reveal_selection: { shortlist_ids: null, matched: "k" } } },
+  ]);
+  assert.deepEqual(logged.map(({ candidates_offered, matched_candidate }) => ({ candidates_offered, matched_candidate })), [
+    { candidates_offered: ["a", "b"], matched_candidate: null },
+    { candidates_offered: ["a", "b"], matched_candidate: "b" },
+    { candidates_offered: ["a", "b", "c"], matched_candidate: "c" },
+    { candidates_offered: ["k"], matched_candidate: "k" },
+    { candidates_offered: [], matched_candidate: null },
+    { candidates_offered: ["k"], matched_candidate: "k" },
+    { candidates_offered: ["k"], matched_candidate: "k" },
+    { candidates_offered: ["k"], matched_candidate: "k" },
+  ]);
 });
 
 test("records clarification turns without treating them as rejected story commands", () => {

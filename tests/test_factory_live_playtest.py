@@ -249,6 +249,10 @@ def test_packets_have_triage_shape_and_documented_routes() -> None:
     assert set(packets[0]) == {"key", "scene", *_DEFAULTS}
     assert packets[0]["stuck"] is True
     assert packets[1]["match_issues"] == ["narration did not validate"]
+    assert packets[1]["candidates_offered"] == ["panel"]
+    assert packets[1]["matched_candidate"] is None
+    assert packets[2]["candidates_offered"] == ["lever"]
+    assert packets[2]["matched_candidate"] == "lever"
     assert packets[2]["stuck"] is False
     assert all(_validate_packet(packet) for packet in packets)
     assert [route["class"] for route in classify_turns(packets)] == [
@@ -257,6 +261,92 @@ def test_packets_have_triage_shape_and_documented_routes() -> None:
         "unclear",
     ]
     assert report_to_packets(clean_report()) == []
+
+
+def _report_with_turn(turn: dict, *, stuck: bool = True) -> dict:
+    turn.setdefault("turn", 1)
+    return {
+        "replicates": [
+            {
+                "replicate": 1,
+                "scene": "1A",
+                "turns": [turn],
+                "stuck_turns": [1] if stuck else [],
+            }
+        ]
+    }
+
+
+def test_new_report_candidates_route_stuck_turns_through_triage() -> None:
+    candidates = _report_with_turn(
+        {
+            "raw_input": "Search the panel.",
+            "text": "The panel stays closed.",
+            "outcome": "committed",
+            "candidates_offered": ["a", "b"],
+            "matched_candidate": None,
+        }
+    )
+    empty = _report_with_turn(
+        {
+            "raw_input": "Search the panel.",
+            "text": "The panel stays closed.",
+            "outcome": "committed",
+            "candidates_offered": [],
+            "matched_candidate": None,
+        }
+    )
+
+    candidate_packet = report_to_packets(candidates)[0]
+    empty_packet = report_to_packets(empty)[0]
+    assert candidate_packet["candidates_offered"] == ["a", "b"]
+    assert candidate_packet["matched_candidate"] is None
+    assert classify_turns([candidate_packet])[0]["rule"] == "R3"
+    assert empty_packet["candidates_offered"] == []
+    assert classify_turns([empty_packet])[0]["rule"] == "R2"
+
+
+def test_new_report_matched_stuck_turn_routes_r5() -> None:
+    value = _report_with_turn(
+        {
+            "raw_input": "Open the panel.",
+            "text": "The panel remains closed.",
+            "outcome": "rejected",
+            "candidates_offered": ["a"],
+            "matched_candidate": "b",
+        }
+    )
+    packet = report_to_packets(value)[0]
+    assert packet["candidates_offered"] == ["a", "b"]
+    assert packet["matched_candidate"] == "b"
+    packet["committed"] = False
+    assert classify_turns([packet])[0]["rule"] == "R5"
+
+
+def test_old_report_keeps_match_surrogate_and_new_report_filters_candidates() -> None:
+    old = _report_with_turn(
+        {
+            "raw_input": "Search the panel.",
+            "text": "The panel stays closed.",
+            "outcome": "committed",
+            "semantic_match": {"matched": "old-match"},
+        }
+    )
+    new = _report_with_turn(
+        {
+            "raw_input": "Search the panel.",
+            "text": "The panel stays closed.",
+            "outcome": "committed",
+            "semantic_match": {"matched": "new-match"},
+            "candidates_offered": ["a", 3, "a", "b"],
+            "matched_candidate": "new-match",
+        }
+    )
+    old_packet = report_to_packets(old)[0]
+    new_packet = report_to_packets(new)[0]
+    assert old_packet["candidates_offered"] == ["old-match"]
+    assert old_packet["matched_candidate"] == "old-match"
+    assert new_packet["candidates_offered"] == ["a", "b", "new-match"]
 
 
 def test_packets_cover_rejection_game_break_and_noncommitted_turns() -> None:

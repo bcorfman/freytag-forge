@@ -52,6 +52,7 @@ class RevealSelection(_BundleModel):
     matched: str | None = None
     universe_size: int = 0
     shortlist_size: int = 0
+    shortlist_ids: tuple[str, ...] = ()
 
 
 class ContractShadow(_BundleModel):

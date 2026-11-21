@@ -200,6 +200,23 @@ def _packet_for_turn(prefix: str, replicate: str, scene_run: dict[str, Any], tur
 
     semantic_match = turn.get("semantic_match")
     matched = semantic_match.get("matched") if isinstance(semantic_match, dict) else None
+
+    if "candidates_offered" in turn:
+        offered = turn.get("candidates_offered")
+        candidates: list[str] = []
+        if isinstance(offered, list):
+            for candidate in offered:
+                if isinstance(candidate, str) and candidate not in candidates:
+                    candidates.append(candidate)
+        matched_candidate = turn.get("matched_candidate") if "matched_candidate" in turn else matched
+        if not isinstance(matched_candidate, str):
+            matched_candidate = None
+        if matched_candidate is not None and matched_candidate not in candidates:
+            candidates.append(matched_candidate)
+        packet["candidates_offered"] = candidates
+        packet["matched_candidate"] = matched_candidate
+        return packet
+
     if isinstance(matched, str) and matched:
         packet["matched_candidate"] = matched
         # The report has no candidate list.  This conservative surrogate keeps

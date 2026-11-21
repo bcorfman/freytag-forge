@@ -1,13 +1,14 @@
 """Hermetic coverage for the typed turn-attempt record."""
 
+import json
 from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
 from pydantic import ValidationError
 
-from storygame.runtime.attempt_bundle import AttemptBundle
-from storygame.runtime.cloudflare import NarrationProviderError
+from storygame.runtime.attempt_bundle import AttemptBundle, RevealSelection
+from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeSnapshot, RuntimeState, TurnRecord
@@ -15,6 +16,7 @@ from storygame.runtime.validation import NARRATION_RETRY_MESSAGE, ProposalValida
 from storygame.story_package.loader import load_story_package
 from storygame.story_package.models import ActivationRule, CanonicalRouteEvent, FactPredicate, RouteOperation
 from storygame.web_demo import create_demo_app
+from tests.test_design_review_fixtures import _assert_story_facts, _scene_state
 
 PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 
@@ -48,6 +50,75 @@ def test_bundle_round_trip_and_unknown_version_refusal() -> None:
     assert AttemptBundle.from_json(loaded_old_bundle.to_json()) == loaded_old_bundle
     with pytest.raises(ValidationError, match="unsupported attempt bundle schema version"):
         AttemptBundle.model_validate({**bundle.model_dump(), "schema_version": 2})
+
+
+def test_reveal_selection_shortlist_ids_round_trip_and_default() -> None:
+    selection = RevealSelection(outcome="semantic_match", matched="k1", shortlist_ids=("k1", "k2"))
+
+    assert selection.model_dump(mode="json")["shortlist_ids"] == ["k1", "k2"]
+    assert RevealSelection(outcome="semantic_refusal").shortlist_ids == ()
+
+    old_bundle = AttemptBundle(
+        identity={"package_id": "continuity_initiative"},
+        pre_state={"scene_id": "1A", "turn_index": 0, "turns_since_scene_entry": 0},
+        command={"raw": "Search the drawer.", "normalized": "Search the drawer."},
+        reveal_selection=selection,
+        outcome="committed",
+    ).model_dump(mode="json")
+    old_bundle["reveal_selection"].pop("shortlist_ids")
+    assert AttemptBundle.from_json(json.dumps(old_bundle)).reveal_selection.shortlist_ids == ()
+
+
+@pytest.mark.parametrize(
+    ("reveal_selection", "expected_ids"),
+    [
+        (
+            {
+                "outcome": "semantic_refusal",
+                "universe_size": 3,
+                "shortlist_size": 2,
+                "shortlist_ids": ["k1", 7, "k2"],
+            },
+            ("k1", "k2"),
+        ),
+        ({"outcome": "no_eligible_action", "universe_size": 0, "shortlist_size": 0}, ()),
+    ],
+)
+def test_engine_records_shortlist_ids_from_old_and_new_providers(
+    reveal_selection: dict[str, object], expected_ids: tuple[str, ...]
+) -> None:
+    engine = RuntimeEngine(_state(), _provider("The room stays quiet.", reveal_selection))
+
+    engine.turn("Search the drawer.")
+
+    assert engine.last_attempt is not None
+    assert engine.last_attempt.reveal_selection is not None
+    assert engine.last_attempt.reveal_selection.shortlist_ids == expected_ids
+
+
+def test_cloudflare_records_semantic_shortlist_ids_in_order() -> None:
+    state = _scene_state("1A")
+    _assert_story_facts(state, "memory_card_recovered", "michelle_warning_known")
+    state.turn_index = 7
+    RuntimeEngine(
+        state, lambda _input: {"segments": [{"kind": "narration", "text": "The room is quiet."}]}
+    )._activate_pacing()
+
+    def semantic_refusal(_state: object, _questions: dict[str, object]) -> dict[str, object]:
+        return {}
+
+    provider = CloudflareTurnProvider(worker_url="", token="", state=state, semantic_ask=semantic_refusal)
+    provider.assemble_turn_prompt("Tell me what is important.")
+
+    assert provider.last_reveal_selection["outcome"] == "semantic_refusal"
+    visible_ids = {candidate.id for candidate in provider.last_projection.candidates}
+    expected_ids = [
+        candidate.id
+        for candidate in provider._eligible_reveal_candidates(provider._reveal_universe())
+        if candidate.id in visible_ids
+    ][:6]
+    assert provider.last_reveal_selection["shortlist_ids"] == expected_ids
+    assert len(provider.last_reveal_selection["shortlist_ids"]) == provider.last_reveal_selection["shortlist_size"]
 
 
 def test_accepted_and_rejected_attempts_are_recorded_and_rejection_restores_state() -> None:

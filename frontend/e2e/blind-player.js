@@ -269,25 +269,39 @@ export function bundlesCategory(category) {
 }
 
 export function turnLog(turns = []) {
-  return turns.map(({ turn, input, raw_input = input, profile = "canonical", profile_requested, profile_warning, text, state, grounding_ids, semantic_match, story_complete, rejected, rejection, attempt_bundle, game_break = null, clarification = null, question_turn = false }) => ({
-    turn,
-    input,
-    raw_input,
-    profile,
-    ...(profile_requested ? { profile_requested } : {}),
-    ...(profile_warning ? { profile_warning } : {}),
-    text,
-    ...(question_turn ? { clarification, question_turn: true } : {}),
-    rejected: Boolean(rejected) && !question_turn,
-    story_complete: Boolean(story_complete),
-    rejection: rejection ?? null,
-    scene_id: state?.scene_id ?? null,
-    semantic_match: semantic_match ?? null,
-    grounding_ids: grounding_ids || [],
-    transition_cause: attempt_bundle?.transition_cause ?? null,
-    outcome: attempt_bundle?.outcome ?? null,
-    game_break,
-  }));
+  return turns.map(({ turn, input, raw_input = input, profile = "canonical", profile_requested, profile_warning, text, state, grounding_ids, semantic_match, story_complete, rejected, rejection, attempt_bundle, game_break = null, clarification = null, question_turn = false }) => {
+    const revealSelection = attempt_bundle && typeof attempt_bundle === "object" && !Array.isArray(attempt_bundle)
+      && attempt_bundle.reveal_selection && typeof attempt_bundle.reveal_selection === "object" && !Array.isArray(attempt_bundle.reveal_selection)
+      ? attempt_bundle.reveal_selection
+      : null;
+    const matchedCandidate = typeof revealSelection?.matched === "string" ? revealSelection.matched : null;
+    const shortlistIds = Array.isArray(revealSelection?.shortlist_ids) && revealSelection.shortlist_ids.every((id) => typeof id === "string")
+      ? revealSelection.shortlist_ids
+      : [];
+    const candidatesOffered = [...new Set(shortlistIds)];
+    if (matchedCandidate !== null && !candidatesOffered.includes(matchedCandidate)) candidatesOffered.push(matchedCandidate);
+    return {
+      turn,
+      input,
+      raw_input,
+      profile,
+      ...(profile_requested ? { profile_requested } : {}),
+      ...(profile_warning ? { profile_warning } : {}),
+      text,
+      ...(question_turn ? { clarification, question_turn: true } : {}),
+      rejected: Boolean(rejected) && !question_turn,
+      story_complete: Boolean(story_complete),
+      rejection: rejection ?? null,
+      scene_id: state?.scene_id ?? null,
+      semantic_match: semantic_match ?? null,
+      grounding_ids: grounding_ids || [],
+      candidates_offered: candidatesOffered,
+      matched_candidate: matchedCandidate,
+      transition_cause: attempt_bundle?.transition_cause ?? null,
+      outcome: attempt_bundle?.outcome ?? null,
+      game_break,
+    };
+  });
 }
 
 function realizationMatch(text, realization) {
