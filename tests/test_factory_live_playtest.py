@@ -7,6 +7,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from factory.cloudflare_spend import read_worker_budget, spend_between
 from factory.guard import BudgetExhausted, LimitSleep, SpendLedger, Usage
 from factory.stations import build_handlers
 from factory.stations.live_playtest import (
@@ -27,6 +28,12 @@ from factory.tickets import Station, TicketClass
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURE = ROOT / "tests/fixtures/factory/blind_player_report_small.json"
 NOW = datetime(2026, 1, 1, 12, tzinfo=UTC)
+
+
+@pytest.fixture(autouse=True)
+def no_worker_network(monkeypatch):
+    monkeypatch.delenv("CLOUDFLARE_WORKER_URL", raising=False)
+    monkeypatch.delenv("CLOUDFLARE_WORKER_TOKEN", raising=False)
 
 
 def report() -> dict:
@@ -97,14 +104,131 @@ def _ledger_rows(path: Path) -> list[Usage]:
     return SpendLedger(path)._read()
 
 
-def _live_handler(tmp_path: Path, runner, ledger: SpendLedger):
+def _live_handler(tmp_path: Path, runner, ledger: SpendLedger, read_budget=lambda: None):
     return live_playtest_handler(
         tmp_path,
         runner=runner,
         fetch_version=lambda _url: {"channel": "staging", "runtime": "scene-v1", "sha": "abc"},
         now_fn=lambda: NOW,
         ledger=ledger,
+        read_budget=read_budget,
     )
+
+
+def test_read_worker_budget_validates_response_and_uses_origin() -> None:
+    token = "secret-token"
+    calls = []
+
+    def fetch(url, received_token, timeout):
+        calls.append((url, received_token, timeout))
+        return 200, json.dumps(
+            {
+                "status": "ok",
+                "day": "2026-01-01",
+                "spent_micro_usd": 1200,
+                "reserved_micro_usd": 300,
+                "limit_micro_usd": 5000,
+                "extra": "discarded",
+            }
+        )
+
+    result = read_worker_budget(
+        {
+            "CLOUDFLARE_WORKER_URL": "https://worker.example.test/narration/v1",
+            "CLOUDFLARE_WORKER_TOKEN": token,
+        },
+        fetch=fetch,
+    )
+    assert result == {
+        "status": "ok",
+        "day": "2026-01-01",
+        "spent_micro_usd": 1200,
+        "reserved_micro_usd": 300,
+        "limit_micro_usd": 5000,
+    }
+    assert calls == [("https://worker.example.test/budget", token, 10)]
+    assert token not in repr(result)
+
+
+@pytest.mark.parametrize(
+    "response",
+    [
+        (500, "{}"),
+        (200, "not json"),
+        (200, json.dumps({"status": "ok", "day": "2026-01-01"})),
+        (200, json.dumps({"status": "narration", "day": "2026-01-01", "spent_micro_usd": 1})),
+        (
+            200,
+            json.dumps(
+                {
+                    "status": "ok",
+                    "day": "2026-01-01",
+                    "spent_micro_usd": -1,
+                    "reserved_micro_usd": 0,
+                    "limit_micro_usd": 1,
+                }
+            ),
+        ),
+        (
+            200,
+            json.dumps(
+                {
+                    "status": "ok",
+                    "day": "2026-01-01",
+                    "spent_micro_usd": True,
+                    "reserved_micro_usd": 0,
+                    "limit_micro_usd": 1,
+                }
+            ),
+        ),
+        (
+            200,
+            json.dumps(
+                {
+                    "status": "ok",
+                    "day": "2026-02-30",
+                    "spent_micro_usd": 0,
+                    "reserved_micro_usd": 0,
+                    "limit_micro_usd": 1,
+                }
+            ),
+        ),
+    ],
+)
+def test_read_worker_budget_returns_none_for_invalid_responses(response) -> None:
+    result = read_worker_budget(
+        {"CLOUDFLARE_WORKER_URL": "https://worker.example.test/path", "CLOUDFLARE_WORKER_TOKEN": "secret"},
+        fetch=lambda _url, _token, _timeout: response,
+    )
+    assert result is None
+
+
+def test_read_worker_budget_returns_none_for_missing_config_or_network_error() -> None:
+    assert read_worker_budget({}, fetch=lambda _url, _token, _timeout: (200, "{}")) is None
+
+    def fail(_url, _token, _timeout):
+        raise OSError("offline")
+
+    assert (
+        read_worker_budget(
+            {"CLOUDFLARE_WORKER_URL": "https://worker.example.test", "CLOUDFLARE_WORKER_TOKEN": "secret"},
+            fetch=fail,
+        )
+        is None
+    )
+
+
+@pytest.mark.parametrize(
+    ("before", "after", "expected"),
+    [
+        ({"day": "2026-01-01", "spent_micro_usd": 8}, {"day": "2026-01-01", "spent_micro_usd": 13}, 5),
+        ({"day": "2026-01-01", "spent_micro_usd": 8}, {"day": "2026-01-02", "spent_micro_usd": 13}, None),
+        ({"day": "2026-01-01", "spent_micro_usd": 8}, {"day": "2026-01-01", "spent_micro_usd": 3}, None),
+        (None, {"day": "2026-01-01", "spent_micro_usd": 3}, None),
+    ],
+)
+def test_spend_between(before, after, expected) -> None:
+    assert spend_between(before, after) == expected
 
 
 def test_live_run_records_player_spend_and_grade_path_does_not(tmp_path: Path) -> None:
@@ -115,20 +239,81 @@ def test_live_run_records_player_spend_and_grade_path_does_not(tmp_path: Path) -
         write_artifact(tmp_path, clean_report())
         return subprocess.CompletedProcess([], 0, stdout="", stderr="")
 
-    result = _live_handler(tmp_path, runner, ledger)(ticket({"expected_sha": "abc"}), NOW)
+    readings = iter(
+        [
+            {
+                "status": "ok",
+                "day": "2026-01-01",
+                "spent_micro_usd": 1200,
+                "reserved_micro_usd": 0,
+                "limit_micro_usd": 5000,
+            },
+            {
+                "status": "ok",
+                "day": "2026-01-01",
+                "spent_micro_usd": 3300,
+                "reserved_micro_usd": 0,
+                "limit_micro_usd": 5000,
+            },
+        ]
+    )
+    result = _live_handler(tmp_path, runner, ledger, lambda: next(readings))(ticket({"expected_sha": "abc"}), NOW)
     assert result.passed
     rows = _ledger_rows(ledger_path)
-    assert len(rows) == 1
-    assert rows[0].provider == "openai"
-    assert rows[0].cost_kind == "dollars"
-    assert rows[0].tokens == 120
-    assert rows[0].usd == pytest.approx(0.0000368)
+    assert len(rows) == 2
+    openai_row, cloudflare_row = rows
+    assert openai_row.provider == "openai"
+    assert openai_row.cost_kind == "dollars"
+    assert openai_row.tokens == 120
+    assert openai_row.usd == pytest.approx(0.0000368)
+    assert cloudflare_row.provider == "cloudflare"
+    assert cloudflare_row.cost_kind == "dollars"
+    assert cloudflare_row.usd == pytest.approx(0.0021)
+    assert "cloudflare $0.0021" in result.output
 
     report_path = tmp_path / "clean.json"
     report_path.write_text(json.dumps(clean_report()), encoding="utf-8")
-    saved = live_playtest_handler(tmp_path, ledger=ledger)(ticket({"report_path": report_path}), NOW)
+    reads = []
+    saved = live_playtest_handler(tmp_path, ledger=ledger, read_budget=lambda: reads.append(True))(
+        ticket({"report_path": report_path}), NOW
+    )
     assert saved.passed
-    assert len(_ledger_rows(ledger_path)) == 1
+    assert len(_ledger_rows(ledger_path)) == 2
+    assert reads == []
+
+
+def test_day_change_between_worker_readings_records_unknown_cloudflare_spend(tmp_path: Path) -> None:
+    ledger = SpendLedger(tmp_path / "ledger.jsonl")
+
+    def runner(_env, _timeout):
+        write_artifact(tmp_path, clean_report())
+        return subprocess.CompletedProcess([], 0, stdout="", stderr="")
+
+    readings = iter(
+        [
+            {
+                "status": "ok",
+                "day": "2026-01-01",
+                "spent_micro_usd": 1200,
+                "reserved_micro_usd": 0,
+                "limit_micro_usd": 5000,
+            },
+            {
+                "status": "ok",
+                "day": "2026-01-02",
+                "spent_micro_usd": 3300,
+                "reserved_micro_usd": 0,
+                "limit_micro_usd": 5000,
+            },
+        ]
+    )
+    result = _live_handler(tmp_path, runner, ledger, lambda: next(readings))(ticket({"expected_sha": "abc"}), NOW)
+    assert result.passed
+    rows = _ledger_rows(tmp_path / "ledger.jsonl")
+    assert rows[-1].provider == "cloudflare"
+    assert rows[-1].cost_kind == "unknown"
+    assert rows[-1].usd is None
+    assert "cloudflare spend unknown" in result.output
 
 
 def test_missing_player_usage_records_one_unknown_row(tmp_path: Path) -> None:
@@ -142,10 +327,13 @@ def test_missing_player_usage_records_one_unknown_row(tmp_path: Path) -> None:
     result = _live_handler(tmp_path, runner, ledger)(ticket({"expected_sha": "abc"}), NOW)
     assert not result.passed
     rows = _ledger_rows(ledger_path)
-    assert len(rows) == 1
+    assert len(rows) == 2
     assert rows[0].cost_kind == "unknown"
     assert rows[0].usd is None
     assert rows[0].tokens == 350
+    assert rows[1].provider == "cloudflare"
+    assert rows[1].cost_kind == "unknown"
+    assert rows[1].usd is None
 
 
 def test_runner_failure_records_unknown_spend(tmp_path: Path) -> None:
@@ -158,10 +346,13 @@ def test_runner_failure_records_unknown_spend(tmp_path: Path) -> None:
     result = _live_handler(tmp_path, runner, ledger)(ticket({"expected_sha": "abc"}), NOW)
     assert not result.passed
     rows = _ledger_rows(ledger_path)
-    assert len(rows) == 1
+    assert len(rows) == 2
     assert rows[0].cost_kind == "unknown"
     assert rows[0].usd is None
     assert rows[0].tokens == 0
+    assert rows[1].provider == "cloudflare"
+    assert rows[1].cost_kind == "unknown"
+    assert rows[1].usd is None
 
 
 def _record_dollars(ledger: SpendLedger, provider: str, usd: float, at: datetime = NOW) -> None:

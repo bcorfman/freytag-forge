@@ -59,4 +59,13 @@ export class BudgetLedger {
       await this.storage.put("spent", spent + amount);
     });
   }
+
+  async status() {
+    return this.run(async () => {
+      const spent = (await this.storage.get("spent")) || 0;
+      const reservations = (await this.storage.get("reservations")) || {};
+      const reserved = Object.values(reservations).reduce((total, value) => total + value, 0);
+      return { spent, reserved };
+    });
+  }
 }

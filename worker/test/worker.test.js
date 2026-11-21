@@ -66,6 +66,16 @@ test("settling removes the reservation and counts the actual cost", async () => 
   assert.deepEqual(await storage.get("reservations"), {});
 });
 
+test("ledger status reports settled spend and open reservations in queue order", async () => {
+  const ledger = new BudgetLedger(new Storage());
+  const pendingReserve = ledger.reserve(7, 10);
+  assert.deepEqual(await ledger.status(), { spent: 0, reserved: 7 });
+  await pendingReserve;
+  assert.deepEqual(await ledger.status(), { spent: 0, reserved: 7 });
+  assert.deepEqual(await ledger.settle((await ledger.reserve(1, 10)).id, 3), undefined);
+  assert.deepEqual(await ledger.status(), { spent: 3, reserved: 7 });
+});
+
 test("missing token is refused before reading the body", async () => {
   const response = await worker.fetch(new Request("https://worker.test", { method: "POST", body: "not json" }), env({ DEMO_SHARED_TOKEN: "" }));
   assert.equal(response.status, 500);
@@ -129,6 +139,54 @@ test("successful AI usage settles to actual cost", async () => {
     assert.equal(response.status, 200);
     assert.equal(await namespace.storage().get("spent"), 5);
   } finally { globalThis.fetch = originalFetch; }
+});
+
+test("budget status reports narration spend without calling AI or changing it", async () => {
+  const namespace = new Namespace();
+  const originalFetch = globalThis.fetch;
+  let aiCalls = 0;
+  globalThis.fetch = async () => {
+    aiCalls += 1;
+    return new Response(JSON.stringify({ success: true, result: { response: "Done.", usage: { prompt_tokens: 1, completion_tokens: 2 } } }));
+  };
+  try {
+    const narration = await worker.fetch(request(), env({ DAILY_BUDGET: namespace, DAILY_BUDGET_USD: "2" }));
+    assert.equal(narration.status, 200);
+    const before = await namespace.storage().get("spent");
+    const budgetRequest = () => new Request("https://worker.test/budget", {
+      method: "POST",
+      headers: { Authorization: "Bearer secret", "Content-Type": "application/json" },
+      body: "{}"
+    });
+    const first = await worker.fetch(budgetRequest(), env({ DAILY_BUDGET: namespace, DAILY_BUDGET_USD: "2", CF_VERSION_METADATA: { id: "rev-1" } }));
+    assert.equal(first.status, 200);
+    assert.equal(first.headers.get("X-Worker-Revision"), "rev-1");
+    assert.deepEqual(await first.json(), {
+      status: "ok",
+      day: new Date().toISOString().slice(0, 10),
+      spent_micro_usd: before,
+      reserved_micro_usd: 0,
+      limit_micro_usd: 2_000_000
+    });
+    const second = await worker.fetch(budgetRequest(), env({ DAILY_BUDGET: namespace, DAILY_BUDGET_USD: "2" }));
+    assert.equal(second.status, 200);
+    assert.equal((await second.json()).spent_micro_usd, before);
+    assert.equal(await namespace.storage().get("spent"), before);
+    assert.equal(aiCalls, 1);
+  } finally { globalThis.fetch = originalFetch; }
+});
+
+test("budget status keeps auth and method checks and reports missing counter", async () => {
+  const makeRequest = (method, token = "secret") => new Request("https://worker.test/budget", {
+    method,
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: method === "POST" ? "not json" : undefined
+  });
+  assert.equal((await worker.fetch(makeRequest("POST", "wrong"), env())).status, 401);
+  assert.equal((await worker.fetch(makeRequest("GET"), env())).status, 405);
+  const missing = await worker.fetch(makeRequest("POST"), env({ DAILY_BUDGET: undefined }));
+  assert.equal(missing.status, 503);
+  assert.equal((await missing.json()).code, "BUDGET_UNAVAILABLE");
 });
 
 function jevRequest(input, token = "secret") {

@@ -24,6 +24,7 @@ from datetime import UTC, datetime, time, timedelta
 from pathlib import Path
 from typing import Any
 
+from factory.cloudflare_spend import read_worker_budget, spend_between
 from factory.guard import BudgetExhausted, Caps, LimitSleep, ProviderLimit, SpendLedger, Usage
 from factory.limits import LimitReport
 from factory.line import StationHandler, StationResult
@@ -309,6 +310,7 @@ def _summary_line(
     packets: list[dict],
     player_usd: float | None = None,
     player_calls: int = 0,
+    cloudflare_usd: float | None = None,
 ) -> str:
     line = (
         f"runs={summary.get('scenes', 0)} turns={summary.get('turns', 0)} "
@@ -319,6 +321,10 @@ def _summary_line(
         line += " openai spend unknown"
     else:
         line += f" openai ${player_usd:.4f} ({player_calls} calls)"
+    if cloudflare_usd is None:
+        line += " cloudflare spend unknown"
+    else:
+        line += f" cloudflare ${cloudflare_usd:.4f}"
     if packets:
         line += " failing=" + ",".join(packet["key"] for packet in packets)
     return line
@@ -411,6 +417,40 @@ def _record_player_spend(
     return spend, tokens, calls
 
 
+def _safe_budget_read(read_budget: Callable[[], dict | None]) -> dict | None:
+    try:
+        reading = read_budget()
+    except Exception:
+        return None
+    return reading if isinstance(reading, dict) else None
+
+
+def _record_cloudflare_spend(
+    ledger: SpendLedger,
+    before: dict | None,
+    after: dict | None,
+    *,
+    now: datetime,
+    scene: str,
+    ticket_id: str,
+) -> int | None:
+    micro_usd = spend_between(before, after)
+    ledger.record(
+        Usage(
+            at=now,
+            provider="cloudflare",
+            model_id="workers-ai",
+            station="live_playtest",
+            scene=scene,
+            ticket_id=ticket_id,
+            tokens=0,
+            usd=micro_usd / 1_000_000 if micro_usd is not None else None,
+            cost_kind="dollars" if micro_usd is not None else "unknown",
+        )
+    )
+    return micro_usd
+
+
 def _now() -> datetime:
     return datetime.now(UTC)
 
@@ -483,6 +523,7 @@ def live_playtest_handler(
     fetch_version: Callable[[str], dict[str, Any]] | None = None,
     now_fn: Callable[[], datetime] = _now,
     ledger: SpendLedger | None = None,
+    read_budget: Callable[[], dict | None] = read_worker_budget,
 ) -> StationHandler:
     """Return the station-7 grader with an injectable version fetch and runner."""
 
@@ -572,8 +613,51 @@ def live_playtest_handler(
             }
         )
         run = runner or (lambda env, timeout_s: _default_runner(repository_root, payload, env, timeout_s))
+        budget_before = _safe_budget_read(read_budget)
         try:
             completed = run(environment, _RUN_TIMEOUT_S * replicates)
+        except (LimitSleep, ProviderLimit):
+            budget_after = _safe_budget_read(read_budget)
+            _record_player_spend(
+                configured_ledger,
+                _fresh_report(repository_root, started_at),
+                prices,
+                now=now,
+                scene=scene,
+                ticket_id=ticket_id,
+            )
+            _record_cloudflare_spend(
+                configured_ledger,
+                budget_before,
+                budget_after,
+                now=now,
+                scene=scene,
+                ticket_id=ticket_id,
+            )
+            raise
+        except Exception as error:
+            budget_after = _safe_budget_read(read_budget)
+            _record_player_spend(
+                configured_ledger,
+                _fresh_report(repository_root, started_at),
+                prices,
+                now=now,
+                scene=scene,
+                ticket_id=ticket_id,
+            )
+            _record_cloudflare_spend(
+                configured_ledger,
+                budget_before,
+                budget_after,
+                now=now,
+                scene=scene,
+                ticket_id=ticket_id,
+            )
+            _raise_quota(str(error), now)
+            return StationResult(False, "live_playtest", f"runner failed: {error}", turns=None)
+
+        budget_after = _safe_budget_read(read_budget)
+        try:
             combined = "\n".join(str(getattr(completed, field, "") or "") for field in ("stdout", "stderr"))
             _raise_quota(combined, now)
         except (LimitSleep, ProviderLimit):
@@ -585,12 +669,28 @@ def live_playtest_handler(
                 scene=scene,
                 ticket_id=ticket_id,
             )
+            _record_cloudflare_spend(
+                configured_ledger,
+                budget_before,
+                budget_after,
+                now=now,
+                scene=scene,
+                ticket_id=ticket_id,
+            )
             raise
         except Exception as error:
             _record_player_spend(
                 configured_ledger,
                 _fresh_report(repository_root, started_at),
                 prices,
+                now=now,
+                scene=scene,
+                ticket_id=ticket_id,
+            )
+            _record_cloudflare_spend(
+                configured_ledger,
+                budget_before,
+                budget_after,
                 now=now,
                 scene=scene,
                 ticket_id=ticket_id,
@@ -607,6 +707,14 @@ def live_playtest_handler(
             scene=scene,
             ticket_id=ticket_id,
         )
+        micro_usd = _record_cloudflare_spend(
+            configured_ledger,
+            budget_before,
+            budget_after,
+            now=now,
+            scene=scene,
+            ticket_id=ticket_id,
+        )
         if getattr(completed, "returncode", 0) != 0:
             return StationResult(False, "live_playtest", "live playtest runner failed", turns=None)
         if report is None:
@@ -615,7 +723,13 @@ def live_playtest_handler(
         if not summary["runs"]:
             return StationResult(False, "live_playtest", "fresh report has no valid scene runs", turns=None)
         packets = report_to_packets(report)
-        output = _summary_line(summary, packets, spend, calls)
+        output = _summary_line(
+            summary,
+            packets,
+            spend,
+            calls,
+            micro_usd / 1_000_000 if micro_usd is not None else None,
+        )
         if _gate_passes(summary) and not packets:
             return StationResult(True, "live_playtest", output)
         return StationResult(False, "live_playtest", output, turns=packets or None)

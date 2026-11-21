@@ -26,6 +26,26 @@ export default {
       return respondError("UNAUTHORIZED", "Invalid token", 401, traceId);
     }
     const pathname = new URL(request.url).pathname;
+    if (pathname === "/budget") {
+      try {
+        const day = utcDay(new Date());
+        if (!env.DAILY_BUDGET) throw new Error("DAILY_BUDGET is missing");
+        const budget = env.DAILY_BUDGET.get(env.DAILY_BUDGET.idFromName(day));
+        const statusResponse = await budget.fetch("https://budget/status", { method: "POST" });
+        if (!statusResponse.ok) throw new Error(`status returned ${statusResponse.status}`);
+        const status = await statusResponse.json();
+        return json({
+          status: "ok",
+          day,
+          spent_micro_usd: status.spent,
+          reserved_micro_usd: status.reserved,
+          limit_micro_usd: dailyLimit(env.DAILY_BUDGET_USD)
+        }, 200, { "X-Worker-Revision": workerRevision });
+      } catch (error) {
+        console.error("Daily budget counter failure", { trace_id: traceId, error: String(error) });
+        return respondError("BUDGET_UNAVAILABLE", "The daily budget counter is unavailable", 503, traceId);
+      }
+    }
     const configuredModel = asString(env.CF_AI_MODEL).trim() || "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
     let model = configuredModel;
     let profile = getModelProfile(model);
@@ -172,6 +192,13 @@ export class DailyBudget {
   async fetch(request, init) {
     if (typeof request === "string") request = new Request(request, init);
     if (request.method !== "POST") return json({ status: "error" }, 405);
+    if (new URL(request.url).pathname === "/status") {
+      try {
+        return json(await this.ledger.status());
+      } catch {
+        return json({ status: "error" }, 500);
+      }
+    }
     let body;
     try {
       body = await request.json();
