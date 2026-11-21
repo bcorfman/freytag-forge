@@ -6,6 +6,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
+from factory.followups import open_followups
 from factory.guard import LimitSleep
 from factory.state import FactoryState
 from factory.tickets import LadderRung, Station, Status, Ticket, TicketQueue
@@ -19,6 +20,8 @@ class StationResult:
     check: str
     output: str
     tokens: int = 0
+    turns: list[dict] | None = None
+    routing: dict | None = None
 
 
 StationHandler = Callable[[Ticket, datetime], StationResult]
@@ -119,9 +122,15 @@ class FactoryLine:
             if ticket.station is Station.DELIVER:
                 self.queue.record_pass(ticket.id, now)
                 outcome = StepOutcome("delivered", ticket.id)
+            elif ticket.station is Station.TRIAGE:
+                opened = open_followups(self.queue, ticket, result.routing, now) if result.routing is not None else []
+                self.queue.record_pass(ticket.id, now)
+                outcome = StepOutcome("triaged", ticket.id, ",".join(item.id for item in opened))
             else:
                 updated = self.queue.get(ticket.id)
-                updated.station = Station(ticket.station + 1)
+                updated.station = (
+                    Station.DELIVER if ticket.station is Station.LIVE_PLAYTEST else Station(ticket.station + 1)
+                )
                 updated.status = Status.QUEUED
                 updated.attempts = 0
                 updated.ladder_rung = LadderRung.LUNA_RETRY
@@ -131,15 +140,28 @@ class FactoryLine:
                 self.queue.save(updated)
                 outcome = StepOutcome("advanced", ticket.id)
         else:
-            self.queue.record_failure(
-                ticket.id,
-                result.check,
-                result.output,
-                now,
-                max_attempts=self.max_attempts,
-                set_aside_s=self.set_aside_s,
-            )
-            outcome = StepOutcome("failed_attempt", ticket.id)
+            if ticket.station is Station.LIVE_PLAYTEST and isinstance(result.turns, list) and result.turns:
+                updated = self.queue.get(ticket.id)
+                updated.station = Station.TRIAGE
+                updated.status = Status.QUEUED
+                updated.attempts = 0
+                updated.ladder_rung = LadderRung.LUNA_RETRY
+                updated.provider = None
+                updated.sleep_until = None
+                updated.return_after = None
+                updated.payload["turns"] = result.turns
+                self.queue.save(updated)
+                outcome = StepOutcome("to_triage", ticket.id)
+            else:
+                self.queue.record_failure(
+                    ticket.id,
+                    result.check,
+                    result.output,
+                    now,
+                    max_attempts=self.max_attempts,
+                    set_aside_s=self.set_aside_s,
+                )
+                outcome = StepOutcome("failed_attempt", ticket.id)
 
         self._check_breakers(now)
         return outcome
