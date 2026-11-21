@@ -12,6 +12,7 @@ from storygame.runtime.cloudflare import CloudflareTurnProvider
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
 from storygame.runtime.knowledge import KnowledgeProjector
+from storygame.runtime.reveal_eligibility import explain_reveal
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.world_model import apply_world_effects, world_for
 from storygame.story_package.loader import load_story_package
@@ -97,6 +98,20 @@ def test_witnessed_recovery_hands_off_challenge_and_commits_patrol_facts(monkeyp
     assert world_for(PACKAGE, state.facts).parent("memory_card") == "kristin"
     assert world_for(PACKAGE, state.facts).parent("patrol_officer") == "kitchen"
     assert sum(text.count(CHALLENGE) for text in _texts(result)) == 1
+
+
+def test_patrol_fact_flip_selects_only_the_matching_drawer_reveal() -> None:
+    state = _state(patrol_in_house=True)
+    plain_reveal = PACKAGE.knowledge_indexes.by_id[CARD_REVEAL]
+    witnessed_reveal = PACKAGE.knowledge_indexes.by_id[WITNESSED_CARD_REVEAL]
+
+    assert not explain_reveal(state, "player", plain_reveal).eligible
+    assert explain_reveal(state, "player", witnessed_reveal).eligible
+
+    state.facts.assert_fact(Fact(predicate="patrol_in_house", subject="story", value="false"))
+
+    assert explain_reveal(state, "player", plain_reveal).eligible
+    assert not explain_reveal(state, "player", witnessed_reveal).eligible
 
 
 @pytest.mark.parametrize("departed", [False, True], ids=["before_patrol", "after_departure"])

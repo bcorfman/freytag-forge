@@ -101,7 +101,22 @@ def test_pressure_event_with_missing_conditions_waits_then_fires_once_they_arriv
     engine._activate_pacing()
 
     assert event.id in state.fired_event_ids
-    assert all(_has_value(state, effect.fact_id, effect.equals) for effect in event.effects)
+    for effect in event.effects:
+        if any(predicate.fact_id == effect.fact_id and predicate.equals != effect.equals for predicate in event.when):
+            continue
+        if any(
+            later.id != event.id
+            and later.scene_id == event.scene_id
+            and later.id in state.fired_event_ids
+            and later.at_turn >= event.at_turn
+            and any(
+                later_effect.fact_id == effect.fact_id and later_effect.equals != effect.equals
+                for later_effect in later.effects
+            )
+            for later in EVENTS
+        ):
+            continue
+        assert _has_value(state, effect.fact_id, effect.equals)
 
 
 @pytest.mark.parametrize("event", EVENTS, ids=lambda event: event.id)

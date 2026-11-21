@@ -148,6 +148,12 @@ class FactStore(BaseModel):
         return super().__eq__(other)
 
     def assert_fact(self, fact: Fact) -> None:
+        if fact.value in {"true", "false"}:
+            opposite = fact.model_copy(update={"value": "false" if fact.value == "true" else "true"})
+            if opposite in self.asserted:
+                self.retract_fact(opposite)
+            if fact in self.asserted:
+                return
         self.asserted.add(fact)
 
     def retract_fact(self, fact: Fact) -> None:
