@@ -218,6 +218,32 @@ def test_read_worker_budget_returns_none_for_missing_config_or_network_error() -
     )
 
 
+def test_default_fetch_sends_a_non_default_user_agent(monkeypatch: pytest.MonkeyPatch) -> None:
+    seen = {}
+
+    class _Response:
+        status = 200
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_):
+            return False
+
+        def read(self) -> bytes:
+            return b"{}"
+
+    def fake_urlopen(request, timeout):
+        seen["agent"] = request.get_header("User-agent")
+        return _Response()
+
+    monkeypatch.setattr("factory.cloudflare_spend.urllib.request.urlopen", fake_urlopen)
+    from factory.cloudflare_spend import _default_fetch
+
+    _default_fetch("https://worker.example/budget", "t", 1)
+    assert seen["agent"] and "urllib" not in seen["agent"].lower()
+
+
 @pytest.mark.parametrize(
     ("before", "after", "expected"),
     [

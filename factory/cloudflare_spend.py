@@ -19,7 +19,12 @@ def _default_fetch(url: str, token: str, timeout: int) -> tuple[int, str]:
     request = urllib.request.Request(
         url,
         data=b"{}",
-        headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+            # Cloudflare rejects Python's default urllib agent with error 1010.
+            "User-Agent": "freytag-factory/1.0",
+        },
         method="POST",
     )
     with urllib.request.urlopen(request, timeout=timeout) as response:
