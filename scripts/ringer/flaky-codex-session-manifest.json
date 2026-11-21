@@ -1,0 +1,29 @@
+{
+  "run_name": "flaky-codex-session",
+  "workdir": "/home/bcorfman/dev/ringer-work/flaky-codex-session",
+  "max_parallel": 1,
+  "worktrees": true,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "fix-flaky-test",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "model": "gpt-5.6-luna",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=high"
+      ],
+      "max_attempts": 2,
+      "timeout_s": 900,
+      "check_timeout_s": 300,
+      "ownership": [
+        "tests/test_factory_limits.py"
+      ],
+      "spec": "You are a Python engineer. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge (detached at HEAD). Edit files here directly. NEVER git commit, never touch /home/bcorfman/dev/freytag-forge itself, never run `uv`, never call a model or the network. FIRST run: [ -e .venv ] || ln -s /home/bcorfman/dev/freytag-forge/.venv .venv . Ruff: `.venv/bin/python -m ruff check <files>` and `.venv/bin/python -m ruff format <files>`. Never pass --cov to pytest. Run tests as `PYTHONPATH=$PWD:$PWD/packages/worldkeeper/src TMPDIR=/tmp .venv/bin/python -m pytest -q -p no:cacheprovider -n 0 tests/test_factory_limits.py`.\n\nPROBLEM. `tests/test_factory_limits.py::test_find_codex_session_prefers_latest_nested_match` is flaky in CI. It writes two session files and calls `.touch()` on each back to back, then expects `find_codex_session(\"thread\", tmp_path)` (in `factory/limits.py`, it returns `max(matches, key=mtime)`) to return the second file. On a filesystem with a coarse clock both files get the same mtime, `max` returns the first match, and the test fails (it did on CI on 2026-11-20: it returned `2026/01/a-thread.jsonl` instead of `2026/02/b-thread.jsonl`). The production code is correct; the test does not control the thing it asserts.\n\nYOUR TASK. Edit ONLY `tests/test_factory_limits.py`, ONLY that one test function. Replace the two `.touch()` calls with explicit, clearly different modification times set through `os.utime` (add `import os` in the file's import block if it is missing), for example the first file at a fixed earlier time and the second 100 seconds later, so the result does not depend on the clock. Keep the file order (second is the newer one), the names, and both assertions, including the `find_codex_session(\"missing\", tmp_path) is None` line. Do NOT edit `factory/limits.py`, do not add a sleep, a skip, an xfail or a retry, and do not touch any other test. Then run the test file and ruff.\n",
+      "check": "set -e\nWORK=/home/bcorfman/dev/ringer-work/flaky-codex-session\nmkdir -p \"$WORK/out\"\nexport PYTHONPATH=$PWD:$PWD/packages/worldkeeper/src TMPDIR=/tmp\n[ -e .venv ] || ln -s /home/bcorfman/dev/freytag-forge/.venv .venv\ngit add -A -- factory tests\nbad=$(git diff --cached --name-only | grep -vxF -e tests/test_factory_limits.py || true)\n[ -z \"$bad\" ] || { echo \"files outside ownership staged: $bad\"; exit 1; }\n[ -n \"$(git diff --cached --name-only)\" ] || { echo \"no change made\"; exit 1; }\ngit diff --cached -U0 | grep -E '^\\+' | grep -E 'os\\.utime' >/dev/null || { echo \"the fix must use os.utime\"; exit 1; }\nif git diff --cached -U0 | grep -E '^\\+' | grep -E 'sleep|skip|xfail|retry'; then echo \"no sleep, skip, xfail or retry allowed\"; exit 1; fi\nstart=$(date +%s)\n.venv/bin/python -m pytest -q -p no:cacheprovider -n 0 tests/test_factory_limits.py\nt=tests/test_factory_limits.py::test_find_codex_session_prefers_latest_nested_match\ni=0\nwhile [ $i -lt 30 ]; do\n  .venv/bin/python -m pytest -q -p no:cacheprovider -n 0 \"$t\" >/dev/null 2>&1 || { echo \"target test failed on repeat $i\"; exit 1; }\n  i=$((i+1))\ndone\ntook=$(( $(date +%s) - start ))\necho \"tests took $took s (budget 60 s)\"\n[ \"$took\" -le 60 ] || { echo \"over the 60 s budget\"; exit 1; }\n# the fixed test must still catch a wrong pick: make the code return the oldest match and expect the test to fail\ncp factory/limits.py \"$WORK/out/limits.py.orig\"\nsed -i 's/return max(matches, key=lambda path: path.stat().st_mtime, default=None)/return min(matches, key=lambda path: path.stat().st_mtime, default=None)/' factory/limits.py\nif cmp -s factory/limits.py \"$WORK/out/limits.py.orig\"; then echo \"mutation did not apply\"; exit 1; fi\nif .venv/bin/python -m pytest -q -p no:cacheprovider -n 0 \"$t\" >/dev/null 2>&1; then cp \"$WORK/out/limits.py.orig\" factory/limits.py; echo \"test still passes when the code picks the oldest file\"; exit 1; fi\ncp \"$WORK/out/limits.py.orig\" factory/limits.py\ngit status --short factory | grep . && { echo \"factory/limits.py not restored\"; exit 1; }\n.venv/bin/python -m ruff check tests/test_factory_limits.py\n.venv/bin/python -m ruff format --check tests/test_factory_limits.py\ngit diff --cached > $WORK/out/flaky.patch\ntest -s $WORK/out/flaky.patch\n",
+      "expect_files": [],
+      "verified": "Only the one test file changes, using os.utime; the test passes 30 times in a row; it fails when the code is mutated to pick the oldest file; ruff clean; under a 60 s budget."
+    }
+  ]
+}

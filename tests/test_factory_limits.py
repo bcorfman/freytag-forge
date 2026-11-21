@@ -1,5 +1,6 @@
 """Tests for pure subscription limit readers and decisions."""
 
+import os
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -68,8 +69,8 @@ def test_find_codex_session_prefers_latest_nested_match(tmp_path: Path) -> None:
     second.parent.mkdir(parents=True)
     first.write_text("")
     second.write_text("")
-    first.touch()
-    second.touch()
+    os.utime(first, (1_700_000_000, 1_700_000_000))
+    os.utime(second, (1_700_000_100, 1_700_000_100))
     assert find_codex_session("thread", tmp_path) == second
     assert find_codex_session("missing", tmp_path) is None
 
