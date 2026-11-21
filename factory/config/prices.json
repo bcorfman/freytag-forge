@@ -1,0 +1,12 @@
+{
+  "source": "https://developers.openai.com/api/docs/pricing and https://developers.openai.com/api/docs/models/gpt-5.6-luna, read 2026-11-21, Standard tier, short context (up to 272K input tokens)",
+  "unit": "usd_per_million_tokens",
+  "models": {
+    "gpt-5.6-luna": {
+      "provider": "openai",
+      "input": 0.20,
+      "cached_input": 0.02,
+      "output": 1.20
+    }
+  }
+}

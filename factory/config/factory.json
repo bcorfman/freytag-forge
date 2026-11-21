@@ -1,34 +1,39 @@
 {
   "caps": {
-    "total_budget_usd": 0.0,
+    "total_budget_usd": 5.0,
     "daily_cap_usd": {
       "claude_code": 0.0,
-      "codex": 0.0,
-      "cloudflare": 0.0
+      "codex": 2.0,
+      "cloudflare": 2.0,
+      "openai": 2.0
     },
     "providers": {
       "claude_code": {
         "kind": "subscription",
         "ceilings": {
-          "five_hour": 0.0,
-          "seven_day": 0.0
+          "five_hour": 0.8,
+          "seven_day": 0.9
         }
       },
       "codex": {
         "kind": "subscription",
         "ceilings": {
-          "five_hour": 0.0,
-          "seven_day": 0.0
+          "five_hour": 0.8,
+          "seven_day": 0.9
         }
       },
       "cloudflare": {
+        "kind": "reported",
+        "ceilings": {}
+      },
+      "openai": {
         "kind": "reported",
         "ceilings": {}
       }
     },
     "call_caps": [],
     "rate_window_s": 3600,
-    "rate_max_usd": 0.0
+    "rate_max_usd": 1.0
   },
   "breakers": {
     "repeat_failures": 3,

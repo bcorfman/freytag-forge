@@ -14,7 +14,7 @@ def make_config(tmp_path: Path, *, budget: float = 10.0, notifier: dict | None =
         (config_dir / name).write_bytes((SOURCE_CONFIG / name).read_bytes())
     data = json.loads((SOURCE_CONFIG / "factory.json").read_text(encoding="utf-8"))
     data["caps"]["total_budget_usd"] = budget
-    data["caps"]["daily_cap_usd"] = {"claude_code": 5.0, "codex": 5.0, "cloudflare": 5.0}
+    data["caps"]["daily_cap_usd"] = {"claude_code": 5.0, "codex": 5.0, "cloudflare": 5.0, "openai": 5.0}
     for provider in ("claude_code", "codex"):
         data["caps"]["providers"][provider]["ceilings"] = {"five_hour": 0.8, "seven_day": 0.8}
     if notifier is not None:
