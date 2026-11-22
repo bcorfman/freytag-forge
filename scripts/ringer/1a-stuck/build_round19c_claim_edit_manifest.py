@@ -1,0 +1,119 @@
+# ruff: noqa: E501  (spec strings are prose briefs for a worker)
+"""Round 19c: a claim-edit fix kind for the planner (add one matcher phrase to an existing claim). FREE to build.
+
+One Codex task. Usage: build_round19c_claim_edit_manifest.py
+"""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+REPO = "/home/bcorfman/dev/freytag-forge"
+WORK = "/home/bcorfman/dev/ringer-work/factory-claim-edit"
+OWNED = [
+    "factory/stations/fix_plan.py",
+    "factory/stations/planner.py",
+    "factory/stations/wiring.py",
+    "tests/test_factory_fix_plan.py",
+    "tests/test_factory_planner.py",
+    "tests/test_factory_wiring.py",
+    "tests/test_factory_claim_edit.py",
+    "tests/shard_durations.json",
+]
+ALLOW_RE = (
+    "^(factory/stations/(fix_plan|planner|wiring)\\.py|"
+    "tests/test_factory_[a-z0-9_]+\\.py|tests/shard_durations\\.json)$"
+)
+
+SPEC = """You are a Python engineer. Your current working directory IS a git worktree of @REPO@ (detached at HEAD). Edit files here directly. NEVER git commit, never touch @REPO@ itself, never run `uv`, NEVER call a model (not `claude`, not `codex`), NEVER use the network, NEVER run `python -m bench run` (it bills a real narrator). FIRST run: [ -e .venv ] || ln -s @REPO@/.venv .venv . Environment for every command: `export PYTHONPATH=$PWD:$PWD/packages/worldkeeper/src TMPDIR=/tmp`. Ruff: `.venv/bin/python -m ruff check <files>` and `.venv/bin/python -m ruff format <files>` (line length 120, Python 3.12). Never pass --cov to pytest. Run tests as `.venv/bin/python -m pytest -q -p no:cacheprovider -n 0 <files>`.
+
+BACKGROUND. The story factory's planner (`factory/stations/planner.py`) proposes ONE fix plan for a story-data ticket; `factory/stations/fix_plan.py` lints it deterministically (`lint_plan`, `_shape_problems`, `build_evidence`, `_KINDS`) and `factory/stations/wiring.py` turns it into a Ringer worker brief (`wiring_spec`) plus a check (`_check_extra`) that a worker applies through the story CLI (`.venv/bin/python -m storygame.story_cli`; read `storygame/story_cmds/cmd_set.py`: `set <address> <yaml>` replaces a value, `set <address> --add '<yaml item>'` appends to a list; a claim's matcher lists `aliases`, `action_evidence`, `must_convey`, `leak_terms` live in the scene's `<scene>.match.yaml` under `claims.<claim id>`; the address form is `claim:<claim id>.<field>`, and `[n]` may index a list; find the real working form by trying `story show` and `story set` on a COPY of the story tree, never on the real one; a claim may delegate to shared lists through a `use:` key, in which case the field lives under `shared`). The planner can only choose `add_pacing_beat` or `set_text` today. Many stuck turns are matcher misses: the player typed a natural command that satisfies an existing authored claim, but the claim's `action_evidence` does not list that wording, so the claim is never offered or never committed. `action_evidence` is a list of groups; a command matches the claim when it hits at least one phrase in EVERY group (AND across groups, OR inside a group). Read one real example in `data/stories/continuity-initiative/source/scenes/1A.match.yaml` and read `factory/precedents/stuck_turns.md` (note the lost precedent: adding `the gap`/`that gap` as reveal evidence broke a pinned behaviour, and the never-do list). This round adds a third fix kind, `edit_claim_evidence`, deliberately narrow.
+
+THE NEW KIND. Plan shape: `kind` `"edit_claim_evidence"` and exactly one sub-object `"claim_edit": {"claim_id": str, "group": int, "phrase": str}`; the plan adds `phrase` as a new alternative to group number `group` (0-based) of the claim's `action_evidence`, and changes NOTHING else. It never touches `must_convey`, `leak_terms`, `aliases`, `earn_when`, requires, effects, text, exits, transitions or pacing.
+
+BUILD 1, `fix_plan.py`. Add the kind to `_KINDS` and to `_shape_problems` (same strictness as the others: exactly the one sub-object, exactly those three fields, types checked, `group` an int and not a bool). Extend `lint_plan` with rule-labelled problems (the `plan.<rule> message` style already used), all deterministic and story-agnostic: (1) `plan.claim` the claim id must exist in the package AND belong to the ticket scene (use the package's knowledge index and the scene id the same way the existing set_text lint resolves claim ids; read how); (2) `plan.claim_shared` refuse when the claim's evidence comes from a shared `use:` list (editing it would change other claims) — read the source tree the way `_source_path` / `_source_tree` already do, or the compiled package, whichever shows this; (3) `plan.group` group index must exist in the claim's current `action_evidence`; (4) `plan.phrase` the phrase is 1 to 3 words, lower-case letters, spaces and apostrophes only, not already in that group, no id-like text, and not made only of stopwords (reuse the stopword idea in `factory/stations/diagnose.py` `STOPWORDS`; import it, do not copy it); (5) `plan.phrase_evidence` the phrase must occur as a contiguous word sequence (case-insensitive) in the `player_input` of at least one failing-turn packet whose key is in `evidence_keys`: the plan may only teach the matcher wording a player actually typed; (6) `plan.phrase_owned` the phrase must not already appear in ANY other claim's `action_evidence` or any claim's `leak_terms` in the same scene (one owner per phrase; avoids ambiguity and the lost precedent); (7) `plan.claim_offered` the claim id must be either among the `candidates_offered` of an evidence-key packet (a matcher miss on an offered claim) or the plan's reason must name it; keep this one simple: require it to be in the offered list OR to be a claim of the ticket scene (so rule 1 covers it) — implement the weaker, and document in NOTES_19C.txt; (8) the existing `plan.reason`, `plan.precedent` and `plan.evidence` rules apply unchanged. Extend `build_evidence`'s `fix_menu` with the new kind and its one-line description, and make each candidate's evidence (`_candidate_evidence`) also carry its current `action_evidence` groups (bounded: at most 8 groups and 12 phrases per group, `_bound_evidence` must still hold) and whether it uses shared lists, so the planner can pick `group`. Existing menu entries and existing evidence keys stay as they are.
+
+BUILD 2, `planner.py`. `PLANNER_BRIEF` and its JSON template gain the third kind in the same plain style (kind is one of the three; for `edit_claim_evidence` include only the claim_edit object; choose it only when a failing turn's typed words clearly mean what an existing offered claim already covers and the claim's `action_evidence` lacks that wording; add ONE short phrase copied from the player's own words; never add a bare common word; the lint checks the phrase is unowned elsewhere). Do not change any other sentence of the brief. If there is a prompt-version constant or hash used to key saved plans, bump or recompute it as the code requires.
+
+BUILD 3, `wiring.py`. `wiring_spec` gets a third `how` branch for the new kind: the worker runs `story set claim:<id>.action_evidence[<group>] --add '<yaml string of the phrase>'` (use the real working address form you found), reading every value from plan.json, and must change nothing else; if the CLI refuses, the smallest hand edit in the owned match file. `_check_extra` gets a branch for the kind that proves: the owned scene `.match.yaml` as parsed from the working tree differs from the same file at `git show HEAD:<path>` in EXACTLY one way, that the planned group of the planned claim has the phrase appended and every other value in the whole document is equal (compare the two parsed documents; print the first difference on failure); and `story_cli fmt --check` and the existing game-path test stay in the common tail. The existing two branches stay byte-for-byte as they are (the tail checks `set_text` with `plan[\"set_text\"]`; keep the structure `if add_pacing_beat ... elif edit_claim_evidence ... else set_text`, so nothing existing changes). Ownership for the new kind is the same two scene files the handler already owns.
+
+TESTS (hermetic; stubs and temp copies only; no process except the free story CLI on a temp copy, if you need it; never edit the real story). New `tests/test_factory_claim_edit.py` (under 15 seconds) plus minimal updates to existing tests where the brief, menu or evidence legitimately change (do not weaken them; the existing wiring and planner tests for the other kinds must stay as they are). Cover: every lint rule above with a passing and a failing case (use the real package, loaded once per test module, and a synthetic ticket payload built from `tests/fixtures/factory/stuck_packets_1a.json`; pick a real 1A claim and a real group for the passing case and derive phrases from the packet's own typed words); shape errors; the evidence menu and the candidate `action_evidence` carry; `wiring_spec` text for the new kind; and the check's content proof through a temp git repo or temp copy of the real 1A match file where you apply the one-phrase edit, show the check logic accepts it, and show it rejects (a) a second changed value, (b) a phrase in the wrong group, (c) a phrase appended twice. If the check logic is a heredoc inside `_check_extra`, factor the comparison into a small pure function in `wiring.py` that the heredoc calls or that the test can also import (keep the heredoc self-contained if it must run in the worktree: it may import from `factory.stations.wiring`). Add the new test file to `tests/shard_durations.json` with `.venv/bin/python scripts/regen_shard_durations.py --missing-only` (read its usage; keep that diff to the one new entry).
+
+HARD LIMITS. Edit only the owned files: @OWNED@. NEVER edit `factory/line.py`, `probe.py`, `diagnose.py`, `tickets.py`, `factory/config/*`, story data under `data/`, `bench/` or `storygame/`. Story-agnostic code: no story names, places, characters or facts in `factory/`. Write NOTES_19C.txt (worktree root, never committed) listing every ambiguity and your choice, including the working address form."""
+
+CHECK = """set -eo pipefail
+WORK=@WORK@
+mkdir -p "$WORK/out"
+export PYTHONPATH=$PWD:$PWD/packages/worldkeeper/src TMPDIR=/tmp
+[ -e .venv ] || ln -s @REPO@/.venv .venv
+test -f tests/test_factory_claim_edit.py || { echo "tests/test_factory_claim_edit.py missing"; exit 1; }
+git add -A -- factory tests
+bad=$(git diff --cached --name-only | grep -vE '@ALLOW_RE@' || true)
+[ -z "$bad" ] || { echo "files outside ownership staged: $bad"; exit 1; }
+for f in factory/line.py factory/stations/probe.py factory/stations/diagnose.py factory/tickets.py; do
+  git diff --cached --name-only | grep -qx "$f" && { echo "$f must not change"; exit 1; } || true
+done
+others=$(git diff --cached --name-only | grep '^factory/config/' || true)
+[ -z "$others" ] || { echo "config files touched: $others"; exit 1; }
+git status --porcelain -- data | grep . && { echo "story data changed"; exit 1; } || true
+grep -q "edit_claim_evidence" factory/stations/fix_plan.py || { echo "kind missing from fix_plan.py"; exit 1; }
+grep -q "edit_claim_evidence" factory/stations/planner.py || { echo "kind missing from planner.py"; exit 1; }
+grep -q "edit_claim_evidence" factory/stations/wiring.py || { echo "kind missing from wiring.py"; exit 1; }
+if grep -n -i -E "michelle|kristin|drawer|memory_card|laptop|continuity.initiative|reyes|walt|warehouse" factory/stations/fix_plan.py factory/stations/wiring.py | grep -v -E "^[^:]*:[0-9]+:.*(precedents:|reyes_rams|supervisor_impatience)"; then echo "story-specific word"; exit 1; fi
+start=$(date +%s)
+.venv/bin/python -m pytest -q -p no:cacheprovider -n 0 tests/test_factory_claim_edit.py
+took=$(( $(date +%s) - start ))
+echo "claim-edit tests took $took s (budget 15 s)"
+[ "$took" -le 15 ] || { echo "over the 15 s budget"; exit 1; }
+start=$(date +%s)
+.venv/bin/python -m pytest -q -p no:cacheprovider -n 8 tests/test_factory_fix_plan.py tests/test_factory_planner.py tests/test_factory_wiring.py tests/test_factory_line.py tests/test_factory_stations.py tests/test_factory_probe.py tests/test_factory_probe_routing.py tests/test_factory_diagnose.py tests/test_factory_followups.py tests/test_factory_frozen.py
+took=$(( $(date +%s) - start ))
+echo "factory tests took $took s (budget 150 s)"
+[ "$took" -le 150 ] || { echo "over the 150 s budget"; exit 1; }
+.venv/bin/python -m ruff check factory tests/test_factory_claim_edit.py
+.venv/bin/python -m ruff format --check factory tests/test_factory_claim_edit.py
+[ ! -e factory/state/ledger.jsonl ] || { echo "a test wrote factory/state/ledger.jsonl"; exit 1; }
+git diff --cached > "$WORK/out/claim-edit.patch"
+test -s "$WORK/out/claim-edit.patch"
+"""
+
+
+def build() -> dict:
+    def fill(text: str) -> str:
+        return (
+            text.replace("@REPO@", REPO)
+            .replace("@WORK@", WORK)
+            .replace("@OWNED@", ", ".join(OWNED))
+            .replace("@ALLOW_RE@", ALLOW_RE)
+        )
+
+    return {
+        "run_name": "factory-claim-edit",
+        "workdir": WORK,
+        "max_parallel": 1,
+        "worktrees": True,
+        "repo": REPO,
+        "tasks": [
+            {
+                "key": "claim-edit",
+                "task_type": "code-feature",
+                "engine": "codex",
+                "engine_args": ["-c", "model_reasoning_effort=high"],
+                "max_attempts": 2,
+                "timeout_s": 3600,
+                "check_timeout_s": 900,
+                "ownership": OWNED,
+                "spec": fill(SPEC),
+                "check": fill(CHECK),
+                "expect_files": [],
+                "verified": "The planner can propose adding one typed phrase to one group of an existing claim's action evidence; strict lint ties the phrase to a failing turn's own words and one owner, refuses shared lists and every other field, and the wiring check proves the match file differs from HEAD by exactly that one appended phrase.",
+            }
+        ],
+    }
+
+
+if __name__ == "__main__":
+    out = Path(__file__).with_name("round19c-claim-edit-manifest.json")
+    out.write_text(json.dumps(build(), indent=2) + "\n")
+    print(out)
