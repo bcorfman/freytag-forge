@@ -33,7 +33,7 @@
     },
     "call_caps": [],
     "rate_window_s": 3600,
-    "rate_max_usd": 1.0
+    "rate_max_usd": 1.5
   },
   "breakers": {
     "repeat_failures": 3,

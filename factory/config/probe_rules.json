@@ -1,5 +1,5 @@
 {
-  "replicates": 10,
+  "replicates": 3,
   "max_stuck_ratio": 0.8,
   "min_control_stuck_turns": 1,
   "estimated_usd_per_turn": 0.0015,

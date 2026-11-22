@@ -400,7 +400,7 @@ def _record_dollars(ledger: SpendLedger, provider: str, usd: float, at: datetime
     ("seed_provider", "seed_usd", "expected"),
     [
         ("openai", 5.0, BudgetExhausted),
-        ("openai", 1.01, BudgetExhausted),
+        ("openai", 1.51, BudgetExhausted),
         ("openai", 2.0, LimitSleep),
         ("cloudflare", 2.0, LimitSleep),
     ],

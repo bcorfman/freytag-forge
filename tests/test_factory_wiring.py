@@ -6,6 +6,7 @@ import shutil
 import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
+from types import SimpleNamespace
 
 from factory.checks.gap_delta import DEFAULT_ROOT
 from factory.manifests import lint_check
@@ -16,10 +17,12 @@ from factory.stations.wiring import (
     MAX_REPLANS,
     PROBE_CHECK_LABEL,
     _clear_previous,
+    beat_position_error,
     wiring_handler,
     wiring_spec,
 )
 from factory.tickets import Station, Ticket
+from storygame.story_package.loader import load_story_package
 
 ROOT = Path(__file__).resolve().parents[1]
 NOW = datetime(2026, 1, 1, tzinfo=UTC)
@@ -40,7 +43,7 @@ def beat_plan(ticket_id: str = "wire-ticket") -> dict:
             "verbatim": True,
             "trailing": True,
             "when": {"drawer_opened": False},
-            "sets": {},
+            "sets": {"architects_strategy_known": True},
         },
     }
 
@@ -64,6 +67,10 @@ def text_plan(ticket_id: str = "wire-ticket") -> dict:
     }
 
 
+def pacing_event(event_id: str, at_turn: int, scene_id: str = "1A") -> SimpleNamespace:
+    return SimpleNamespace(id=event_id, scene_id=scene_id, at_turn=at_turn)
+
+
 def make_ticket(plan: dict, workspace: Path, ticket_id: str = "wire-ticket") -> Ticket:
     return Ticket(
         id=ticket_id,
@@ -78,6 +85,106 @@ def make_ticket(plan: dict, workspace: Path, ticket_id: str = "wire-ticket") -> 
             "failing_turns": [{"key": "turn-1", "scene": "1A"}],
         },
     )
+
+
+def test_beat_position_error_places_a_beat_before_the_first_later_turn_event() -> None:
+    events = [pacing_event("early", 3), pacing_event("new", 9), pacing_event("later", 10), pacing_event("old", 8)]
+
+    assert beat_position_error(events, "new", "1A") is None
+
+
+def test_beat_position_error_rejects_a_beat_appended_after_a_later_turn_event() -> None:
+    events = [pacing_event("later", 10), pacing_event("new", 9)]
+
+    error = beat_position_error(events, "new", "1A")
+
+    assert error is not None
+    assert "beat new (turn 9)" in error
+    assert "event later (turn 10)" in error
+
+
+def test_beat_position_error_uses_the_end_when_no_later_turn_event_exists() -> None:
+    earlier_position = [pacing_event("new", 9), pacing_event("early", 8)]
+    end_position = [pacing_event("early", 8), pacing_event("new", 9)]
+
+    error = beat_position_error(earlier_position, "new", "1A")
+
+    assert error is not None
+    assert "at the end" in error
+    assert "position 1" in error
+    assert beat_position_error(end_position, "new", "1A") is None
+
+
+def test_beat_position_error_ignores_events_from_other_scenes() -> None:
+    events = [
+        pacing_event("early", 3),
+        pacing_event("other-scene", 99, scene_id="2A"),
+        pacing_event("new", 9),
+        pacing_event("later", 10),
+    ]
+
+    assert beat_position_error(events, "new", "1A") is None
+
+
+def test_beat_position_error_reports_a_missing_beat() -> None:
+    error = beat_position_error([pacing_event("other", 3)], "missing", "1A")
+
+    assert error == "beat missing is missing from scene 1A"
+
+
+def test_wiring_spec_add_beat_includes_position_rule_and_other_specs_are_unchanged() -> None:
+    beat_text = wiring_spec(beat_plan(), "data/stories/continuity-initiative")
+    assert "first other event in this scene whose at_turn is greater than the new beat's" in beat_text
+    assert "The CLI appends a new beat at the end" in beat_text
+    assert "move only the beat record" in beat_text
+
+    claim_plan = {
+        "version": 1,
+        "ticket_id": "wire-ticket",
+        "scene": "1A",
+        "kind": "edit_claim_evidence",
+        "reason": "Add one reviewed phrase.",
+        "evidence_keys": ["turn-1"],
+        "claim_edit": {"claim_id": "claim-1", "group": 0, "phrase": "the phrase"},
+    }
+    claim_text = wiring_spec(claim_plan, "data/stories/continuity-initiative")
+    assert claim_text.endswith(
+        "HOW:\n"
+        "Use the story CLI from the repository root, reading every value from plan.json: `"
+        ".venv/bin/python -m storygame.story_cli set claim:<id>.action_evidence[<group>] --add "
+        "'<yaml string of the phrase>'`.\n"
+        "Use claim_edit.claim_id, claim_edit.group, and claim_edit.phrase exactly as written. If the CLI refuses,\n"
+        "make the smallest hand edit in the owned match file. Preserve every other record and file. The authoritative\n"
+        "story root is data/stories/continuity-initiative.\n"
+    )
+
+    text_spec = wiring_spec(text_plan(), "data/stories/continuity-initiative")
+    assert text_spec.endswith(
+        """HOW:
+Use the story CLI from the repository root, reading the address and replacement text from
+plan.json: `.venv/bin/python -m storygame.story_cli set <address> <text>`.
+Copy the text character for character; never re-word it. If the CLI refuses, make the
+smallest hand edit necessary. Preserve every other record and file. The authoritative story
+root is data/stories/continuity-initiative.\n"""
+    )
+
+
+def test_beat_position_error_matches_the_real_compiled_scene_order() -> None:
+    package = load_story_package(DEFAULT_ROOT)
+    scene_events = [event for event in package.pacing.events if getattr(event, "scene_id", None) == "1A"]
+    first_later = next(event for event in scene_events if getattr(event, "at_turn", None) > 9)
+    fake_beat = pacing_event("wire_position_probe_1a", 9)
+    insert_at = next(index for index, event in enumerate(scene_events) if event.at_turn > fake_beat.at_turn)
+
+    inserted = [*scene_events]
+    inserted.insert(insert_at, fake_beat)
+    assert beat_position_error(inserted, fake_beat.id, "1A") is None
+
+    appended = [*scene_events, fake_beat]
+    error = beat_position_error(appended, fake_beat.id, "1A")
+    assert error is not None
+    assert first_later.id in error
+    assert f"(turn {first_later.at_turn})" in error
 
 
 def init_repo(tmp_path: Path) -> Path:

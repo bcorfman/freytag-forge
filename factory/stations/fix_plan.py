@@ -432,6 +432,11 @@ def lint_plan(plan: dict, ticket_payload: dict, package: StoryPackage) -> list[s
         facts = _declared_facts(package)
         if (set(beat["when"]) | set(beat["sets"])) - facts:
             problems.append("plan.facts beat predicates must name declared story facts")
+        if not beat["sets"]:
+            problems.append(
+                "plan.empty_effect beat must set at least one declared story fact that no other pacing event or claim "
+                "sets, or guard it with when pinned to the opposite value"
+            )
         for fact_id in sorted(beat["sets"]):
             value = beat["sets"][fact_id]
             existing = producers(package, fact_id, value)

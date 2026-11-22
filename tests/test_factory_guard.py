@@ -197,12 +197,14 @@ def test_normal_call_records_usage_and_updates_totals(tmp_path: Path) -> None:
         ticket_id="ticket",
         now=NOW,
         fn=lambda: CallResult({"ok": True}, 42, 1.25),
+        estimate_usd=1.0,
     )
 
     assert result.output == {"ok": True}
     assert ledger.total_usd() == 1.25
     assert ledger.day_usd("claude_code", date(2026, 1, 31)) == 1.25
     assert ledger.calls("claude-opus-5-5", date(2026, 1, 31), scene="scene") == 1
+    assert ledger._read()[0].estimate_usd == 1.0
 
 
 def test_rate_of_spend_breaker_names_rate(tmp_path: Path) -> None:
@@ -236,11 +238,57 @@ def test_corrupt_ledger_line_reports_line_number(tmp_path: Path) -> None:
 
 def test_ledger_survives_reopening(tmp_path: Path) -> None:
     path = tmp_path / "ledger.jsonl"
-    SpendLedger(path).record(_usage(NOW, usd=1.5))
+    SpendLedger(path).record(
+        Usage(NOW, "claude_code", "claude-opus-5-5", "prose", "scene", "ticket", 10, 1.5, estimate_usd=1.25)
+    )
 
     reopened = SpendLedger(path)
     assert reopened.total_usd() == 1.5
     assert reopened.calls("claude-opus-5-5", date(2026, 1, 31)) == 1
+    assert reopened._read()[0].estimate_usd == 1.25
+
+
+def test_old_ledger_row_without_estimate_loads_as_none(tmp_path: Path) -> None:
+    path = tmp_path / "ledger.jsonl"
+    path.write_text(
+        json.dumps(
+            {
+                "at": NOW.isoformat(),
+                "provider": "claude_code",
+                "model_id": "claude-opus-5-5",
+                "station": "prose",
+                "scene": "scene",
+                "ticket_id": "old",
+                "tokens": 3,
+                "usd": 1.25,
+            }
+        )
+        + "\n"
+    )
+
+    assert SpendLedger(path)._read()[0].estimate_usd is None
+
+
+@pytest.mark.parametrize("estimate", [-0.01, True])
+def test_usage_rejects_negative_or_boolean_estimate(estimate: object) -> None:
+    with pytest.raises(ValueError, match="estimate_usd"):
+        Usage(NOW, "claude_code", "claude-opus-5-5", "prose", "scene", "ticket", 1, 1.0, estimate_usd=estimate)
+
+
+def test_estimate_report_groups_dollar_rows_and_ignores_incomplete_rows(tmp_path: Path) -> None:
+    ledger = SpendLedger(tmp_path / "ledger.jsonl")
+    ledger.record(Usage(NOW, "provider", "model", "z-station", "scene", "one", 1, 2.0, estimate_usd=1.0))
+    ledger.record(Usage(NOW, "provider", "model", "z-station", "scene", "two", 1, 3.0, estimate_usd=2.0))
+    ledger.record(Usage(NOW, "provider", "model", "a-station", "scene", "zero", 1, 0.5, estimate_usd=0.0))
+    ledger.record(_usage(NOW, usd=4.0))
+    ledger.record(
+        Usage(NOW, "provider", "model", "ignored", "scene", "subscription", 1, None, "subscription", estimate_usd=1.0)
+    )
+
+    assert ledger.estimate_report() == [
+        {"station": "a-station", "calls": 1, "estimate_usd": 0.0, "actual_usd": 0.5, "ratio": None},
+        {"station": "z-station", "calls": 2, "estimate_usd": 3.0, "actual_usd": 5.0, "ratio": 1.67},
+    ]
 
 
 def test_subscription_usage_keeps_list_price_out_of_dollar_totals(tmp_path: Path) -> None:
@@ -308,6 +356,7 @@ def test_old_ledger_lines_default_to_dollars(tmp_path: Path) -> None:
 
     usage = SpendLedger(path)._read()[0]
     assert usage.cost_kind == "dollars"
+    assert usage.estimate_usd is None
     assert SpendLedger(path).total_usd() == 1.25
 
 

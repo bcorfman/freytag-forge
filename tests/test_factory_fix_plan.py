@@ -43,6 +43,11 @@ TICKET = {
 
 
 def beat_plan() -> dict:
+    fact_id = next(
+        fact
+        for fact in sorted(fix_plan._declared_facts(PACKAGE))
+        if not producers(PACKAGE, fact, True) and not producers(PACKAGE, fact, False)
+    )
     return {
         "version": 1,
         "ticket_id": "ticket-parent-1a-story-data",
@@ -57,7 +62,7 @@ def beat_plan() -> dict:
             "verbatim": True,
             "trailing": True,
             "when": {"memory_card_recovered": True, "michelle_lead_actionable": False},
-            "sets": {},
+            "sets": {fact_id: True},
         },
     }
 
@@ -101,6 +106,33 @@ def _drawer_gap_plan() -> dict:
 def test_valid_plans_pass() -> None:
     assert fix_plan.lint_plan(beat_plan(), TICKET, PACKAGE) == []
     assert fix_plan.lint_plan(text_plan(), TICKET, PACKAGE) == []
+
+
+def test_rejects_pacing_beat_with_empty_effects() -> None:
+    plan = beat_plan()
+    plan["beat"]["sets"] = {}
+
+    problems = fix_plan.lint_plan(plan, TICKET, PACKAGE)
+
+    assert len(problems) == 1
+    assert problems[0].startswith("plan.empty_effect")
+
+
+def test_accepts_pacing_beat_with_one_unshared_effect() -> None:
+    problems = fix_plan.lint_plan(beat_plan(), TICKET, PACKAGE)
+
+    assert not any(problem.startswith("plan.empty_effect") for problem in problems)
+    assert not any(problem.startswith(("plan.redundant_effect", "plan.shared_effect")) for problem in problems)
+
+
+def test_reports_empty_effect_with_other_beat_problem() -> None:
+    plan = beat_plan()
+    plan["beat"].update({"id": "Not a safe id", "sets": {}})
+
+    problems = fix_plan.lint_plan(plan, TICKET, PACKAGE)
+
+    assert any(problem.startswith("plan.empty_effect") for problem in problems)
+    assert any(problem.startswith("plan.beat_id") for problem in problems)
 
 
 def test_rejects_pacing_beat_with_redundant_effect() -> None:

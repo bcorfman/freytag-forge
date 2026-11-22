@@ -354,6 +354,7 @@ def _record_probe_spend(
     now: datetime,
     scene: str,
     ticket_id: str,
+    estimate_usd: float | None,
 ) -> None:
     micro_usd = spend_between(before, after)
     ledger.record(
@@ -367,6 +368,7 @@ def _record_probe_spend(
             tokens=0,
             usd=micro_usd / 1_000_000 if micro_usd is not None else None,
             cost_kind="dollars" if micro_usd is not None else "unknown",
+            estimate_usd=estimate_usd,
         )
     )
 
@@ -425,6 +427,7 @@ def probe_handler(
         if lock_path.exists() and _fresh_staged_lock(lock_path, now):
             return StationResult(False, "probe", "a staged run is in progress", tokens=0)
 
+        projected: float | None = None
         try:
             control_package, candidate_package = _story_packages(repository_root, tree, payload)
             package_hash = _package_hash(candidate_package)
@@ -539,6 +542,7 @@ def probe_handler(
                 now=now,
                 scene=getattr(ticket, "scene", payload.get("scene", "")),
                 ticket_id=str(getattr(ticket, "id", "")),
+                estimate_usd=projected,
             )
             with contextlib.suppress(OSError):
                 lock_path.unlink()

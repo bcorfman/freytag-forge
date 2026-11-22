@@ -10,19 +10,26 @@ import pytest
 
 from factory.guard import CallResult, Caps, ModelGuard, ModelNotAllowed, SpendLedger
 from factory.limits import LimitReport
+from factory.stations import fix_plan
 from factory.stations import planner as planner_module
 from factory.stations.planner import PLANNER_BRIEF, build_prompt, claude_call, extract_plan, make_planner
 from factory.tickets import Station, Ticket
+from storygame.story_package.dependencies import producers
 from storygame.story_package.loader import load_story_package
 
 ROOT = Path(__file__).parents[1]
 FIXTURE = ROOT / "tests/fixtures/factory/claude_planner_stream.jsonl"
 DEFAULT_STORY = ROOT / "data/stories/continuity-initiative"
+PACKAGE = load_story_package(DEFAULT_STORY)
 NOW = datetime(2026, 1, 1, tzinfo=UTC)
 
 
 def test_planner_brief_mentions_redundant_fact_rule() -> None:
     assert "opposite value" in PLANNER_BRIEF
+    assert (
+        "A beat's sets field must name at least one story fact, because a beat with no effect cannot compile."
+        in PLANNER_BRIEF
+    )
 
 
 def test_planner_brief_asks_for_precedents_first() -> None:
@@ -61,6 +68,11 @@ def test_planner_brief_contains_the_opus_fun_sentences() -> None:
 
 
 def _plan(ticket_id: str = "wrong", *, at_turn: int = 10, text: str | None = None) -> dict:
+    fact_id = next(
+        fact
+        for fact in sorted(fix_plan._declared_facts(PACKAGE))
+        if not producers(PACKAGE, fact, True) and not producers(PACKAGE, fact, False)
+    )
     return {
         "version": 1,
         "ticket_id": ticket_id,
@@ -75,7 +87,7 @@ def _plan(ticket_id: str = "wrong", *, at_turn: int = 10, text: str | None = Non
             "verbatim": True,
             "trailing": True,
             "when": {},
-            "sets": {},
+            "sets": {fact_id: True},
         },
     }
 

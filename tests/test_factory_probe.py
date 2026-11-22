@@ -12,6 +12,7 @@ from factory.stations.probe import (
     build_variation,
     judge_probe,
     probe_handler,
+    projected_cost_usd,
     runs_from_report,
     summarize_arm,
 )
@@ -322,6 +323,7 @@ def test_handler_full_path_reuses_hashes_and_records_spend(tmp_path: Path, monke
     assert len(ledger_rows) == 1
     assert ledger_rows[0]["station"] == "probe"
     assert ledger_rows[0]["provider"] == "cloudflare"
+    assert ledger_rows[0]["estimate_usd"] == projected_cost_usd(payload["runs"], RULES["replicates"], RULES)
     saved_handler = probe_handler(root, runner=make_runner(calls), rules=RULES, read_budget=lambda: None)
     saved = saved_handler(make_ticket(payload), NOW)
     assert saved.passed
