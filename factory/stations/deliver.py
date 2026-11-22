@@ -95,7 +95,11 @@ def _run(runner: _RUNNER, argv: list[str], cwd: Path) -> tuple[bool, str]:
 
 
 def _changed_paths(runner: _RUNNER, tree: Path) -> tuple[list[str] | None, str | None]:
-    passed, output = _run(runner, ["git", "diff", "--name-only", "origin/main", "--"], tree)
+    passed, output = _run(runner, ["git", "merge-base", "HEAD", "origin/main"], tree)
+    if not passed or not output.strip():
+        return None, "could not inspect tree diff"
+    merge_base = output.strip().splitlines()[-1]
+    passed, output = _run(runner, ["git", "diff", "--name-only", merge_base, "--"], tree)
     if not passed:
         return None, "could not inspect tree diff"
     tracked = output.splitlines()
@@ -107,18 +111,17 @@ def _changed_paths(runner: _RUNNER, tree: Path) -> tuple[list[str] | None, str |
 
 
 def _diff_hash(runner: _RUNNER, tree: Path, paths: list[str]) -> tuple[str | None, str | None]:
-    passed, tracked_diff = _run(runner, ["git", "diff", "--binary", "origin/main", "--"], tree)
-    if not passed:
-        return None, "could not read tree diff"
     digest = hashlib.sha256()
-    digest.update(tracked_diff.encode("utf-8", errors="surrogateescape"))
     for path in paths:
-        passed, untracked_diff = _run(runner, ["git", "diff", "--no-index", "--binary", "/dev/null", "--", path], tree)
-        if not passed and not untracked_diff:
-            return None, "could not read untracked file diff"
         digest.update(path.encode("utf-8", errors="surrogateescape"))
         digest.update(b"\0")
-        digest.update(untracked_diff.encode("utf-8", errors="surrogateescape"))
+        file_path = tree / path
+        try:
+            content = file_path.read_bytes() if file_path.is_file() else b"<deleted>"
+        except OSError:
+            return None, "could not read changed file"
+        digest.update(hashlib.sha256(content).hexdigest().encode("ascii"))
+        digest.update(b"\0")
     return digest.hexdigest(), None
 
 
@@ -265,25 +268,6 @@ def deliver_handler(
         payload = ticket.payload
         if payload.get("merge_to_main") is not True:
             return StationResult(False, "deliver", "ticket is not authorized to merge to main")
-        tree = ticket_tree(payload, ticket.id, repository_root)
-        if tree is None:
-            return StationResult(False, "deliver", "ticket tree not found")
-        paths, error = _changed_paths(invoke, tree)
-        if error:
-            return StationResult(False, "deliver", error)
-        assert paths is not None
-        if not paths:
-            return StationResult(False, "deliver", "empty diff against origin/main")
-        config_path = repository_root / "factory/config/frozen.json"
-        if not config_path.is_file():
-            config_path = Path(__file__).resolve().parents[1] / "config/frozen.json"
-        blocked = _blocked_paths(paths, config_path)
-        if blocked:
-            return StationResult(False, "deliver", "protected paths: " + ",".join(blocked))
-        diff_hash, error = _diff_hash(invoke, tree, paths)
-        if error or diff_hash is None:
-            return StationResult(False, "deliver", error or "could not hash tree diff")
-
         workspace_value = payload.get("workspace")
         if not isinstance(workspace_value, str):
             return StationResult(False, "deliver", "missing payload key: workspace")
@@ -291,135 +275,161 @@ def deliver_handler(
         safe_id = _safe_id(ticket.id)
         delivery_path = workspace / safe_id / "delivery.json"
         saved = _record(delivery_path) if delivery_path.exists() else None
-        if saved is not None and saved.get("diff_hash") != diff_hash:
-            return StationResult(False, "deliver", "diff changed after delivery started")
+        if saved is not None and saved.get("merged_sha") is not None:
+            record = saved
+            merged_sha = record["merged_sha"]
+            pr_number = record.get("pr_number")
+        else:
+            tree = ticket_tree(payload, ticket.id, repository_root)
+            if tree is None:
+                return StationResult(False, "deliver", "ticket tree not found")
+            paths, error = _changed_paths(invoke, tree)
+            if error:
+                return StationResult(False, "deliver", error)
+            assert paths is not None
+            has_pr = isinstance(saved.get("pr_number"), int) if saved is not None else False
+            if not has_pr:
+                if not paths:
+                    return StationResult(False, "deliver", "empty diff against origin/main")
+                config_path = repository_root / "factory/config/frozen.json"
+                if not config_path.is_file():
+                    config_path = Path(__file__).resolve().parents[1] / "config/frozen.json"
+                blocked = _blocked_paths(paths, config_path)
+                if blocked:
+                    return StationResult(False, "deliver", "protected paths: " + ",".join(blocked))
+            diff_hash, error = _diff_hash(invoke, tree, paths)
+            if error or diff_hash is None:
+                return StationResult(False, "deliver", error or "could not hash tree diff")
+            if saved is not None and saved.get("diff_hash") != diff_hash:
+                return StationResult(False, "deliver", "diff changed after delivery started")
 
-        gate_result = gate_handler(ticket, now)
-        if not gate_result.passed:
-            return StationResult(False, "deliver", "free gates failed: " + _gate_tail(gate_result.output))
-        staging_error = _staging_check(invoke, repository_root, now)
-        if staging_error:
-            return StationResult(False, "deliver", staging_error)
-
-        branch = saved.get("branch") if saved else f"factory/{safe_id}"
-        if not isinstance(branch, str) or branch != f"factory/{safe_id}":
-            return StationResult(False, "deliver", "invalid delivery branch")
-        record = {
-            "diff_hash": diff_hash,
-            "branch": branch,
-            "pr_number": saved.get("pr_number") if saved else None,
-            "merged_sha": saved.get("merged_sha") if saved else None,
-            "merged_at": saved.get("merged_at") if saved else None,
-        }
-
-        if record["merged_sha"] is None:
-            pr_number = record["pr_number"]
-            if not isinstance(pr_number, int):
-                pr_number, error = _find_pr(invoke, repository_root, branch)
-                if error:
-                    return StationResult(False, "deliver", error)
-            if pr_number is None:
-                passed, output = _run(invoke, ["git", "fetch", "origin", "main"], tree)
-                if not passed:
-                    return StationResult(False, "deliver", "git fetch failed: " + _one_line(output))
-                passed, output = _run(
-                    invoke,
-                    ["git", "rev-list", "--left-right", "--count", "HEAD...origin/main"],
-                    tree,
-                )
-                if not passed:
-                    return StationResult(False, "deliver", "could not inspect branch base")
-                try:
-                    behind = int(output.split()[1])
-                except (IndexError, ValueError):
-                    return StationResult(False, "deliver", "could not inspect branch base")
-                if behind:
-                    passed, output = _run(invoke, ["git", "rebase", "origin/main"], tree)
-                    if not passed:
-                        return StationResult(False, "deliver", "git rebase failed: " + _one_line(output))
-                passed, output = _run(invoke, ["git", "switch", "-c", branch], tree)
-                if not passed and "already exists" not in output.lower():
-                    return StationResult(False, "deliver", "could not create delivery branch")
-                passed, output = _run(invoke, ["git", "add", "--", *paths], tree)
-                if not passed:
-                    return StationResult(False, "deliver", "could not stage delivery diff")
-                message = f"Factory: {ticket.scene} {_ticket_class(ticket)} fix ({ticket.id})"
-                passed, output = _run(invoke, ["git", "commit", "--only", "-m", message, "--", *paths], tree)
-                if not passed:
-                    return StationResult(False, "deliver", "git commit failed: " + _one_line(output))
-                passed, output = _run(
-                    invoke, ["git", "push", "--force-with-lease", "origin", f"{branch}:{branch}"], tree
-                )
-                if not passed:
-                    return StationResult(False, "deliver", "git push failed: " + _one_line(output))
-                plan = payload.get("plan")
-                body_lines = [f"Ticket: {ticket.id}"]
-                if isinstance(plan, dict):
-                    for key in ("reason", "kind"):
-                        if key in plan:
-                            body_lines.append(f"{key}: {_one_line(str(plan[key]))}")
-                body_lines.extend(("Free gates output:", _gate_tail(gate_result.output)))
-                passed, output = _run(
-                    invoke,
-                    [
-                        "gh",
-                        "pr",
-                        "create",
-                        "--base",
-                        "main",
-                        "--head",
-                        branch,
-                        "--title",
-                        message,
-                        "--body",
-                        _redact("\n".join(body_lines)),
-                    ],
-                    repository_root,
-                )
-                if not passed:
-                    return StationResult(False, "deliver", "could not create pull request")
-                pr_number = _pr_number(output)
-                if pr_number is None:
-                    return StationResult(False, "deliver", "could not read pull request number")
-            record["pr_number"] = pr_number
-            _atomic_json_write(delivery_path, record)
-
-            try:
-                _ci_status(invoke, repository_root, pr_number, now)
-            except RuntimeError as error:
-                return StationResult(False, "deliver", _one_line(str(error)))
+            gate_result = gate_handler(ticket, now)
+            if not gate_result.passed:
+                return StationResult(False, "deliver", "free gates failed: " + _gate_tail(gate_result.output))
             staging_error = _staging_check(invoke, repository_root, now)
             if staging_error:
                 return StationResult(False, "deliver", staging_error)
-            passed, output = _run(
-                invoke,
-                ["gh", "pr", "merge", str(pr_number), "--merge", "--delete-branch"],
-                repository_root,
-            )
-            if not passed:
-                return StationResult(False, "deliver", "could not merge pull request")
-            passed, output = _run(
-                invoke, ["gh", "pr", "view", str(pr_number), "--json", "mergeCommit,state"], repository_root
-            )
-            if not passed:
-                return StationResult(False, "deliver", "could not read merge result")
-            try:
-                merge = json.loads(output)
-            except json.JSONDecodeError:
-                return StationResult(False, "deliver", "could not read merge result")
-            merged_sha = merge.get("mergeCommit", {}).get("oid") if isinstance(merge, dict) else None
-            if not isinstance(merged_sha, str) or not merged_sha or merge.get("state") != "MERGED":
-                return StationResult(False, "deliver", "pull request did not merge")
-            record["merged_sha"] = merged_sha
-            record["merged_at"] = clock().isoformat()
-            _atomic_json_write(delivery_path, record)
-            _run(invoke, ["git", "fetch", "--prune", "origin"], tree)
-            branch_list_passed, branch_output = _run(invoke, ["git", "branch", "--list", branch], tree)
-            if branch_list_passed and branch_output.strip():
-                _run(invoke, ["git", "branch", "-D", branch], tree)
-        else:
-            merged_sha = record["merged_sha"]
-            pr_number = record.get("pr_number")
+
+            branch = saved.get("branch") if saved else f"factory/{safe_id}"
+            if not isinstance(branch, str) or branch != f"factory/{safe_id}":
+                return StationResult(False, "deliver", "invalid delivery branch")
+            record = {
+                "diff_hash": diff_hash,
+                "branch": branch,
+                "pr_number": saved.get("pr_number") if saved else None,
+                "merged_sha": saved.get("merged_sha") if saved else None,
+                "merged_at": saved.get("merged_at") if saved else None,
+            }
+
+            if record["merged_sha"] is None:
+                pr_number = record["pr_number"]
+                if not isinstance(pr_number, int):
+                    pr_number, error = _find_pr(invoke, repository_root, branch)
+                    if error:
+                        return StationResult(False, "deliver", error)
+                if pr_number is None:
+                    passed, output = _run(invoke, ["git", "switch", "-c", branch], tree)
+                    if not passed and "already exists" not in output.lower():
+                        return StationResult(False, "deliver", "could not create delivery branch")
+                    passed, output = _run(invoke, ["git", "add", "--", *paths], tree)
+                    if not passed:
+                        return StationResult(False, "deliver", "could not stage delivery diff")
+                    message = f"Factory: {ticket.scene} {_ticket_class(ticket)} fix ({ticket.id})"
+                    passed, output = _run(invoke, ["git", "commit", "--only", "-m", message, "--", *paths], tree)
+                    if not passed:
+                        return StationResult(False, "deliver", "git commit failed: " + _one_line(output))
+                    passed, output = _run(invoke, ["git", "fetch", "origin", "main"], tree)
+                    if not passed:
+                        return StationResult(False, "deliver", "git fetch failed: " + _one_line(output))
+                    passed, output = _run(
+                        invoke,
+                        ["git", "rev-list", "--left-right", "--count", "HEAD...origin/main"],
+                        tree,
+                    )
+                    if not passed:
+                        return StationResult(False, "deliver", "could not inspect branch base")
+                    try:
+                        behind = int(output.split()[1])
+                    except (IndexError, ValueError):
+                        return StationResult(False, "deliver", "could not inspect branch base")
+                    if behind:
+                        passed, output = _run(invoke, ["git", "rebase", "origin/main"], tree)
+                        if not passed:
+                            _run(invoke, ["git", "rebase", "--abort"], tree)
+                            return StationResult(False, "deliver", "git rebase failed: " + _one_line(output))
+                    passed, output = _run(
+                        invoke, ["git", "push", "--force-with-lease", "origin", f"{branch}:{branch}"], tree
+                    )
+                    if not passed:
+                        return StationResult(False, "deliver", "git push failed: " + _one_line(output))
+                    plan = payload.get("plan")
+                    body_lines = [f"Ticket: {ticket.id}"]
+                    if isinstance(plan, dict):
+                        for key in ("reason", "kind"):
+                            if key in plan:
+                                body_lines.append(f"{key}: {_one_line(str(plan[key]))}")
+                    body_lines.extend(("Free gates output:", _gate_tail(gate_result.output)))
+                    passed, output = _run(
+                        invoke,
+                        [
+                            "gh",
+                            "pr",
+                            "create",
+                            "--base",
+                            "main",
+                            "--head",
+                            branch,
+                            "--title",
+                            message,
+                            "--body",
+                            _redact("\n".join(body_lines)),
+                        ],
+                        repository_root,
+                    )
+                    if not passed:
+                        return StationResult(False, "deliver", "could not create pull request")
+                    pr_number = _pr_number(output)
+                    if pr_number is None:
+                        return StationResult(False, "deliver", "could not read pull request number")
+                record["pr_number"] = pr_number
+                _atomic_json_write(delivery_path, record)
+
+                try:
+                    _ci_status(invoke, repository_root, pr_number, now)
+                except RuntimeError as error:
+                    return StationResult(False, "deliver", _one_line(str(error)))
+                staging_error = _staging_check(invoke, repository_root, now)
+                if staging_error:
+                    return StationResult(False, "deliver", staging_error)
+                passed, output = _run(
+                    invoke,
+                    ["gh", "pr", "merge", str(pr_number), "--merge", "--delete-branch"],
+                    repository_root,
+                )
+                if not passed:
+                    return StationResult(False, "deliver", "could not merge pull request")
+                passed, output = _run(
+                    invoke, ["gh", "pr", "view", str(pr_number), "--json", "mergeCommit,state"], repository_root
+                )
+                if not passed:
+                    return StationResult(False, "deliver", "could not read merge result")
+                try:
+                    merge = json.loads(output)
+                except json.JSONDecodeError:
+                    return StationResult(False, "deliver", "could not read merge result")
+                merged_sha = merge.get("mergeCommit", {}).get("oid") if isinstance(merge, dict) else None
+                if not isinstance(merged_sha, str) or not merged_sha or merge.get("state") != "MERGED":
+                    return StationResult(False, "deliver", "pull request did not merge")
+                record["merged_sha"] = merged_sha
+                record["merged_at"] = clock().isoformat()
+                _atomic_json_write(delivery_path, record)
+                _run(invoke, ["git", "fetch", "--prune", "origin"], tree)
+                branch_list_passed, branch_output = _run(invoke, ["git", "branch", "--list", branch], tree)
+                if branch_list_passed and branch_output.strip():
+                    _run(invoke, ["git", "branch", "-D", branch], tree)
+            else:
+                merged_sha = record["merged_sha"]
+                pr_number = record.get("pr_number")
 
         merged_at_value = record.get("merged_at")
         if not isinstance(merged_at_value, str) or not isinstance(merged_sha, str):

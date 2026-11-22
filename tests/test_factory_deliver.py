@@ -7,7 +7,7 @@ import pytest
 
 from factory.guard import LimitSleep
 from factory.line import StationResult
-from factory.stations.deliver import deliver_handler
+from factory.stations.deliver import _changed_paths, _diff_hash, deliver_handler
 from factory.tickets import Station, Ticket
 
 NOW = datetime(2026, 1, 1, 12, tzinfo=UTC)
@@ -16,6 +16,11 @@ NOW = datetime(2026, 1, 1, 12, tzinfo=UTC)
 def _git(repo: Path, *args: str) -> str:
     result = subprocess.run(["git", *args], cwd=repo, check=True, capture_output=True, text=True)
     return result.stdout.strip()
+
+
+def _local_runner(argv: list[str], cwd: Path) -> tuple[int, str]:
+    result = subprocess.run(argv, cwd=cwd, capture_output=True, text=True)
+    return result.returncode, (result.stdout or "") + (result.stderr or "")
 
 
 def _fixture(tmp_path: Path) -> tuple[Path, Ticket, Path]:
@@ -208,7 +213,7 @@ def test_fresh_staged_lock_sleeps_before_github_work(tmp_path: Path) -> None:
     assert not any(call[0] == "gh" for call in runner.calls)
 
 
-def test_stale_record_rejects_changed_diff(tmp_path: Path) -> None:
+def test_changed_content_after_start_still_fails(tmp_path: Path) -> None:
     root, ticket, _bare = _fixture(tmp_path)
     runner = GhRunner(root)
     handler = deliver_handler(root, runner=runner, gates=_passing)
@@ -221,3 +226,121 @@ def test_stale_record_rejects_changed_diff(tmp_path: Path) -> None:
 
     assert not result.passed
     assert result.output == "diff changed after delivery started"
+
+
+def test_resume_after_merge_waits_for_deploy_without_rediffing(tmp_path: Path) -> None:
+    root, ticket, _bare = _fixture(tmp_path)
+    tree = Path(ticket.payload["workspace"]) / "ticket" / "tree"
+    _git(tree, "add", "--", "README.md")
+    _git(tree, "commit", "-qm", "merged fix")
+    merged_sha = _git(tree, "rev-parse", "HEAD")
+    _git(tree, "push", "-q", "origin", "HEAD:main")
+    _git(tree, "fetch", "-q", "origin", "main")
+    record_path = Path(ticket.payload["workspace"]) / "ticket" / "delivery.json"
+    record_path.write_text(
+        json.dumps(
+            {
+                "diff_hash": "obsolete",
+                "branch": "factory/ticket",
+                "pr_number": 7,
+                "merged_sha": merged_sha,
+                "merged_at": NOW.isoformat(),
+            }
+        ),
+        encoding="utf-8",
+    )
+    runner = GhRunner(root)
+    versions = [
+        {"channel": "staging", "runtime": "scene-v1", "sha": "old"},
+        {"channel": "staging", "runtime": "scene-v1", "sha": merged_sha},
+    ]
+
+    def fetch(_url):
+        return versions.pop(0)
+
+    handler = deliver_handler(root, runner=runner, gates=_passing, fetch_version=fetch, now_fn=lambda: NOW)
+    with pytest.raises(LimitSleep, match="staging"):
+        handler(ticket, NOW)
+    result = handler(ticket, NOW)
+
+    assert result.passed
+    assert result.payload_updates == {"merged_sha": merged_sha, "expected_sha": merged_sha, "pr_number": 7}
+    assert runner.calls == []
+
+
+def test_behind_main_rebases_after_commit(tmp_path: Path) -> None:
+    root, ticket, _bare = _fixture(tmp_path)
+    (root / "unrelated.txt").write_text("main moved\n", encoding="utf-8")
+    _git(root, "add", "--", "unrelated.txt")
+    _git(root, "commit", "-qm", "unrelated main change")
+    _git(root, "push", "-q", "origin", "main")
+    runner = GhRunner(root)
+
+    with pytest.raises(LimitSleep, match="ci"):
+        deliver_handler(root, runner=runner, gates=_passing, fetch_version=lambda _url: {}, now_fn=lambda: NOW)(
+            ticket, NOW
+        )
+
+    tree = Path(ticket.payload["workspace"]) / "ticket" / "tree"
+    assert _git(tree, "show", "HEAD:README.md") == "factory fix"
+    assert _git(tree, "show", "HEAD:unrelated.txt") == "main moved"
+    assert sum(call[:3] == ["git", "rebase", "origin/main"] for call in runner.calls) == 1
+    assert sum(call[:3] == ["gh", "pr", "create"] for call in runner.calls) == 1
+
+
+def test_rebase_conflict_fails_with_git_output(tmp_path: Path) -> None:
+    root, ticket, _bare = _fixture(tmp_path)
+    (root / "README.md").write_text("conflicting main change\n", encoding="utf-8")
+    _git(root, "add", "--", "README.md")
+    _git(root, "commit", "-qm", "conflicting main change")
+    _git(root, "push", "-q", "origin", "main")
+    runner = GhRunner(root)
+
+    result = deliver_handler(root, runner=runner, gates=_passing)(ticket, NOW)
+
+    assert not result.passed
+    assert "git rebase failed:" in result.output
+    tree = Path(ticket.payload["workspace"]) / "ticket" / "tree"
+    assert _git(tree, "status", "--porcelain") == ""
+    assert ["git", "rebase", "--abort"] in runner.calls
+    assert not any(call[:3] == ["git", "push", "--force-with-lease"] for call in runner.calls)
+    assert not any(call[:3] == ["gh", "pr", "create"] for call in runner.calls)
+
+
+def test_diff_hash_is_stable_across_commit_and_main_advance(tmp_path: Path) -> None:
+    root, ticket, _bare = _fixture(tmp_path)
+    tree = Path(ticket.payload["workspace"]) / "ticket" / "tree"
+    paths_before, error = _changed_paths(_local_runner, tree)
+    assert error is None and paths_before is not None
+    hash_before, error = _diff_hash(_local_runner, tree, paths_before)
+    assert error is None and hash_before is not None
+    runner = GhRunner(root)
+
+    with pytest.raises(LimitSleep, match="ci"):
+        deliver_handler(root, runner=runner, gates=_passing, fetch_version=lambda _url: {}, now_fn=lambda: NOW)(
+            ticket, NOW
+        )
+
+    paths_after_commit, error = _changed_paths(_local_runner, tree)
+    assert error is None and paths_after_commit is not None
+    hash_after_commit, error = _diff_hash(_local_runner, tree, paths_after_commit)
+    assert error is None and hash_after_commit is not None
+    assert paths_after_commit == paths_before
+    assert hash_after_commit == hash_before
+
+    (root / "unrelated.txt").write_text("main advanced\n", encoding="utf-8")
+    _git(root, "add", "--", "unrelated.txt")
+    _git(root, "commit", "-qm", "unrelated main change")
+    _git(root, "push", "-q", "origin", "main")
+    _git(tree, "fetch", "-q", "origin", "main")
+    paths_after_main, error = _changed_paths(_local_runner, tree)
+    assert error is None and paths_after_main is not None
+    hash_after_main, error = _diff_hash(_local_runner, tree, paths_after_main)
+    assert error is None and hash_after_main is not None
+    assert paths_after_main == paths_before
+    assert hash_after_main == hash_before
+
+    with pytest.raises(LimitSleep, match="staging"):
+        deliver_handler(root, runner=runner, gates=_passing, fetch_version=lambda _url: {}, now_fn=lambda: NOW)(
+            ticket, NOW
+        )
