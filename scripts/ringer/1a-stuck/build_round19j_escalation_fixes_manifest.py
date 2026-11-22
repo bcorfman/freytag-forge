@@ -1,7 +1,7 @@
 # ruff: noqa: E501  (spec strings are prose briefs for a worker)
 """Round 19j: apply the real findings of Opus's check of the escalation code (opus-fun-check-19j.md). FREE to build.
 
-One Codex task. Usage: build_round19j_escalation_fixes_manifest.py
+One Codex task. NOTE: the first run failed only because `tests/test_factory_fun_feedback.py` was not owned (an older test had to simulate the owner's reply); the work was finished in the same worktree with the corrected ownership. Usage: build_round19j_escalation_fixes_manifest.py
 """
 
 from __future__ import annotations
@@ -18,8 +18,9 @@ OWNED = [
     "tests/test_factory_escalation.py",
     "tests/test_factory_line.py",
     "tests/test_factory_tickets.py",
+    "tests/test_factory_fun_feedback.py",
 ]
-ALLOW_RE = "^(factory/line\\.py|factory/tickets\\.py|tests/test_factory_(escalation|line|tickets)\\.py)$"
+ALLOW_RE = "^(factory/line\\.py|factory/tickets\\.py|tests/test_factory_(escalation|line|tickets|fun_feedback)\\.py)$"
 
 SPEC = """You are a Python engineer. Your current working directory IS a git worktree of @REPO@ (detached at HEAD). Edit files here directly. NEVER git commit, never touch @REPO@ itself, never run `uv`, NEVER call a model, NEVER use the network, NEVER send a real notification (tests use a stub notifier only). FIRST run: [ -e .venv ] || ln -s @REPO@/.venv .venv . Environment for every command: `export PYTHONPATH=$PWD:$PWD/packages/worldkeeper/src TMPDIR=/tmp`. Ruff: `.venv/bin/python -m ruff check <files>` and `.venv/bin/python -m ruff format <files>` (line length 120, Python 3.12). Never pass --cov to pytest. Run tests as `.venv/bin/python -m pytest -q -p no:cacheprovider -n 0 <files>`.
 

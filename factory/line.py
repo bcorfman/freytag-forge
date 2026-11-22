@@ -203,7 +203,12 @@ class FactoryLine:
         if self.notifier is None:
             return
         for ticket in self.queue.all():
-            if not isinstance(ticket.payload.get("owner_wait"), dict):
+            owner_wait = ticket.payload.get("owner_wait")
+            if (
+                not isinstance(owner_wait, dict)
+                or owner_wait.get("reason") != "fun_review_blocked_twice"
+                or owner_wait.get("reply") is not None
+            ):
                 continue
             notice = ticket.payload.get("owner_notice")
             if isinstance(notice, dict) and notice.get("sent_at") is not None:
@@ -430,6 +435,12 @@ class FactoryLine:
                             set_aside_s=self.set_aside_s,
                         )
                         self._record_fun_lessons(failed_ticket, "fun_exhausted")
+                        failed_ticket.payload["owner_wait"] = {
+                            "reason": "fun_review_blocked_twice",
+                            "since": now.astimezone(UTC).isoformat(),
+                            "reply": None,
+                        }
+                        self.queue.save(failed_ticket)
                         self._escalate_fun_impasse(failed_ticket)
                         outcome = StepOutcome("failed_attempt", ticket.id)
                 elif ticket.station is Station.LIVE_PLAYTEST and isinstance(result.turns, list) and result.turns:
@@ -485,10 +496,9 @@ class FactoryLine:
         max_steps: int = 10000,
     ) -> list[StepOutcome]:
         outcomes: list[StepOutcome] = []
-        for step_number in range(max_steps):
+        for _ in range(max_steps):
             now = clock()
-            if step_number == 0:
-                self._retry_owner_notifications(now)
+            self._retry_owner_notifications(now)
             outcome = self.step(now)
             outcomes.append(outcome)
             if outcome.kind == "halted" or self._all_passed():

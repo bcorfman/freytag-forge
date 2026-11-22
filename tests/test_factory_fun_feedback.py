@@ -250,9 +250,11 @@ def test_second_fun_block_uses_failure_ladder_and_preserves_history(tmp_path: Pa
         }
     ]
 
+    assert saved.payload["owner_wait"]["reason"] == "fun_review_blocked_twice"
     saved.station = Station.FUN_REVIEW
     saved.status = Status.QUEUED
     saved.return_after = None
+    saved.payload["owner_wait"]["reply"] = "retry"
     queue.save(saved)
     assert line.step(NOW).kind == "failed_attempt"
     repeated = queue.get(ticket.id)

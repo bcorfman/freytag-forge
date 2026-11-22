@@ -1,5 +1,7 @@
 from datetime import UTC, datetime, timedelta
 
+import pytest
+
 import factory.__main__ as entry
 from factory.line import FactoryLine, StationResult
 from factory.state import FactoryState
@@ -10,13 +12,14 @@ NOW = datetime(2026, 11, 22, 12, tzinfo=UTC)
 
 
 class StubNotifier:
-    def __init__(self, *, error: Exception | None = None) -> None:
+    def __init__(self, *, error: Exception | None = None, fail_count: int | None = None) -> None:
         self.calls: list[tuple[str, str]] = []
         self.error = error
+        self.fail_count = fail_count
 
     def notify(self, subject: str, body: str) -> None:
         self.calls.append((subject, body))
-        if self.error is not None:
+        if self.error is not None and (self.fail_count is None or len(self.calls) <= self.fail_count):
             raise self.error
 
 
@@ -37,7 +40,7 @@ def _history() -> list[dict]:
     ]
 
 
-def _ticket(tmp_path, *, with_history: bool = True) -> Ticket:
+def _ticket(tmp_path, *, with_history: bool = True, ladder_rung: LadderRung = LadderRung.OPUS_REFRESH) -> Ticket:
     timestamp = NOW.isoformat()
     payload = {
         "merge_to_main": True,
@@ -54,7 +57,7 @@ def _ticket(tmp_path, *, with_history: bool = True) -> Ticket:
         token_budget=1000,
         created_at=timestamp,
         updated_at=timestamp,
-        ladder_rung=LadderRung.OPUS_REFRESH,
+        ladder_rung=ladder_rung,
         payload=payload,
     )
 
@@ -122,19 +125,38 @@ def test_notice_is_sent_once_across_set_aside_return_and_body_has_both_plans(tmp
 def test_notifier_exception_does_not_stop_line_and_retries_stop_at_three(tmp_path) -> None:
     notifier = StubNotifier(error=RuntimeError("stub failed"))
     line, queue = _line(tmp_path, _ticket(tmp_path), notifier)
+    other = _ticket(tmp_path)
+    other.id = "other"
+    other.station = Station.ACT_CONTRACTS
+    other.created_at = (NOW + timedelta(seconds=1)).isoformat()
+    other.updated_at = other.created_at
+    queue.add(other)
+    line.handlers[Station.ACT_CONTRACTS] = lambda _ticket, _now: StationResult(False, "gate", "bad")
 
-    assert line.step(NOW).kind == "failed_attempt"
-    assert queue.get("ticket-19h").payload["owner_notice"] == {
-        "sent_at": None,
-        "attempts": 1,
-        "error": "stub failed",
-    }
-    for attempt in (2, 3):
-        line.run(clock=lambda: NOW, sleep=lambda _seconds: None, max_steps=1)
-        assert queue.get("ticket-19h").payload["owner_notice"]["attempts"] == attempt
-    line.run(clock=lambda: NOW, sleep=lambda _seconds: None, max_steps=1)
+    line.run(clock=lambda: NOW, sleep=lambda _seconds: None, max_steps=4)
+
     assert len(notifier.calls) == 3
     assert queue.get("ticket-19h").payload["owner_notice"]["attempts"] == 3
+
+
+def test_failed_notice_retries_on_next_loop_and_success_stops_retries(tmp_path) -> None:
+    notifier = StubNotifier(error=RuntimeError("stub failed"), fail_count=1)
+    line, queue = _line(tmp_path, _ticket(tmp_path), notifier)
+    other = _ticket(tmp_path)
+    other.id = "other"
+    other.station = Station.ACT_CONTRACTS
+    other.created_at = (NOW + timedelta(seconds=1)).isoformat()
+    other.updated_at = other.created_at
+    queue.add(other)
+    line.handlers[Station.ACT_CONTRACTS] = lambda _ticket, _now: StationResult(False, "gate", "bad")
+
+    line.run(clock=lambda: NOW, sleep=lambda _seconds: None, max_steps=4)
+
+    assert len(notifier.calls) == 2
+    assert queue.get("ticket-19h").payload["owner_notice"] == {
+        "sent_at": NOW.isoformat(),
+        "attempts": 2,
+    }
 
 
 def test_notifier_none_still_parks_without_owner_notice(tmp_path) -> None:
@@ -147,16 +169,53 @@ def test_notifier_none_still_parks_without_owner_notice(tmp_path) -> None:
     assert "owner_notice" not in saved.payload
 
 
-def test_ticket_without_fun_history_never_escalates(tmp_path) -> None:
+def test_ticket_without_two_fun_history_entries_never_notifies(tmp_path) -> None:
     notifier = StubNotifier()
     line, queue = _line(tmp_path, _ticket(tmp_path, with_history=False), notifier)
 
     assert line.step(NOW).kind == "failed_attempt"
     saved = queue.get("ticket-19h")
     assert saved.status is Status.SET_ASIDE
-    assert "owner_wait" not in saved.payload
+    assert saved.payload["owner_wait"] == {
+        "reason": "fun_review_blocked_twice",
+        "since": NOW.isoformat(),
+        "reply": None,
+    }
     assert "owner_notice" not in saved.payload
     assert notifier.calls == []
+
+
+@pytest.mark.parametrize(
+    "owner_wait",
+    [
+        {"reason": "manual_hold", "since": NOW.isoformat(), "reply": None},
+        {"reason": "fun_review_blocked_twice", "since": NOW.isoformat(), "reply": "retry later"},
+    ],
+)
+def test_retry_skips_unrelated_or_answered_owner_wait_tickets(tmp_path, owner_wait) -> None:
+    notifier = StubNotifier()
+    ticket = _ticket(tmp_path)
+    ticket.status = Status.SET_ASIDE
+    ticket.return_after = (NOW + timedelta(hours=1)).isoformat()
+    ticket.payload["owner_wait"] = owner_wait
+    line, queue = _line(tmp_path, ticket, notifier)
+
+    line.run(clock=lambda: NOW, sleep=lambda _seconds: None, max_steps=1)
+
+    assert notifier.calls == []
+    assert "owner_notice" not in queue.get(ticket.id).payload
+
+
+def test_second_fun_block_forces_set_aside_and_notifies_from_lower_rung(tmp_path) -> None:
+    notifier = StubNotifier()
+    line, queue = _line(tmp_path, _ticket(tmp_path, ladder_rung=LadderRung.LUNA_RETRY), notifier)
+
+    assert line.step(NOW).kind == "failed_attempt"
+    saved = queue.get("ticket-19h")
+    assert saved.status is Status.SET_ASIDE
+    assert saved.ladder_rung is LadderRung.SET_ASIDE
+    assert saved.payload["owner_wait"]["reason"] == "fun_review_blocked_twice"
+    assert len(notifier.calls) == 1
 
 
 def test_owner_wait_ticket_is_skipped_by_all_ready_paths(tmp_path) -> None:
