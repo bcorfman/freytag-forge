@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from factory.checks.gap_delta import DEFAULT_ROOT
+from storygame.story_package.dependencies import producers
 from storygame.story_package.loader import load_story_package
 from storygame.story_package.models import StoryPackage
 from storygame.story_source.lookup import _source_tree, story_text
@@ -263,6 +264,14 @@ def lint_plan(plan: dict, ticket_payload: dict, package: StoryPackage) -> list[s
         facts = _declared_facts(package)
         if (set(beat["when"]) | set(beat["sets"])) - facts:
             problems.append("plan.facts beat predicates must name declared story facts")
+        for fact_id in sorted(beat["sets"]):
+            value = beat["sets"][fact_id]
+            existing = producers(package, fact_id, value)
+            if existing and beat["when"].get(fact_id) is not (not value):
+                problems.append(
+                    f"plan.redundant_effect beat sets {fact_id}, which {existing[0].text} already sets; "
+                    f"guard when with {fact_id}: {not value} or set a fact nothing else sets"
+                )
         if set(beat["sets"]) & _exit_fact_ids(package, plan["scene"]):
             problems.append("plan.exit_trigger beat may not set an exit trigger or dependency")
         if _text_problem(beat["text"], package):

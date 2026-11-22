@@ -76,3 +76,19 @@ def test_built_manifest_round_trips_through_json(tmp_path) -> None:
     path = tmp_path / "manifest.json"
     write_manifest(manifest, path)
     assert json.loads(path.read_text(encoding="utf-8")) == manifest
+
+
+def test_manifest_uses_task_verification_sentence() -> None:
+    verified = "The exact task-specific checks pass."
+    manifest = build_manifest("run", "/repo", "/tmp", [task(verified=verified)])
+    assert manifest["tasks"][0]["verified"] == verified
+
+
+def test_manifest_builds_generic_verification_sentence_and_round_trips(tmp_path) -> None:
+    manifest = build_manifest("run", "/repo", str(tmp_path), [task()])
+    verified = manifest["tasks"][0]["verified"]
+    assert verified
+    assert "prereg" in verified
+    path = tmp_path / "manifest.json"
+    write_manifest(manifest, path)
+    assert json.loads(path.read_text(encoding="utf-8")) == manifest

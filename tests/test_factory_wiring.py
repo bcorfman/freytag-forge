@@ -13,7 +13,7 @@ from factory.checks.gap_delta import DEFAULT_ROOT
 from factory.manifests import lint_check
 from factory.stations.planner import PlanOutcome
 from factory.stations.tree import ticket_tree
-from factory.stations.wiring import wiring_handler, wiring_spec
+from factory.stations.wiring import _clear_previous, wiring_handler, wiring_spec
 from factory.tickets import Station, Ticket
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -359,6 +359,33 @@ def test_wiring_rerun_removes_the_previous_tree(tmp_path: Path) -> None:
     assert (workspace / "rerun" / "tree").is_dir()
     assert (workspace / "rerun" / "ringer" / "wire.patch").is_file()
     assert len(list(workspace.glob("rerun/tree"))) == 1
+
+
+def test_wiring_cleanup_prunes_leftover_ringer_worktree(tmp_path: Path) -> None:
+    repository = init_repo(tmp_path)
+    ticket_dir = tmp_path / "workspace" / "leftover"
+    ringer_worktree = ticket_dir / "ringer" / "wire"
+    ringer_worktree.parent.mkdir(parents=True)
+    added = subprocess.run(
+        ["git", "worktree", "add", "--detach", str(ringer_worktree), "HEAD"],
+        cwd=repository,
+        capture_output=True,
+        text=True,
+    )
+    assert added.returncode == 0, added.stderr
+
+    assert _clear_previous(repository, ticket_dir, subprocess.run) is None
+    registrations = subprocess.run(
+        ["git", "worktree", "list", "--porcelain"], cwd=repository, check=True, capture_output=True, text=True
+    ).stdout
+    assert str(ringer_worktree) not in registrations
+    second = subprocess.run(
+        ["git", "worktree", "add", "--detach", str(ringer_worktree), "HEAD"],
+        cwd=repository,
+        capture_output=True,
+        text=True,
+    )
+    assert second.returncode == 0, second.stderr
 
 
 def test_ticket_tree_rejects_missing_or_outside_workspaces(tmp_path: Path) -> None:
