@@ -84,6 +84,21 @@ def test_build_prompt_is_brief_evidence_then_verbatim_retry_context() -> None:
     assert "why" not in prompt
 
 
+def test_build_prompt_adds_check_output_after_previous_plan() -> None:
+    evidence = {"scene": "1A", "fix_menu": [{"kind": "set_text"}]}
+    previous = {"kind": "set_text", "reason": "old"}
+    check_output = "CHECK FAILED: compiled claim text differs from plan.json\n"
+
+    prompt = build_prompt(evidence, previous_plan=previous, check_output=check_output)
+
+    assert "Check output (this plan was applied and the check failed):" in prompt
+    assert check_output in prompt
+    assert prompt.index("Previous plan:") < prompt.index("Check output (this plan was applied and the check failed):")
+    without_check = build_prompt(evidence, previous_plan=previous)
+    assert "Check output (this plan was applied and the check failed):" not in without_check
+    assert build_prompt(evidence, previous_plan=previous, check_output=None) == without_check
+
+
 @pytest.mark.parametrize(
     "text, expected",
     [
@@ -217,6 +232,29 @@ def test_make_planner_retries_lint_failure_with_verdict(tmp_path: Path, monkeypa
 
     assert outcome.plan is not None and outcome.attempts == 2
     assert "plan.text beat text violates the bounded authored-text rules" in prompts[1]
+
+
+def test_make_planner_puts_check_feedback_in_first_prompt(tmp_path: Path, monkeypatch) -> None:
+    guard, caps, ledger = _guard_and_caps(tmp_path)
+    prompts: list[str] = []
+    feedback_plan = _plan()
+    check_output = "CHECK FAILED: the compiled package differs from plan.json"
+    _fake_claude(monkeypatch, [CallResult(json.dumps(_plan()), 4)], prompts)
+
+    outcome = make_planner(guard=guard, ledger=ledger, caps=caps)(
+        _ticket(),
+        load_story_package(DEFAULT_STORY),
+        NOW,
+        feedback_plan=feedback_plan,
+        check_output=check_output,
+    )
+
+    assert outcome.plan is not None
+    assert prompts[0].index("Previous plan:") < prompts[0].index(
+        "Check output (this plan was applied and the check failed):"
+    )
+    assert '"reason":"A small beat keeps the failing turn inside the scene."' in prompts[0]
+    assert check_output in prompts[0]
 
 
 def test_make_planner_returns_last_problems_after_three_bad_replies(tmp_path: Path, monkeypatch) -> None:

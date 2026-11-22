@@ -57,6 +57,8 @@ It checks that evidence_keys are taken from failing-turn packets.
 Choose a beat only when its timing and predicates are supported by the evidence.
 Choose set_text only when the evidence identifies a sentence that needs the smallest wording change.
 Reply with ONE JSON object and nothing else.
+When check output is shown, the plan was applied and the check failed, so reply with a revised plan \
+that fixes the reason shown.
 
 {
   "version": 1,
@@ -97,12 +99,15 @@ def build_prompt(
     evidence: dict,
     problems: list[str] | None = None,
     previous_plan: dict | None = None,
+    check_output: str | None = None,
 ) -> str:
     """Compose the fixed brief, evidence, and optional verbatim retry verdicts."""
 
     sections = [PLANNER_BRIEF, _compact_json(evidence)]
     if previous_plan is not None:
         sections.append("Previous plan:\n" + _compact_json(previous_plan))
+    if check_output is not None:
+        sections.append("Check output (this plan was applied and the check failed):\n" + check_output)
     if problems is not None:
         sections.append("Lint problems:\n" + "\n".join(problems))
     return "\n\n".join(sections)
@@ -255,20 +260,32 @@ def make_planner(
     max_attempts: int = 3,
     model_id: str = "claude-sonnet-5-5",
     effort: str = "high",
-) -> Callable[[Any, StoryPackage, datetime], PlanOutcome]:
+) -> Callable[..., PlanOutcome]:
     """Build a guarded planner callable for one wiring ticket."""
 
-    def planner(ticket: Any, package: StoryPackage, now: datetime) -> PlanOutcome:
+    def planner(
+        ticket: Any,
+        package: StoryPackage,
+        now: datetime,
+        *,
+        feedback_plan: dict | None = None,
+        check_output: str | None = None,
+    ) -> PlanOutcome:
         evidence = build_evidence(ticket.payload, package)
         ticket_payload = dict(ticket.payload)
         ticket_payload.setdefault("scene", ticket.scene)
         total_tokens = 0
         attempts = 0
         problems: list[str] = []
-        previous_plan: dict | None = None
+        previous_plan: dict | None = feedback_plan
 
         for _attempt in range(max_attempts):
-            prompt = build_prompt(evidence, problems if attempts else None, previous_plan)
+            prompt = build_prompt(
+                evidence,
+                problems if attempts else None,
+                previous_plan,
+                check_output if not attempts else None,
+            )
             result = guarded_call(
                 guard=guard,
                 ledger=ledger,

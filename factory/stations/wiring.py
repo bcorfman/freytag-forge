@@ -20,6 +20,8 @@ from storygame.story_package.loader import load_story_package
 
 from .fix_plan import lint_plan
 
+MAX_REPLANS = 3
+
 
 def _repository_root() -> Path:
     return Path(__file__).resolve().parents[2]
@@ -216,13 +218,56 @@ def _clear_previous(
     return None
 
 
+def _write_attempt(
+    repository_root: Path,
+    ticket_dir: Path,
+    safe_id: str,
+    plan: dict,
+    story_root: Path,
+    ownership: list[str],
+    max_attempts: int,
+) -> tuple[Path, Path]:
+    ticket_dir.mkdir(parents=True, exist_ok=True)
+    ringer_dir = ticket_dir / "ringer"
+    ringer_dir.mkdir()
+    plan_path = ticket_dir / "plan.json"
+    plan_path.write_text(json.dumps(plan, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    story_root_relative = story_root.relative_to(repository_root).as_posix()
+    manifest = build_manifest(
+        run_name=f"factory-wiring-{safe_id}",
+        repo=str(repository_root),
+        workdir=str(ringer_dir),
+        tasks=[
+            TaskSpec(
+                key="wire",
+                task_type="code-fix",
+                spec_body=wiring_spec(plan, story_root_relative),
+                verified=(
+                    "The compiled package holds the exact plan text, the story source formats cleanly, "
+                    "and the game-path completion tests pass."
+                ),
+                ownership=ownership,
+                tests=["tests/test_game_path_completion.py"],
+                check_extra=_check_extra(plan_path, story_root_relative, ownership),
+                engine="codex",
+                effort="medium",
+                max_attempts=max_attempts,
+                check_timeout_s=300,
+            )
+        ],
+    )
+    manifest_path = ticket_dir / "manifest.json"
+    write_manifest(manifest, manifest_path)
+    return manifest_path, ringer_dir
+
+
 def wiring_handler(
     root: Path | None = None,
     run_ringer: Callable[[Path, Path], subprocess.CompletedProcess] | None = None,
     run: Callable[..., subprocess.CompletedProcess] = subprocess.run,
     now_fn: Callable[[], datetime] = datetime.now,
     guard_call: Callable[[Callable[[], object]], object] | None = None,
-    planner: Callable[[Any, Any, datetime], Any] | None = None,
+    planner: Callable[..., Any] | None = None,
 ) -> StationHandler:
     """Return the station-4 handler that runs and applies one checked worker patch."""
 
@@ -233,9 +278,10 @@ def wiring_handler(
         payload = ticket.payload
         working_payload = dict(payload)
         plan = working_payload.get("plan")
+        planner_driven = not isinstance(plan, dict)
         workspace_value = working_payload.get("workspace")
         planner_tokens = 0
-        if not isinstance(plan, dict) and planner is None:
+        if planner_driven and planner is None:
             return StationResult(False, "wiring", "missing payload key: plan")
         if not isinstance(workspace_value, str):
             return StationResult(False, "wiring", "missing payload key: workspace")
@@ -243,7 +289,7 @@ def wiring_handler(
         story_root = _story_root(repository_root)
         try:
             package = load_story_package(story_root)
-            if not isinstance(plan, dict):
+            if planner_driven:
                 outcome = planner(ticket, package, now)
                 planner_tokens = outcome.tokens
                 plan = outcome.plan
@@ -289,78 +335,88 @@ def wiring_handler(
                 False, "wiring", "no owned source files exist for the plan scene", tokens=planner_tokens
             )
 
-        try:
-            ticket_dir.mkdir(parents=True, exist_ok=True)
-            ringer_dir = ticket_dir / "ringer"
-            ringer_dir.mkdir()
-            plan_path = ticket_dir / "plan.json"
-            plan_path.write_text(
-                json.dumps(plan, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-            )
-            story_root_relative = story_root.relative_to(repository_root).as_posix()
-            manifest = build_manifest(
-                run_name=f"factory-wiring-{safe_id}",
-                repo=str(repository_root),
-                workdir=str(ringer_dir),
-                tasks=[
-                    TaskSpec(
-                        key="wire",
-                        task_type="code-fix",
-                        spec_body=wiring_spec(plan, story_root_relative),
-                        verified=(
-                            "The compiled package holds the exact plan text, the story source formats cleanly, "
-                            "and the game-path completion tests pass."
-                        ),
-                        ownership=ownership,
-                        tests=["tests/test_game_path_completion.py"],
-                        check_extra=_check_extra(plan_path, story_root_relative, ownership),
-                        engine="codex",
-                        effort="medium",
-                        max_attempts=2,
-                        check_timeout_s=300,
-                    )
-                ],
-            )
-            manifest_path = ticket_dir / "manifest.json"
-            write_manifest(manifest, manifest_path)
-        except (OSError, ValueError, AssertionError, KeyError) as error:
-            return StationResult(
-                False,
-                "wiring",
-                _tail(str(error) or error.__class__.__name__),
-                tokens=planner_tokens,
-            )
-
         ringer = working_payload.get("ringer", "~/dev/ringer/ringer.py")
         if not isinstance(ringer, str):
             return StationResult(False, "wiring", "ringer must be a path string", tokens=planner_tokens)
         ringer_path = Path(ringer).expanduser()
         runner = run_ringer or _default_run_ringer
-        try:
+        max_rounds = MAX_REPLANS if planner_driven else 1
+        patch_path: Path
+        for round_number in range(max_rounds):
+            if round_number:
+                cleanup_error = _clear_previous(repository_root, ticket_dir, run)
+                if cleanup_error:
+                    return StationResult(False, "wiring", cleanup_error, tokens=planner_tokens)
+            try:
+                manifest_path, ringer_dir = _write_attempt(
+                    repository_root,
+                    ticket_dir,
+                    safe_id,
+                    plan,
+                    story_root,
+                    ownership,
+                    max_attempts=1 if planner_driven else 2,
+                )
+            except (OSError, ValueError, AssertionError, KeyError) as error:
+                return StationResult(
+                    False,
+                    "wiring",
+                    _tail(str(error) or error.__class__.__name__),
+                    tokens=planner_tokens,
+                )
+            try:
 
-            def invoke() -> subprocess.CompletedProcess:
-                return runner(manifest_path, ringer_path)
+                def invoke(manifest_path: Path = manifest_path) -> subprocess.CompletedProcess:
+                    return runner(manifest_path, ringer_path)
 
-            completed = guard_call(invoke) if guard_call is not None else invoke()
-        except (OSError, subprocess.TimeoutExpired, TypeError, ValueError) as error:
-            return StationResult(False, "wiring", _tail(str(error) or error.__class__.__name__), tokens=planner_tokens)
-        output = _output(completed)
-        returncode = getattr(completed, "returncode", 1)
-        patch_path = ringer_dir / "wire.patch"
-        if returncode != 0:
-            return StationResult(
-                False,
-                "wiring",
-                _tail(output) or f"Ringer exited with status {returncode}",
-                tokens=planner_tokens,
-            )
-        if not patch_path.is_file() or patch_path.stat().st_size == 0:
-            return StationResult(
-                False,
-                "wiring",
-                _tail(output) or "Ringer produced a missing or empty patch",
-                tokens=planner_tokens,
-            )
+                completed = guard_call(invoke) if guard_call is not None else invoke()
+            except (OSError, subprocess.TimeoutExpired, TypeError, ValueError) as error:
+                return StationResult(
+                    False, "wiring", _tail(str(error) or error.__class__.__name__), tokens=planner_tokens
+                )
+            output = _output(completed)
+            returncode = getattr(completed, "returncode", 1)
+            patch_path = ringer_dir / "wire.patch"
+            if returncode == 0 and patch_path.is_file() and patch_path.stat().st_size:
+                break
+            failure_output = _tail(output)
+            if not failure_output:
+                failure_output = (
+                    f"Ringer exited with status {returncode}"
+                    if returncode != 0
+                    else "Ringer produced a missing or empty patch"
+                )
+            if not planner_driven or round_number == max_rounds - 1:
+                return StationResult(False, "wiring", failure_output, tokens=planner_tokens)
+            try:
+                outcome = planner(
+                    ticket,
+                    package,
+                    now,
+                    feedback_plan=plan,
+                    check_output=_tail(output),
+                )
+                planner_tokens += outcome.tokens
+                plan = outcome.plan
+                if not isinstance(plan, dict):
+                    return StationResult(
+                        False,
+                        "wiring",
+                        "\n".join(outcome.problems),
+                        tokens=planner_tokens,
+                    )
+                working_payload["plan"] = plan
+                ticket_payload = dict(working_payload)
+                ticket_payload.setdefault("scene", ticket.scene)
+                problems = lint_plan(plan, ticket_payload, package)
+            except (OSError, TypeError, ValueError, KeyError) as error:
+                return StationResult(
+                    False, "wiring", _tail(str(error) or error.__class__.__name__), tokens=planner_tokens
+                )
+            if problems:
+                return StationResult(False, "wiring", "\n".join(problems), tokens=planner_tokens)
+        else:
+            return StationResult(False, "wiring", "Ringer produced a missing or empty patch", tokens=planner_tokens)
 
         tree = ticket_dir / "tree"
         added = _run_git(run, ["git", "worktree", "add", "--detach", str(tree), "HEAD"], repository_root)
