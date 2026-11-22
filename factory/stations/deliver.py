@@ -23,7 +23,7 @@ from factory.stations.tree import ticket_tree
 
 _RUNNER = Callable[[list[str], Path], tuple[int, str]]
 _MERGE_BLOCKED_PREFIXES = ("factory", ".github", "scripts")
-_SHA_RE = re.compile(r"(?:/|^)(\d+)(?:\s*)$")
+_PR_URL_NUMBER_RE = re.compile(r"/pull/(\d+)")
 
 
 def _repository_root() -> Path:
@@ -148,8 +148,11 @@ def _gate_tail(output: str) -> str:
 
 
 def _pr_number(output: str) -> int | None:
-    match = _SHA_RE.search(output.strip())
-    return int(match.group(1)) if match else None
+    match = _PR_URL_NUMBER_RE.search(output)
+    if match:
+        return int(match.group(1))
+    stripped = output.strip()
+    return int(stripped) if stripped.isdigit() else None
 
 
 def _staging_check(runner: _RUNNER, root: Path, now: datetime) -> str | None:
@@ -390,7 +393,9 @@ def deliver_handler(
                         return StationResult(False, "deliver", "could not create pull request")
                     pr_number = _pr_number(output)
                     if pr_number is None:
-                        return StationResult(False, "deliver", "could not read pull request number")
+                        pr_number, _ = _find_pr(invoke, repository_root, branch)
+                        if pr_number is None:
+                            return StationResult(False, "deliver", "could not read pull request number")
                 record["pr_number"] = pr_number
                 _atomic_json_write(delivery_path, record)
 

@@ -54,11 +54,16 @@ def _fixture(tmp_path: Path) -> tuple[Path, Ticket, Path]:
 
 
 class GhRunner:
-    def __init__(self, root: Path) -> None:
+    def __init__(
+        self, root: Path, *, create_output: str = "https://github.example.test/pull/7\n", fallback_pr_list: str = "[]"
+    ) -> None:
         self.root = root
         self.calls: list[list[str]] = []
         self.ci_calls = 0
         self.version_calls = 0
+        self.create_output = create_output
+        self.fallback_pr_list = fallback_pr_list
+        self.create_called = False
 
     def __call__(self, argv: list[str], cwd: Path) -> tuple[int, str]:
         self.calls.append(argv)
@@ -68,9 +73,10 @@ class GhRunner:
         if argv[1:4] == ["run", "list", "--branch"]:
             return 0, "[]"
         if argv[1:3] == ["pr", "list"]:
-            return 0, "[]"
+            return 0, self.fallback_pr_list if self.create_called else "[]"
         if argv[1:3] == ["pr", "create"]:
-            return 0, "https://github.example.test/pull/7\n"
+            self.create_called = True
+            return 0, self.create_output
         if argv[1:3] == ["pr", "merge"]:
             return 0, "merged\n"
         if argv[1:3] == ["pr", "view"] and "statusCheckRollup,state" in argv:
@@ -154,6 +160,61 @@ def test_happy_path_is_idempotent_and_waits_for_staging(tmp_path: Path) -> None:
     merge = next(call for call in runner.calls if call[:3] == ["gh", "pr", "merge"])
     assert "--merge" in merge and "--delete-branch" in merge
     assert "--squash" not in merge and "--rebase" not in merge
+
+
+def test_pr_number_read_from_url_followed_by_notice_lines(tmp_path: Path) -> None:
+    root, ticket, _bare = _fixture(tmp_path)
+    runner = GhRunner(
+        root,
+        create_output="https://github.example.test/pull/810\n\nnotice one\nnotice two\n",
+    )
+    versions = [
+        {"channel": "staging", "runtime": "scene-v1", "sha": "old"},
+        {"channel": "staging", "runtime": "scene-v1", "sha": "a" * 40},
+    ]
+
+    def fetch(_url):
+        return versions.pop(0)
+
+    handler = deliver_handler(root, runner=runner, gates=_passing, fetch_version=fetch, now_fn=lambda: NOW)
+    with pytest.raises(LimitSleep, match="ci"):
+        handler(ticket, NOW)
+
+    record_path = Path(ticket.payload["workspace"]) / "ticket" / "delivery.json"
+    record = json.loads(record_path.read_text(encoding="utf-8"))
+    assert record["pr_number"] == 810
+
+
+def test_pr_number_falls_back_to_branch_lookup(tmp_path: Path) -> None:
+    root, ticket, _bare = _fixture(tmp_path)
+    runner = GhRunner(
+        root, create_output="created pull request\n", fallback_pr_list='[{"number": 811, "state": "OPEN"}]'
+    )
+    versions = [
+        {"channel": "staging", "runtime": "scene-v1", "sha": "old"},
+        {"channel": "staging", "runtime": "scene-v1", "sha": "a" * 40},
+    ]
+
+    def fetch(_url):
+        return versions.pop(0)
+
+    handler = deliver_handler(root, runner=runner, gates=_passing, fetch_version=fetch, now_fn=lambda: NOW)
+    with pytest.raises(LimitSleep, match="ci"):
+        handler(ticket, NOW)
+
+    record_path = Path(ticket.payload["workspace"]) / "ticket" / "delivery.json"
+    record = json.loads(record_path.read_text(encoding="utf-8"))
+    assert record["pr_number"] == 811
+
+
+def test_pr_number_unreadable_everywhere_fails(tmp_path: Path) -> None:
+    root, ticket, _bare = _fixture(tmp_path)
+    runner = GhRunner(root, create_output="created pull request\n")
+
+    result = deliver_handler(root, runner=runner, gates=_passing)(ticket, NOW)
+
+    assert result == StationResult(False, "deliver", "could not read pull request number")
+    assert not any(call[:3] == ["gh", "pr", "merge"] for call in runner.calls)
 
 
 def test_failed_ci_returns_check_names_only(tmp_path: Path) -> None:
