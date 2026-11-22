@@ -29,7 +29,7 @@ from .fix_plan import build_evidence, lint_plan
 
 PLANNER_BRIEF = """You are a story-data fixer for an interactive-fiction engine.
 Read the evidence packet as the complete context for this ticket.
-Choose exactly one fix from the two kinds listed in the evidence packet's fix_menu.
+Choose exactly one fix from the three kinds listed in the evidence packet's fix_menu.
 Prefer the smallest change that would have let the failing turns succeed.
 Timing and wording are your decision, and nobody will be asked to choose them.
 The evidence includes precedents: fixes the project proved, fixes that lost, and things that must never be done.
@@ -45,7 +45,7 @@ Return one plan object with exactly this JSON shape.
 The version field is an integer.
 The ticket_id, scene, kind, and reason fields are strings.
 The evidence_keys field is a list of strings.
-The kind field is either "add_pacing_beat" or "set_text".
+The kind field is one of "add_pacing_beat", "set_text", or "edit_claim_evidence".
 For add_pacing_beat, include only the beat object below.
 The beat id is a string.
 The beat at_turn is an integer.
@@ -55,6 +55,8 @@ The beat when and sets fields map string fact names to boolean values.
 A beat must not set a fact another beat or claim sets unless its when guard pins that fact to the opposite value.
 For set_text, include only the set_text object below.
 The set_text address and text fields are strings.
+For edit_claim_evidence, include only the claim_edit object below.
+The claim_edit claim_id and phrase fields are strings, and group is an integer.
 
 The deterministic lint checks that a beat id uses the safe pattern and scene suffix.
 It checks that the beat turn is inside the scene window and before the handoff.
@@ -64,6 +66,9 @@ It checks that authored text has 20 to 600 characters, uses plain words, and con
 It checks that evidence_keys are taken from failing-turn packets.
 Choose a beat only when its timing and predicates are supported by the evidence.
 Choose set_text only when the evidence identifies a sentence that needs the smallest wording change.
+Choose edit_claim_evidence only when a failing turn's typed words clearly mean what an existing offered claim
+already covers and the claim's action_evidence lacks that wording. Add one short phrase copied from the player's
+own words; never add a bare common word. The lint checks that the phrase is unowned elsewhere.
 Reply with ONE JSON object and nothing else.
 When check output is shown, the plan was applied and the check failed, so reply with a revised plan \
 that fixes the reason shown.
@@ -72,7 +77,7 @@ that fixes the reason shown.
   "version": 1,
   "ticket_id": "string",
   "scene": "string",
-  "kind": "add_pacing_beat or set_text",
+  "kind": "add_pacing_beat, set_text, or edit_claim_evidence",
   "reason": "string",
   "evidence_keys": ["string"],
   "beat": {
@@ -84,7 +89,8 @@ that fixes the reason shown.
     "when": {"string": true},
     "sets": {"string": true}
   },
-  "set_text": {"address": "string", "text": "string"}
+  "set_text": {"address": "string", "text": "string"},
+  "claim_edit": {"claim_id": "string", "group": 0, "phrase": "string"}
 }
 """
 

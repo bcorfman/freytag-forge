@@ -208,6 +208,7 @@
     "tests/test_factory_canary.py": 0.04,
     "tests/test_factory_carry_matrix.py": 8.15,
     "tests/test_factory_checks.py": 0.02,
+    "tests/test_factory_claim_edit.py": 0.08,
     "tests/test_factory_contracts.py": 0.22,
     "tests/test_factory_deliver.py": 0.37,
     "tests/test_factory_diagnose.py": 0.16,
