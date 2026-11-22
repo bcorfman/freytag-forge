@@ -7,7 +7,13 @@ import pytest
 import yaml
 
 from scripts.gap_rules import main
-from storygame.story_package.gap_rules import custody_checks, exit_transitions, render_rule_results, run_gap_rules
+from storygame.story_package.gap_rules import (
+    RULES,
+    custody_checks,
+    exit_transitions,
+    render_rule_results,
+    run_gap_rules,
+)
 from storygame.story_package.loader import load_story_package
 from tests.story_source.helpers import compiled_story_copy, load_compiled_copy
 
@@ -227,6 +233,60 @@ def test_real_package_has_no_producer_results_for_every_anchor() -> None:
     for anchor in anchors:
         results = run_gap_rules(ROOT, anchor, ["no_producer"])
         assert not results, f"{anchor}: no_producer results for {', '.join(result.subject for result in results)}"
+
+
+def test_real_package_has_no_twin_reveal_results_for_every_transition_and_pacing_event() -> None:
+    package = load_story_package(ROOT)
+    anchors = [event.id for event in package.pacing.events]
+    anchors += [transition.id for transition in package.pacing.transitions]
+
+    for anchor in anchors:
+        results = run_gap_rules(ROOT, anchor, ["twin_reveals"])
+        assert not results, f"{anchor}: twin_reveals results for {', '.join(result.subject for result in results)}"
+
+
+def test_twin_reveals_seeded_defect_and_clean_variants(tmp_path: Path) -> None:
+    package_root = _copy_package(tmp_path)
+
+    def remove_when(data: dict) -> None:
+        _claim(data, "k_sl_1a_b_r0").pop("when")
+        _claim(data, "k_sl_1a_b_r0w").pop("when")
+
+    _edit_source(package_root, "scenes/1A.yaml", remove_when)
+    results = run_gap_rules(package_root, "t_1a_1b", ["twin_reveals"])
+    assert len(results) == 1
+    assert results[0].subject == "k_sl_1a_b_r0,k_sl_1a_b_r0w"
+    assert "Shared earn_when sentence" in "\n".join(results[0].evidence)
+    assert all(claim_id in "\n".join(results[0].evidence) for claim_id in ("k_sl_1a_b_r0", "k_sl_1a_b_r0w"))
+
+    def restore_when(data: dict) -> None:
+        _claim(data, "k_sl_1a_b_r0")["when"] = {"patrol_in_house": False}
+        _claim(data, "k_sl_1a_b_r0w")["when"] = {"patrol_in_house": True}
+
+    _edit_source(package_root, "scenes/1A.yaml", restore_when)
+    assert not run_gap_rules(package_root, "t_1a_1b", ["twin_reveals"])
+
+    _edit_source(package_root, "scenes/1A.yaml", remove_when)
+    _edit_source(
+        package_root,
+        "scenes/1A.yaml",
+        lambda data: _claim(data, "k_sl_1a_b_r0w").update(earn_when="searches somewhere else"),
+    )
+    assert not run_gap_rules(package_root, "t_1a_1b", ["twin_reveals"])
+
+
+def test_twin_reveals_is_registered_and_rendered(tmp_path: Path) -> None:
+    package_root = _copy_package(tmp_path)
+    _edit_source(
+        package_root,
+        "scenes/1A.yaml",
+        lambda data: (_claim(data, "k_sl_1a_b_r0").pop("when"), _claim(data, "k_sl_1a_b_r0w").pop("when")),
+    )
+    results = run_gap_rules(package_root, "t_1a_1b", ["twin_reveals"])
+
+    assert "twin_reveals" in RULES
+    rendered = render_rule_results(results, "t_1a_1b")
+    assert "### twin_reveals: k_sl_1a_b_r0,k_sl_1a_b_r0w" in rendered
 
 
 def test_unread_effect_is_an_unknown_rule() -> None:
