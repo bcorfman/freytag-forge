@@ -169,6 +169,8 @@ def open_followups(queue: TicketQueue, parent: Ticket, routing: dict, now: datet
             station = Station.CONTRACT_REFRESH
             status = Status.FAILED
             payload["needs"] = "engine_plan"
+        else:
+            payload["merge_to_main"] = True
         ticket_id = _safe_id(f"{parent.id}-{scene}-{ticket_class.value}")
         if _existing(queue, ticket_id):
             continue

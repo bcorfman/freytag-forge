@@ -14,6 +14,7 @@ and grades the newest report written after that invocation began.
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import math
 import os
@@ -516,6 +517,18 @@ def _fresh_report(root: Path, started_at: float) -> dict | None:
     return _load_json(max(fresh, key=lambda path: path.stat().st_mtime))
 
 
+def _staged_lock_path(root: Path) -> Path:
+    return root / "factory/state/staged_run.lock"
+
+
+def _fresh_staged_lock(path: Path, now: datetime) -> bool:
+    try:
+        age = _as_timestamp(now) - path.stat().st_mtime
+    except OSError:
+        return False
+    return age < timedelta(hours=6).total_seconds()
+
+
 def live_playtest_handler(
     root: Path | None = None,
     *,
@@ -614,47 +627,59 @@ def live_playtest_handler(
         )
         run = runner or (lambda env, timeout_s: _default_runner(repository_root, payload, env, timeout_s))
         budget_before = _safe_budget_read(read_budget)
+        lock_path = _staged_lock_path(repository_root)
+        if lock_path.exists() and _fresh_staged_lock(lock_path, now):
+            return StationResult(False, "live_playtest", "staged run already in progress", turns=None)
         try:
-            completed = run(environment, _RUN_TIMEOUT_S * replicates)
-        except (LimitSleep, ProviderLimit):
-            budget_after = _safe_budget_read(read_budget)
-            _record_player_spend(
-                configured_ledger,
-                _fresh_report(repository_root, started_at),
-                prices,
-                now=now,
-                scene=scene,
-                ticket_id=ticket_id,
-            )
-            _record_cloudflare_spend(
-                configured_ledger,
-                budget_before,
-                budget_after,
-                now=now,
-                scene=scene,
-                ticket_id=ticket_id,
-            )
-            raise
-        except Exception as error:
-            budget_after = _safe_budget_read(read_budget)
-            _record_player_spend(
-                configured_ledger,
-                _fresh_report(repository_root, started_at),
-                prices,
-                now=now,
-                scene=scene,
-                ticket_id=ticket_id,
-            )
-            _record_cloudflare_spend(
-                configured_ledger,
-                budget_before,
-                budget_after,
-                now=now,
-                scene=scene,
-                ticket_id=ticket_id,
-            )
-            _raise_quota(str(error), now)
-            return StationResult(False, "live_playtest", f"runner failed: {error}", turns=None)
+            lock_path.parent.mkdir(parents=True, exist_ok=True)
+            lock_path.write_text(f"{ticket_id}\n{now.isoformat()}\n", encoding="utf-8")
+        except OSError as error:
+            return StationResult(False, "live_playtest", f"could not create staged run lock: {error}", turns=None)
+        try:
+            try:
+                completed = run(environment, _RUN_TIMEOUT_S * replicates)
+            except (LimitSleep, ProviderLimit):
+                budget_after = _safe_budget_read(read_budget)
+                _record_player_spend(
+                    configured_ledger,
+                    _fresh_report(repository_root, started_at),
+                    prices,
+                    now=now,
+                    scene=scene,
+                    ticket_id=ticket_id,
+                )
+                _record_cloudflare_spend(
+                    configured_ledger,
+                    budget_before,
+                    budget_after,
+                    now=now,
+                    scene=scene,
+                    ticket_id=ticket_id,
+                )
+                raise
+            except Exception as error:
+                budget_after = _safe_budget_read(read_budget)
+                _record_player_spend(
+                    configured_ledger,
+                    _fresh_report(repository_root, started_at),
+                    prices,
+                    now=now,
+                    scene=scene,
+                    ticket_id=ticket_id,
+                )
+                _record_cloudflare_spend(
+                    configured_ledger,
+                    budget_before,
+                    budget_after,
+                    now=now,
+                    scene=scene,
+                    ticket_id=ticket_id,
+                )
+                _raise_quota(str(error), now)
+                return StationResult(False, "live_playtest", f"runner failed: {error}", turns=None)
+        finally:
+            with contextlib.suppress(OSError):
+                lock_path.unlink()
 
         budget_after = _safe_budget_read(read_budget)
         try:

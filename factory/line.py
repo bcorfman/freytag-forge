@@ -22,6 +22,7 @@ class StationResult:
     tokens: int = 0
     turns: list[dict] | None = None
     routing: dict | None = None
+    payload_updates: dict | None = None
 
 
 StationHandler = Callable[[Ticket, datetime], StationResult]
@@ -118,19 +119,35 @@ class FactoryLine:
         if provider is not None:
             self.state.lane_succeeded(provider)
         self.queue.record_tokens(ticket.id, result.tokens)
+        if result.payload_updates:
+            updated = self.queue.get(ticket.id)
+            updated.payload.update(result.payload_updates)
+            self.queue.save(updated)
         if result.passed:
-            if ticket.station is Station.DELIVER:
+            merged_payload = {**ticket.payload, **(result.payload_updates or {})}
+            merge_to_main = merged_payload.get("merge_to_main") is True
+            if ticket.station is Station.LIVE_PLAYTEST and merge_to_main:
                 self.queue.record_pass(ticket.id, now)
                 outcome = StepOutcome("delivered", ticket.id)
             elif ticket.station is Station.TRIAGE:
                 opened = open_followups(self.queue, ticket, result.routing, now) if result.routing is not None else []
                 self.queue.record_pass(ticket.id, now)
                 outcome = StepOutcome("triaged", ticket.id, ",".join(item.id for item in opened))
+            elif ticket.station is Station.DELIVER and not merge_to_main:
+                self.queue.record_pass(ticket.id, now)
+                outcome = StepOutcome("delivered", ticket.id)
             else:
                 updated = self.queue.get(ticket.id)
-                updated.station = (
-                    Station.DELIVER if ticket.station is Station.LIVE_PLAYTEST else Station(ticket.station + 1)
-                )
+                if (
+                    ticket.station is Station.LIVE_PLAYTEST
+                    or ticket.station is Station.PROMPT_SNAPSHOT
+                    and merge_to_main
+                ):
+                    updated.station = Station.DELIVER
+                elif ticket.station is Station.DELIVER and merge_to_main:
+                    updated.station = Station.LIVE_PLAYTEST
+                else:
+                    updated.station = Station(ticket.station + 1)
                 updated.status = Status.QUEUED
                 updated.attempts = 0
                 updated.ladder_rung = LadderRung.LUNA_RETRY

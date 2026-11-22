@@ -5,6 +5,7 @@ from pathlib import Path
 from factory.line import StationHandler
 from factory.tickets import Station
 
+from .deliver import deliver_handler
 from .free_gates import free_gates_handler
 from .live_playtest import live_playtest_handler
 from .planner import default_planner
@@ -48,9 +49,10 @@ def build_handlers(root: Path | None = None) -> dict[Station, StationHandler]:
             Station.PROMPT_SNAPSHOT: prompt_snapshot_handler(root),
             Station.WIRING: wiring_handler(root, planner=_lazy_planner(root)),
             Station.LIVE_PLAYTEST: live_playtest_handler(root),
+            Station.DELIVER: deliver_handler(root),
             Station.TRIAGE: triage_handler(root),
         }
     )
 
 
-# Stations 0, 1, 3 and 9 remain unbuilt.
+# Stations 0, 1 and 3 remain unbuilt.

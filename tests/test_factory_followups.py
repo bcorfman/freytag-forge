@@ -61,12 +61,14 @@ def test_followups_group_by_class_and_restart_at_the_expected_station(tmp_path: 
     assert engine.status is Status.FAILED
     assert engine.station is Station.CONTRACT_REFRESH
     assert engine.payload["needs"] == "engine_plan"
+    assert "merge_to_main" not in engine.payload
     assert engine.payload["failing_turns"] == [turns[3]]
     assert by_class[TicketClass.STORY_DATA].payload == {
         "parent": "parent",
         "class": "story_data",
         "failing_turns": [turns[0]],
         "rules": {"story": "R2"},
+        "merge_to_main": True,
     }
     assert queue.next_ready(NOW).id != engine.id
 
@@ -110,6 +112,7 @@ def test_escalation_suppresses_story_work_only_for_its_scene(tmp_path: Path) -> 
     }
     escalation = queue.get("parent-1A-story_data-escalation")
     assert escalation.station is Station.CONTRACT_REFRESH
+    assert "merge_to_main" not in escalation.payload
     assert escalation.payload["failing_turns"] == turns[:3]
     assert escalation.payload["reason"] == "three failures of one class in one scene"
 
