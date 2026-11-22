@@ -42,7 +42,7 @@ def _default_runner(argv: list[str], cwd: Path) -> tuple[int, str]:
         )
     except (OSError, subprocess.TimeoutExpired) as error:
         return 1, str(error)
-    output = "".join(str(value) for value in (completed.stdout, completed.stderr) if value)
+    output = completed.stdout if completed.returncode == 0 else completed.stdout + completed.stderr
     return completed.returncode, output
 
 
@@ -153,6 +153,23 @@ def _pr_number(output: str) -> int | None:
         return int(match.group(1))
     stripped = output.strip()
     return int(stripped) if stripped.isdigit() else None
+
+
+def _pr_merge_result(runner: _RUNNER, root: Path, pr_number: int) -> tuple[str | None, str | None]:
+    passed, output = _run(runner, ["gh", "pr", "view", str(pr_number), "--json", "mergeCommit,state"], root)
+    if not passed:
+        return None, None
+    try:
+        value = json.loads(output)
+    except json.JSONDecodeError:
+        return None, None
+    if not isinstance(value, dict):
+        return None, None
+    state_value = value.get("state")
+    state = str(state_value).upper() if isinstance(state_value, str) else None
+    merge_commit = value.get("mergeCommit")
+    merged_sha = merge_commit.get("oid") if isinstance(merge_commit, dict) else None
+    return state, merged_sha if isinstance(merged_sha, str) and merged_sha else None
 
 
 def _staging_check(runner: _RUNNER, root: Path, now: datetime) -> str | None:
@@ -278,8 +295,25 @@ def deliver_handler(
         safe_id = _safe_id(ticket.id)
         delivery_path = workspace / safe_id / "delivery.json"
         saved = _record(delivery_path) if delivery_path.exists() else None
-        if saved is not None and saved.get("merged_sha") is not None:
-            record = saved
+        record = saved
+        merged_sha = record.get("merged_sha") if record is not None else None
+        pr_number = record.get("pr_number") if record is not None else None
+        pr_state_checked = False
+        if record is not None and merged_sha is None and isinstance(pr_number, int):
+            pr_state, existing_sha = _pr_merge_result(invoke, repository_root, pr_number)
+            if pr_state is None:
+                return StationResult(False, "deliver", "could not inspect pull request state")
+            if pr_state == "CLOSED":
+                return StationResult(False, "deliver", "pull request closed without merging")
+            pr_state_checked = True
+            if pr_state == "MERGED":
+                if existing_sha is None:
+                    return StationResult(False, "deliver", "could not read merge result")
+                merged_sha = existing_sha
+                record["merged_sha"] = merged_sha
+                record["merged_at"] = clock().isoformat()
+                _atomic_json_write(delivery_path, record)
+        if record is not None and record.get("merged_sha") is not None:
             merged_sha = record["merged_sha"]
             pr_number = record.get("pr_number")
         else:
@@ -399,39 +433,51 @@ def deliver_handler(
                 record["pr_number"] = pr_number
                 _atomic_json_write(delivery_path, record)
 
-                try:
-                    _ci_status(invoke, repository_root, pr_number, now)
-                except RuntimeError as error:
-                    return StationResult(False, "deliver", _one_line(str(error)))
-                staging_error = _staging_check(invoke, repository_root, now)
-                if staging_error:
-                    return StationResult(False, "deliver", staging_error)
-                passed, output = _run(
-                    invoke,
-                    ["gh", "pr", "merge", str(pr_number), "--merge", "--delete-branch"],
-                    repository_root,
-                )
-                if not passed:
-                    return StationResult(False, "deliver", "could not merge pull request")
-                passed, output = _run(
-                    invoke, ["gh", "pr", "view", str(pr_number), "--json", "mergeCommit,state"], repository_root
-                )
-                if not passed:
-                    return StationResult(False, "deliver", "could not read merge result")
-                try:
-                    merge = json.loads(output)
-                except json.JSONDecodeError:
-                    return StationResult(False, "deliver", "could not read merge result")
-                merged_sha = merge.get("mergeCommit", {}).get("oid") if isinstance(merge, dict) else None
-                if not isinstance(merged_sha, str) or not merged_sha or merge.get("state") != "MERGED":
-                    return StationResult(False, "deliver", "pull request did not merge")
-                record["merged_sha"] = merged_sha
-                record["merged_at"] = clock().isoformat()
-                _atomic_json_write(delivery_path, record)
-                _run(invoke, ["git", "fetch", "--prune", "origin"], tree)
-                branch_list_passed, branch_output = _run(invoke, ["git", "branch", "--list", branch], tree)
-                if branch_list_passed and branch_output.strip():
-                    _run(invoke, ["git", "branch", "-D", branch], tree)
+                if not pr_state_checked:
+                    pr_state, existing_sha = _pr_merge_result(invoke, repository_root, pr_number)
+                    if pr_state is None:
+                        return StationResult(False, "deliver", "could not inspect pull request state")
+                    if pr_state == "CLOSED":
+                        return StationResult(False, "deliver", "pull request closed without merging")
+                    pr_state_checked = True
+                else:
+                    pr_state, existing_sha = "OPEN", None
+
+                if pr_state == "MERGED":
+                    if existing_sha is None:
+                        return StationResult(False, "deliver", "could not read merge result")
+                    merged_sha = existing_sha
+                    record["merged_sha"] = merged_sha
+                    record["merged_at"] = clock().isoformat()
+                    _atomic_json_write(delivery_path, record)
+                else:
+                    try:
+                        _ci_status(invoke, repository_root, pr_number, now)
+                    except RuntimeError as error:
+                        return StationResult(False, "deliver", _one_line(str(error)))
+                    staging_error = _staging_check(invoke, repository_root, now)
+                    if staging_error:
+                        return StationResult(False, "deliver", staging_error)
+                    merge_passed, _ = _run(
+                        invoke,
+                        ["gh", "pr", "merge", str(pr_number), "--merge", "--delete-branch"],
+                        repository_root,
+                    )
+                    pr_state, merged_sha = _pr_merge_result(invoke, repository_root, pr_number)
+                    if not merge_passed:
+                        if pr_state != "MERGED" or merged_sha is None:
+                            return StationResult(False, "deliver", "could not merge pull request")
+                    elif pr_state is None:
+                        return StationResult(False, "deliver", "could not read merge result")
+                    if pr_state != "MERGED" or merged_sha is None:
+                        return StationResult(False, "deliver", "pull request did not merge")
+                    record["merged_sha"] = merged_sha
+                    record["merged_at"] = clock().isoformat()
+                    _atomic_json_write(delivery_path, record)
+                    _run(invoke, ["git", "fetch", "--prune", "origin"], tree)
+                    branch_list_passed, branch_output = _run(invoke, ["git", "branch", "--list", branch], tree)
+                    if branch_list_passed and branch_output.strip():
+                        _run(invoke, ["git", "branch", "-D", branch], tree)
             else:
                 merged_sha = record["merged_sha"]
                 pr_number = record.get("pr_number")

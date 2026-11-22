@@ -7,7 +7,7 @@ import pytest
 
 from factory.guard import LimitSleep
 from factory.line import StationResult
-from factory.stations.deliver import _changed_paths, _diff_hash, deliver_handler
+from factory.stations.deliver import _changed_paths, _default_runner, _diff_hash, deliver_handler
 from factory.tickets import Station, Ticket
 
 NOW = datetime(2026, 1, 1, 12, tzinfo=UTC)
@@ -55,7 +55,14 @@ def _fixture(tmp_path: Path) -> tuple[Path, Ticket, Path]:
 
 class GhRunner:
     def __init__(
-        self, root: Path, *, create_output: str = "https://github.example.test/pull/7\n", fallback_pr_list: str = "[]"
+        self,
+        root: Path,
+        *,
+        create_output: str = "https://github.example.test/pull/7\n",
+        fallback_pr_list: str = "[]",
+        merge_code: int = 0,
+        initial_pr_state: str = "OPEN",
+        merged_pr_state: str = "MERGED",
     ) -> None:
         self.root = root
         self.calls: list[list[str]] = []
@@ -64,6 +71,9 @@ class GhRunner:
         self.create_output = create_output
         self.fallback_pr_list = fallback_pr_list
         self.create_called = False
+        self.merge_code = merge_code
+        self.pr_state = initial_pr_state
+        self.merged_pr_state = merged_pr_state
 
     def __call__(self, argv: list[str], cwd: Path) -> tuple[int, str]:
         self.calls.append(argv)
@@ -78,7 +88,8 @@ class GhRunner:
             self.create_called = True
             return 0, self.create_output
         if argv[1:3] == ["pr", "merge"]:
-            return 0, "merged\n"
+            self.pr_state = self.merged_pr_state
+            return self.merge_code, "merged\n"
         if argv[1:3] == ["pr", "view"] and "statusCheckRollup,state" in argv:
             self.ci_calls += 1
             conclusion = None if self.ci_calls == 1 else "SUCCESS"
@@ -86,6 +97,9 @@ class GhRunner:
             return 0, json.dumps(
                 {"state": "OPEN", "statusCheckRollup": [{"name": "tests", "status": status, "conclusion": conclusion}]}
             )
+        if argv[1:3] == ["pr", "view"] and "mergeCommit,state" in argv:
+            merge_commit = {"oid": "a" * 40} if self.pr_state == "MERGED" else None
+            return 0, json.dumps({"state": self.pr_state, "mergeCommit": merge_commit})
         if argv[1:3] == ["pr", "view"]:
             return 0, json.dumps({"state": "MERGED", "mergeCommit": {"oid": "a" * 40}})
         raise AssertionError(argv)
@@ -93,6 +107,35 @@ class GhRunner:
 
 def _passing(_ticket, _now):
     return StationResult(True, "free_gates", "all free gates passed")
+
+
+def test_default_runner_returns_stdout_only_on_success(tmp_path: Path) -> None:
+    executable = tmp_path / "fake-command"
+    executable.write_text(
+        "#!/bin/sh\nprintf '%s\\n' '{\"ok\": true}'\nprintf '%s\\n' 'hint: use --help' >&2\n",
+        encoding="utf-8",
+    )
+    executable.chmod(0o755)
+
+    code, output = _default_runner([str(executable)], tmp_path)
+
+    assert code == 0
+    assert json.loads(output) == {"ok": True}
+    assert output == '{"ok": true}\n'
+
+
+def test_default_runner_includes_stderr_on_failure(tmp_path: Path) -> None:
+    executable = tmp_path / "fake-command"
+    executable.write_text(
+        "#!/bin/sh\nprintf '%s\\n' '{\"ok\": false}'\nprintf '%s\\n' 'hint: command failed' >&2\nexit 1\n",
+        encoding="utf-8",
+    )
+    executable.chmod(0o755)
+
+    code, output = _default_runner([str(executable)], tmp_path)
+
+    assert code == 1
+    assert output == '{"ok": false}\nhint: command failed\n'
 
 
 def test_refuses_without_merge_authorization(tmp_path: Path) -> None:
@@ -160,6 +203,108 @@ def test_happy_path_is_idempotent_and_waits_for_staging(tmp_path: Path) -> None:
     merge = next(call for call in runner.calls if call[:3] == ["gh", "pr", "merge"])
     assert "--merge" in merge and "--delete-branch" in merge
     assert "--squash" not in merge and "--rebase" not in merge
+
+
+def test_merge_command_failing_after_the_merge_still_succeeds(tmp_path: Path) -> None:
+    root, ticket, _bare = _fixture(tmp_path)
+    runner = GhRunner(root, merge_code=1)
+    versions = [
+        {"channel": "staging", "runtime": "scene-v1", "sha": "old"},
+        {"channel": "staging", "runtime": "scene-v1", "sha": "a" * 40},
+    ]
+
+    def fetch(_url):
+        return versions.pop(0)
+
+    handler = deliver_handler(root, runner=runner, gates=_passing, fetch_version=fetch, now_fn=lambda: NOW)
+    with pytest.raises(LimitSleep, match="ci"):
+        handler(ticket, NOW)
+    with pytest.raises(LimitSleep, match="staging"):
+        handler(ticket, NOW)
+
+    record_path = Path(ticket.payload["workspace"]) / "ticket" / "delivery.json"
+    record = json.loads(record_path.read_text(encoding="utf-8"))
+    assert record["merged_sha"] == "a" * 40
+    assert record["merged_at"] == NOW.isoformat()
+    assert any(call[:3] == ["gh", "pr", "merge"] for call in runner.calls)
+
+    result = handler(ticket, NOW)
+
+    assert result.passed
+    assert result.payload_updates == {"merged_sha": "a" * 40, "expected_sha": "a" * 40, "pr_number": 7}
+
+
+def test_merge_command_failing_and_not_merged_fails(tmp_path: Path) -> None:
+    root, ticket, _bare = _fixture(tmp_path)
+    runner = GhRunner(root, merge_code=1, merged_pr_state="OPEN")
+
+    handler = deliver_handler(root, runner=runner, gates=_passing, now_fn=lambda: NOW)
+    with pytest.raises(LimitSleep, match="ci"):
+        handler(ticket, NOW)
+
+    result = handler(ticket, NOW)
+
+    assert result == StationResult(False, "deliver", "could not merge pull request")
+    assert any(call[:3] == ["gh", "pr", "merge"] for call in runner.calls)
+    record_path = Path(ticket.payload["workspace"]) / "ticket" / "delivery.json"
+    record = json.loads(record_path.read_text(encoding="utf-8"))
+    assert record["merged_sha"] is None
+
+
+def test_resume_with_already_merged_pr_skips_ci_and_merge(tmp_path: Path) -> None:
+    root, ticket, _bare = _fixture(tmp_path)
+    record_path = Path(ticket.payload["workspace"]) / "ticket" / "delivery.json"
+    record_path.write_text(
+        json.dumps(
+            {
+                "diff_hash": "obsolete",
+                "branch": "factory/ticket",
+                "pr_number": 7,
+                "merged_sha": None,
+                "merged_at": None,
+            }
+        ),
+        encoding="utf-8",
+    )
+    runner = GhRunner(root, initial_pr_state="MERGED")
+    versions = [
+        {"channel": "staging", "runtime": "scene-v1", "sha": "old"},
+        {"channel": "staging", "runtime": "scene-v1", "sha": "a" * 40},
+    ]
+
+    def fetch(_url):
+        return versions.pop(0)
+
+    handler = deliver_handler(root, runner=runner, gates=_passing, fetch_version=fetch, now_fn=lambda: NOW)
+    with pytest.raises(LimitSleep, match="staging"):
+        handler(ticket, NOW)
+
+    record = json.loads(record_path.read_text(encoding="utf-8"))
+    assert record["merged_sha"] == "a" * 40
+    assert record["merged_at"] == NOW.isoformat()
+    assert not any("statusCheckRollup,state" in call for call in runner.calls)
+    assert not any(call[:3] == ["gh", "pr", "merge"] for call in runner.calls)
+
+    result = handler(ticket, NOW)
+
+    assert result.passed
+    assert result.payload_updates == {"merged_sha": "a" * 40, "expected_sha": "a" * 40, "pr_number": 7}
+
+
+def test_closed_pr_fails(tmp_path: Path) -> None:
+    root, ticket, _bare = _fixture(tmp_path)
+    record_path = Path(ticket.payload["workspace"]) / "ticket" / "delivery.json"
+    record_path.write_text(
+        json.dumps({"branch": "factory/ticket", "pr_number": 7, "merged_sha": None, "merged_at": None}),
+        encoding="utf-8",
+    )
+    runner = GhRunner(root, initial_pr_state="CLOSED")
+
+    result = deliver_handler(root, runner=runner, gates=_passing)(ticket, NOW)
+
+    assert result == StationResult(False, "deliver", "pull request closed without merging")
+    assert not any("statusCheckRollup,state" in call for call in runner.calls)
+    assert not any(call[:3] == ["gh", "pr", "merge"] for call in runner.calls)
 
 
 def test_pr_number_read_from_url_followed_by_notice_lines(tmp_path: Path) -> None:
