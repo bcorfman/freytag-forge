@@ -25,6 +25,7 @@ class TaskSpec:
     key: str
     task_type: str = "code-feature"
     spec_body: str = ""
+    verified: str = ""
     ownership: list[str] = field(default_factory=list)
     tests: list[str] = field(default_factory=list)
     check_extra: str = ""
@@ -164,6 +165,9 @@ def build_manifest(
             seen_ownership[path] = task.key
 
         owned_sentence = ", ".join(ownership)
+        verified = task.verified or (
+            f"Checks that {task.key} changed only the owned files and the repository tests and checks it names pass."
+        )
         spec = (
             WORKER_PREAMBLE.format(repo=repo) + f"\nYou own exactly these files: {owned_sentence}.\n\n" + task.spec_body
         )
@@ -179,6 +183,7 @@ def build_manifest(
                 "timeout_s": task.timeout_s,
                 "check_timeout_s": task.check_timeout_s,
                 "ownership": ownership,
+                "verified": verified,
                 "spec": spec,
                 "check": check,
             }

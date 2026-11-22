@@ -202,9 +202,6 @@ def _clear_previous(
         completed = _run_git(run, ["git", "worktree", "remove", "--force", str(tree)], repository_root)
         if completed is None or completed.returncode != 0:
             return _tail(_output(completed)) or f"could not remove prior tree: {tree}"
-    completed = _run_git(run, ["git", "worktree", "prune"], repository_root)
-    if completed is None or completed.returncode != 0:
-        return _tail(_output(completed)) or "could not prune prior worktrees"
     for path in (ticket_dir / "manifest.json", ticket_dir / "plan.json", ticket_dir / "out", ticket_dir / "ringer"):
         try:
             if path.is_dir() and not path.is_symlink():
@@ -213,6 +210,9 @@ def _clear_previous(
                 path.unlink()
         except OSError as error:
             return str(error)
+    completed = _run_git(run, ["git", "worktree", "prune"], repository_root)
+    if completed is None or completed.returncode != 0:
+        return _tail(_output(completed)) or "could not prune prior worktrees"
     return None
 
 
@@ -307,6 +307,10 @@ def wiring_handler(
                         key="wire",
                         task_type="code-fix",
                         spec_body=wiring_spec(plan, story_root_relative),
+                        verified=(
+                            "The compiled package holds the exact plan text, the story source formats cleanly, "
+                            "and the game-path completion tests pass."
+                        ),
                         ownership=ownership,
                         tests=["tests/test_game_path_completion.py"],
                         check_extra=_check_extra(plan_path, story_root_relative, ownership),
