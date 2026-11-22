@@ -49,6 +49,7 @@ class Station(IntEnum):
     DELIVER = 9
     FUN_REVIEW = 10
     DIAGNOSE = 11
+    PROBE = 12
 
 
 class LadderRung(IntEnum):

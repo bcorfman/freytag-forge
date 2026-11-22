@@ -1,0 +1,106 @@
+{
+  "scene_id": "synthetic",
+  "package_path": "data/stories/example",
+  "runs": [
+    {
+      "status": "ok",
+      "replicate": 0,
+      "script": "synthetic-r0",
+      "scene_id": "synthetic",
+      "completed": true,
+      "turns": [
+        {
+          "turn_number": 1,
+          "player_input": "Inspect the workbench.",
+          "narration": "A plain observation.",
+          "selected_knowledge_ids": ["k1"],
+          "grounding_ids": ["g1"],
+          "left_scene": false,
+          "rejected": false,
+          "game_break": null
+        },
+        {
+          "turn_number": 2,
+          "player_input": "Open the drawer.",
+          "narration": "No new result.",
+          "selected_knowledge_ids": [],
+          "grounding_ids": [],
+          "left_scene": false,
+          "rejected": false,
+          "game_break": null
+        },
+        {
+          "turn_number": 3,
+          "player_input": "Read the label.",
+          "narration": "A second observation.",
+          "selected_knowledge_ids": [],
+          "grounding_ids": ["g2"],
+          "left_scene": false,
+          "rejected": false,
+          "game_break": null
+        },
+        {
+          "turn_number": 4,
+          "player_input": "Leave the room.",
+          "narration": "The scene changes.",
+          "selected_knowledge_ids": ["k2"],
+          "grounding_ids": ["g2"],
+          "left_scene": true,
+          "rejected": false,
+          "game_break": null
+        }
+      ],
+      "scene_transitions": [{"after_turn": 4, "cause": "play"}]
+    },
+    {
+      "status": "ok",
+      "replicate": 1,
+      "script": "synthetic-r1",
+      "scene_id": "synthetic",
+      "completed": true,
+      "turns": [
+        {
+          "turn_number": 1,
+          "player_input": "Inspect the shelf.",
+          "narration": "A plain observation.",
+          "selected_knowledge_ids": ["k1"],
+          "grounding_ids": ["g1"],
+          "left_scene": false,
+          "rejected": false,
+          "game_break": null
+        },
+        {
+          "turn_number": 2,
+          "player_input": "Check the window.",
+          "narration": "Another observation.",
+          "selected_knowledge_ids": ["k2"],
+          "grounding_ids": ["g2"],
+          "left_scene": false,
+          "rejected": false,
+          "game_break": null
+        },
+        {
+          "turn_number": 3,
+          "player_input": "Unlock the door.",
+          "narration": "The way opens.",
+          "selected_knowledge_ids": ["k3"],
+          "grounding_ids": ["g3"],
+          "left_scene": false,
+          "rejected": false,
+          "game_break": null
+        },
+        {
+          "turn_number": 4,
+          "player_input": "Cross the threshold.",
+          "narration": "The scene changes.",
+          "selected_knowledge_ids": ["k4"],
+          "grounding_ids": ["g4"],
+          "left_scene": true,
+          "rejected": false,
+          "game_break": null
+        }
+      ],
+      "scene_transitions": [{"after_turn": 4, "cause": "play"}]
+    }
+  ]
+}
