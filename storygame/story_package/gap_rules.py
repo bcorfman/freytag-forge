@@ -587,12 +587,115 @@ def _run_no_producer(package: StoryPackage, root: Path, anchor: str, exits: list
     return _no_producer_results(package, root, anchor, exits)
 
 
+def _normalized_earn_when(text: str) -> str:
+    return re.sub(r"\s+", " ", text.strip()).casefold()
+
+
+def _boolean_value(value: object) -> bool | None:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str) and value.casefold() in {"true", "false"}:
+        return value.casefold() == "true"
+    return None
+
+
+def _requires_contradict(left: KnowledgeDefinition, right: KnowledgeDefinition) -> bool:
+    left_values = {
+        predicate.fact_id: value
+        for predicate in left.requires
+        if (value := _boolean_value(predicate.equals)) is not None
+    }
+    right_values = {
+        predicate.fact_id: value
+        for predicate in right.requires
+        if (value := _boolean_value(predicate.equals)) is not None
+    }
+    return any(left_values[fact_id] != right_values[fact_id] for fact_id in left_values.keys() & right_values.keys())
+
+
+def _established_values(claim: KnowledgeDefinition) -> set[tuple[str, bool]]:
+    return {
+        (effect.fact_id, value)
+        for effect in claim.establishes
+        if effect.op == "assert" and (value := _boolean_value(effect.value)) is not None
+    }
+
+
+def _cannot_be_eligible_together(left: KnowledgeDefinition, right: KnowledgeDefinition) -> bool:
+    if _requires_contradict(left, right):
+        return True
+    left_requires = {
+        (predicate.fact_id, value)
+        for predicate in left.requires
+        if (value := _boolean_value(predicate.equals)) is not None
+    }
+    right_requires = {
+        (predicate.fact_id, value)
+        for predicate in right.requires
+        if (value := _boolean_value(predicate.equals)) is not None
+    }
+    return bool(_established_values(left) & right_requires or _established_values(right) & left_requires)
+
+
+def _requires_text(claim: KnowledgeDefinition) -> str:
+    return ", ".join(f"{predicate.fact_id}={predicate.equals!r}" for predicate in claim.requires) or "none"
+
+
+def _twin_reveals_results(package: StoryPackage, root: Path, anchor: str, exits: list[Transition]) -> list[RuleResult]:
+    scenes = {transition.source_scene_id for transition in exits}
+    if not scenes:
+        _, item = _anchor_item(package, anchor)
+        scenes = {item.scene_id}
+
+    claims = sorted(
+        (
+            claim
+            for claim in package.knowledge.knowledge
+            if claim.earn_when
+            and _normalized_earn_when(claim.earn_when)
+            and scenes.intersection(claim.available_in_scenes)
+        ),
+        key=lambda claim: claim.id,
+    )
+    results: list[RuleResult] = []
+    for index, left in enumerate(claims):
+        for right in claims[index + 1 :]:
+            if _normalized_earn_when(left.earn_when) != _normalized_earn_when(right.earn_when):
+                continue
+            if _cannot_be_eligible_together(left, right):
+                continue
+            left_id, right_id = sorted((left.id, right.id))
+            results.append(
+                RuleResult(
+                    rule="twin_reveals",
+                    anchor=anchor,
+                    subject=f"{left_id},{right_id}",
+                    summary=(
+                        f"{left_id} and {right_id} share the earn_when sentence and can be eligible together, "
+                        "so the matcher can match both and the engine refuses the command."
+                    ),
+                    evidence=(
+                        _located(root, f"Shared earn_when sentence: {left.earn_when!r}.", left.id),
+                        _located(root, f"{left.id} requires: {_requires_text(left)}.", left.id),
+                        _located(root, f"{right.id} shares earn_when sentence: {right.earn_when!r}.", right.id),
+                        _located(root, f"{right.id} requires: {_requires_text(right)}.", right.id),
+                    ),
+                )
+            )
+    return results
+
+
+def _run_twin_reveals(package: StoryPackage, root: Path, anchor: str, exits: list[Transition]) -> list[RuleResult]:
+    return _twin_reveals_results(package, root, anchor, exits)
+
+
 RULES: dict[str, Callable] = {
     "custody": _run_custody,
     "co_location": _run_co_location,
     "no_strand": _run_no_strand,
     "single_reveal_strand": _run_single_reveal_strand,
     "no_producer": _run_no_producer,
+    "twin_reveals": _run_twin_reveals,
 }
 
 
