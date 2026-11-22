@@ -562,8 +562,7 @@ Not a defect: examining props after `SL-1A-G` has fired is flagged "stuck" by th
 **Resume here (2026-11-22).** Read this block first; the round entries above are the evidence.
 
 **Where things stand.**
-- `main` is at `913a2d6d` (PR #803, the `twin_reveals` gap rule). PR #802 (boolean-twin engine fix and the laptop hook for the witnessed card recovery) is merged.
-- **PR #804, branch `factory-fix-plan`, is open and waiting for the owner's merge word** (hand-built factory code needs it). It holds rounds 18b-1 (fix-plan format, lint, evidence), 18b-2 (station 4 wiring handler and per-ticket tree) and 18b-3 (the planner call), at `6a446a6a`. Check its CI before merging; every earlier PR was green on all shards.
+- `main` is at `f19462a7` (PR #804 merged 2026-11-22 with a merge commit, branch deleted). It holds the `twin_reveals` gap rule (#803) and station 4: the fix-plan format, lint and evidence packet (18b-1), the wiring handler with its per-ticket tree (18b-2) and the planner call (18b-3). PR #802 (boolean-twin engine fix and the laptop hook for the witnessed card recovery) is merged. No factory PR is open.
 - The factory may merge its OWN ticket-generated fix PRs once free gates and CI pass (owner decision 2026-11-22; memory note `factory-may-merge-its-own-fix-prs`). Hand-built PRs still wait for the owner.
 - Staging runs `66ee7482` or later. The Worker (`freytag-demo-narrate`) now narrates on the 70B (`CF_AI_MODEL` deleted); `CF_API_TOKEN` and `DEMO_SHARED_TOKEN` are secrets; Railway and `.env` hold the new shared token. The 15b to 15d smokes probably ran on the 8B, so they are not directly comparable with 17c.
 - Ledger total so far about $0.09 of the $5 smoke cap (OpenAI $0.034, Cloudflare $0.054). Claude and Codex are subscription lanes.
