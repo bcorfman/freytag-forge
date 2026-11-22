@@ -284,6 +284,15 @@ def test_evidence_is_deterministic_bounded_and_skips_unknown() -> None:
     assert {item["key"] for item in first["failing_turns"]} == {"1A-r1-t6", "1A-r1-t7"}
 
 
+def test_evidence_ignores_lesson_rendering_errors(monkeypatch: pytest.MonkeyPatch) -> None:
+    def broken_render_lessons(*args: object, **kwargs: object) -> str:
+        raise RuntimeError("bad lesson store")
+
+    monkeypatch.setattr(fix_plan, "render_lessons", broken_render_lessons)
+
+    assert fix_plan.build_evidence(copy.deepcopy(TICKET), PACKAGE)["fun_lessons"] is None
+
+
 def test_evidence_carries_the_diagnosis() -> None:
     ticket = copy.deepcopy(TICKET)
     ticket["diagnosis"] = {

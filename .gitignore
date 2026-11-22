@@ -142,3 +142,6 @@ node_modules/
 
 # Claude Code local settings and lock files stay on this machine.
 .claude/
+
+# factory runtime state (spend ledger, lessons); never committed
+factory/state/

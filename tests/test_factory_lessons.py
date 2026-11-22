@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from factory.lessons import record_lessons, render_lessons
+from factory.lessons import lessons_path, record_lessons, render_lessons
 from factory.line import FactoryLine, StationResult
 from factory.state import FactoryState
 from factory.stations import fix_plan
@@ -78,7 +78,7 @@ def test_recording_is_idempotent_and_keeps_only_the_record_fields(tmp_path: Path
         "recorded_at",
     }
     assert records[0]["lesson_id"] == "ticket-1:1:blocked"
-    assert records[0]["precedent"] == "concise wording; it keeps the scene moving"
+    assert records[0]["precedent"] == "concise wording"
     assert ticket.payload["fun_lessons_recorded"] == ["ticket-1:1:blocked"]
 
 
@@ -115,9 +115,98 @@ def test_delivered_records_the_final_plan_after_the_block(tmp_path: Path) -> Non
     assert records[-1]["fix_kind"] == "add_pacing_beat"
 
 
+@pytest.mark.parametrize(
+    ("reason", "expected"),
+    [
+        ("Precedent: none; list checks and the reason it does not apply.", "none"),
+        ("Precedent: NONE is not applicable; explain why.", "none"),
+        ("Precedent: Foo bar. More text", "Foo bar"),
+        ("Precedent: line one\nline two", "line one"),
+        ("Precedent: semicolon; more text", "semicolon"),
+    ],
+)
+def test_precedent_is_normalized_when_recorded(tmp_path: Path, reason: str, expected: str) -> None:
+    path = tmp_path / "lessons.jsonl"
+    record_lessons(_ticket("precedent", path=path, history=_history(reason=reason)), "fun_exhausted")
+
+    assert _records(path)[0]["precedent"] == expected
+
+
+def test_plan_without_a_kind_writes_no_record(tmp_path: Path) -> None:
+    path = tmp_path / "lessons.jsonl"
+    history = [{"plan": {"reason": "Precedent: no kind."}, "failed_checks": ["delights_the_player"]}]
+
+    record_lessons(
+        _ticket("missing-kind", path=path, history=history, plan={"reason": "Precedent: no kind."}),
+        "delivered",
+    )
+
+    assert not path.exists()
+
+
+def test_unknown_stored_records_are_not_rendered(tmp_path: Path) -> None:
+    path = tmp_path / "lessons.jsonl"
+    records = []
+    for outcome, ticket_id, scene_id, fun_round in (
+        ("blocked", "unknown-block-1", "1A", 1),
+        ("blocked", "unknown-block-2", "2A", 1),
+        ("won_after_block", "unknown-win-1", "3A", 2),
+        ("won_after_block", "unknown-win-2", "4A", 2),
+    ):
+        records.append(
+            {
+                "lesson_id": f"{ticket_id}:lesson",
+                "ticket_id": ticket_id,
+                "scene_id": scene_id,
+                "outcome": outcome,
+                "fix_kind": "unknown",
+                "precedent": "none",
+                "failed_checks": ["delights_the_player"] if outcome == "blocked" else [],
+                "fun_round": fun_round,
+                "recorded_at": "2026-01-01T00:00:00+00:00",
+            }
+        )
+    path.write_text("\n".join(json.dumps(record) for record in records) + "\n", encoding="utf-8")
+
+    assert render_lessons(path) == ""
+
+
+def test_invalid_records_are_skipped_while_good_records_render(tmp_path: Path) -> None:
+    path = tmp_path / "lessons.jsonl"
+    for ticket_id, scene in (("good-1", "1A"), ("good-2", "2A")):
+        record_lessons(
+            _ticket(ticket_id, path=path, scene=scene, history=_history(reason="Precedent: good lesson.")),
+            "fun_exhausted",
+        )
+    invalid_records = [
+        {"lesson_id": 1},
+        {"lesson_id": "bad-list-ticket", "ticket_id": [], "scene_id": "3A"},
+        {"lesson_id": "bad-outcome", "ticket_id": "bad", "scene_id": "3A", "outcome": "oops"},
+        {"lesson_id": "bad-check", "ticket_id": "bad", "scene_id": "3A", "failed_checks": ["ok", 1]},
+        {"lesson_id": "bad-round", "ticket_id": "bad", "scene_id": "3A", "fun_round": True},
+    ]
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write("not-json\n")
+        for record in invalid_records:
+            handle.write(json.dumps(record) + "\n")
+
+    rendered = render_lessons(path)
+
+    assert 'Avoid: set_text via "good lesson" tends to fail delights_the_player (2 tickets, 2 scenes).' in rendered
+    assert "bad-list-ticket" not in rendered
+
+
+def test_lessons_path_honors_payload_and_default(tmp_path: Path) -> None:
+    repository_root = Path(__file__).resolve().parents[1]
+    assert lessons_path({}) == repository_root / "factory" / "state" / "fun_lessons.jsonl"
+    assert lessons_path({"fun_lessons_path": "custom/lessons.jsonl"}) == repository_root / "custom" / "lessons.jsonl"
+    assert lessons_path({"fun_lessons_path": tmp_path / "lessons.jsonl"}) == tmp_path / "lessons.jsonl"
+    assert lessons_path({"fun_lessons_path": None}) is None
+
+
 def test_proven_threshold_and_mixed_conflict_are_rendered(tmp_path: Path) -> None:
     path = tmp_path / "lessons.jsonl"
-    shared_reason = "Precedent: concise wording; it works."
+    shared_reason = "Precedent: concise wording. It works."
     for ticket_id, scene in (("b1", "1A"), ("b2", "2A")):
         ticket = _ticket(ticket_id, path=path, scene=scene, history=_history(reason=shared_reason))
         record_lessons(ticket, "fun_exhausted")
@@ -127,14 +216,14 @@ def test_proven_threshold_and_mixed_conflict_are_rendered(tmp_path: Path) -> Non
             path=path,
             scene=scene,
             history=_history(reason=shared_reason),
-            plan={"kind": "set_text", "reason": "Precedent: concise wording; it works."},
+            plan={"kind": "set_text", "reason": "Precedent: concise wording. It works."},
         )
         record_lessons(ticket, "delivered")
 
     rendered = render_lessons(path)
 
     assert "FUN REVIEW LESSONS (machine-recorded, proven across ≥2 scenes)" in rendered
-    assert 'Mixed: set_text via "concise wording; it works": 2 wins, 4 blocks on delights_the_player.' in rendered
+    assert 'Mixed: set_text via "concise wording": 2 wins, 4 blocks on delights_the_player.' in rendered
 
     one_ticket = _ticket("only-one", path=path, scene="5A", history=_history(kind="edit_claim_evidence"))
     record_lessons(one_ticket, "fun_exhausted")
@@ -149,7 +238,9 @@ def test_rendered_lessons_are_capped_and_evicted_from_the_end(tmp_path: Path) ->
                 f"ticket-{index}-{suffix}",
                 path=path,
                 scene=f"{index + 1}{suffix}",
-                history=_history(kind=f"kind-{index}", reason=f"Precedent: technique-{index}; reason."),
+                history=_history(
+                    kind=f"kind-{index}", reason=f"Precedent: technique-{index}-" + ("x" * 30) + "; reason."
+                ),
             )
             record_lessons(ticket, "fun_exhausted")
     rendered = render_lessons(path, cap=4000)

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from collections import defaultdict
+from collections.abc import Mapping
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -29,12 +30,14 @@ def _repository_root() -> Path:
     return Path(__file__).resolve().parents[1]
 
 
-def _store_path(ticket: Ticket) -> Path:
-    raw_path = ticket.payload.get("fun_lessons_path")
-    if isinstance(raw_path, (str, Path)):
-        path = Path(raw_path)
-        return path if path.is_absolute() else _repository_root() / path
-    return _repository_root() / "factory" / "state" / "fun_lessons.jsonl"
+def lessons_path(payload: Mapping) -> Path | None:
+    if "fun_lessons_path" not in payload:
+        return _repository_root() / "factory" / "state" / "fun_lessons.jsonl"
+    raw_path = payload["fun_lessons_path"]
+    if not isinstance(raw_path, (str, Path)):
+        return None
+    path = Path(raw_path)
+    return path if path.is_absolute() else _repository_root() / path
 
 
 def _precedent(plan: object) -> str:
@@ -47,13 +50,18 @@ def _precedent(plan: object) -> str:
     start = reason.find(marker)
     if start < 0:
         return "none"
-    value = reason[start + len(marker) :].split(".", 1)[0].strip()
+    value = reason[start + len(marker) :].lstrip()
+    if value.lower().startswith("none"):
+        return "none"
+    delimiters = [position for delimiter in (".", ";", "\n") if (position := value.find(delimiter)) >= 0]
+    value = value[: min(delimiters)] if delimiters else value
+    value = value.strip()
     return value[:80] or "none"
 
 
-def _plan_values(plan: object) -> tuple[str, str]:
+def _plan_values(plan: object) -> tuple[str | None, str]:
     kind = plan.get("kind") if isinstance(plan, dict) else None
-    return (kind if isinstance(kind, str) else "unknown", _precedent(plan))
+    return (kind if isinstance(kind, str) and kind != "unknown" else None, _precedent(plan))
 
 
 def _failed_checks(entry: object) -> list[str]:
@@ -71,6 +79,8 @@ def _candidate_records(ticket: Ticket, outcome: str, recorded_at: str) -> list[d
     for round_number, entry in enumerate(history, start=1):
         plan = entry.get("plan") if isinstance(entry, dict) else None
         fix_kind, precedent = _plan_values(plan)
+        if fix_kind is None:
+            continue
         failed_checks = _failed_checks(entry)
         records.append(
             {
@@ -89,19 +99,20 @@ def _candidate_records(ticket: Ticket, outcome: str, recorded_at: str) -> list[d
     if outcome == "delivered":
         plan = ticket.payload.get("plan")
         fix_kind, precedent = _plan_values(plan)
-        records.append(
-            {
-                "lesson_id": f"{ticket.id}:{len(history) + 1}:won_after_block",
-                "ticket_id": ticket.id,
-                "scene_id": ticket.scene,
-                "outcome": "won_after_block",
-                "fix_kind": fix_kind,
-                "precedent": precedent,
-                "failed_checks": [],
-                "fun_round": len(history) + 1,
-                "recorded_at": recorded_at,
-            }
-        )
+        if fix_kind is not None:
+            records.append(
+                {
+                    "lesson_id": f"{ticket.id}:{len(history) + 1}:won_after_block",
+                    "ticket_id": ticket.id,
+                    "scene_id": ticket.scene,
+                    "outcome": "won_after_block",
+                    "fix_kind": fix_kind,
+                    "precedent": precedent,
+                    "failed_checks": [],
+                    "fun_round": len(history) + 1,
+                    "recorded_at": recorded_at,
+                }
+            )
     return records
 
 
@@ -116,7 +127,9 @@ def record_lessons(ticket: Ticket, outcome: str) -> None:
     if not records:
         return
 
-    path = _store_path(ticket)
+    path = lessons_path(ticket.payload)
+    if path is None:
+        return
     existing_ids: set[str] = set()
     if path.exists():
         with path.open(encoding="utf-8") as handle:
@@ -157,7 +170,27 @@ def _read_records(path: Path) -> list[dict[str, Any]]:
             record = json.loads(line)
         except (json.JSONDecodeError, TypeError):
             continue
-        if isinstance(record, dict) and _RECORD_FIELDS.issubset(record):
+        if (
+            isinstance(record, dict)
+            and _RECORD_FIELDS.issubset(record)
+            and all(
+                isinstance(record[field], str)
+                for field in {
+                    "lesson_id",
+                    "ticket_id",
+                    "scene_id",
+                    "outcome",
+                    "fix_kind",
+                    "precedent",
+                    "recorded_at",
+                }
+            )
+            and record["outcome"] in {"blocked", "won_after_block"}
+            and isinstance(record["failed_checks"], list)
+            and all(isinstance(check, str) for check in record["failed_checks"])
+            and isinstance(record["fun_round"], int)
+            and not isinstance(record["fun_round"], bool)
+        ):
             records.append(record)
     return records
 
@@ -179,6 +212,8 @@ def render_lessons(path: str | Path, cap: int = 4000) -> str:
     blocked: dict[tuple[str, str, str], list[dict[str, Any]]] = defaultdict(list)
     wins: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
     for record in records:
+        if record["fix_kind"] == "unknown":
+            continue
         if record["outcome"] == "blocked":
             checks = record["failed_checks"] if isinstance(record["failed_checks"], list) else []
             for check in checks:
