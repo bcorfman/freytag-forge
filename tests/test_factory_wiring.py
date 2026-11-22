@@ -28,7 +28,7 @@ def beat_plan(ticket_id: str = "wire-ticket") -> dict:
         "evidence_keys": ["turn-1"],
         "beat": {
             "id": "truck_laptop_wire_1a",
-            "at_turn": 10,
+            "at_turn": 12,
             "text": "Check the truck and laptop before the patrol returns to the house.",
             "verbatim": True,
             "trailing": True,

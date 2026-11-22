@@ -117,6 +117,54 @@ def test_redundant_effect_is_allowed_with_opposite_guard() -> None:
     assert not any(problem.startswith("plan.redundant_effect") for problem in fix_plan.lint_plan(plan, TICKET, PACKAGE))
 
 
+def test_rejects_beat_that_sets_a_fact_an_existing_later_beat_sets() -> None:
+    plan = _drawer_gap_plan()
+    plan["beat"].update(
+        {
+            "id": "drawer_gap_noticed_1a",
+            "at_turn": 5,
+            "when": {"drawer_gap_pointed_out": False, "memory_card_recovered": False},
+        }
+    )
+
+    problems = fix_plan.lint_plan(plan, TICKET, PACKAGE)
+
+    assert any(
+        problem.startswith("plan.earlier_than_producer") and "reyes_rams_drawer_1a" in problem and "(turn 8)" in problem
+        for problem in problems
+    )
+
+
+def test_beat_at_or_after_the_producer_turn_is_not_refused_by_the_earlier_rule() -> None:
+    plan = _drawer_gap_plan()
+    plan["beat"].update(
+        {
+            "id": "drawer_gap_noticed_1a",
+            "when": {"drawer_gap_pointed_out": False, "memory_card_recovered": False},
+        }
+    )
+    for at_turn in (8, 9):
+        plan["beat"]["at_turn"] = at_turn
+
+        assert not any(
+            problem.startswith("plan.earlier_than_producer") for problem in fix_plan.lint_plan(plan, TICKET, PACKAGE)
+        )
+
+
+def test_earlier_rule_ignores_beats_that_set_no_shared_fact() -> None:
+    fact_id = next(
+        fact
+        for fact in sorted(fix_plan._declared_facts(PACKAGE))
+        if not producers(PACKAGE, fact, True) and not producers(PACKAGE, fact, False)
+    )
+    plan = beat_plan()
+    plan["beat"].update({"at_turn": 5, "sets": {fact_id: True}})
+
+    assert not any(
+        problem.startswith("plan.earlier_than_producer") for problem in fix_plan.lint_plan(plan, TICKET, PACKAGE)
+    )
+
+
 def test_declared_fact_without_matching_producer_is_allowed() -> None:
     fact_id = next(
         fact
