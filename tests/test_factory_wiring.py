@@ -11,6 +11,7 @@ from pathlib import Path
 
 from factory.checks.gap_delta import DEFAULT_ROOT
 from factory.manifests import lint_check
+from factory.stations.planner import PlanOutcome
 from factory.stations.tree import ticket_tree
 from factory.stations.wiring import wiring_handler, wiring_spec
 from factory.tickets import Station, Ticket
@@ -232,6 +233,68 @@ def test_wiring_happy_path_for_both_kinds_and_ticket_tree(tmp_path: Path) -> Non
         assert tree == workspace / ticket_id / "tree"
         assert (tree / ".venv").is_symlink()
         assert (tree / "data/stories/continuity-initiative/source/scenes/1A.yaml").is_file()
+
+
+def test_wiring_plans_missing_payload_plan_and_preserves_ticket(tmp_path: Path) -> None:
+    repository = init_repo(tmp_path)
+    workspace = tmp_path / "workspace"
+    plan = beat_plan("planner-wiring")
+    ticket = make_ticket(plan, workspace, "planner-wiring")
+    original_payload = dict(ticket.payload)
+    del ticket.payload["plan"]
+    calls = []
+
+    def planner(received_ticket, package, now):
+        calls.append((received_ticket, package, now))
+        return PlanOutcome(plan, 23, [], 1)
+
+    result = wiring_handler(
+        repository,
+        run_ringer=stub_ringer(repository, tmp_path / "scratch-planner"),
+        planner=planner,
+    )(ticket, NOW)
+
+    assert result.passed, result.output
+    assert result.tokens == 23
+    assert len(calls) == 1
+    assert ticket.payload == {key: value for key, value in original_payload.items() if key != "plan"}
+    assert json.loads((workspace / "planner-wiring" / "plan.json").read_text(encoding="utf-8")) == plan
+
+
+def test_wiring_planner_failure_creates_no_tree(tmp_path: Path) -> None:
+    repository = init_repo(tmp_path)
+    workspace = tmp_path / "workspace"
+    ticket = make_ticket(beat_plan(), workspace)
+    del ticket.payload["plan"]
+
+    def planner(_ticket, _package, _now):
+        return PlanOutcome(None, 17, ["first problem", "second problem"], 3)
+
+    result = wiring_handler(repository, planner=planner)(ticket, NOW)
+
+    assert not result.passed
+    assert result.output == "first problem\nsecond problem"
+    assert result.tokens == 17
+    assert not workspace.exists()
+
+
+def test_wiring_with_existing_plan_never_calls_planner(tmp_path: Path) -> None:
+    repository = init_repo(tmp_path)
+    called = False
+
+    def planner(_ticket, _package, _now):
+        nonlocal called
+        called = True
+        raise AssertionError("planner must not run for an existing plan")
+
+    result = wiring_handler(
+        repository,
+        run_ringer=stub_ringer(repository, tmp_path / "scratch-existing"),
+        planner=planner,
+    )(make_ticket(beat_plan(), tmp_path / "workspace"), NOW)
+
+    assert result.passed, result.output
+    assert not called
 
 
 def test_wiring_rejects_ringer_failure_empty_patch_and_bad_patch(tmp_path: Path) -> None:

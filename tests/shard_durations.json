@@ -222,6 +222,7 @@
     "tests/test_factory_line.py": 0.05,
     "tests/test_factory_live_playtest.py": 0.02,
     "tests/test_factory_manifests.py": 0.01,
+    "tests/test_factory_planner.py": 5.13,
     "tests/test_factory_preflight.py": 0.05,
     "tests/test_factory_prereg.py": 0.01,
     "tests/test_factory_prompt_snapshot.py": 32.72,

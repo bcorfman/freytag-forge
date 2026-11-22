@@ -10,6 +10,7 @@ import sys
 from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 from factory.checks.gap_delta import DEFAULT_ROOT
 from factory.followups import _safe_id
@@ -221,6 +222,7 @@ def wiring_handler(
     run: Callable[..., subprocess.CompletedProcess] = subprocess.run,
     now_fn: Callable[[], datetime] = datetime.now,
     guard_call: Callable[[Callable[[], object]], object] | None = None,
+    planner: Callable[[Any, Any, datetime], Any] | None = None,
 ) -> StationHandler:
     """Return the station-4 handler that runs and applies one checked worker patch."""
 
@@ -228,40 +230,53 @@ def wiring_handler(
     repository_root = Path(root) if root is not None else _repository_root()
 
     def handle(ticket, now: datetime) -> StationResult:
-        del now
         payload = ticket.payload
-        plan = payload.get("plan")
-        workspace_value = payload.get("workspace")
-        if not isinstance(plan, dict):
+        working_payload = dict(payload)
+        plan = working_payload.get("plan")
+        workspace_value = working_payload.get("workspace")
+        planner_tokens = 0
+        if not isinstance(plan, dict) and planner is None:
             return StationResult(False, "wiring", "missing payload key: plan")
         if not isinstance(workspace_value, str):
             return StationResult(False, "wiring", "missing payload key: workspace")
 
         story_root = _story_root(repository_root)
-        ticket_payload = dict(payload)
-        ticket_payload.setdefault("scene", ticket.scene)
         try:
             package = load_story_package(story_root)
+            if not isinstance(plan, dict):
+                outcome = planner(ticket, package, now)
+                planner_tokens = outcome.tokens
+                plan = outcome.plan
+                if not isinstance(plan, dict):
+                    return StationResult(
+                        False,
+                        "wiring",
+                        "\n".join(outcome.problems),
+                        tokens=planner_tokens,
+                    )
+                working_payload["plan"] = plan
+            ticket_payload = dict(working_payload)
+            ticket_payload.setdefault("scene", ticket.scene)
             problems = lint_plan(plan, ticket_payload, package)
         except (OSError, TypeError, ValueError, KeyError) as error:
-            return StationResult(False, "wiring", _tail(str(error) or error.__class__.__name__))
+            return StationResult(False, "wiring", _tail(str(error) or error.__class__.__name__), tokens=planner_tokens)
         if problems:
-            return StationResult(False, "wiring", "\n".join(problems))
+            return StationResult(False, "wiring", "\n".join(problems), tokens=planner_tokens)
 
         workspace = Path(workspace_value).expanduser()
         try:
             workspace = workspace.resolve()
             repository_resolved = repository_root.resolve()
         except (OSError, RuntimeError, ValueError) as error:
-            return StationResult(False, "wiring", str(error))
+            return StationResult(False, "wiring", str(error), tokens=planner_tokens)
         if _inside(workspace, repository_resolved):
-            return StationResult(False, "wiring", "workspace must be outside the repository")
+            return StationResult(False, "wiring", "workspace must be outside the repository", tokens=planner_tokens)
 
         safe_id = _safe_id(ticket.id)
         ticket_dir = workspace / safe_id
         cleanup_error = _clear_previous(repository_root, ticket_dir, run)
         if cleanup_error:
-            return StationResult(False, "wiring", cleanup_error)
+            return StationResult(False, "wiring", cleanup_error, tokens=planner_tokens)
 
         source_dir = story_root / "source" / "scenes"
         ownership = []
@@ -270,7 +285,9 @@ def wiring_handler(
             if candidate.is_file():
                 ownership.append(candidate.relative_to(repository_root).as_posix())
         if not ownership:
-            return StationResult(False, "wiring", "no owned source files exist for the plan scene")
+            return StationResult(
+                False, "wiring", "no owned source files exist for the plan scene", tokens=planner_tokens
+            )
 
         try:
             ticket_dir.mkdir(parents=True, exist_ok=True)
@@ -303,11 +320,16 @@ def wiring_handler(
             manifest_path = ticket_dir / "manifest.json"
             write_manifest(manifest, manifest_path)
         except (OSError, ValueError, AssertionError, KeyError) as error:
-            return StationResult(False, "wiring", _tail(str(error) or error.__class__.__name__))
+            return StationResult(
+                False,
+                "wiring",
+                _tail(str(error) or error.__class__.__name__),
+                tokens=planner_tokens,
+            )
 
-        ringer = payload.get("ringer", "~/dev/ringer/ringer.py")
+        ringer = working_payload.get("ringer", "~/dev/ringer/ringer.py")
         if not isinstance(ringer, str):
-            return StationResult(False, "wiring", "ringer must be a path string")
+            return StationResult(False, "wiring", "ringer must be a path string", tokens=planner_tokens)
         ringer_path = Path(ringer).expanduser()
         runner = run_ringer or _default_run_ringer
         try:
@@ -317,28 +339,48 @@ def wiring_handler(
 
             completed = guard_call(invoke) if guard_call is not None else invoke()
         except (OSError, subprocess.TimeoutExpired, TypeError, ValueError) as error:
-            return StationResult(False, "wiring", _tail(str(error) or error.__class__.__name__))
+            return StationResult(False, "wiring", _tail(str(error) or error.__class__.__name__), tokens=planner_tokens)
         output = _output(completed)
         returncode = getattr(completed, "returncode", 1)
         patch_path = ringer_dir / "wire.patch"
         if returncode != 0:
-            return StationResult(False, "wiring", _tail(output) or f"Ringer exited with status {returncode}")
+            return StationResult(
+                False,
+                "wiring",
+                _tail(output) or f"Ringer exited with status {returncode}",
+                tokens=planner_tokens,
+            )
         if not patch_path.is_file() or patch_path.stat().st_size == 0:
-            return StationResult(False, "wiring", _tail(output) or "Ringer produced a missing or empty patch")
+            return StationResult(
+                False,
+                "wiring",
+                _tail(output) or "Ringer produced a missing or empty patch",
+                tokens=planner_tokens,
+            )
 
         tree = ticket_dir / "tree"
         added = _run_git(run, ["git", "worktree", "add", "--detach", str(tree), "HEAD"], repository_root)
         if added is None or added.returncode != 0:
-            return StationResult(False, "wiring", _tail(_output(added)) or "could not create ticket worktree")
+            return StationResult(
+                False,
+                "wiring",
+                _tail(_output(added)) or "could not create ticket worktree",
+                tokens=planner_tokens,
+            )
         venv_link = tree / ".venv"
         try:
             if not venv_link.exists() and not venv_link.is_symlink():
                 venv_link.symlink_to(repository_root / ".venv")
         except OSError as error:
-            return StationResult(False, "wiring", str(error))
+            return StationResult(False, "wiring", str(error), tokens=planner_tokens)
         applied = _run_git(run, ["git", "apply", str(patch_path)], tree)
         if applied is None or applied.returncode != 0:
-            return StationResult(False, "wiring", _tail(_output(applied)) or "patch did not apply")
-        return StationResult(True, "wiring", f"tree={tree} patch={patch_path}")
+            return StationResult(
+                False,
+                "wiring",
+                _tail(_output(applied)) or "patch did not apply",
+                tokens=planner_tokens,
+            )
+        return StationResult(True, "wiring", f"tree={tree} patch={patch_path}", tokens=planner_tokens)
 
     return handle
