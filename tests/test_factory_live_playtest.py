@@ -694,6 +694,54 @@ def test_live_runner_called_once_and_stale_artifact_ignored(tmp_path: Path, monk
     assert not stale.exists()
 
 
+def test_live_runner_lock_exists_only_during_call_and_is_removed_on_failure(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setenv("E2E_API_BASE_URL", "https://staging.example")
+    seen: list[bool] = []
+
+    def runner(env, timeout):
+        del env, timeout
+        seen.append((tmp_path / "factory/state/staged_run.lock").exists())
+        write_artifact(tmp_path, clean_report())
+        return subprocess.CompletedProcess([], 0, stdout="", stderr="")
+
+    handler = _live_handler(tmp_path, runner, SpendLedger(tmp_path / "ledger.jsonl"))
+    assert handler(ticket({"expected_sha": "abc"}), NOW).passed
+    assert seen == [True]
+    assert not (tmp_path / "factory/state/staged_run.lock").exists()
+
+    def raising_runner(env, timeout):
+        del env, timeout
+        assert (tmp_path / "factory/state/staged_run.lock").exists()
+        raise RuntimeError("runner failed")
+
+    failed = _live_handler(tmp_path, raising_runner, SpendLedger(tmp_path / "ledger-2.jsonl"))(
+        ticket({"expected_sha": "abc"}), NOW
+    )
+    assert not failed.passed
+    assert not (tmp_path / "factory/state/staged_run.lock").exists()
+
+
+def test_fresh_live_staged_lock_blocks_runner(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setenv("E2E_API_BASE_URL", "https://staging.example")
+    lock = tmp_path / "factory/state/staged_run.lock"
+    lock.parent.mkdir(parents=True)
+    lock.write_text("other\n", encoding="utf-8")
+    os.utime(lock, (NOW.timestamp() - 60, NOW.timestamp() - 60))
+    called = False
+
+    def runner(env, timeout):
+        nonlocal called
+        del env, timeout
+        called = True
+        return subprocess.CompletedProcess([], 0)
+
+    result = _live_handler(tmp_path, runner, SpendLedger(tmp_path / "ledger.jsonl"))(
+        ticket({"expected_sha": "abc"}), NOW
+    )
+    assert not result.passed and result.output == "staged run already in progress"
+    assert called is False
+
+
 def test_live_missing_fresh_report_and_default_runner_approval(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setenv("E2E_API_BASE_URL", "https://staging.example")
     handler = live_playtest_handler(

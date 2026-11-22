@@ -94,6 +94,29 @@ def test_live_playtest_failure_with_turns_moves_to_triage(tmp_path):
     assert saved.payload["turns"] == turns
 
 
+def test_merge_ticket_delivers_after_station_nine_and_keeps_payload_updates(tmp_path):
+    ticket = make_ticket("merge", station=Station.PROMPT_SNAPSHOT)
+    ticket.payload["merge_to_main"] = True
+
+    def delivery(_ticket, _now):
+        return StationResult(True, "deliver", "merged", payload_updates={"merged_sha": "abc"})
+
+    line, queue, _ = make_line(
+        tmp_path,
+        [ticket],
+        {Station.PROMPT_SNAPSHOT: passing, Station.DELIVER: delivery, Station.LIVE_PLAYTEST: passing},
+    )
+
+    assert line.step(NOW).kind == "advanced"
+    assert queue.get("merge").station is Station.DELIVER
+    assert line.step(NOW).kind == "advanced"
+    saved = queue.get("merge")
+    assert saved.station is Station.LIVE_PLAYTEST
+    assert saved.payload["merged_sha"] == "abc"
+    assert line.step(NOW).kind == "delivered"
+    assert queue.get("merge").status is Status.PASSED
+
+
 def test_live_playtest_infrastructure_failure_retries(tmp_path):
     ticket = make_ticket("playtest-retry", station=Station.LIVE_PLAYTEST)
     line, queue, _ = make_line(
