@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-import contextlib
-import io
+import difflib
 import json
-import os
 import shutil
 import subprocess
 from datetime import UTC, datetime
@@ -13,7 +11,7 @@ from factory.checks.gap_delta import DEFAULT_ROOT
 from factory.manifests import lint_check
 from factory.stations.planner import PlanOutcome
 from factory.stations.tree import ticket_tree
-from factory.stations.wiring import _clear_previous, wiring_handler, wiring_spec
+from factory.stations.wiring import MAX_REPLANS, _clear_previous, wiring_handler, wiring_spec
 from factory.tickets import Station, Ticket
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -91,95 +89,21 @@ def init_repo(tmp_path: Path) -> Path:
 def stub_ringer(repository: Path, scratch_parent: Path):
     def run(manifest_path: Path, _ringer_path: Path) -> subprocess.CompletedProcess:
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-        plan = json.loads((manifest_path.parent / "plan.json").read_text(encoding="utf-8"))
-        scratch = scratch_parent / "worker"
-        if scratch.exists():
-            shutil.rmtree(scratch)
-        shutil.copytree(repository, scratch, symlinks=True)
-        (scratch / ".venv").symlink_to(ROOT / ".venv")
-        python = str(ROOT / ".venv" / "bin" / "python")
-        commands = []
-        if plan["kind"] == "add_pacing_beat":
-            beat = plan["beat"]
-            commands.append(
-                [python, "-m", "storygame.story_cli", "new", "beat", plan["scene"], beat["id"], "--say", beat["text"]]
+        relative_scene = Path("data") / "stories" / DEFAULT_ROOT.name / "source" / "scenes" / "1A.yaml"
+        scene_path = repository / relative_scene
+        original = scene_path.read_text(encoding="utf-8")
+        updated = original + ("\n" if not original.endswith("\n") else "") + "# stub ringer patch\n"
+        patch = "".join(
+            difflib.unified_diff(
+                original.splitlines(keepends=True),
+                updated.splitlines(keepends=True),
+                fromfile=f"a/{relative_scene}",
+                tofile=f"b/{relative_scene}",
             )
-            commands.extend(
-                [
-                    [python, "-m", "storygame.story_cli", "set", f"beat:{beat['id']}.at_turn", str(beat["at_turn"])],
-                    [
-                        python,
-                        "-m",
-                        "storygame.story_cli",
-                        "set",
-                        f"beat:{beat['id']}.when",
-                        json.dumps(beat["when"]),
-                    ],
-                    [
-                        python,
-                        "-m",
-                        "storygame.story_cli",
-                        "set",
-                        f"beat:{beat['id']}.sets",
-                        json.dumps(beat["sets"]),
-                    ],
-                    [
-                        python,
-                        "-m",
-                        "storygame.story_cli",
-                        "set",
-                        f"beat:{beat['id']}.trailing",
-                        str(beat["trailing"]).lower(),
-                    ],
-                    [
-                        python,
-                        "-m",
-                        "storygame.story_cli",
-                        "set",
-                        f"beat:{beat['id']}.say[0].verbatim",
-                        str(beat["verbatim"]).lower(),
-                    ],
-                ]
-            )
-        else:
-            edit = plan["set_text"]
-            commands.append([python, "-m", "storygame.story_cli", "set", edit["address"], edit["text"]])
-        for command in commands:
-            if any(".when" in item or ".trailing" in item for item in command):
-                from storygame.story_source.yamlio import dumps_document, load_document
-
-                scene_path = scratch / "data" / "stories" / DEFAULT_ROOT.name / "source" / "scenes" / "1A.yaml"
-                scene_document = load_document(scene_path)
-                field = "when" if any(".when" in item for item in command) else "trailing"
-                scene_document["beats"][-1][field] = plan["beat"][field]
-                scene_path.write_text(dumps_document(scene_document), encoding="utf-8")
-            if any(".say[0].verbatim" in item for item in command):
-                from storygame.story_source.yamlio import dumps_document, load_document
-
-                scene_path = scratch / "data" / "stories" / DEFAULT_ROOT.name / "source" / "scenes" / "1A.yaml"
-                scene_document = load_document(scene_path)
-                say = scene_document["beats"][-1]["say"]
-                if isinstance(say, str):
-                    scene_document["beats"][-1]["say"] = [{"text": say, "verbatim": False}]
-                scene_path.write_text(dumps_document(scene_document), encoding="utf-8")
-            from storygame import story_cli
-
-            stdout = io.StringIO()
-            stderr = io.StringIO()
-            old_directory = Path.cwd()
-            try:
-                os.chdir(scratch)
-                with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
-                    status = story_cli.main(command[3:])
-            finally:
-                os.chdir(old_directory)
-            completed = subprocess.CompletedProcess(command, status, stdout.getvalue(), stderr.getvalue())
-            if completed.returncode:
-                return completed
-        patch = subprocess.run(["git", "diff", "--binary"], cwd=scratch, capture_output=True, check=True)
+        ).encode()
         patch_path = Path(manifest["workdir"]) / "wire.patch"
-        patch_path.write_bytes(patch.stdout)
-        return subprocess.CompletedProcess(command, 0, stdout="stub ringer ok", stderr="")
+        patch_path.write_bytes(patch)
+        return subprocess.CompletedProcess([], 0, stdout="stub ringer ok", stderr="")
 
     return run
 
@@ -295,6 +219,128 @@ def test_wiring_with_existing_plan_never_calls_planner(tmp_path: Path) -> None:
 
     assert result.passed, result.output
     assert not called
+
+
+def test_wiring_replans_after_check_failure_and_sums_tokens(tmp_path: Path) -> None:
+    repository = init_repo(tmp_path)
+    workspace = tmp_path / "workspace"
+    ticket = make_ticket(beat_plan("first-plan"), workspace, "replan-success")
+    del ticket.payload["plan"]
+    first_plan = beat_plan("first-plan")
+    second_plan = text_plan("second-plan")
+    planner_calls = []
+    manifests = []
+    plans = [first_plan, second_plan]
+
+    def planner(received_ticket, package, now, **kwargs):
+        planner_calls.append((received_ticket, package, now, kwargs))
+        return PlanOutcome(plans.pop(0), 10 if len(planner_calls) == 1 else 20, [], 1)
+
+    def ringer(manifest_path: Path, _ringer_path: Path) -> subprocess.CompletedProcess:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifests.append(manifest)
+        workdir = Path(manifest["workdir"])
+        if len(manifests) == 1:
+            return subprocess.CompletedProcess([], 3, "CHECK FAILED: first plan was rejected", "")
+        (workdir / "wire.patch").write_text("not applied by this stub\n", encoding="utf-8")
+        return subprocess.CompletedProcess([], 0, "check passed", "")
+
+    def fake_git(command: list[str], **_kwargs) -> subprocess.CompletedProcess:
+        if command[1:3] == ["worktree", "add"]:
+            Path(command[-2]).mkdir(parents=True, exist_ok=True)
+        return subprocess.CompletedProcess(command, 0, "", "")
+
+    original_payload = dict(ticket.payload)
+    result = wiring_handler(repository, run_ringer=ringer, run=fake_git, planner=planner)(ticket, NOW)
+
+    assert result.passed, result.output
+    assert result.tokens == 30
+    assert len(planner_calls) == 2
+    assert planner_calls[0][3] == {}
+    assert planner_calls[1][3]["feedback_plan"] == first_plan
+    assert "CHECK FAILED: first plan was rejected" in planner_calls[1][3]["check_output"]
+    assert json.loads((workspace / "replan-success" / "plan.json").read_text(encoding="utf-8")) == second_plan
+    assert manifests[0]["tasks"][0]["max_attempts"] == 1
+    assert manifests[1]["tasks"][0]["max_attempts"] == 1
+    assert ticket.payload == original_payload
+
+
+def test_wiring_replans_three_times_then_returns_last_check_output(tmp_path: Path) -> None:
+    repository = init_repo(tmp_path)
+    workspace = tmp_path / "workspace"
+    ticket = make_ticket(beat_plan(), workspace, "replan-failure")
+    del ticket.payload["plan"]
+    planner_calls = []
+    ringer_calls = []
+
+    def planner(_ticket, _package, _now, **kwargs):
+        planner_calls.append(kwargs)
+        return PlanOutcome(beat_plan(f"plan-{len(planner_calls)}"), 1, [], 1)
+
+    def ringer(_manifest_path: Path, _ringer_path: Path) -> subprocess.CompletedProcess:
+        ringer_calls.append(True)
+        return subprocess.CompletedProcess([], 7, f"last check output {len(ringer_calls)}", "")
+
+    result = wiring_handler(repository, run_ringer=ringer, planner=planner)(ticket, NOW)
+
+    assert not result.passed
+    assert len(ringer_calls) == MAX_REPLANS
+    assert len(planner_calls) == MAX_REPLANS
+    assert result.output == "last check output 3"
+    assert result.tokens == MAX_REPLANS
+
+
+def test_wiring_payload_plan_keeps_one_round_and_two_worker_attempts(tmp_path: Path) -> None:
+    repository = init_repo(tmp_path)
+    manifests = []
+    planner_called = False
+
+    def planner(*_args, **_kwargs):
+        nonlocal planner_called
+        planner_called = True
+        raise AssertionError("planner must not run for a payload plan")
+
+    def ringer(manifest_path: Path, _ringer_path: Path) -> subprocess.CompletedProcess:
+        manifests.append(json.loads(manifest_path.read_text(encoding="utf-8")))
+        return subprocess.CompletedProcess([], 4, "payload check failed", "")
+
+    result = wiring_handler(repository, run_ringer=ringer, planner=planner)(
+        make_ticket(beat_plan(), tmp_path / "workspace", "payload-failure"), NOW
+    )
+
+    assert not result.passed
+    assert len(manifests) == 1
+    assert manifests[0]["tasks"][0]["max_attempts"] == 2
+    assert not planner_called
+
+
+def test_wiring_stops_when_second_plan_fails_lint(tmp_path: Path) -> None:
+    repository = init_repo(tmp_path)
+    workspace = tmp_path / "workspace"
+    ticket = make_ticket(beat_plan(), workspace, "replan-lint-failure")
+    del ticket.payload["plan"]
+    planner_calls = []
+    ringer_calls = []
+    invalid_plan = text_plan("invalid-second-plan")
+    invalid_plan["set_text"]["text"] = "too short"
+
+    def planner(_ticket, _package, _now, **kwargs):
+        planner_calls.append(kwargs)
+        if len(planner_calls) == 1:
+            return PlanOutcome(beat_plan("first-plan"), 3, [], 1)
+        return PlanOutcome(invalid_plan, 5, [], 1)
+
+    def ringer(_manifest_path: Path, _ringer_path: Path) -> subprocess.CompletedProcess:
+        ringer_calls.append(True)
+        return subprocess.CompletedProcess([], 3, "check failed before replan", "")
+
+    result = wiring_handler(repository, run_ringer=ringer, planner=planner)(ticket, NOW)
+
+    assert not result.passed
+    assert "plan.text replacement text violates the bounded authored-text rules" in result.output
+    assert len(ringer_calls) == 1
+    assert len(planner_calls) == 2
+    assert result.tokens == 8
 
 
 def test_wiring_rejects_ringer_failure_empty_patch_and_bad_patch(tmp_path: Path) -> None:
