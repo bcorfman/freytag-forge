@@ -9,6 +9,7 @@ import pytest
 
 from factory.checks.gap_delta import DEFAULT_ROOT
 from factory.stations import fix_plan
+from storygame.story_package.dependencies import producers
 from storygame.story_package.loader import load_story_package
 from storygame.story_source.lookup import story_text
 
@@ -76,9 +77,68 @@ def text_plan() -> dict:
     }
 
 
+def _drawer_gap_plan() -> dict:
+    plan = beat_plan()
+    plan["beat"].update(
+        {
+            "id": "drawer_gap_recalled_1a",
+            "at_turn": 12,
+            "when": {"memory_card_recovered": False, "patrol_in_house": False},
+            "sets": {"drawer_gap_pointed_out": True},
+            "text": (
+                "The street is quiet again. Kristin's eyes go back to the workstation drawer, riding high in its "
+                "frame, "
+                "with that thin gap under its lower edge. The officer was too interested in it. Michelle may have left "
+                "something there."
+            ),
+        }
+    )
+    return plan
+
+
 def test_valid_plans_pass() -> None:
     assert fix_plan.lint_plan(beat_plan(), TICKET, PACKAGE) == []
     assert fix_plan.lint_plan(text_plan(), TICKET, PACKAGE) == []
+
+
+def test_rejects_pacing_beat_with_redundant_effect() -> None:
+    problems = fix_plan.lint_plan(_drawer_gap_plan(), TICKET, PACKAGE)
+
+    assert problems == [
+        "plan.redundant_effect beat sets drawer_gap_pointed_out, which pacing event reyes_rams_drawer_1a (turn 8) "
+        "already sets; guard when with drawer_gap_pointed_out: False or set a fact nothing else sets"
+    ]
+
+
+def test_redundant_effect_is_allowed_with_opposite_guard() -> None:
+    plan = _drawer_gap_plan()
+    plan["beat"]["when"]["drawer_gap_pointed_out"] = False
+
+    assert not any(problem.startswith("plan.redundant_effect") for problem in fix_plan.lint_plan(plan, TICKET, PACKAGE))
+
+
+def test_declared_fact_without_matching_producer_is_allowed() -> None:
+    fact_id = next(
+        fact
+        for fact in sorted(fix_plan._declared_facts(PACKAGE))
+        if not producers(PACKAGE, fact, True) and not producers(PACKAGE, fact, False)
+    )
+    plan = beat_plan()
+    plan["beat"]["sets"] = {fact_id: True}
+
+    assert not any(problem.startswith("plan.redundant_effect") for problem in fix_plan.lint_plan(plan, TICKET, PACKAGE))
+
+
+def test_opposite_value_of_existing_producer_is_allowed() -> None:
+    fact_id = next(
+        fact
+        for fact in sorted(fix_plan._declared_facts(PACKAGE))
+        if producers(PACKAGE, fact, True) and not producers(PACKAGE, fact, False)
+    )
+    plan = beat_plan()
+    plan["beat"]["sets"] = {fact_id: False}
+
+    assert not any(problem.startswith("plan.redundant_effect") for problem in fix_plan.lint_plan(plan, TICKET, PACKAGE))
 
 
 @pytest.mark.parametrize(

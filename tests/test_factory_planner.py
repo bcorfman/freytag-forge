@@ -20,6 +20,10 @@ DEFAULT_STORY = ROOT / "data/stories/continuity-initiative"
 NOW = datetime(2026, 1, 1, tzinfo=UTC)
 
 
+def test_planner_brief_mentions_redundant_fact_rule() -> None:
+    assert "opposite value" in PLANNER_BRIEF
+
+
 def _plan(ticket_id: str = "wrong", *, at_turn: int = 10, text: str | None = None) -> dict:
     return {
         "version": 1,

@@ -44,6 +44,7 @@ The beat at_turn is an integer.
 The beat text is a string.
 The beat verbatim and trailing fields are booleans.
 The beat when and sets fields map string fact names to boolean values.
+A beat must not set a fact another beat or claim sets unless its when guard pins that fact to the opposite value.
 For set_text, include only the set_text object below.
 The set_text address and text fields are strings.
 
