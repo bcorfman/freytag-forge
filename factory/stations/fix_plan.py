@@ -270,6 +270,11 @@ def lint_plan(plan: dict, ticket_payload: dict, package: StoryPackage) -> list[s
 
     if not plan["reason"].strip() or len(plan["reason"]) > 400:
         problems.append("plan.reason reason must be non-blank and at most 400 characters")
+    if not plan["reason"].lstrip().startswith("Precedent:"):
+        problems.append(
+            "plan.precedent reason must begin with Precedent: and name the proven technique followed, "
+            "or Precedent: none with what was checked"
+        )
 
     if plan["kind"] == "add_pacing_beat":
         beat = plan["beat"]
@@ -366,6 +371,23 @@ def _candidate_evidence(package: StoryPackage, candidate_id: str) -> dict[str, o
     }
 
 
+def _precedents_text(ticket_payload: Mapping[str, Any]) -> str | None:
+    repository_root = Path(__file__).resolve().parents[2]
+    raw_path = ticket_payload.get("precedents_path")
+    if raw_path is None:
+        path = repository_root / "factory" / "precedents" / "stuck_turns.md"
+    elif isinstance(raw_path, (str, Path)):
+        path = Path(raw_path)
+        if not path.is_absolute():
+            path = repository_root / path
+    else:
+        return None
+    try:
+        return path.read_text(encoding="utf-8")[:20_000]
+    except (OSError, UnicodeError):
+        return None
+
+
 def _bound_evidence(packet: dict[str, object], limit: int = 12_000) -> dict[str, object]:
     def size() -> int:
         return len(json.dumps(packet, ensure_ascii=False, sort_keys=True, separators=(",", ":")))
@@ -457,7 +479,9 @@ def build_evidence(ticket_payload: dict, package: StoryPackage) -> dict:
             },
         ],
     }
-    return _bound_evidence(evidence)
+    evidence = _bound_evidence(evidence)
+    evidence["precedents"] = _precedents_text(ticket_payload)
+    return evidence
 
 
 def _read_json(path: Path) -> object:
