@@ -64,6 +64,13 @@
         "provider": "claude_code"
       }
     ],
-    "deliver": []
+    "deliver": [],
+    "fun_review": [
+      {
+        "model_id": "claude-opus-5-5",
+        "effort": "medium",
+        "provider": "claude_code"
+      }
+    ]
   }
 }

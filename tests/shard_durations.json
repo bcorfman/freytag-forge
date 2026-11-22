@@ -215,6 +215,7 @@
     "tests/test_factory_fix_plan.py": 0.13,
     "tests/test_factory_followups.py": 0.02,
     "tests/test_factory_frozen.py": 0.05,
+    "tests/test_factory_fun_review.py": 0.4,
     "tests/test_factory_gap_delta.py": 1.64,
     "tests/test_factory_guard.py": 0.01,
     "tests/test_factory_judge_calibration.py": 0.01,

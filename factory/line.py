@@ -143,6 +143,8 @@ class FactoryLine:
                     or ticket.station is Station.PROMPT_SNAPSHOT
                     and merge_to_main
                 ):
+                    updated.station = Station.FUN_REVIEW if merge_to_main else Station.DELIVER
+                elif ticket.station is Station.FUN_REVIEW and merge_to_main:
                     updated.station = Station.DELIVER
                 elif ticket.station is Station.DELIVER and merge_to_main:
                     updated.station = Station.LIVE_PLAYTEST

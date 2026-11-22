@@ -104,9 +104,16 @@ def test_merge_ticket_delivers_after_station_nine_and_keeps_payload_updates(tmp_
     line, queue, _ = make_line(
         tmp_path,
         [ticket],
-        {Station.PROMPT_SNAPSHOT: passing, Station.DELIVER: delivery, Station.LIVE_PLAYTEST: passing},
+        {
+            Station.PROMPT_SNAPSHOT: passing,
+            Station.FUN_REVIEW: passing,
+            Station.DELIVER: delivery,
+            Station.LIVE_PLAYTEST: passing,
+        },
     )
 
+    assert line.step(NOW).kind == "advanced"
+    assert queue.get("merge").station is Station.FUN_REVIEW
     assert line.step(NOW).kind == "advanced"
     assert queue.get("merge").station is Station.DELIVER
     assert line.step(NOW).kind == "advanced"
@@ -115,6 +122,27 @@ def test_merge_ticket_delivers_after_station_nine_and_keeps_payload_updates(tmp_
     assert saved.payload["merged_sha"] == "abc"
     assert line.step(NOW).kind == "delivered"
     assert queue.get("merge").status is Status.PASSED
+
+
+def test_failed_fun_review_records_failure_and_stays_at_station_ten(tmp_path):
+    ticket = make_ticket("fun-fail", station=Station.FUN_REVIEW)
+    ticket.payload["merge_to_main"] = True
+    line, queue, _ = make_line(tmp_path, [ticket], {Station.FUN_REVIEW: failing})
+
+    outcome = line.step(NOW)
+
+    saved = queue.get("fun-fail")
+    assert outcome.kind == "failed_attempt"
+    assert saved.station is Station.FUN_REVIEW
+    assert saved.failures[-1].check == "quality"
+
+
+def test_non_merge_ticket_still_goes_from_prompt_snapshot_to_live_playtest(tmp_path):
+    ticket = make_ticket("no-merge", station=Station.PROMPT_SNAPSHOT)
+    line, queue, _ = make_line(tmp_path, [ticket], {Station.PROMPT_SNAPSHOT: passing})
+
+    assert line.step(NOW).kind == "advanced"
+    assert queue.get("no-merge").station is Station.LIVE_PLAYTEST
 
 
 def test_live_playtest_infrastructure_failure_retries(tmp_path):
