@@ -88,6 +88,7 @@ def test_fun_review_contract_has_eighth_delight_check_and_all_true_passes(tmp_pa
     assert '"delights_the_player": true' in FUN_REVIEW_BRIEF
     assert '"fun_advice": "empty on pass; one or two plain sentences on block"' in FUN_REVIEW_BRIEF
     assert "Keep fun_advice to 300 characters or fewer." in FUN_REVIEW_BRIEF
+    assert "\n\nReply with ONE JSON object and nothing else:" in FUN_REVIEW_BRIEF
 
     root, _tree, ticket = _review_fixture(tmp_path)
     result = fun_review_handler(
@@ -238,6 +239,7 @@ def test_second_fun_block_uses_failure_ladder_and_preserves_history(tmp_path: Pa
     saved = queue.get(ticket.id)
     assert saved.status is Status.SET_ASIDE
     assert saved.failures[-1].check == "fun_review"
+    assert saved.payload["fun_rounds"] == MAX_FUN_ROUNDS
     assert saved.payload["fun_history"] == [
         {
             "plan": ticket.payload["plan"],
@@ -246,6 +248,15 @@ def test_second_fun_block_uses_failure_ladder_and_preserves_history(tmp_path: Pa
             "failed_checks": ["delights_the_player"],
         }
     ]
+
+    saved.station = Station.FUN_REVIEW
+    saved.status = Status.QUEUED
+    saved.return_after = None
+    queue.save(saved)
+    assert line.step(NOW).kind == "failed_attempt"
+    repeated = queue.get(ticket.id)
+    assert repeated.payload["fun_rounds"] == MAX_FUN_ROUNDS + 1
+    assert repeated.payload["fun_history"] == saved.payload["fun_history"]
 
     first = _line_ticket(
         "fun-history",
@@ -272,6 +283,91 @@ def test_second_fun_block_uses_failure_ladder_and_preserves_history(tmp_path: Pa
     )
     assert normal_line.step(NOW).kind == "failed_attempt"
     assert normal_queue.get(unreadable.id).attempts == 1
+
+
+def test_empty_fun_failed_checks_use_the_rule_feedback_line(tmp_path: Path) -> None:
+    result = _blocked_result()
+    result.payload_updates["fun_review"]["failed_checks"] = []
+    ticket = _line_ticket("fun-empty-checks")
+    line, queue = _line(tmp_path, ticket, result)
+
+    assert line.step(NOW).kind == "fun_blocked"
+    assert (
+        queue.get(ticket.id)
+        .payload["fun_feedback"]
+        .startswith("Failed checks: none (blocked by the rule against only moving words)\n")
+    )
+
+
+def _probe_line(tmp_path: Path, ticket: Ticket, result: StationResult) -> tuple[FactoryLine, TicketQueue]:
+    queue = TicketQueue(tmp_path / "probe-tickets")
+    queue.add(ticket)
+    line = FactoryLine(
+        queue=queue,
+        state=FactoryState.load(tmp_path / "probe-state.json"),
+        handlers={Station.PROBE: lambda _ticket, _now: result},
+        provider_for=lambda _ticket: None,
+        check_breakers=lambda _now: [],
+    )
+    return line, queue
+
+
+def test_probe_reject_carries_last_fun_advice_and_reasons(tmp_path: Path) -> None:
+    ticket = Ticket(
+        "probe-with-fun-history",
+        "scene-1",
+        Station.PROBE,
+        1000,
+        NOW.isoformat(),
+        NOW.isoformat(),
+        payload={
+            "plan": {"kind": "set_text"},
+            "fun_history": [
+                {
+                    "plan": {"kind": "set_text"},
+                    "reasons": "Use the existing clue as a payoff.",
+                    "fun_advice": "Make the clue matter at the reveal.",
+                    "failed_checks": ["delights_the_player"],
+                }
+            ],
+        },
+    )
+    result = StationResult(
+        False,
+        "probe",
+        "probe failed",
+        payload_updates={"probe": {"verdict": "reject", "feedback": "probe feedback"}},
+    )
+    line, queue = _probe_line(tmp_path, ticket, result)
+
+    assert line.step(NOW).kind == "probe_rejected"
+    assert queue.get(ticket.id).payload["probe_feedback"] == (
+        "probe feedback\n\nEarlier fun review advice (still applies):\n"
+        "Reasons: Use the existing clue as a payoff.\n"
+        "fun_advice: Make the clue matter at the reveal."
+    )
+
+
+def test_probe_reject_without_fun_history_keeps_feedback_unchanged(tmp_path: Path) -> None:
+    ticket = Ticket(
+        "probe-without-fun-history",
+        "scene-1",
+        Station.PROBE,
+        1000,
+        NOW.isoformat(),
+        NOW.isoformat(),
+        payload={"plan": {"kind": "set_text"}},
+    )
+    result = StationResult(
+        False,
+        "probe",
+        "probe failed",
+        payload_updates={"probe": {"verdict": "reject", "feedback": "probe feedback"}},
+    )
+    line, queue = _probe_line(tmp_path, ticket, result)
+
+    assert line.step(NOW).kind == "probe_rejected"
+    assert queue.get(ticket.id).payload["probe_feedback"] == "probe feedback"
 
 
 def test_probe_and_fun_pass_clear_fun_feedback(tmp_path: Path) -> None:

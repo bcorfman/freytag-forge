@@ -77,7 +77,7 @@ FUN_REVIEW_BRIEF = (
     "stakes. Generic mood words, extra props, and invented facts never count. If the fix adds no player-visible text, "
     "answer yes "
     "when the added words are a natural way a player would try the action. They must let the player reach the scene's "
-    "intended moment without skipping a puzzle, a clue or a reward.\n"
+    "intended moment without skipping a puzzle, a clue or a reward.\n\n"
     "Reply with ONE JSON object and nothing else:\n"
     '{"verdict": "pass" or "block", "checks": {"fits_scene": true, '
     '"gives_a_reason_to_act": true, "keeps_pace": true, "fits_freytag_phase": true, '

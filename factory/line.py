@@ -189,7 +189,18 @@ class FactoryLine:
                     updated.payload["probe_rounds"] = next_probe_round
                     updated.payload["feedback_plan"] = ticket.payload.get("plan")
                     feedback = probe_update.get("feedback")
-                    updated.payload["probe_feedback"] = feedback if isinstance(feedback, str) else result.output
+                    probe_feedback = feedback if isinstance(feedback, str) else result.output
+                    history = updated.payload.get("fun_history")
+                    if isinstance(history, list) and history:
+                        last_entry = history[-1] if isinstance(history[-1], dict) else {}
+                        reasons = last_entry.get("reasons") if isinstance(last_entry.get("reasons"), str) else ""
+                        fun_advice = (
+                            last_entry.get("fun_advice") if isinstance(last_entry.get("fun_advice"), str) else ""
+                        )
+                        probe_feedback += f"\n\nEarlier fun review advice (still applies):\nReasons: {reasons}"
+                        if fun_advice:
+                            probe_feedback += f"\nfun_advice: {fun_advice}"
+                    updated.payload["probe_feedback"] = probe_feedback
                     updated.payload.pop("plan", None)
                     updated.payload.pop("fun_feedback", None)
                     self.queue.save(updated)
@@ -231,17 +242,19 @@ class FactoryLine:
                     if not isinstance(failed_checks, list):
                         failed_checks = []
                     failed_checks = [key for key in failed_checks if isinstance(key, str)]
+                    history_entry = {
+                        "plan": blocked_plan,
+                        "reasons": reasons,
+                        "fun_advice": fun_advice,
+                        "failed_checks": failed_checks,
+                    }
                     history = updated.payload.get("fun_history")
                     if not isinstance(history, list):
                         history = []
-                    history.append(
-                        {
-                            "plan": blocked_plan,
-                            "reasons": reasons,
-                            "fun_advice": fun_advice,
-                            "failed_checks": failed_checks,
-                        }
-                    )
+                    last_entry = history[-1] if history and isinstance(history[-1], dict) else None
+                    history_keys = ("plan", "reasons", "fun_advice", "failed_checks")
+                    if last_entry is None or any(last_entry.get(key) != history_entry[key] for key in history_keys):
+                        history.append(history_entry)
                     updated.payload["fun_history"] = history
                     if next_fun_round < MAX_FUN_ROUNDS:
                         updated.station = Station.WIRING
@@ -254,7 +267,11 @@ class FactoryLine:
                         updated.payload["fun_rounds"] = next_fun_round
                         updated.payload["feedback_plan"] = blocked_plan
                         feedback_lines = [
-                            "Failed checks: " + ", ".join(failed_checks),
+                            (
+                                "Failed checks: none (blocked by the rule against only moving words)"
+                                if not failed_checks
+                                else "Failed checks: " + ", ".join(failed_checks)
+                            ),
                             "Reasons: " + reasons,
                         ]
                         if fun_advice:
@@ -266,6 +283,7 @@ class FactoryLine:
                         self.queue.save(updated)
                         outcome = StepOutcome("fun_blocked", ticket.id)
                     else:
+                        updated.payload["fun_rounds"] = next_fun_round
                         updated.ladder_rung = LadderRung.OPUS_REFRESH
                         self.queue.save(updated)
                         self.queue.record_failure(
