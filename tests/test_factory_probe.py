@@ -68,6 +68,29 @@ def test_runs_from_report_uses_typed_inputs_and_caps() -> None:
     assert runs[0]["inputs"][0] == "Inspect item 0."
 
 
+def test_projected_cost_usd_sums_turns_across_runs() -> None:
+    rate = 0.0015
+    runs = [
+        {"inputs": ["Inspect the shelf."] * 16},
+        {"inputs": ["Inspect the shelf."] * 13},
+        {"inputs": ["Inspect the shelf."] * 15},
+    ]
+
+    assert projected_cost_usd(runs, 3, {"estimated_usd_per_turn": rate}) == pytest.approx(0.396)
+
+
+def test_projected_cost_usd_single_run() -> None:
+    rate = 0.0015
+
+    assert projected_cost_usd(
+        [{"inputs": ["Inspect the shelf."] * 10}], 1, {"estimated_usd_per_turn": rate}
+    ) == pytest.approx(2 * 10 * rate)
+
+
+def test_projected_cost_usd_empty_runs() -> None:
+    assert projected_cost_usd([], 3, {"estimated_usd_per_turn": 0.0015}) == 0
+
+
 def test_build_variation_is_story_package_only_and_bench_describes(tmp_path: Path) -> None:
     run = {"run": "synthetic-r1", "scene": "synthetic", "inputs": ["Inspect the shelf.", "Open the drawer."]}
     control = build_variation(
@@ -284,7 +307,23 @@ def test_handler_staged_lock_and_spend_cap_block_runner(tmp_path: Path, monkeypa
     payload = {
         "workspace": str(tmp_path),
         "story_package": "data/stories/base",
-        "runs": [{"run": "synthetic-r1", "scene": "synthetic", "inputs": ["Inspect the shelf.", "Open the drawer."]}],
+        "runs": [
+            {
+                "run": "synthetic-r1",
+                "scene": "synthetic",
+                "inputs": [f"Inspect item {index}." for index in range(40)],
+            },
+            {
+                "run": "synthetic-r2",
+                "scene": "synthetic",
+                "inputs": [f"Inspect item {index}." for index in range(45)],
+            },
+            {
+                "run": "synthetic-r3",
+                "scene": "synthetic",
+                "inputs": [f"Inspect item {index}." for index in range(45)],
+            },
+        ],
         "billed_run_approved": True,
     }
     calls: list[list[str]] = []
@@ -299,7 +338,7 @@ def test_handler_staged_lock_and_spend_cap_block_runner(tmp_path: Path, monkeypa
     lock.unlink()
     config_path = root / "factory/config/factory.json"
     config = json.loads(config_path.read_text(encoding="utf-8"))
-    config["caps"]["daily_cap_usd"]["cloudflare"] = 0.5
+    config["caps"]["daily_cap_usd"]["cloudflare"] = 1.0
     config_path.write_text(json.dumps(config), encoding="utf-8")
     ledger = root / "factory/state/ledger.jsonl"
     ledger.write_text(
@@ -312,7 +351,7 @@ def test_handler_staged_lock_and_spend_cap_block_runner(tmp_path: Path, monkeypa
                 "scene": "synthetic",
                 "ticket_id": "old",
                 "tokens": 0,
-                "usd": 0.5,
+                "usd": 0.25,
                 "cost_kind": "dollars",
                 "limits": None,
             }
@@ -320,14 +359,14 @@ def test_handler_staged_lock_and_spend_cap_block_runner(tmp_path: Path, monkeypa
         + "\n",
         encoding="utf-8",
     )
-    with pytest.raises(LimitSleep) as raised:
-        probe_handler(
-            root,
-            runner=make_runner(calls),
-            rules=RULES,
-            read_budget=lambda: dict(BUDGET),
-        )(make_ticket(payload), NOW)
-    assert raised.value.provider == "cloudflare"
+    result = probe_handler(
+        root,
+        runner=make_runner(calls),
+        rules=RULES,
+        read_budget=lambda: dict(BUDGET),
+    )(make_ticket(payload), NOW)
+    assert not result.passed
+    assert result.output == "projected probe cost $0.7800 is above the remaining budget"
     assert calls == []
 
 
@@ -337,7 +376,23 @@ def test_handler_full_path_reuses_hashes_and_records_spend(tmp_path: Path, monke
     payload = {
         "workspace": str(tmp_path),
         "story_package": "data/stories/base",
-        "runs": [{"run": "synthetic-r1", "scene": "synthetic", "inputs": ["Inspect the shelf.", "Open the drawer."]}],
+        "runs": [
+            {
+                "run": "synthetic-r1",
+                "scene": "synthetic",
+                "inputs": ["Inspect the shelf."] * 16,
+            },
+            {
+                "run": "synthetic-r2",
+                "scene": "synthetic",
+                "inputs": ["Inspect the shelf."] * 13,
+            },
+            {
+                "run": "synthetic-r3",
+                "scene": "synthetic",
+                "inputs": ["Inspect the shelf."] * 15,
+            },
+        ],
         "billed_run_approved": True,
     }
     calls: list[list[str]] = []
@@ -362,14 +417,16 @@ def test_handler_full_path_reuses_hashes_and_records_spend(tmp_path: Path, monke
     assert result.passed
     assert result.payload_updates["probe"]["feedback"].startswith("verdict keep")
     assert "Inspect the shelf" not in result.payload_updates["probe"]["feedback"]
-    assert len(calls) == 2
+    assert len(calls) == 6
     assert (tmp_path / "probe-ticket/probe/control-synthetic-r1.json").is_file()
     assert payload == original
     ledger_rows = [json.loads(line) for line in (root / "factory/state/ledger.jsonl").read_text().splitlines()]
     assert len(ledger_rows) == 1
     assert ledger_rows[0]["station"] == "probe"
     assert ledger_rows[0]["provider"] == "cloudflare"
-    assert ledger_rows[0]["estimate_usd"] == projected_cost_usd(payload["runs"], RULES["replicates"], RULES)
+    expected_estimate = projected_cost_usd(payload["runs"], RULES["replicates"], RULES)
+    assert expected_estimate == pytest.approx(0.264)
+    assert ledger_rows[0]["estimate_usd"] == expected_estimate
     budget_reads: list[bool] = []
 
     def saved_budget_reader() -> dict | None:
@@ -379,13 +436,13 @@ def test_handler_full_path_reuses_hashes_and_records_spend(tmp_path: Path, monke
     saved_handler = probe_handler(root, runner=make_runner(calls), rules=RULES, read_budget=saved_budget_reader)
     saved = saved_handler(make_ticket(payload), NOW)
     assert saved.passed
-    assert len(calls) == 2
+    assert len(calls) == 6
     assert budget_reads == []
     (tree / "data/stories/base/package.txt").write_bytes(b"changed")
     budgets = iter([dict(BUDGET), dict(BUDGET)])
     changed = probe_handler(root, runner=make_runner(calls), rules=RULES, read_budget=lambda: next(budgets))
     changed(make_ticket(payload), NOW)
-    assert len(calls) == 4
+    assert len(calls) == 12
 
 
 def test_handler_unknown_spend_and_runner_errors_do_not_save(tmp_path: Path, monkeypatch) -> None:

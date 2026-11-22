@@ -204,13 +204,8 @@ def summarize_arm(turn_records_files: list[Path]) -> dict:
 def projected_cost_usd(runs: list[dict], replicates: int, rules: dict) -> float:
     """Estimate both arms' billed narrator cost for the selected replay scripts."""
 
-    return (
-        2
-        * len(runs)
-        * replicates
-        * sum(len(run.get("inputs", ())) for run in runs)
-        * float(rules["estimated_usd_per_turn"])
-    )
+    total_turns = sum(len(run.get("inputs", ())) for run in runs)
+    return 2 * replicates * total_turns * float(rules["estimated_usd_per_turn"])
 
 
 def _rate(summary: dict, field: str, denominator: str) -> float:
