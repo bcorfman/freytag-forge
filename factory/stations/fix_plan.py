@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from factory.checks.gap_delta import DEFAULT_ROOT
+from factory.lessons import render_lessons
 from storygame.story_package.dependencies import producers
 from storygame.story_package.loader import load_story_package
 from storygame.story_package.models import StoryPackage
@@ -671,6 +672,16 @@ def build_evidence(ticket_payload: dict, package: StoryPackage) -> dict:
     }
     evidence = _bound_evidence(evidence)
     evidence["precedents"] = _precedents_text(ticket_payload)
+    raw_lessons_path = ticket_payload.get("fun_lessons_path")
+    if raw_lessons_path is None:
+        lessons_path = Path(__file__).resolve().parents[2] / "factory" / "state" / "fun_lessons.jsonl"
+    elif isinstance(raw_lessons_path, (str, Path)):
+        lessons_path = Path(raw_lessons_path)
+        if not lessons_path.is_absolute():
+            lessons_path = Path(__file__).resolve().parents[2] / lessons_path
+    else:
+        lessons_path = None
+    evidence["fun_lessons"] = None if lessons_path is None else (render_lessons(lessons_path) or None)
     return evidence
 
 

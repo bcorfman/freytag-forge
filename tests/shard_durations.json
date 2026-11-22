@@ -223,6 +223,7 @@
     "tests/test_factory_guard.py": 0.01,
     "tests/test_factory_judge_calibration.py": 0.01,
     "tests/test_factory_judge_guards.py": 0.02,
+    "tests/test_factory_lessons.py": 1.22,
     "tests/test_factory_limits.py": 0.01,
     "tests/test_factory_line.py": 0.05,
     "tests/test_factory_live_playtest.py": 0.02,

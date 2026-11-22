@@ -113,7 +113,7 @@ def test_build_prompt_is_brief_evidence_then_verbatim_retry_context() -> None:
     assert prompt.index('{"scene":"1A"') > prompt.index(PLANNER_BRIEF)
     assert prompt.index("Previous plan:") < prompt.index("Lint problems:")
     assert "plan.text text is too short\nplan.evidence evidence is missing" in prompt
-    assert "why" not in prompt
+    assert '"why"' not in prompt
 
 
 def test_build_prompt_adds_check_output_after_previous_plan() -> None:

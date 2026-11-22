@@ -41,6 +41,8 @@ Never choose a phrase so broad that it lets a player skip a puzzle, a clue, or a
 Timing and wording are your decision, and nobody will be asked to choose them.
 The evidence includes precedents: fixes the project proved, fixes that lost, and things that must never be done.
 Try a proven technique first, and never choose a fix listed as lost or never do.
+Fun review lessons describe patterns, not fixes; never repeat an Avoid pattern for a scene unless your reason \
+names the lesson and why this scene differs.
 Begin reason with "Precedent: " followed by the proven technique you follow.
 If none covers the case, begin reason with "Precedent: none"; list checks and the reason it does not apply.
 After the cause, name in a few words the detail that makes the fix fun.

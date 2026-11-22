@@ -273,8 +273,10 @@ def test_evidence_is_deterministic_bounded_and_skips_unknown() -> None:
     second = fix_plan.build_evidence(ticket, PACKAGE)
     assert first == second
     json.dumps(first)
-    bounded_without_precedents = {key: value for key, value in first.items() if key != "precedents"}
-    assert len(json.dumps(bounded_without_precedents)) < 12_000
+    bounded_without_curated_text = {
+        key: value for key, value in first.items() if key not in {"precedents", "fun_lessons"}
+    }
+    assert len(json.dumps(bounded_without_curated_text)) < 12_000
     assert "unknown_candidate" not in first["candidates"]
     candidate = first["candidates"]["k_sl_1a_b_r1"]
     assert candidate["earn_when"]

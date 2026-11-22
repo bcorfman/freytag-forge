@@ -163,6 +163,7 @@ def _line_ticket(ticket_id: str, *, payload: dict | None = None) -> Ticket:
 
 
 def _line(tmp_path: Path, ticket: Ticket, result: StationResult) -> tuple[FactoryLine, TicketQueue]:
+    ticket.payload.setdefault("fun_lessons_path", str(tmp_path / "fun_lessons.jsonl"))
     queue = TicketQueue(tmp_path / "tickets")
     queue.add(ticket)
     line = FactoryLine(

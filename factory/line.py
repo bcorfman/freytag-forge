@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 
 from factory.followups import open_followups
 from factory.guard import LimitSleep
+from factory.lessons import record_lessons
 from factory.state import FactoryState
 from factory.tickets import LadderRung, Station, Status, Ticket, TicketQueue
 
@@ -94,6 +95,16 @@ class FactoryLine:
             self.state.trip_breaker("; ".join(reasons), now)
             self.state.save()
 
+    def _record_fun_lessons(self, ticket: Ticket, outcome: str) -> None:
+        history = ticket.payload.get("fun_history")
+        if not isinstance(history, list) or not history:
+            return
+        try:
+            record_lessons(ticket, outcome)
+        except Exception:
+            return
+        self.queue.save(ticket)
+
     def step(self, now: datetime) -> StepOutcome:
         if self.state.is_tripped():
             return StepOutcome("halted", None)
@@ -129,7 +140,8 @@ class FactoryLine:
             merged_payload = {**ticket.payload, **(result.payload_updates or {})}
             merge_to_main = merged_payload.get("merge_to_main") is True
             if ticket.station is Station.LIVE_PLAYTEST and merge_to_main:
-                self.queue.record_pass(ticket.id, now)
+                passed_ticket = self.queue.record_pass(ticket.id, now)
+                self._record_fun_lessons(passed_ticket, "delivered")
                 outcome = StepOutcome("delivered", ticket.id)
             elif ticket.station is Station.TRIAGE:
                 opened = open_followups(self.queue, ticket, result.routing, now) if result.routing is not None else []
@@ -286,7 +298,7 @@ class FactoryLine:
                         updated.payload["fun_rounds"] = next_fun_round
                         updated.ladder_rung = LadderRung.OPUS_REFRESH
                         self.queue.save(updated)
-                        self.queue.record_failure(
+                        failed_ticket = self.queue.record_failure(
                             ticket.id,
                             result.check,
                             result.output,
@@ -294,6 +306,7 @@ class FactoryLine:
                             max_attempts=1,
                             set_aside_s=self.set_aside_s,
                         )
+                        self._record_fun_lessons(failed_ticket, "fun_exhausted")
                         outcome = StepOutcome("failed_attempt", ticket.id)
                 elif ticket.station is Station.LIVE_PLAYTEST and isinstance(result.turns, list) and result.turns:
                     updated = self.queue.get(ticket.id)
@@ -306,6 +319,7 @@ class FactoryLine:
                     updated.return_after = None
                     updated.payload["turns"] = result.turns
                     self.queue.save(updated)
+                    self._record_fun_lessons(updated, "fun_exhausted")
                     outcome = StepOutcome("to_triage", ticket.id)
                 else:
                     self.queue.record_failure(
