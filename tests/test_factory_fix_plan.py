@@ -106,7 +106,9 @@ def test_rejects_pacing_beat_with_redundant_effect() -> None:
 
     assert problems == [
         "plan.redundant_effect beat sets drawer_gap_pointed_out, which pacing event reyes_rams_drawer_1a (turn 8) "
-        "already sets; guard when with drawer_gap_pointed_out: False or set a fact nothing else sets"
+        "already sets; guard when with drawer_gap_pointed_out: False or set a fact nothing else sets",
+        "plan.shared_effect beat sets drawer_gap_pointed_out, which pacing event reyes_rams_drawer_1a (turn 8) "
+        "also sets; set a fact no other pacing event sets",
     ]
 
 
@@ -117,7 +119,8 @@ def test_redundant_effect_is_allowed_with_opposite_guard() -> None:
     assert not any(problem.startswith("plan.redundant_effect") for problem in fix_plan.lint_plan(plan, TICKET, PACKAGE))
 
 
-def test_rejects_beat_that_sets_a_fact_an_existing_later_beat_sets() -> None:
+def test_rejects_beat_that_sets_a_fact_any_pacing_event_sets() -> None:
+    plans = []
     plan = _drawer_gap_plan()
     plan["beat"].update(
         {
@@ -126,16 +129,32 @@ def test_rejects_beat_that_sets_a_fact_an_existing_later_beat_sets() -> None:
             "when": {"drawer_gap_pointed_out": False, "memory_card_recovered": False},
         }
     )
+    plans.append(plan)
 
-    problems = fix_plan.lint_plan(plan, TICKET, PACKAGE)
-
-    assert any(
-        problem.startswith("plan.earlier_than_producer") and "reyes_rams_drawer_1a" in problem and "(turn 8)" in problem
-        for problem in problems
+    plan = _drawer_gap_plan()
+    plan["beat"].update(
+        {
+            "id": "drawer_sits_crooked_1a",
+            "at_turn": 11,
+            "when": {
+                "drawer_gap_pointed_out": False,
+                "memory_card_recovered": False,
+                "patrol_in_house": False,
+            },
+        }
     )
+    plans.append(plan)
+
+    for plan in plans:
+        problems = fix_plan.lint_plan(plan, TICKET, PACKAGE)
+
+        assert any(
+            problem.startswith("plan.shared_effect") and "reyes_rams_drawer_1a" in problem and "(turn 8)" in problem
+            for problem in problems
+        )
 
 
-def test_beat_at_or_after_the_producer_turn_is_not_refused_by_the_earlier_rule() -> None:
+def test_shared_effect_is_refused_at_and_after_the_producer_turn_too() -> None:
     plan = _drawer_gap_plan()
     plan["beat"].update(
         {
@@ -146,23 +165,28 @@ def test_beat_at_or_after_the_producer_turn_is_not_refused_by_the_earlier_rule()
     for at_turn in (8, 9):
         plan["beat"]["at_turn"] = at_turn
 
-        assert not any(
-            problem.startswith("plan.earlier_than_producer") for problem in fix_plan.lint_plan(plan, TICKET, PACKAGE)
+        assert any(
+            problem.startswith("plan.shared_effect") and "reyes_rams_drawer_1a" in problem and "(turn 8)" in problem
+            for problem in fix_plan.lint_plan(plan, TICKET, PACKAGE)
         )
 
 
-def test_earlier_rule_ignores_beats_that_set_no_shared_fact() -> None:
-    fact_id = next(
-        fact
-        for fact in sorted(fix_plan._declared_facts(PACKAGE))
-        if not producers(PACKAGE, fact, True) and not producers(PACKAGE, fact, False)
-    )
+def test_shared_effect_rule_ignores_a_fact_no_pacing_event_sets() -> None:
+    pacing_fact_ids = {
+        fix_plan._value(effect, "fact_id")
+        for event in fix_plan._value(getattr(PACKAGE, "pacing", None), "events", ()) or ()
+        for effect in fix_plan._value(event, "effects", ()) or ()
+    }
+    fact_id = next(fact for fact in sorted(fix_plan._declared_facts(PACKAGE)) if fact not in pacing_fact_ids)
     plan = beat_plan()
-    plan["beat"].update({"at_turn": 5, "sets": {fact_id: True}})
+    plan["beat"]["sets"] = {fact_id: True}
 
-    assert not any(
-        problem.startswith("plan.earlier_than_producer") for problem in fix_plan.lint_plan(plan, TICKET, PACKAGE)
-    )
+    for at_turn in (5, 11):
+        plan["beat"]["at_turn"] = at_turn
+
+        assert not any(
+            problem.startswith("plan.shared_effect") for problem in fix_plan.lint_plan(plan, TICKET, PACKAGE)
+        )
 
 
 def test_declared_fact_without_matching_producer_is_allowed() -> None:

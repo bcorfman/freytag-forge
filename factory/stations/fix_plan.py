@@ -223,7 +223,7 @@ def _exit_fact_ids(package: StoryPackage, scene: str) -> set[str]:
     return result
 
 
-def _earlier_pacing_problems(package: StoryPackage, beat: Mapping[str, Any]) -> list[str]:
+def _shared_effect_problems(package: StoryPackage, beat: Mapping[str, Any]) -> list[str]:
     pacing = getattr(package, "pacing", None)
     events = _value(pacing, "events", ()) or ()
     matches: list[tuple[str, int, str]] = []
@@ -232,12 +232,7 @@ def _earlier_pacing_problems(package: StoryPackage, beat: Mapping[str, Any]) -> 
         for event in events:
             event_turn = _value(event, "at_turn")
             event_id = _value(event, "id")
-            if (
-                not isinstance(event_turn, int)
-                or isinstance(event_turn, bool)
-                or event_turn <= beat["at_turn"]
-                or not isinstance(event_id, str)
-            ):
+            if not isinstance(event_turn, int) or isinstance(event_turn, bool) or not isinstance(event_id, str):
                 continue
             if any(
                 _value(effect, "fact_id") == fact_id and _value(effect, "equals") == value
@@ -246,9 +241,8 @@ def _earlier_pacing_problems(package: StoryPackage, beat: Mapping[str, Any]) -> 
                 matches.append((fact_id, event_turn, event_id))
 
     return [
-        f"plan.earlier_than_producer beat at turn {beat['at_turn']} sets {fact_id}, which pacing event "
-        f"{event_id} (turn {event_turn}) also sets; that event's test needs {fact_id} unset before turn "
-        f"{event_turn}, so use turn {event_turn} or later, or set a fact nothing else sets"
+        f"plan.shared_effect beat sets {fact_id}, which pacing event {event_id} (turn {event_turn}) also sets; "
+        "set a fact no other pacing event sets"
         for fact_id, event_turn, event_id in sorted(matches, key=lambda match: (match[0], match[1], match[2]))
     ]
 
@@ -302,7 +296,7 @@ def lint_plan(plan: dict, ticket_payload: dict, package: StoryPackage) -> list[s
                     f"plan.redundant_effect beat sets {fact_id}, which {existing[0].text} already sets; "
                     f"guard when with {fact_id}: {not value} or set a fact nothing else sets"
                 )
-        problems.extend(_earlier_pacing_problems(package, beat))
+        problems.extend(_shared_effect_problems(package, beat))
         if set(beat["sets"]) & _exit_fact_ids(package, plan["scene"]):
             problems.append("plan.exit_trigger beat may not set an exit trigger or dependency")
         if _text_problem(beat["text"], package):

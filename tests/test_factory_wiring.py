@@ -33,7 +33,7 @@ def beat_plan(ticket_id: str = "wire-ticket") -> dict:
             "verbatim": True,
             "trailing": True,
             "when": {"drawer_opened": False},
-            "sets": {"drawer_opened": True},
+            "sets": {},
         },
     }
 
