@@ -27,6 +27,7 @@ class StationResult:
 
 StationHandler = Callable[[Ticket, datetime], StationResult]
 MAX_PROBE_ROUNDS = 3
+MAX_FUN_ROUNDS = 2
 
 
 @dataclass
@@ -142,6 +143,10 @@ class FactoryLine:
                 if ticket.station is Station.PROBE:
                     updated.payload.pop("probe_feedback", None)
                     updated.payload.pop("feedback_plan", None)
+                    updated.payload.pop("fun_feedback", None)
+                if ticket.station is Station.FUN_REVIEW:
+                    updated.payload.pop("fun_feedback", None)
+                    updated.payload.pop("feedback_plan", None)
                 if ticket.station is Station.DIAGNOSE:
                     updated.station = Station.WIRING
                 elif ticket.station is Station.PROMPT_SNAPSHOT:
@@ -186,6 +191,7 @@ class FactoryLine:
                     feedback = probe_update.get("feedback")
                     updated.payload["probe_feedback"] = feedback if isinstance(feedback, str) else result.output
                     updated.payload.pop("plan", None)
+                    updated.payload.pop("fun_feedback", None)
                     self.queue.save(updated)
                     outcome = StepOutcome("probe_rejected", ticket.id)
                 else:
@@ -201,28 +207,98 @@ class FactoryLine:
                         set_aside_s=self.set_aside_s,
                     )
                     outcome = StepOutcome("failed_attempt", ticket.id)
-            elif ticket.station is Station.LIVE_PLAYTEST and isinstance(result.turns, list) and result.turns:
-                updated = self.queue.get(ticket.id)
-                updated.station = Station.TRIAGE
-                updated.status = Status.QUEUED
-                updated.attempts = 0
-                updated.ladder_rung = LadderRung.LUNA_RETRY
-                updated.provider = None
-                updated.sleep_until = None
-                updated.return_after = None
-                updated.payload["turns"] = result.turns
-                self.queue.save(updated)
-                outcome = StepOutcome("to_triage", ticket.id)
             else:
-                self.queue.record_failure(
-                    ticket.id,
-                    result.check,
-                    result.output,
-                    now,
-                    max_attempts=self.max_attempts,
-                    set_aside_s=self.set_aside_s,
+                fun_update = (
+                    result.payload_updates.get("fun_review") if isinstance(result.payload_updates, dict) else None
                 )
-                outcome = StepOutcome("failed_attempt", ticket.id)
+                fun_verdict = fun_update.get("verdict") if isinstance(fun_update, dict) else None
+                if ticket.station is Station.FUN_REVIEW and fun_verdict == "block":
+                    fun_rounds = ticket.payload.get("fun_rounds", 0)
+                    if not isinstance(fun_rounds, int) or isinstance(fun_rounds, bool):
+                        fun_rounds = 0
+                    next_fun_round = fun_rounds + 1
+                    updated = self.queue.get(ticket.id)
+                    blocked_plan = ticket.payload.get("plan")
+                    if not isinstance(blocked_plan, dict):
+                        blocked_plan = fun_update.get("plan")
+                    if not isinstance(blocked_plan, dict):
+                        blocked_plan = {}
+                    reasons = fun_update.get("reasons")
+                    reasons = reasons if isinstance(reasons, str) else ""
+                    fun_advice = fun_update.get("fun_advice")
+                    fun_advice = fun_advice if isinstance(fun_advice, str) else ""
+                    failed_checks = fun_update.get("failed_checks")
+                    if not isinstance(failed_checks, list):
+                        failed_checks = []
+                    failed_checks = [key for key in failed_checks if isinstance(key, str)]
+                    history = updated.payload.get("fun_history")
+                    if not isinstance(history, list):
+                        history = []
+                    history.append(
+                        {
+                            "plan": blocked_plan,
+                            "reasons": reasons,
+                            "fun_advice": fun_advice,
+                            "failed_checks": failed_checks,
+                        }
+                    )
+                    updated.payload["fun_history"] = history
+                    if next_fun_round < MAX_FUN_ROUNDS:
+                        updated.station = Station.WIRING
+                        updated.status = Status.QUEUED
+                        updated.attempts = 0
+                        updated.ladder_rung = LadderRung.LUNA_RETRY
+                        updated.provider = None
+                        updated.sleep_until = None
+                        updated.return_after = None
+                        updated.payload["fun_rounds"] = next_fun_round
+                        updated.payload["feedback_plan"] = blocked_plan
+                        feedback_lines = [
+                            "Failed checks: " + ", ".join(failed_checks),
+                            "Reasons: " + reasons,
+                        ]
+                        if fun_advice:
+                            feedback_lines.append("fun_advice: " + fun_advice)
+                        updated.payload["fun_feedback"] = "\n".join(feedback_lines)
+                        updated.payload.pop("plan", None)
+                        updated.payload.pop("probe_feedback", None)
+                        updated.payload.pop("fun_review", None)
+                        self.queue.save(updated)
+                        outcome = StepOutcome("fun_blocked", ticket.id)
+                    else:
+                        updated.ladder_rung = LadderRung.OPUS_REFRESH
+                        self.queue.save(updated)
+                        self.queue.record_failure(
+                            ticket.id,
+                            result.check,
+                            result.output,
+                            now,
+                            max_attempts=1,
+                            set_aside_s=self.set_aside_s,
+                        )
+                        outcome = StepOutcome("failed_attempt", ticket.id)
+                elif ticket.station is Station.LIVE_PLAYTEST and isinstance(result.turns, list) and result.turns:
+                    updated = self.queue.get(ticket.id)
+                    updated.station = Station.TRIAGE
+                    updated.status = Status.QUEUED
+                    updated.attempts = 0
+                    updated.ladder_rung = LadderRung.LUNA_RETRY
+                    updated.provider = None
+                    updated.sleep_until = None
+                    updated.return_after = None
+                    updated.payload["turns"] = result.turns
+                    self.queue.save(updated)
+                    outcome = StepOutcome("to_triage", ticket.id)
+                else:
+                    self.queue.record_failure(
+                        ticket.id,
+                        result.check,
+                        result.output,
+                        now,
+                        max_attempts=self.max_attempts,
+                        set_aside_s=self.set_aside_s,
+                    )
+                    outcome = StepOutcome("failed_attempt", ticket.id)
 
         self._check_breakers(now)
         return outcome

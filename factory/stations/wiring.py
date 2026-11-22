@@ -23,6 +23,10 @@ from .fix_plan import lint_plan
 
 MAX_REPLANS = 3
 PROBE_CHECK_LABEL = "Check output (this plan was applied and tried in play; the replay verdict follows):"
+FUN_CHECK_LABEL = (
+    "Fun review feedback (this plan was applied and the story editor blocked it; its failed checks, reasons and "
+    "fun_advice follow):"
+)
 
 
 def _repository_root() -> Path:
@@ -359,6 +363,11 @@ def wiring_handler(
             and isinstance(working_payload.get("feedback_plan"), dict)
             and isinstance(working_payload.get("probe_feedback"), str)
         )
+        fun_retry = (
+            planner_driven
+            and isinstance(working_payload.get("feedback_plan"), dict)
+            and isinstance(working_payload.get("fun_feedback"), str)
+        )
         workspace_value = working_payload.get("workspace")
         planner_tokens = 0
         if planner_driven and planner is None:
@@ -370,15 +379,20 @@ def wiring_handler(
         try:
             package = load_story_package(story_root)
             if planner_driven:
-                planner_kwargs = (
-                    {
+                if probe_retry:
+                    planner_kwargs = {
                         "feedback_plan": working_payload["feedback_plan"],
                         "check_output": working_payload["probe_feedback"],
                         "check_label": PROBE_CHECK_LABEL,
                     }
-                    if probe_retry
-                    else {}
-                )
+                elif fun_retry:
+                    planner_kwargs = {
+                        "feedback_plan": working_payload["feedback_plan"],
+                        "check_output": working_payload["fun_feedback"],
+                        "check_label": FUN_CHECK_LABEL,
+                    }
+                else:
+                    planner_kwargs = {}
                 outcome = planner(ticket, package, now, **planner_kwargs)
                 planner_tokens = outcome.tokens
                 plan = outcome.plan

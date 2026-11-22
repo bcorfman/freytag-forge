@@ -11,7 +11,14 @@ from factory.checks.gap_delta import DEFAULT_ROOT
 from factory.manifests import lint_check
 from factory.stations.planner import PlanOutcome
 from factory.stations.tree import ticket_tree
-from factory.stations.wiring import MAX_REPLANS, PROBE_CHECK_LABEL, _clear_previous, wiring_handler, wiring_spec
+from factory.stations.wiring import (
+    FUN_CHECK_LABEL,
+    MAX_REPLANS,
+    PROBE_CHECK_LABEL,
+    _clear_previous,
+    wiring_handler,
+    wiring_spec,
+)
 from factory.tickets import Station, Ticket
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -211,6 +218,40 @@ def test_wiring_probe_retry_passes_verdict_feedback_only_to_first_planner_call(t
             "feedback_plan": feedback_plan,
             "check_output": ticket.payload["probe_feedback"],
             "check_label": PROBE_CHECK_LABEL,
+        }
+    ]
+
+
+def test_wiring_fun_retry_passes_story_editor_feedback_to_planner(tmp_path: Path) -> None:
+    assert FUN_CHECK_LABEL == (
+        "Fun review feedback (this plan was applied and the story editor blocked it; its failed checks, reasons and "
+        "fun_advice follow):"
+    )
+    repository = init_repo(tmp_path)
+    workspace = tmp_path / "workspace"
+    feedback_plan = beat_plan("fun-feedback")
+    ticket = make_ticket(feedback_plan, workspace, "fun-feedback")
+    del ticket.payload["plan"]
+    ticket.payload["feedback_plan"] = feedback_plan
+    ticket.payload["fun_feedback"] = "Add a small payoff that gives the player a memorable reason to act."
+    calls = []
+
+    def planner(_ticket, _package, _now, **kwargs):
+        calls.append(kwargs)
+        return PlanOutcome(feedback_plan, 7, [], 1)
+
+    result = wiring_handler(
+        repository,
+        run_ringer=stub_ringer(repository, tmp_path / "scratch-fun-feedback"),
+        planner=planner,
+    )(ticket, NOW)
+
+    assert result.passed, result.output
+    assert calls == [
+        {
+            "feedback_plan": feedback_plan,
+            "check_output": ticket.payload["fun_feedback"],
+            "check_label": FUN_CHECK_LABEL,
         }
     ]
 

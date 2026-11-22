@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
@@ -34,6 +35,25 @@ def test_planner_brief_mentions_the_causes() -> None:
     assert "cause of each failing turn" in PLANNER_BRIEF
     assert "how many turns share each cause" in PLANNER_BRIEF
     assert "most common cause" in PLANNER_BRIEF
+
+
+def test_planner_brief_contains_the_opus_fun_sentences() -> None:
+    collapsed = re.sub(r"\s+", " ", PLANNER_BRIEF)
+    expected = (
+        "Among the fixes that would have let the failing turns succeed, choose the one the player would enjoy most.",
+        "Fun means Freytag pacing, quality characters, and continuity in and between scenes.",
+        "A fix is more fun when it uses a detail already in the scene to plant a clue, pay off an earlier detail, "
+        "show a character, or sharpen the stakes.",
+        "Never invent a new fact, object, person, or place to make a fix more fun.",
+        "Choose the smaller fix only when two fixes would be equally fun.",
+        "For edit_claim_evidence, the fun is letting the player's own words reach the intended moment.",
+        "Never choose a phrase so broad that it lets a player skip a puzzle, a clue, or a reward.",
+        "After the cause, name in a few words the detail that makes the fix fun.",
+        "When a story editor's block is shown, treat its fun_advice as the owner's taste and follow it.",
+        "The advice never overrides the evidence, the precedents, or the lint.",
+        "Never resubmit the blocked fix with only its words moved around.",
+    )
+    assert all(sentence in collapsed for sentence in expected)
 
 
 def _plan(ticket_id: str = "wrong", *, at_turn: int = 10, text: str | None = None) -> dict:

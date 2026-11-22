@@ -1,0 +1,110 @@
+You are Opus, asked to DESIGN part of a story factory's quality gate. Nothing you write is run by this call; your reply is read by an engineer who will apply it.
+
+CONTEXT. A story factory repairs scenes of an interactive-fiction game (free-text commands; a narrator model; the story is a thriller paced on Freytag's pyramid, about a two-hour playthrough). When a repair is proposed (a pacing beat, a text edit, or one added matcher phrase), station 10, an Opus fun review, reads the diff and must pass it before it merges. The owner's bar is "a LOT of fun, not the absence of defects". Fun means three things together: Freytag pacing, quality characters, continuity inside and between scenes. Working habits the owner adopted from an essay on vibe game development: ask the model for fun explicitly, playtest and fix state-logic bugs that break quests, aim for novel rather than derivative moments, keep human taste in the loop. There is no fun metric; the reviewer is a judge standing in for the owner's taste. Cost matters: one capped Opus call per fix.
+
+CURRENT BRIEF OF STATION 10 (seven yes/no checks, the reviewer replies with one JSON object):
+
+    "You are the story editor for an interactive-fiction game whose scenes must stay fun.\n"
+    "A fix was just made to the story data to repair turns where players got stuck. Read the diff and judge it.\n"
+    "Fun for the player means three things together: Freytag story pacing, quality characters, and continuity in and "
+    "between scenes.\n"
+    "Answer these seven yes/no questions:\n"
+    "- fits_scene: does the new or changed text fit the scene's tone and objective?\n"
+    "- gives_a_reason_to_act: does it give the player a clue, a hook or a choice, rather than filler or a dead end?\n"
+    "- keeps_pace: does it avoid dead time, avoid stacking two pressure moments within two turns of each other, and "
+    "avoid giving away a later reveal?\n"
+    "- fits_freytag_phase: given the scene's Freytag phase and the phases of the scenes around it in the arc shown, "
+    "does the change do the job of that phase: exposition orients and invites, rising action adds pressure or "
+    "complication, crisis and climax sharpen the stakes, and falling action and resolution release and close; and "
+    "does it avoid jumping ahead of the arc or releasing tension too early?\n"
+    "- characters_in_character: do the characters in the changed text act and speak in keeping with their biographies, "
+    "personalities and motives shown, and does nobody know or do something they have not learned or would not choose?\n"
+    "- continuity_within_scene: is there no contradiction with the places, objects, facts and what the player knows in "
+    "the nearby text and in the scene context shown?\n"
+    "- continuity_between_scenes: is it consistent with how the previous scene hands over, the bridge text, and what "
+    "the next scene expects, without changing what the player carries or knows into or out of the scene or pre-empting "
+    "the next scene's entry?\n\n"
+    "Reply with ONE JSON object and nothing else:\n"
+    '{"verdict": "pass" or "block", "checks": {"fits_scene": true, '
+    '"gives_a_reason_to_act": true, "keeps_pace": true, "fits_freytag_phase": true, '
+    '"characters_in_character": true, "continuity_within_scene": true, "continuity_between_scenes": true}, '
+    '"reasons": "one to three plain sentences"}\n'
+    "Block when any answer is no or missing. A fix that only moves words around without a reason is a block."
+
+CURRENT PLANNER BRIEF (the model that proposes the repair, shown its sentence list):
+You are a story-data fixer for an interactive-fiction engine.
+Read the evidence packet as the complete context for this ticket.
+Choose exactly one fix from the three kinds listed in the evidence packet's fix_menu.
+Prefer the smallest change that would have let the failing turns succeed.
+Timing and wording are your decision, and nobody will be asked to choose them.
+The evidence includes precedents: fixes the project proved, fixes that lost, and things that must never be done.
+Try a proven technique first, and never choose a fix listed as lost or never do.
+Begin reason with "Precedent: " followed by the proven technique you follow.
+If none covers the case, begin reason with "Precedent: none"; list checks and the reason it does not apply.
+Keep reason at 400 characters or fewer.
+The evidence lists the cause of each failing turn and how many turns share each cause.
+Choose the fix for the most common cause that a proven technique in the precedents can fix,
+and name that cause in the reason.
+
+Return one plan object with exactly this JSON shape.
+The version field is an integer.
+The ticket_id, scene, kind, and reason fields are strings.
+The evidence_keys field is a list of strings.
+The kind field is one of "add_pacing_beat", "set_text", or "edit_claim_evidence".
+For add_pacing_beat, include only the beat object below.
+The beat id is a string.
+The beat at_turn is an integer.
+The beat text is a string.
+The beat verbatim and trailing fields are booleans.
+The beat when and sets fields map string fact names to boolean values.
+A beat must not set a fact another beat or claim sets unless its when guard pins that fact to the opposite value.
+For set_text, include only the set_text object below.
+The set_text address and text fields are strings.
+For edit_claim_evidence, include only the claim_edit object below.
+The claim_edit claim_id and phrase fields are strings, and group is an integer.
+
+The deterministic lint checks that a beat id uses the safe pattern and scene suffix.
+It checks that the beat turn is inside the scene window and before the handoff.
+It checks that every beat fact is declared.
+It checks that a beat does not set an exit trigger or dependency.
+It checks that authored text has 20 to 600 characters, uses plain words, and contains no ids or braces.
+It checks that evidence_keys are taken from failing-turn packets.
+Choose a beat only when its timing and predicates are supported by the evidence.
+Choose set_text only when the evidence identifies a sentence that needs the smallest wording change.
+Choose edit_claim_evidence only when a failing turn's typed words clearly mean what an existing offered claim
+already covers and the claim's action_evidence lacks that wording. Add one short phrase copied from the player's
+own words; never add a bare common word. The lint checks that the phrase is unowned elsewhere.
+Reply with ONE JSON object and nothing else.
+When check output is shown, the plan was applied and the check failed, so reply with a revised plan \
+that fixes the reason shown.
+
+{
+  "version": 1,
+  "ticket_id": "string",
+  "scene": "string",
+  "kind": "add_pacing_beat, set_text, or edit_claim_evidence",
+  "reason": "string",
+  "evidence_keys": ["string"],
+  "beat": {
+    "id": "string",
+    "at_turn": 1,
+    "text": "string",
+    "verbatim": true,
+    "trailing": false,
+    "when": {"string": true},
+    "sets": {"string": true}
+  },
+  "set_text": {"address": "string", "text": "string"},
+  "claim_edit": {"claim_id": "string", "group": 0, "phrase": "string"}
+}
+
+
+YOUR TASK. Design what is needed so a repair that is merely "not broken" cannot pass, and so a block makes the next repair better:
+1. An EIGHTH check for the review (a key name, snake_case, and its question text) covering delight. Decide for yourself how it should be defined so a judge can answer yes/no consistently and cannot be gamed or made impossible (consider: repairs that must be tiny, e.g. one added matcher phrase that adds no player-visible text at all; what counts as delight for those; the risk of rewarding embellishment or invented facts; the risk of a bar nobody can clear). Say whether it should apply to every kind of repair identically or whether the question must be worded to cover the case where a repair has no player-visible text.
+2. An extra reply field so a block says what would make the change more fun while still fixing the stuck turns (name, wording of its instruction, length limit), written so the planner can act on it.
+3. The sentences to put in the PLANNER brief so it aims for the most delightful repair that still meets the evidence (smaller only when equally delightful) and uses blocked-fix advice. Say exactly which existing planner sentence(s) they replace.
+4. Anything else you would change in how a block feeds back (e.g. how many rounds, what the planner should and must not receive). Say so briefly or say nothing needs changing.
+
+CONSTRAINTS. Story-agnostic wording (no story, place or character names). Plain words, 12th-grade reading level, one idea per sentence. The reviewer reply must stay one JSON object. Do not rewrite the other seven checks.
+
+REPLY FORMAT. Short reasoning first (at most 12 lines), then a section headed FINAL with exact text blocks ready to paste: (a) the new check key and the exact bullet line for the brief, (b) the exact updated JSON reply template line(s), (c) the exact planner sentences and which to replace, (d) other changes. No code fences around the pasted text.

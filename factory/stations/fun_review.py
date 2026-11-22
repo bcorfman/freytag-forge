@@ -6,7 +6,7 @@ import hashlib
 import json
 import re
 import subprocess
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -47,6 +47,7 @@ FUN_REVIEW_CHECKS = (
     "characters_in_character",
     "continuity_within_scene",
     "continuity_between_scenes",
+    "delights_the_player",
 )
 
 FUN_REVIEW_BRIEF = (
@@ -54,7 +55,7 @@ FUN_REVIEW_BRIEF = (
     "A fix was just made to the story data to repair turns where players got stuck. Read the diff and judge it.\n"
     "Fun for the player means three things together: Freytag story pacing, quality characters, and continuity in and "
     "between scenes.\n"
-    "Answer these seven yes/no questions:\n"
+    "Answer these eight yes/no questions:\n"
     "- fits_scene: does the new or changed text fit the scene's tone and objective?\n"
     "- gives_a_reason_to_act: does it give the player a clue, a hook or a choice, rather than filler or a dead end?\n"
     "- keeps_pace: does it avoid dead time, avoid stacking two pressure moments within two turns of each other, and "
@@ -69,12 +70,27 @@ FUN_REVIEW_BRIEF = (
     "the nearby text and in the scene context shown?\n"
     "- continuity_between_scenes: is it consistent with how the previous scene hands over, the bridge text, and what "
     "the next scene expects, without changing what the player carries or knows into or out of the scene or pre-empting "
-    "the next scene's entry?\n\n"
+    "the next scene's entry?\n"
+    "- delights_the_player: would a player enjoy this moment, using only the facts, people, places and objects already "
+    "in the scene context shown? If the fix adds or changes player-visible text, answer yes only if you can name one "
+    "specific detail in it that plants a clue, pays off an earlier detail, reveals a character, or sharpens the "
+    "stakes. Generic mood words, extra props, and invented facts never count. If the fix adds no player-visible text, "
+    "answer yes "
+    "when the added words are a natural way a player would try the action. They must let the player reach the scene's "
+    "intended moment without skipping a puzzle, a clue or a reward.\n"
     "Reply with ONE JSON object and nothing else:\n"
     '{"verdict": "pass" or "block", "checks": {"fits_scene": true, '
     '"gives_a_reason_to_act": true, "keeps_pace": true, "fits_freytag_phase": true, '
-    '"characters_in_character": true, "continuity_within_scene": true, "continuity_between_scenes": true}, '
-    '"reasons": "one to three plain sentences"}\n'
+    '"characters_in_character": true, "continuity_within_scene": true, "continuity_between_scenes": true, '
+    '"delights_the_player": true}, '
+    '"reasons": "one to three plain sentences", '
+    '"fun_advice": "empty on pass; one or two plain sentences on block"}\n'
+    "In reasons, when delights_the_player is true, name the detail that earns it.\n"
+    "In fun_advice, on a block, say how a fix could be more fun and still free the stuck turns.\n"
+    "Name the existing detail to use and the job it should do: plant, payoff, character, or stakes.\n"
+    "Do not write the finished wording.\n"
+    "Use only facts in the scene context shown, and keep to the three fix kinds.\n"
+    "Keep fun_advice to 300 characters or fewer.\n"
     "Block when any answer is no or missing. A fix that only moves words around without a reason is a block."
 )
 
@@ -133,6 +149,7 @@ def build_review_prompt(
     plan_reason: str | None,
     diff: str,
     scene_context: dict | None = None,
+    claim_evidence: str | None = None,
 ) -> str:
     """Build the complete, story-agnostic review packet in a fixed order."""
 
@@ -141,6 +158,8 @@ def build_review_prompt(
         sections.append("Review criteria:\n" + criteria_text)
     if scene_context is not None:
         sections.append("Scene context:\n" + _compact_json(scene_context))
+    if claim_evidence is not None:
+        sections.append(claim_evidence)
     evidence_lines = ["Failing-turn evidence:"]
     if failing_turns:
         evidence_lines.append(json.dumps(failing_turns, ensure_ascii=False, sort_keys=True))
@@ -271,6 +290,38 @@ def _plan_reason(workspace: Path, safe_id: str) -> str | None:
     return reason if isinstance(reason, str) else None
 
 
+def _plan_for_review(payload: dict[str, Any], workspace: Path, safe_id: str) -> dict[str, Any] | None:
+    plan = payload.get("plan")
+    if isinstance(plan, dict):
+        return plan
+    saved = _record(workspace / safe_id / "plan.json")
+    return saved if isinstance(saved, dict) else None
+
+
+def _claim_evidence(package: Any, scene_id: str, plan: dict[str, Any] | None) -> str | None:
+    if not isinstance(plan, dict) or plan.get("kind") != "edit_claim_evidence":
+        return None
+    claim_edit = plan.get("claim_edit")
+    claim_id = claim_edit.get("claim_id") if isinstance(claim_edit, dict) else None
+    if not isinstance(claim_id, str):
+        return None
+    indexes = getattr(package, "knowledge_indexes", None)
+    definitions = getattr(indexes, "by_id", None)
+    claim = definitions.get(claim_id) if isinstance(definitions, Mapping) else None
+    if claim is None:
+        return None
+    available_in_scenes = getattr(claim, "available_in_scenes", ())
+    if available_in_scenes and scene_id not in available_in_scenes:
+        return None
+    action_evidence = getattr(claim, "action_evidence", ())
+    groups = [
+        [phrase for phrase in group if isinstance(phrase, str)][:12]
+        for group in action_evidence[:8]
+        if isinstance(group, (list, tuple))
+    ]
+    return "Claim evidence:\n" + _compact_json({"claim_id": claim_id, "action_evidence": groups})
+
+
 def _review_diff(runner: _RUNNER, tree: Path, paths: list[str]) -> tuple[str | None, str | None]:
     passed, output = _run(runner, ["git", "merge-base", "HEAD", "origin/main"], tree)
     if not passed or not output.strip():
@@ -318,10 +369,13 @@ def _evaluate_review(
     checks: dict[str, Any],
     reasons: str,
     diff_hash: str,
+    fun_advice: str = "",
     *,
     tokens: int = 0,
 ) -> tuple[bool, str, StationResult]:
     normalized_reasons = _review_reason(reasons, checks)
+    normalized_fun_advice = _one_line(fun_advice)[:300]
+    failed_checks = [key for key in FUN_REVIEW_CHECKS if checks.get(key) is not True]
     passed = verdict == "pass" and bool(reasons.strip()) and _first_failing_check(checks) is None
     if passed:
         result = StationResult(
@@ -329,7 +383,14 @@ def _evaluate_review(
             "fun_review",
             normalized_reasons,
             tokens=tokens,
-            payload_updates={"fun_review": {"verdict": "pass", "diff_hash": diff_hash, "reasons": normalized_reasons}},
+            payload_updates={
+                "fun_review": {
+                    "verdict": "pass",
+                    "diff_hash": diff_hash,
+                    "reasons": normalized_reasons,
+                    "failed_checks": failed_checks,
+                }
+            },
         )
     else:
         result = StationResult(
@@ -337,6 +398,15 @@ def _evaluate_review(
             "fun_review",
             "fun review blocked the fix: " + normalized_reasons,
             tokens=tokens,
+            payload_updates={
+                "fun_review": {
+                    "verdict": "block",
+                    "diff_hash": diff_hash,
+                    "reasons": normalized_reasons,
+                    "fun_advice": normalized_fun_advice,
+                    "failed_checks": failed_checks,
+                }
+            },
         )
     return passed, normalized_reasons, result
 
@@ -349,7 +419,10 @@ def _saved_result(saved: dict[str, Any], diff_hash: str) -> StationResult | None
     reasons = saved.get("reasons")
     if verdict not in {"pass", "block"} or not isinstance(checks, dict) or not isinstance(reasons, str):
         return None
-    return _evaluate_review(verdict, checks, reasons, diff_hash)[2]
+    fun_advice = saved.get("fun_advice")
+    if not isinstance(fun_advice, str):
+        fun_advice = ""
+    return _evaluate_review(verdict, checks, reasons, diff_hash, fun_advice)[2]
 
 
 def default_reviewer(
@@ -400,7 +473,7 @@ def default_reviewer(
     return review
 
 
-def _verdict(reply: ReviewReply) -> tuple[str, dict[str, Any], str] | None:
+def _verdict(reply: ReviewReply) -> tuple[str, dict[str, Any], str, str] | None:
     value = extract_plan(reply.text)
     if value is None:
         return None
@@ -409,9 +482,11 @@ def _verdict(reply: ReviewReply) -> tuple[str, dict[str, Any], str] | None:
     if verdict not in {"pass", "block"} or not isinstance(checks, dict):
         return None
     reasons = value.get("reasons")
+    fun_advice = value.get("fun_advice")
+    fun_advice = "" if not isinstance(fun_advice, str) else _one_line(fun_advice)[:300]
     if not isinstance(reasons, str) or not reasons.strip():
-        return verdict, checks, ""
-    return verdict, checks, _one_line(reasons)
+        return verdict, checks, "", fun_advice
+    return verdict, checks, _one_line(reasons), fun_advice
 
 
 def fun_review_handler(
@@ -439,12 +514,14 @@ def fun_review_handler(
         tree = ticket_tree(payload, ticket.id, repository_root)
         if tree is None:
             return StationResult(False, "fun_review", "ticket tree not found")
+        workspace = Path(workspace_value).expanduser()
+        safe_id = _safe_id(ticket.id)
+        plan = _plan_for_review(payload, workspace, safe_id)
         try:
             package = resolved_package_loader(_story_root(tree))
             scene_context = build_scene_context(package, ticket.scene)
         except Exception:
             return StationResult(False, "fun_review", "could not load the story package for the review")
-        workspace = Path(workspace_value).expanduser()
         paths, error = _changed_paths(invoke, tree)
         if error:
             return StationResult(False, "fun_review", _one_line(error))
@@ -455,11 +532,13 @@ def fun_review_handler(
         if error or diff_hash is None:
             return StationResult(False, "fun_review", _one_line(error or "could not hash tree diff"))
 
-        review_path = workspace / _safe_id(ticket.id) / "review.json"
+        review_path = workspace / safe_id / "review.json"
         saved = _record(review_path) if review_path.exists() else None
         if saved is not None:
             reused = _saved_result(saved, diff_hash)
             if reused is not None:
+                if isinstance(plan, dict):
+                    reused.payload_updates["fun_review"]["plan"] = plan
                 return reused
 
         diff, error = _review_diff(invoke, tree, paths)
@@ -469,15 +548,16 @@ def fun_review_handler(
             ticket.scene,
             _review_criteria(payload, tree),
             _turn_evidence(payload),
-            _plan_reason(workspace, _safe_id(ticket.id)),
+            _plan_reason(workspace, safe_id),
             diff,
             scene_context,
+            _claim_evidence(package, ticket.scene, plan),
         )
         if resolved_reviewer is None:
             resolved_reviewer = default_reviewer(repository_root)
 
         total_tokens = 0
-        parsed: tuple[str, dict[str, Any], str] | None = None
+        parsed: tuple[str, dict[str, Any], str, str] | None = None
         for attempt in range(2):
             reply = resolved_reviewer(ticket, prompt if attempt == 0 else prompt + "\n\n" + _RETRY_LINE, now)
             total_tokens += reply.tokens
@@ -487,20 +567,25 @@ def fun_review_handler(
         if parsed is None:
             return StationResult(False, "fun_review", "no usable verdict from the reviewer", tokens=total_tokens)
 
-        verdict, checks, reasons = parsed
+        verdict, checks, reasons, fun_advice = parsed
         passed, reasons, review_result = _evaluate_review(
             verdict,
             checks,
             reasons,
             diff_hash,
+            fun_advice,
             tokens=total_tokens,
         )
+        review_payload = review_result.payload_updates["fun_review"]
+        if isinstance(plan, dict):
+            review_payload["plan"] = plan
         record = {
             "brief_hash": FUN_REVIEW_BRIEF_HASH,
             "diff_hash": diff_hash,
             "verdict": "pass" if passed else "block",
             "reasons": reasons,
             "checks": checks,
+            "fun_advice": fun_advice,
             "reviewed_at": now.isoformat(),
         }
         _atomic_json_write(review_path, record)

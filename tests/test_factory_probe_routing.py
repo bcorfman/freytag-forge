@@ -199,3 +199,64 @@ def test_merge_ticket_walks_prompt_probe_fun_review_and_deliver(tmp_path) -> Non
 
     assert [line.step(NOW).kind for _ in range(5)] == ["advanced", "advanced", "advanced", "advanced", "delivered"]
     assert queue.get("walk-merge").status is Status.PASSED
+
+
+def test_fun_feedback_sendback_rechecks_through_probe_before_fun_review(tmp_path) -> None:
+    ticket = make_ticket(
+        "fun-route",
+        Station.FUN_REVIEW,
+        {
+            "merge_to_main": True,
+            "plan": {"kind": "set_text", "address": "first"},
+        },
+    )
+    fun_calls = 0
+
+    def fun_review(_ticket, _now):
+        nonlocal fun_calls
+        fun_calls += 1
+        if fun_calls == 1:
+            return StationResult(
+                False,
+                "fun_review",
+                "blocked",
+                payload_updates={
+                    "fun_review": {
+                        "verdict": "block",
+                        "reasons": "Use the existing detail.",
+                        "fun_advice": "Make the existing detail do more work.",
+                        "failed_checks": ["delights_the_player"],
+                        "plan": {"kind": "set_text", "address": "first"},
+                    }
+                },
+            )
+        return StationResult(True, "fun_review", "pass")
+
+    handlers = {
+        Station.FUN_REVIEW: fun_review,
+        Station.WIRING: lambda _ticket, _now: StationResult(True, "wiring", "ok"),
+        Station.FREE_GATES: lambda _ticket, _now: StationResult(True, "free_gates", "ok"),
+        Station.PROMPT_SNAPSHOT: lambda _ticket, _now: StationResult(True, "snapshot", "ok"),
+        Station.PROBE: lambda _ticket, _now: StationResult(True, "probe", "ok"),
+        Station.DELIVER: lambda _ticket, _now: StationResult(True, "deliver", "ok"),
+        Station.LIVE_PLAYTEST: lambda _ticket, _now: StationResult(True, "live_playtest", "ok"),
+    }
+    line, queue = make_line(tmp_path, ticket, handlers[Station.FUN_REVIEW])
+    line.handlers = handlers
+
+    assert line.step(NOW).kind == "fun_blocked"
+    saved = queue.get(ticket.id)
+    assert saved.station is Station.WIRING
+    assert "plan" not in saved.payload
+
+    assert line.step(NOW).kind == "advanced"
+    assert queue.get(ticket.id).station is Station.FREE_GATES
+    assert line.step(NOW).kind == "advanced"
+    assert queue.get(ticket.id).station is Station.PROMPT_SNAPSHOT
+    assert line.step(NOW).kind == "advanced"
+    assert queue.get(ticket.id).station is Station.PROBE
+    assert line.step(NOW).kind == "advanced"
+    assert queue.get(ticket.id).station is Station.FUN_REVIEW
+    assert line.step(NOW).kind == "advanced"
+    assert queue.get(ticket.id).station is Station.DELIVER
+    assert fun_calls == 2
