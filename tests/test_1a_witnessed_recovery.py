@@ -29,6 +29,14 @@ DEFAULT_PURSUIT = story_text("beat:pursuit_1b.say[1].text", package=PACKAGE)
 MARKED_PURSUIT = story_text("beat:pursuit_1b.say[0].text", package=PACKAGE)
 
 
+def test_card_recovery_deliveries_keep_laptop_truck_hook() -> None:
+    for reveal_id in (CARD_REVEAL, WITNESSED_CARD_REVEAL):
+        delivery = story_text(f"claim:{reveal_id}.text", package=PACKAGE)
+        assert "laptop" in delivery
+        assert "truck" in delivery
+    assert CHALLENGE in story_text(f"claim:{WITNESSED_CARD_REVEAL}.text", package=PACKAGE)
+
+
 class _Response:
     def __init__(self, payload: object) -> None:
         self.payload = payload

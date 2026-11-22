@@ -939,7 +939,7 @@ reveals:
       repeatable: false
       when:
         patrol_in_house: true
-      text: Kristin's fingers find something taped beneath the drawer. She peels it loose. It is Michelle's memory card, and she pockets it. The officer turns at the sound. "What have you got there?" His hand is already out.
+      text: Kristin's fingers find something taped beneath the drawer. She peels it loose, and the tape rasps. It is Michelle's memory card, and she pockets it. Her laptop is still out in her truck. The officer turns at the sound. "What have you got there?" His hand is already out.
       earn_when: searches the drawer, the gap in the drawer, or the space beneath it
 - id: sl_1a_f
   storylet_id: SL-1A-F
