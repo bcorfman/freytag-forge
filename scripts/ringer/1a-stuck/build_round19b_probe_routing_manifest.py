@@ -1,0 +1,123 @@
+# ruff: noqa: E501  (spec strings are prose briefs for a worker)
+"""Round 19b: route station 12 (the probe) into the factory line, feed its verdict back to the planner. FREE to build.
+
+One Codex task. Usage: build_round19b_probe_routing_manifest.py
+Claim-edit fix kind (19c), fun-review eighth check and the live rerun are later rounds.
+"""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+REPO = "/home/bcorfman/dev/freytag-forge"
+WORK = "/home/bcorfman/dev/ringer-work/factory-probe-routing"
+OWNED = [
+    "factory/line.py",
+    "factory/followups.py",
+    "factory/stations/wiring.py",
+    "factory/stations/planner.py",
+    "factory/stations/live_playtest.py",
+    "tests/test_factory_line.py",
+    "tests/test_factory_followups.py",
+    "tests/test_factory_wiring.py",
+    "tests/test_factory_planner.py",
+    "tests/test_factory_live_playtest.py",
+    "tests/test_factory_stations.py",
+    "tests/test_factory_probe_routing.py",
+    "tests/shard_durations.json",
+]
+ALLOW_RE = (
+    "^(factory/line\\.py|factory/followups\\.py|factory/stations/(wiring|planner|live_playtest)\\.py|"
+    "tests/test_factory_[a-z0-9_]+\\.py|tests/shard_durations\\.json)$"
+)
+
+SPEC = """You are a Python engineer. Your current working directory IS a git worktree of @REPO@ (detached at HEAD). Edit files here directly. NEVER git commit, never touch @REPO@ itself, never run `uv`, NEVER call a model (not `claude`, not `codex`), NEVER use the network, and NEVER run `python -m bench run` (it bills a real narrator). FIRST run: [ -e .venv ] || ln -s @REPO@/.venv .venv . Environment for every command: `export PYTHONPATH=$PWD:$PWD/packages/worldkeeper/src TMPDIR=/tmp`. Ruff: `.venv/bin/python -m ruff check <files>` and `.venv/bin/python -m ruff format <files>` (line length 120, Python 3.12). Never pass --cov to pytest. Run tests as `.venv/bin/python -m pytest -q -p no:cacheprovider -n 0 <files>`.
+
+BACKGROUND. The story factory is a Python state machine (`factory/line.py` `FactoryLine.step`, `factory/tickets.py`, stations in `factory/stations/`). Station 12, the probe (`factory/stations/probe.py`, already built and FROZEN: do not edit it), replays the recorded typed commands of failing live runs on the unchanged story and on a ticket's fixed story tree and returns a keep, reject or inconclusive verdict. Its result is `StationResult(passed=(verdict == "keep"), "probe", line, payload_updates={"probe": {"verdict", "reasons", "control", "candidate", "feedback"}})`. It needs `payload["runs"]` (a list built by `probe.runs_from_report(report, scene)`), or `payload["report_path"]`. Nothing routes to it yet and nothing saves `runs`. Your job is the routing and the feedback loop, in four parts. Read first: `factory/line.py` (whole), `factory/stations/probe.py` (docstring, `runs_from_report`, `_feedback`, the handler's fail messages), `factory/stations/wiring.py` (`wiring_handler`: the planner call near the top of `handle` and the one in the failed-check loop, which passes `feedback_plan=plan, check_output=_tail(output)`), `factory/stations/planner.py` (`build_prompt` and the `planner` closure with `feedback_plan`, `check_output`, `previous_plan`), `factory/stations/live_playtest.py` (`live_playtest_handler` and its result paths) and `factory/followups.py` (`open_followups`, where follow-up tickets get their payload).
+
+PART 1, routing in `factory/line.py`. A passed PROMPT_SNAPSHOT of a `merge_to_main` ticket now goes to PROBE (12) instead of FUN_REVIEW; a passed PROBE goes to FUN_REVIEW. All other routes stay exactly as they are (PROMPT_SNAPSHOT of a non-merge ticket still goes to LIVE_PLAYTEST via `Station(ticket.station + 1)`, FUN_REVIEW to DELIVER, and so on). Make the if-chain impossible to misroute: no ticket may reach station 12 by `Station(ticket.station + 1)` (for example from DIAGNOSE=11, which goes to WIRING, and from anything else); add an explicit branch for PROBE so `Station(12 + 1)` is never evaluated (13 does not exist).
+
+PART 2, a failed probe is a verdict, not a worker failure. When PROBE returns `passed` False the line must NOT call `queue.record_failure`. Instead, with `probe_rounds` = the ticket payload's `probe_rounds` (default 0, an int): if `probe_rounds + 1` is below the new module constant `MAX_PROBE_ROUNDS = 3`, the ticket goes back to station 4 (WIRING) with status QUEUED, attempts 0, `ladder_rung` LUNA_RETRY, provider None, sleep_until None, return_after None, and these payload changes (save the payload through the queue the same way the station-7-to-triage branch does): `probe_rounds` incremented by one; `feedback_plan` set to the ticket's current `plan` (the rejected plan); `probe_feedback` set to the `feedback` string from `result.payload_updates["probe"]` (or `result.output` when absent); the key `plan` removed (so wiring plans again); the key `probe` kept (the evidence). Otherwise (that was the third round) set the ticket aside with the evidence using the EXISTING ladder machinery in `queue.record_failure` called with `max_attempts=1` so the existing rung logic sets it aside (read `TicketQueue.record_failure` first and choose the call that leaves the ticket SET_ASIDE with the probe output recorded; explain your choice in NOTES_19B.txt). Return `StepOutcome("probe_rejected", ticket.id)` for a retry and `StepOutcome("failed_attempt", ticket.id)` for the set-aside. A probe that fails because of a plain infrastructure error (its output does not begin with the verdict word; define in `line.py` what distinguishes the two: the station returns `payload_updates["probe"]["verdict"]` in `{"reject","inconclusive"}` for a verdict) is a normal failure and goes to `record_failure` as before. A passed probe also clears `probe_feedback` and `feedback_plan` from the payload (they belong to the retry only).
+
+PART 3, wiring and planner carry the probe feedback. In `wiring_handler`, when the ticket payload holds `feedback_plan` (a dict) and `probe_feedback` (a string) and has no `plan`, the FIRST planner call of that run is `planner(ticket, package, now, feedback_plan=<that plan>, check_output=<probe_feedback>)`. The planner's `build_prompt` labels `check_output` as "this plan was applied and the check failed"; for a probe retry the label must say instead, in plain words, that the plan was applied and tried in play and the replay verdict follows (add one optional parameter `check_label: str | None = None` to `build_prompt` and to the planner closure's keyword arguments, default `None` meaning today's exact text so every existing prompt stays byte-identical; wiring passes the probe label only on the probe retry). The retry's feedback is verdicts and numbers only: do not add narration or player text anywhere. Existing behaviour for a ticket without these payload keys must not change at all (the existing wiring and planner tests must pass unchanged, except where a test legitimately asserts the full set of keyword arguments).
+
+PART 4, station 7 saves the typed commands, and follow-ups carry them. (a) In `live_playtest.py` station 7's handler, both the passing and the failing result of BOTH its paths (the `report_path` path and the live-run path) must carry `payload_updates={"runs": runs_from_report(report, scene)}` when that list is non-empty (import `runs_from_report` lazily or restructure to avoid a circular import: `probe.py` already imports private helpers from `live_playtest.py`, and you must not edit `probe.py`; a function-level import inside the handler is acceptable). A failing result with `turns` keeps its `turns` as today. Results where `runs` is empty keep `payload_updates` None as today. (b) In `factory/followups.py` `open_followups`, a follow-up ticket for a scene gets `payload["runs"]` copied from the parent's `payload.get("runs")` filtered to entries whose `scene` equals the follow-up's scene (only when the filtered list is non-empty; a `runs` list is never created empty). Nothing else in followups changes.
+
+TESTS (hermetic; stubs only; no process, no network). Add `tests/test_factory_probe_routing.py` for the new behaviour and extend the existing test files minimally where the old behaviour legitimately changes (for example `test_merge_ticket_delivers_after_station_nine_and_keeps_payload_updates` in `tests/test_factory_line.py` now passes through station 12; update it, do not weaken it). Cover: PROMPT_SNAPSHOT to PROBE for a merge ticket and to LIVE_PLAYTEST for a non-merge ticket; PROBE pass to FUN_REVIEW and clears the retry keys; DIAGNOSE still goes to WIRING; a probe reject at round 0 and 1 sends the ticket to station 4 with `plan` removed, `feedback_plan` the old plan, `probe_feedback` the text, `probe_rounds` incremented, attempts 0, and does not touch the failure counters (compare `queue.get(id)` failure fields before and after; read the ticket model for their names); `inconclusive` behaves the same; a third reject sets the ticket aside; an infrastructure failure (no verdict) goes through `record_failure` normally and is not counted as a round; wiring's first planner call receives `feedback_plan` and the label and `check_output` on a retry and nothing extra for an ordinary ticket (use the existing planner stubs in `tests/test_factory_wiring.py`); `build_prompt` is byte-identical to before when `check_label` is None (assert against the literal old section text) and uses the new label otherwise; station 7 carries `runs` on pass and on fail on both paths (use the fixtures and stubs the existing live-playtest tests use) and a ticket whose report has no replayable run carries none; follow-ups copy only the matching scene's runs and never an empty list. Add one line walk with stub handlers from PROMPT_SNAPSHOT through PROBE and FUN_REVIEW to DELIVER for a merge ticket. New test file must run under 15 seconds. Add the new test file to `tests/shard_durations.json` with `.venv/bin/python scripts/regen_shard_durations.py --missing-only` (read its usage; keep that diff to the one new entry).
+
+HARD LIMITS. Edit only the owned files: @OWNED@. NEVER edit `factory/stations/probe.py`, `factory/tickets.py`, `factory/stations/__init__.py`, `factory/config/*`, `diagnose.py`, `fun_review.py`, `deliver.py`, `triage.py`, `fix_plan.py`, story data, `bench/` or `storygame/`. Keep every change story-agnostic. Write NOTES_19B.txt (worktree root, never committed) listing every ambiguity and your choice."""
+
+CHECK = """set -eo pipefail
+WORK=@WORK@
+mkdir -p "$WORK/out"
+export PYTHONPATH=$PWD:$PWD/packages/worldkeeper/src TMPDIR=/tmp
+[ -e .venv ] || ln -s @REPO@/.venv .venv
+test -f tests/test_factory_probe_routing.py || { echo "tests/test_factory_probe_routing.py missing"; exit 1; }
+git add -A -- factory tests
+bad=$(git diff --cached --name-only | grep -vE '@ALLOW_RE@' || true)
+[ -z "$bad" ] || { echo "files outside ownership staged: $bad"; exit 1; }
+for f in factory/stations/probe.py factory/tickets.py factory/stations/__init__.py; do
+  git diff --cached --name-only | grep -qx "$f" && { echo "$f must not change"; exit 1; } || true
+done
+others=$(git diff --cached --name-only | grep '^factory/config/' || true)
+[ -z "$others" ] || { echo "config files touched: $others"; exit 1; }
+grep -q "MAX_PROBE_ROUNDS" factory/line.py || { echo "MAX_PROBE_ROUNDS missing from line.py"; exit 1; }
+grep -q "Station.PROBE" factory/line.py || { echo "line.py does not route Station.PROBE"; exit 1; }
+if grep -n -i -E "michelle|kristin|drawer|memory_card|laptop|continuity.initiative|reyes|walt|warehouse" factory/line.py factory/followups.py; then echo "story-specific word"; exit 1; fi
+start=$(date +%s)
+.venv/bin/python -m pytest -q -p no:cacheprovider -n 0 tests/test_factory_probe_routing.py
+took=$(( $(date +%s) - start ))
+echo "routing tests took $took s (budget 15 s)"
+[ "$took" -le 15 ] || { echo "over the 15 s budget"; exit 1; }
+start=$(date +%s)
+.venv/bin/python -m pytest -q -p no:cacheprovider -n 8 tests/test_factory_line.py tests/test_factory_stations.py tests/test_factory_tickets.py tests/test_factory_guard.py tests/test_factory_preflight.py tests/test_factory_frozen.py tests/test_factory_triage.py tests/test_factory_followups.py tests/test_factory_fun_review.py tests/test_factory_deliver.py tests/test_factory_wiring.py tests/test_factory_planner.py tests/test_factory_fix_plan.py tests/test_factory_diagnose.py tests/test_factory_probe.py tests/test_factory_live_playtest.py
+took=$(( $(date +%s) - start ))
+echo "factory tests took $took s (budget 180 s)"
+[ "$took" -le 180 ] || { echo "over the 180 s budget"; exit 1; }
+.venv/bin/python -m ruff check factory tests/test_factory_probe_routing.py
+.venv/bin/python -m ruff format --check factory tests/test_factory_probe_routing.py
+[ ! -e factory/state/ledger.jsonl ] || { echo "a test wrote factory/state/ledger.jsonl"; exit 1; }
+git diff --cached > "$WORK/out/probe-routing.patch"
+test -s "$WORK/out/probe-routing.patch"
+"""
+
+
+def build() -> dict:
+    def fill(text: str) -> str:
+        return (
+            text.replace("@REPO@", REPO)
+            .replace("@WORK@", WORK)
+            .replace("@OWNED@", ", ".join(OWNED))
+            .replace("@ALLOW_RE@", ALLOW_RE)
+        )
+
+    return {
+        "run_name": "factory-probe-routing",
+        "workdir": WORK,
+        "max_parallel": 1,
+        "worktrees": True,
+        "repo": REPO,
+        "tasks": [
+            {
+                "key": "probe-routing",
+                "task_type": "code-feature",
+                "engine": "codex",
+                "engine_args": ["-c", "model_reasoning_effort=high"],
+                "max_attempts": 2,
+                "timeout_s": 3600,
+                "check_timeout_s": 900,
+                "ownership": OWNED,
+                "spec": fill(SPEC),
+                "check": fill(CHECK),
+                "expect_files": [],
+                "verified": "The line routes a passed prompt snapshot to the probe and a passed probe to the fun review; a reject or inconclusive verdict returns the ticket to the planner with numbers-only feedback for up to three rounds before it is set aside, without counting as a worker failure; station 7 saves the typed commands and follow-ups carry them; old prompts and routes are unchanged.",
+            }
+        ],
+    }
+
+
+if __name__ == "__main__":
+    out = Path(__file__).with_name("round19b-probe-routing-manifest.json")
+    out.write_text(json.dumps(build(), indent=2) + "\n")
+    print(out)

@@ -49,6 +49,7 @@ class Station(IntEnum):
     DELIVER = 9
     FUN_REVIEW = 10
     DIAGNOSE = 11
+    PROBE = 12
 
 
 class LadderRung(IntEnum):
@@ -239,6 +240,9 @@ class TicketQueue:
     def next_ready(self, now: datetime) -> Ticket | None:
         ready = []
         for ticket in self.all():
+            owner_wait = ticket.payload.get("owner_wait")
+            if isinstance(owner_wait, dict) and owner_wait.get("reply") is None:
+                continue
             if ticket.status is Status.QUEUED:
                 ready.append(ticket)
             elif ticket.status is Status.SLEEPING and ticket.sleep_until is not None:

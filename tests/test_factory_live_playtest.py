@@ -635,8 +635,51 @@ def test_saved_handler_pass_failure_and_bad_file(tmp_path: Path) -> None:
     story_failed = handler(ticket({"report_path": failed}), NOW)
     bad = handler(ticket({"report_path": tmp_path / "missing.json"}), NOW)
     assert passed.passed and passed.turns is None
+    assert passed.payload_updates is None
     assert not story_failed.passed and story_failed.turns
+    assert story_failed.payload_updates and story_failed.payload_updates["runs"]
     assert not bad.passed and bad.turns is None
+
+
+def test_saved_and_live_reports_carry_replayable_runs_on_pass_and_failure(tmp_path: Path, monkeypatch) -> None:
+    replayable = clean_report()
+    replayable["replicates"][0]["turns"].append(
+        {
+            "turn": 2,
+            "raw_input": "Open the desk.",
+            "text": "The desk opens.",
+            "rejected": False,
+            "outcome": "committed",
+            "scene_id": "1A",
+            "transition_cause": None,
+            "grounding_ids": [],
+            "game_break": None,
+        }
+    )
+    replayable["replicates"][0]["turn_count"] = 2
+    replayable_path = tmp_path / "replayable.json"
+    replayable_path.write_text(json.dumps(replayable), encoding="utf-8")
+    handler = live_playtest_handler(tmp_path, ledger=SpendLedger(tmp_path / "ledger.jsonl"))
+
+    saved_pass = handler(ticket({"report_path": replayable_path}), NOW)
+    saved_fail = handler(ticket({"report_path": FIXTURE}), NOW)
+    assert saved_pass.passed and saved_pass.payload_updates and saved_pass.payload_updates["runs"]
+    assert (
+        not saved_fail.passed and saved_fail.turns and saved_fail.payload_updates and saved_fail.payload_updates["runs"]
+    )
+
+    monkeypatch.setenv("E2E_API_BASE_URL", "https://staging.example")
+    reports = iter([replayable, report()])
+
+    def runner(_env, _timeout):
+        write_artifact(tmp_path, next(reports))
+        return subprocess.CompletedProcess([], 0, stdout="", stderr="")
+
+    live = _live_handler(tmp_path, runner, SpendLedger(tmp_path / "live-ledger.jsonl"))
+    live_pass = live(ticket({"expected_sha": "abc"}), NOW)
+    live_fail = live(ticket({"expected_sha": "abc"}), NOW)
+    assert live_pass.passed and live_pass.payload_updates and live_pass.payload_updates["runs"]
+    assert not live_fail.passed and live_fail.turns and live_fail.payload_updates and live_fail.payload_updates["runs"]
 
 
 def test_live_identity_failures_never_call_runner(tmp_path: Path, monkeypatch) -> None:

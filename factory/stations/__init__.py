@@ -11,6 +11,7 @@ from .free_gates import free_gates_handler
 from .fun_review import fun_review_handler
 from .live_playtest import live_playtest_handler
 from .planner import default_planner
+from .probe import probe_handler
 from .prompt_snapshot import prompt_snapshot_handler
 from .triage import triage_handler
 from .wiring import wiring_handler
@@ -29,7 +30,8 @@ class _HandlerRegistry(dict[Station, StationHandler]):
         return (
             station
             for station in super().__iter__()
-            if station not in {Station.LIVE_PLAYTEST, Station.WIRING, Station.FUN_REVIEW, Station.DIAGNOSE}
+            if station
+            not in {Station.LIVE_PLAYTEST, Station.WIRING, Station.FUN_REVIEW, Station.DIAGNOSE, Station.PROBE}
         )
 
 
@@ -59,6 +61,7 @@ def build_handlers(root: Path | None = None) -> dict[Station, StationHandler]:
             Station.DELIVER: deliver_handler(root),
             Station.TRIAGE: triage_handler(root),
             Station.DIAGNOSE: diagnose_handler(root),
+            Station.PROBE: probe_handler(root),
         }
     )
 

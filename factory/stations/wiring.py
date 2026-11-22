@@ -8,6 +8,7 @@ import shutil
 import subprocess
 import sys
 from collections.abc import Callable
+from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -21,6 +22,11 @@ from storygame.story_package.loader import load_story_package
 from .fix_plan import lint_plan
 
 MAX_REPLANS = 3
+PROBE_CHECK_LABEL = "Check output (this plan was applied and tried in play; the replay verdict follows):"
+FUN_CHECK_LABEL = (
+    "Fun review feedback (this plan was applied and the story editor blocked it; its failed checks, reasons and "
+    "fun_advice follow):"
+)
 
 
 def _repository_root() -> Path:
@@ -61,6 +67,50 @@ def _quote(value: str | Path) -> str:
     return shlex.quote(str(value))
 
 
+def _first_difference(expected: object, actual: object, path: str = "root") -> str | None:
+    if type(expected) is not type(actual):
+        return f"{path}: expected {expected!r}, got {actual!r}"
+    if isinstance(expected, dict):
+        keys = sorted(set(expected) | set(actual), key=str)
+        for key in keys:
+            if key not in expected:
+                return f"{path}.{key}: unexpected {actual[key]!r}"
+            if key not in actual:
+                return f"{path}.{key}: missing (expected {expected[key]!r})"
+            if difference := _first_difference(expected[key], actual[key], f"{path}.{key}"):
+                return difference
+        return None
+    if isinstance(expected, list):
+        if len(expected) != len(actual):
+            return f"{path}: expected list length {len(expected)}, got {len(actual)}"
+        for index, (expected_item, actual_item) in enumerate(zip(expected, actual, strict=False)):
+            if difference := _first_difference(expected_item, actual_item, f"{path}[{index}]"):
+                return difference
+        return None
+    if expected != actual:
+        return f"{path}: expected {expected!r}, got {actual!r}"
+    return None
+
+
+def claim_evidence_change_error(before: object, after: object, claim_id: str, group: int, phrase: str) -> str | None:
+    """Return the first mismatch when a match document contains exactly one planned append."""
+
+    if not isinstance(before, dict) or not isinstance(after, dict):
+        return "claim evidence documents must be mappings"
+    claims = before.get("claims")
+    claim = claims.get(claim_id) if isinstance(claims, dict) else None
+    action_evidence = claim.get("action_evidence") if isinstance(claim, dict) else None
+    if not isinstance(action_evidence, list) or not 0 <= group < len(action_evidence):
+        return "planned claim or action_evidence group is missing from HEAD"
+    if not isinstance(action_evidence[group], list):
+        return "planned action_evidence group is not a list"
+    if phrase.casefold() in {item.casefold() for item in action_evidence[group] if isinstance(item, str)}:
+        return "planned phrase was already present in the HEAD action_evidence group"
+    expected = deepcopy(before)
+    expected["claims"][claim_id]["action_evidence"][group].append(phrase)
+    return _first_difference(expected, after)
+
+
 def wiring_spec(plan: dict, story_root_relative: str | Path) -> str:
     """Build the self-contained, story-neutral worker brief for one plan."""
 
@@ -78,6 +128,14 @@ Use the story CLI from the repository root and read every value from plan.json. 
 The exact address forms come from storygame/story_cmds/cmd_new.py and cmd_set.py. If the
 CLI refuses a field, make the smallest hand edit necessary. Preserve every other record and
 file. The authoritative story root is {story_root_relative}."""
+    elif plan.get("kind") == "edit_claim_evidence":
+        claim_command = ".venv/bin/python -m storygame.story_cli set claim:<id>.action_evidence[<group>] --add "
+        claim_command += "'<yaml string of the phrase>'"
+        how = f"""HOW:
+Use the story CLI from the repository root, reading every value from plan.json: `{claim_command}`.
+Use claim_edit.claim_id, claim_edit.group, and claim_edit.phrase exactly as written. If the CLI refuses,
+make the smallest hand edit in the owned match file. Preserve every other record and file. The authoritative
+story root is {story_root_relative}."""
     else:
         how = f"""HOW:
 Use the story CLI from the repository root, reading the address and replacement text from
@@ -114,6 +172,7 @@ from pathlib import Path
 from storygame.story_package.loader import load_story_package
 from storygame.story_source import check_source_tree
 from storygame.story_source.lookup import story_text
+from factory.stations.wiring import claim_evidence_change_error
 
 plan_path = Path(sys.argv[1])
 story_root = Path(sys.argv[2])
@@ -158,6 +217,26 @@ if plan["kind"] == "add_pacing_beat":
         raise SystemExit("compiled beat text differs from plan.json")
     if realizations[0].verbatim != expected["verbatim"]:
         raise SystemExit("compiled beat verbatim flag differs from plan.json")
+elif plan["kind"] == "edit_claim_evidence":
+    match_paths = [path for path in owned if path.endswith(".match.yaml")]
+    if len(match_paths) != 1:
+        raise SystemExit("could not identify exactly one owned match file")
+    match_path = match_paths[0]
+    before = subprocess.run(
+        ["git", "show", f"HEAD:{{match_path}}"], check=False, capture_output=True, text=True
+    )
+    if before.returncode:
+        raise SystemExit(before.stderr or "git show failed for the owned match file")
+    import yaml
+
+    before_document = yaml.safe_load(before.stdout)
+    after_document = yaml.safe_load(Path(match_path).read_text(encoding="utf-8"))
+    edit = plan["claim_edit"]
+    failure = claim_evidence_change_error(
+        before_document, after_document, edit["claim_id"], edit["group"], edit["phrase"]
+    )
+    if failure:
+        raise SystemExit("claim evidence content differs: " + failure)
 else:
     address = plan["set_text"]["address"]
     if story_text(address, package=package) != plan["set_text"]["text"]:
@@ -279,6 +358,16 @@ def wiring_handler(
         working_payload = dict(payload)
         plan = working_payload.get("plan")
         planner_driven = not isinstance(plan, dict)
+        probe_retry = (
+            planner_driven
+            and isinstance(working_payload.get("feedback_plan"), dict)
+            and isinstance(working_payload.get("probe_feedback"), str)
+        )
+        fun_retry = (
+            planner_driven
+            and isinstance(working_payload.get("feedback_plan"), dict)
+            and isinstance(working_payload.get("fun_feedback"), str)
+        )
         workspace_value = working_payload.get("workspace")
         planner_tokens = 0
         if planner_driven and planner is None:
@@ -290,7 +379,21 @@ def wiring_handler(
         try:
             package = load_story_package(story_root)
             if planner_driven:
-                outcome = planner(ticket, package, now)
+                if probe_retry:
+                    planner_kwargs = {
+                        "feedback_plan": working_payload["feedback_plan"],
+                        "check_output": working_payload["probe_feedback"],
+                        "check_label": PROBE_CHECK_LABEL,
+                    }
+                elif fun_retry:
+                    planner_kwargs = {
+                        "feedback_plan": working_payload["feedback_plan"],
+                        "check_output": working_payload["fun_feedback"],
+                        "check_label": FUN_CHECK_LABEL,
+                    }
+                else:
+                    planner_kwargs = {}
+                outcome = planner(ticket, package, now, **planner_kwargs)
                 planner_tokens = outcome.tokens
                 plan = outcome.plan
                 if not isinstance(plan, dict):

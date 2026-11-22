@@ -29,13 +29,23 @@ from .fix_plan import build_evidence, lint_plan
 
 PLANNER_BRIEF = """You are a story-data fixer for an interactive-fiction engine.
 Read the evidence packet as the complete context for this ticket.
-Choose exactly one fix from the two kinds listed in the evidence packet's fix_menu.
-Prefer the smallest change that would have let the failing turns succeed.
+Choose exactly one fix from the three kinds listed in the evidence packet's fix_menu.
+Among the fixes that would have let the failing turns succeed, choose the one the player would enjoy most.
+Fun means Freytag pacing, quality characters, and continuity in and between scenes.
+A fix is more fun when it uses a detail already in the scene to plant a clue, pay off an earlier detail, show a
+character, or sharpen the stakes.
+Never invent a new fact, object, person, or place to make a fix more fun.
+Choose the smaller fix only when two fixes would be equally fun.
+For edit_claim_evidence, the fun is letting the player's own words reach the intended moment.
+Never choose a phrase so broad that it lets a player skip a puzzle, a clue, or a reward.
 Timing and wording are your decision, and nobody will be asked to choose them.
 The evidence includes precedents: fixes the project proved, fixes that lost, and things that must never be done.
 Try a proven technique first, and never choose a fix listed as lost or never do.
+Fun review lessons describe patterns, not fixes; never repeat an Avoid pattern for a scene unless your reason \
+names the lesson and why this scene differs.
 Begin reason with "Precedent: " followed by the proven technique you follow.
 If none covers the case, begin reason with "Precedent: none"; list checks and the reason it does not apply.
+After the cause, name in a few words the detail that makes the fix fun.
 Keep reason at 400 characters or fewer.
 The evidence lists the cause of each failing turn and how many turns share each cause.
 Choose the fix for the most common cause that a proven technique in the precedents can fix,
@@ -45,7 +55,7 @@ Return one plan object with exactly this JSON shape.
 The version field is an integer.
 The ticket_id, scene, kind, and reason fields are strings.
 The evidence_keys field is a list of strings.
-The kind field is either "add_pacing_beat" or "set_text".
+The kind field is one of "add_pacing_beat", "set_text", or "edit_claim_evidence".
 For add_pacing_beat, include only the beat object below.
 The beat id is a string.
 The beat at_turn is an integer.
@@ -55,6 +65,8 @@ The beat when and sets fields map string fact names to boolean values.
 A beat must not set a fact another beat or claim sets unless its when guard pins that fact to the opposite value.
 For set_text, include only the set_text object below.
 The set_text address and text fields are strings.
+For edit_claim_evidence, include only the claim_edit object below.
+The claim_edit claim_id and phrase fields are strings, and group is an integer.
 
 The deterministic lint checks that a beat id uses the safe pattern and scene suffix.
 It checks that the beat turn is inside the scene window and before the handoff.
@@ -64,15 +76,21 @@ It checks that authored text has 20 to 600 characters, uses plain words, and con
 It checks that evidence_keys are taken from failing-turn packets.
 Choose a beat only when its timing and predicates are supported by the evidence.
 Choose set_text only when the evidence identifies a sentence that needs the smallest wording change.
+Choose edit_claim_evidence only when a failing turn's typed words clearly mean what an existing offered claim
+already covers and the claim's action_evidence lacks that wording. Add one short phrase copied from the player's
+own words; never add a bare common word. The lint checks that the phrase is unowned elsewhere.
 Reply with ONE JSON object and nothing else.
 When check output is shown, the plan was applied and the check failed, so reply with a revised plan \
 that fixes the reason shown.
+When a story editor's block is shown, treat its fun_advice as the owner's taste and follow it.
+The advice never overrides the evidence, the precedents, or the lint.
+Never resubmit the blocked fix with only its words moved around.
 
 {
   "version": 1,
   "ticket_id": "string",
   "scene": "string",
-  "kind": "add_pacing_beat or set_text",
+  "kind": "add_pacing_beat, set_text, or edit_claim_evidence",
   "reason": "string",
   "evidence_keys": ["string"],
   "beat": {
@@ -84,7 +102,8 @@ that fixes the reason shown.
     "when": {"string": true},
     "sets": {"string": true}
   },
-  "set_text": {"address": "string", "text": "string"}
+  "set_text": {"address": "string", "text": "string"},
+  "claim_edit": {"claim_id": "string", "group": 0, "phrase": "string"}
 }
 """
 
@@ -108,6 +127,7 @@ def build_prompt(
     problems: list[str] | None = None,
     previous_plan: dict | None = None,
     check_output: str | None = None,
+    check_label: str | None = None,
 ) -> str:
     """Compose the fixed brief, evidence, and optional verbatim retry verdicts."""
 
@@ -115,7 +135,8 @@ def build_prompt(
     if previous_plan is not None:
         sections.append("Previous plan:\n" + _compact_json(previous_plan))
     if check_output is not None:
-        sections.append("Check output (this plan was applied and the check failed):\n" + check_output)
+        label = check_label if check_label is not None else "Check output (this plan was applied and the check failed):"
+        sections.append(label + "\n" + check_output)
     if problems is not None:
         sections.append("Lint problems:\n" + "\n".join(problems))
     return "\n\n".join(sections)
@@ -278,6 +299,7 @@ def make_planner(
         *,
         feedback_plan: dict | None = None,
         check_output: str | None = None,
+        check_label: str | None = None,
     ) -> PlanOutcome:
         evidence = build_evidence(ticket.payload, package)
         ticket_payload = dict(ticket.payload)
@@ -293,6 +315,7 @@ def make_planner(
                 problems if attempts else None,
                 previous_plan,
                 check_output if not attempts else None,
+                check_label if not attempts else None,
             )
             result = guarded_call(
                 guard=guard,

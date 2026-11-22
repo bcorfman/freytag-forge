@@ -117,6 +117,20 @@ def test_set_aside_failure_stays_set_aside_and_reschedules(tmp_path) -> None:
     assert updated.return_after == (NOW + timedelta(hours=6)).isoformat()
 
 
+def test_record_failure_never_sets_owner_wait_for_fun_history(tmp_path) -> None:
+    queue = TicketQueue(tmp_path)
+    ticket = make_ticket("fun-history")
+    ticket.station = Station.FUN_REVIEW
+    ticket.ladder_rung = LadderRung.OPUS_REFRESH
+    ticket.payload["fun_history"] = [{}, {}]
+    queue.add(ticket)
+
+    updated = queue.record_failure("fun-history", "fun_review", "blocked", NOW, max_attempts=1)
+
+    assert updated.status is Status.SET_ASIDE
+    assert "owner_wait" not in updated.payload
+
+
 def test_limit_hit_does_not_change_attempts_or_failures(tmp_path) -> None:
     queue = TicketQueue(tmp_path)
     ticket = make_ticket("limited")

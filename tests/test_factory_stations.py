@@ -290,5 +290,6 @@ def test_build_handlers_and_factory_line_advance(tmp_path: Path) -> None:
         Station.DELIVER,
     }
     assert Station.FUN_REVIEW in handlers
+    assert Station.PROBE in handlers
     assert line.step(NOW).kind == "advanced"
     assert queue.get("ticket").station is Station.PROSE

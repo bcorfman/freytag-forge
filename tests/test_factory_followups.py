@@ -127,6 +127,26 @@ def test_followup_ids_replace_unsafe_characters(tmp_path: Path) -> None:
     assert (tmp_path / "tickets" / f"{opened[0].id}.json").exists()
 
 
+def test_followups_copy_only_matching_parent_replay_runs(tmp_path: Path) -> None:
+    queue = TicketQueue(tmp_path / "tickets")
+    source = parent()
+    source.payload["runs"] = [
+        {"run": "1A-r1", "scene": "1A", "inputs": ["Search the desk."]},
+        {"run": "1B-r1", "scene": "1B", "inputs": ["Open the door."]},
+    ]
+    result = routing(
+        [routed("a", "1A", "story_data", "R2"), routed("b", "1B", "world_model", "R7")],
+        [turn("a", "1A"), turn("b", "1B")],
+    )
+
+    opened = open_followups(queue, source, result, NOW)
+
+    by_scene = {ticket.scene: ticket for ticket in opened}
+    assert by_scene["1A"].payload["runs"] == [source.payload["runs"][0]]
+    assert by_scene["1B"].payload["runs"] == [source.payload["runs"][1]]
+    assert all(ticket.payload["runs"] for ticket in opened)
+
+
 def test_end_to_end_playtest_triage_opens_world_and_wiring_tickets(tmp_path: Path) -> None:
     turns = [turn("story-turn", "1A", stuck=True), turn("world-turn", "1A", flags=["missed_change"])]
     ticket = Ticket(

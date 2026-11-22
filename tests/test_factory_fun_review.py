@@ -1,4 +1,5 @@
 import json
+import re
 import shutil
 import subprocess
 from datetime import UTC, datetime
@@ -113,6 +114,15 @@ def test_brief_names_freytag_pacing_character_and_continuity() -> None:
     assert "character" in brief
     assert "continuity" in brief
     assert all(key in FUN_REVIEW_BRIEF for key in FUN_REVIEW_CHECKS)
+    expected = (
+        "- delights_the_player: would a player enjoy this moment, using only the facts, people, places and objects "
+        "already in the scene context shown? If the fix adds or changes player-visible text, answer yes only if you "
+        "can name one specific detail in it that plants a clue, pays off an earlier detail, reveals a character, or "
+        "sharpens the stakes. Generic mood words, extra props, and invented facts never count. If the fix adds no "
+        "player-visible text, answer yes when the added words are a natural way a player would try the action. They "
+        "must let the player reach the scene's intended moment without skipping a puzzle, a clue or a reward."
+    )
+    assert re.sub(r"\s+", " ", expected) in re.sub(r"\s+", " ", FUN_REVIEW_BRIEF)
 
 
 def test_scene_context_for_the_real_story() -> None:
@@ -189,6 +199,52 @@ def test_prompt_carries_the_scene_context_before_the_evidence() -> None:
     assert "Scene context:" not in without_context
 
 
+@pytest.mark.parametrize(
+    ("kind", "has_claim_evidence"),
+    [("edit_claim_evidence", True), ("set_text", False), ("add_pacing_beat", False)],
+)
+def test_reviewer_packet_adds_claim_evidence_only_for_claim_edits(
+    tmp_path: Path, kind: str, has_claim_evidence: bool
+) -> None:
+    root, _tree, ticket = _fixture(tmp_path)
+    plan = {
+        "kind": kind,
+        "reason": "Precedent: none; use the existing evidence.",
+        "claim_edit": {"claim_id": "claim-1", "group": 0, "phrase": "open the drawer"},
+    }
+    plan_path = tmp_path / "workspace/review-ticket/plan.json"
+    plan_path.write_text(json.dumps(plan), encoding="utf-8")
+    package = SimpleNamespace(
+        scenes=(),
+        knowledge_indexes=SimpleNamespace(
+            by_id={
+                "claim-1": SimpleNamespace(
+                    available_in_scenes=("scene-1",),
+                    action_evidence=tuple(tuple(f"phrase-{index}-{item}" for item in range(13)) for index in range(9)),
+                )
+            }
+        ),
+    )
+    prompts: list[str] = []
+    result = fun_review_handler(
+        root,
+        reviewer=_reviewer([_reply()], prompts),
+        runner=_runner,
+        package_loader=lambda _root: package,
+    )(ticket, NOW)
+
+    assert result.passed
+    if has_claim_evidence:
+        assert "Claim evidence:\n" in prompts[0]
+        evidence_line = prompts[0].split("Claim evidence:\n", 1)[1].splitlines()[0]
+        evidence = json.loads(evidence_line)
+        assert evidence["claim_id"] == "claim-1"
+        assert len(evidence["action_evidence"]) == 8
+        assert all(len(group) == 12 for group in evidence["action_evidence"])
+    else:
+        assert "Claim evidence:" not in prompts[0]
+
+
 def test_a_missing_check_key_blocks(tmp_path: Path) -> None:
     root, _tree, ticket = _fixture(tmp_path)
     prompts: list[str] = []
@@ -204,7 +260,7 @@ def test_a_missing_check_key_blocks(tmp_path: Path) -> None:
     second = handler(ticket, NOW)
 
     assert not first.passed and not second.passed
-    assert "continuity_between_scenes" in first.output
+    assert "delights_the_player" in first.output
     assert second.output == first.output
     assert second.tokens == 0
     assert len(prompts) == 1
@@ -294,6 +350,7 @@ def test_pass_writes_record_and_includes_the_complete_packet(tmp_path: Path) -> 
     assert result.payload_updates is not None
     assert result.payload_updates["fun_review"]["verdict"] == "pass"
     assert result.payload_updates["fun_review"]["reasons"] == "It gives the player a clear next move."
+    assert result.payload_updates["fun_review"]["failed_checks"] == []
     assert isinstance(result.payload_updates["fun_review"]["diff_hash"], str)
     assert len(prompts) == 1
     assert prompts[0].startswith(FUN_REVIEW_BRIEF)
@@ -304,6 +361,8 @@ def test_pass_writes_record_and_includes_the_complete_packet(tmp_path: Path) -> 
     record = json.loads((tmp_path / "workspace/review-ticket/review.json").read_text(encoding="utf-8"))
     assert record["diff_hash"] == result.payload_updates["fun_review"]["diff_hash"]
     assert record["verdict"] == "pass"
+    assert record["reasons"] == "It gives the player a clear next move."
+    assert set(record["checks"]) == set(FUN_REVIEW_CHECKS)
     assert record["brief_hash"] == FUN_REVIEW_BRIEF_HASH
 
 

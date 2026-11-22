@@ -1,0 +1,8 @@
+{
+  "replicates": 10,
+  "max_stuck_ratio": 0.8,
+  "min_control_stuck_turns": 1,
+  "estimated_usd_per_turn": 0.0015,
+  "max_runs_per_probe": 6,
+  "max_turns_per_run": 30
+}

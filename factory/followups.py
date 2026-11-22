@@ -94,6 +94,7 @@ def open_followups(queue: TicketQueue, parent: Ticket, routing: dict, now: datet
     timestamp = _utc_iso(now)
     packets = _packet_index(turns)
     opened: list[Ticket] = []
+    parent_runs = parent.payload.get("runs")
 
     valid_escalations: list[dict[str, Any]] = []
     escalation_scenes: set[str] = set()
@@ -126,6 +127,13 @@ def open_followups(queue: TicketQueue, parent: Ticket, routing: dict, now: datet
             "failing_turns": [packet for packet in turns if packet.get("key") in set(entry["keys"])],
             "reason": "three failures of one class in one scene",
         }
+        matching_runs = (
+            [run for run in parent_runs if isinstance(run, dict) and run.get("scene") == scene]
+            if isinstance(parent_runs, list)
+            else []
+        )
+        if matching_runs:
+            payload["runs"] = matching_runs
         ticket = _new_ticket(
             ticket_id=ticket_id,
             scene=scene,
@@ -165,6 +173,13 @@ def open_followups(queue: TicketQueue, parent: Ticket, routing: dict, now: datet
             "failing_turns": group["turns"],
             "rules": group["rules"],
         }
+        matching_runs = (
+            [run for run in parent_runs if isinstance(run, dict) and run.get("scene") == scene]
+            if isinstance(parent_runs, list)
+            else []
+        )
+        if matching_runs:
+            payload["runs"] = matching_runs
         if station is None:
             station = Station.CONTRACT_REFRESH
             status = Status.FAILED

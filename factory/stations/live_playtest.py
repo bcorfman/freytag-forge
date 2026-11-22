@@ -568,12 +568,16 @@ def live_playtest_handler(
             summary = playtest_summary(report)
             if not summary["runs"]:
                 return StationResult(False, "live_playtest", "report has no valid scene runs", turns=None)
+            from factory.stations.probe import runs_from_report
+
+            runs = runs_from_report(report, scene)
+            payload_updates = {"runs": runs} if runs else None
             packets = report_to_packets(report)
             spend, _tokens, calls, _missing = player_spend(report, _prices_for_root(repository_root))
             output = _summary_line(summary, packets, spend, calls)
             if _gate_passes(summary) and not packets:
-                return StationResult(True, "live_playtest", output)
-            return StationResult(False, "live_playtest", output, turns=packets or None)
+                return StationResult(True, "live_playtest", output, payload_updates=payload_updates)
+            return StationResult(False, "live_playtest", output, turns=packets or None, payload_updates=payload_updates)
 
         expected_sha = payload.get("expected_sha")
         if not isinstance(expected_sha, str) or not expected_sha:
@@ -747,6 +751,10 @@ def live_playtest_handler(
         summary = playtest_summary(report)
         if not summary["runs"]:
             return StationResult(False, "live_playtest", "fresh report has no valid scene runs", turns=None)
+        from factory.stations.probe import runs_from_report
+
+        runs = runs_from_report(report, scene)
+        payload_updates = {"runs": runs} if runs else None
         packets = report_to_packets(report)
         output = _summary_line(
             summary,
@@ -756,8 +764,8 @@ def live_playtest_handler(
             micro_usd / 1_000_000 if micro_usd is not None else None,
         )
         if _gate_passes(summary) and not packets:
-            return StationResult(True, "live_playtest", output)
-        return StationResult(False, "live_playtest", output, turns=packets or None)
+            return StationResult(True, "live_playtest", output, payload_updates=payload_updates)
+        return StationResult(False, "live_playtest", output, turns=packets or None, payload_updates=payload_updates)
 
     return handle
 

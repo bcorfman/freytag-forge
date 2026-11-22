@@ -1,4 +1,4 @@
-"""Build and lint deterministic plans for the two supported story fixes."""
+"""Build and lint deterministic plans for the supported story fixes."""
 
 from __future__ import annotations
 
@@ -11,13 +11,14 @@ from pathlib import Path
 from typing import Any
 
 from factory.checks.gap_delta import DEFAULT_ROOT
+from factory.lessons import lessons_path, render_lessons
 from storygame.story_package.dependencies import producers
 from storygame.story_package.loader import load_story_package
 from storygame.story_package.models import StoryPackage
 from storygame.story_source.lookup import _source_tree, story_text
 
 PLAN_VERSION = 1
-_KINDS = frozenset({"add_pacing_beat", "set_text"})
+_KINDS = frozenset({"add_pacing_beat", "set_text", "edit_claim_evidence"})
 _BEAT_ID = re.compile(r"^[a-z][a-z0-9_]*_(?P<scene>[1-9][a-z])$")
 _TODO = re.compile(r"\bTODO\b", re.IGNORECASE)
 _ID_CHAR = r"A-Za-z0-9_"
@@ -154,7 +155,7 @@ def _shape_problems(plan: object) -> list[str]:
     if not isinstance(plan, dict):
         return ["plan.shape plan must be an object"]
     required = {"version", "ticket_id", "scene", "kind", "reason", "evidence_keys"}
-    if not required.issubset(plan) or set(plan) - required - {"beat", "set_text"}:
+    if not required.issubset(plan) or set(plan) - required - {"beat", "set_text", "claim_edit"}:
         return ["plan.shape required keys or extra top-level keys are invalid"]
     if (
         plan.get("version") != PLAN_VERSION
@@ -170,7 +171,9 @@ def _shape_problems(plan: object) -> list[str]:
     kind = plan.get("kind")
     if kind not in _KINDS:
         return []
-    expected = {"beat"} if kind == "add_pacing_beat" else {"set_text"}
+    expected = (
+        {"beat"} if kind == "add_pacing_beat" else {"claim_edit"} if kind == "edit_claim_evidence" else {"set_text"}
+    )
     if set(plan) != required | expected:
         return ["plan.shape exactly the sub-object for kind is required"]
     subplan = plan.get(next(iter(expected)))
@@ -196,6 +199,16 @@ def _shape_problems(plan: object) -> list[str]:
                 not isinstance(key, str) or not isinstance(value, bool) for key, value in mapping.items()
             ):
                 return [f"plan.shape beat {name} must map strings to booleans"]
+    elif kind == "edit_claim_evidence":
+        fields = {"claim_id", "group", "phrase"}
+        if (
+            set(subplan) != fields
+            or not isinstance(subplan.get("claim_id"), str)
+            or not isinstance(subplan.get("phrase"), str)
+        ):
+            return ["plan.shape claim_edit fields are invalid"]
+        if not isinstance(subplan.get("group"), int) or isinstance(subplan.get("group"), bool):
+            return ["plan.shape claim_edit group must be an integer"]
     else:
         if set(subplan) != {"address", "text"} or any(
             not isinstance(subplan.get(key), str) for key in ("address", "text")
@@ -245,6 +258,132 @@ def _shared_effect_problems(package: StoryPackage, beat: Mapping[str, Any]) -> l
         "set a fact no other pacing event sets"
         for fact_id, event_turn, event_id in sorted(matches, key=lambda match: (match[0], match[1], match[2]))
     ]
+
+
+def _match_source(package: StoryPackage, candidate_id: str) -> tuple[Mapping[str, Any], Mapping[str, Any]] | None:
+    """Return a claim and its match document from the authored source tree."""
+
+    try:
+        tree = _source_tree(package)
+    except (OSError, RuntimeError):
+        return None
+    if tree is None:
+        return None
+    for relative, document in sorted(tree.files.items()):
+        if not relative.endswith(".match.yaml") or not isinstance(document, Mapping):
+            continue
+        claims = document.get("claims")
+        claim = claims.get(candidate_id) if isinstance(claims, Mapping) else None
+        if isinstance(claim, Mapping):
+            return claim, document
+    return None
+
+
+def _scene_claim_ids(package: StoryPackage, scene: str) -> set[str]:
+    indexes = getattr(package, "knowledge_indexes", None)
+    scene_to_candidates = _value(indexes, "scene_to_candidates", {})
+    candidates = scene_to_candidates.get(scene, ()) if isinstance(scene_to_candidates, Mapping) else ()
+    return {candidate_id for candidate_id in candidates if isinstance(candidate_id, str)}
+
+
+def _phrase_in_text(text: str, phrase: str) -> bool:
+    return re.search(rf"(?<![a-z]){re.escape(phrase)}(?![a-z])", text.casefold()) is not None
+
+
+def _claim_edit_problems(
+    plan: Mapping[str, Any], ticket_payload: Mapping[str, Any], package: StoryPackage, packets: list[object]
+) -> list[str]:
+    edit = plan["claim_edit"]
+    claim_id = edit["claim_id"]
+    scene = plan["scene"]
+    ticket_scene = _ticket_scene(ticket_payload)
+    claim_scene = ticket_scene if ticket_scene is not None else scene
+    indexes = getattr(package, "knowledge_indexes", None)
+    definitions = _value(indexes, "by_id", {})
+    candidate = definitions.get(claim_id) if isinstance(definitions, Mapping) else None
+    scene_claim_ids = _scene_claim_ids(package, claim_scene)
+    problems: list[str] = []
+    valid_claim = candidate is not None and claim_id in scene_claim_ids
+    if not valid_claim:
+        problems.append("plan.claim claim_id must exist in the package and belong to the ticket scene")
+    evidence_keys = set(plan["evidence_keys"])
+    offered = {
+        item
+        for packet in packets
+        if _value(packet, "key") in evidence_keys
+        for item in (_value(packet, "candidates_offered", ()) or ())
+        if isinstance(item, str)
+    }
+    if claim_id not in offered and claim_id not in scene_claim_ids:
+        problems.append("plan.claim_offered claim_id must be offered by a selected failing turn")
+    if not valid_claim:
+        return problems
+
+    source = _match_source(package, claim_id)
+    source_claim = source[0] if source is not None else None
+    if (
+        isinstance(source_claim, Mapping)
+        and isinstance(source_claim.get("use"), str)
+        and "action_evidence" not in source_claim
+    ):
+        shared = source[1].get("shared")
+        shared_record = shared.get(source_claim["use"]) if isinstance(shared, Mapping) else None
+        if isinstance(shared_record, Mapping) and "action_evidence" in shared_record:
+            problems.append("plan.claim_shared claim action_evidence comes from a shared use list")
+
+    groups = _value(candidate, "action_evidence", ())
+    group = edit["group"]
+    if not isinstance(groups, (list, tuple)) or group < 0 or group >= len(groups):
+        problems.append("plan.group group must identify an existing action_evidence group")
+        current_group: object = ()
+    else:
+        current_group = groups[group]
+
+    phrase = edit["phrase"]
+    words = phrase.split()
+    valid_phrase = bool(re.fullmatch(r"[a-z]+(?:'[a-z]+)?(?: [a-z]+(?:'[a-z]+)?){0,2}", phrase))
+    if (
+        not valid_phrase
+        or not 1 <= len(words) <= 3
+        or any(character.isdigit() or character == "_" for character in phrase)
+    ):
+        problems.append("plan.phrase phrase must be 1 to 3 lower-case words using only spaces and apostrophes")
+    else:
+        from .diagnose import STOPWORDS
+
+        if all(word in STOPWORDS for word in words):
+            problems.append("plan.phrase phrase must contain a non-stopword")
+    if isinstance(current_group, (list, tuple)) and any(
+        isinstance(item, str) and item.casefold() == phrase.casefold() for item in current_group
+    ):
+        problems.append("plan.phrase phrase is already in the selected action_evidence group")
+
+    if not any(
+        _value(packet, "key") in evidence_keys
+        and isinstance(player_input := _value(packet, "player_input"), str)
+        and _phrase_in_text(player_input, phrase)
+        for packet in packets
+    ):
+        problems.append("plan.phrase_evidence phrase must occur in a selected failing-turn player_input")
+
+    for other_id in sorted(scene_claim_ids):
+        other = definitions.get(other_id) if isinstance(definitions, Mapping) else None
+        if other is None:
+            continue
+        if other_id != claim_id and any(
+            isinstance(item, str) and item.casefold() == phrase.casefold()
+            for group_items in (_value(other, "action_evidence", ()) or ())
+            for item in (group_items or ())
+        ):
+            problems.append("plan.phrase_owned phrase is already owned by another claim's action_evidence")
+            break
+        if any(
+            isinstance(item, str) and item.casefold() == phrase.casefold()
+            for item in (_value(other, "leak_terms", ()) or ())
+        ):
+            problems.append("plan.phrase_owned phrase is already used by a claim's leak_terms")
+            break
+    return problems
 
 
 def lint_plan(plan: dict, ticket_payload: dict, package: StoryPackage) -> list[str]:
@@ -306,6 +445,8 @@ def lint_plan(plan: dict, ticket_payload: dict, package: StoryPackage) -> list[s
             problems.append("plan.exit_trigger beat may not set an exit trigger or dependency")
         if _text_problem(beat["text"], package):
             problems.append("plan.text beat text violates the bounded authored-text rules")
+    elif plan["kind"] == "edit_claim_evidence":
+        problems.extend(_claim_edit_problems(plan, ticket_payload, package, packets))
     else:
         address = plan["set_text"]["address"]
         current: str | None = None
@@ -363,9 +504,20 @@ def _candidate_evidence(package: StoryPackage, candidate_id: str) -> dict[str, o
     text = _value(candidate, "delivery_text", "")
     if not isinstance(text, str):
         text = ""
+    action_evidence = _value(candidate, "action_evidence", ())
+    bounded_action_evidence = [
+        [item for item in group if isinstance(item, str)][:12]
+        for group in (action_evidence[:8] if isinstance(action_evidence, (list, tuple)) else ())
+        if isinstance(group, (list, tuple))
+    ]
+    source = _match_source(package, candidate_id)
+    source_claim = source[0] if source is not None else None
+    uses_shared = isinstance(source_claim, Mapping) and isinstance(source_claim.get("use"), str)
     return {
         "earn_when": _json_safe(_value(candidate, "earn_when")),
         "requires": _json_safe(_model_dump(_value(candidate, "requires", ()))),
+        "action_evidence": bounded_action_evidence,
+        "uses_shared": uses_shared,
         "text": text[:400],
         "source": _source_path(package, candidate_id),
     }
@@ -512,10 +664,19 @@ def build_evidence(ticket_payload: dict, package: StoryPackage) -> dict:
                 "kind": "set_text",
                 "description": "Change a reveal handoff sentence through the story CLI at claim:<id>.text.",
             },
+            {
+                "kind": "edit_claim_evidence",
+                "description": "Add one player-typed phrase to one existing claim action_evidence group.",
+            },
         ],
     }
     evidence = _bound_evidence(evidence)
     evidence["precedents"] = _precedents_text(ticket_payload)
+    fun_lessons_path = lessons_path(ticket_payload)
+    try:
+        evidence["fun_lessons"] = None if fun_lessons_path is None else (render_lessons(fun_lessons_path) or None)
+    except Exception:
+        evidence["fun_lessons"] = None
     return evidence
 
 
