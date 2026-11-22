@@ -3,6 +3,7 @@ import shutil
 import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -10,7 +11,9 @@ from factory.guard import LimitSleep, ModelNotAllowed
 from factory.stations.diagnose import (
     CAUSES,
     DIAGNOSE_BRIEF,
+    DIAGNOSE_VERSION,
     ClassifierReply,
+    _known_word,
     default_classifier,
     diagnose_handler,
     diagnose_turn,
@@ -47,6 +50,14 @@ def test_gold_diagnoses_and_every_packet_has_one_cause() -> None:
     assert "k_sl_1a_i_r1" in values["r2-t13"]["signals"]["claim_ids"]
     assert values["r3-t3"]["cause"] == "claim_not_offered"
     assert "k_sl_1a_j_r1" in values["r3-t3"]["signals"]["claim_ids"]
+    assert values["r2-t9"]["cause"] == "no_authored_outcome"
+    assert values["r2-t12"]["cause"] == "claim_wording_miss"
+    assert values["r1-t4"]["cause"] == "no_authored_outcome"
+    assert values["r2-t6"]["cause"] == "no_authored_outcome"
+    assert values["r3-t5"]["cause"] == "no_authored_outcome"
+    assert values["r3-t6"]["cause"] == "claim_wording_miss"
+    assert values["r3-t9"]["cause"] == "no_authored_outcome"
+    assert values["r2-t12"]["signals"]["missing"] == [{"claim_id": "k_sl_1a_i_r1", "group": 0}]
     assert len(values) == 21
     assert all(row["cause"] in CAUSES for row in values.values())
 
@@ -59,6 +70,127 @@ def test_pure_diagnosis_is_deterministic_and_respects_unknown_words() -> None:
     assert first == second
     assert first["cause"] == "unknown_object"
     assert "zarglething" in first["signals"]["unknown_words"]
+
+    assert _known_word("approaching", {"approach"})
+    assert _known_word("using", {"use"})
+    modifier = diagnose_turn(
+        {
+            "key": "modifier",
+            "scene": "1A",
+            "player_input": "Question the suspicious officer about Michelle.",
+            "candidates_offered": [],
+        },
+        PACKAGE,
+    )
+    assert modifier["cause"] == "no_authored_outcome"
+    assert "suspicious" not in modifier["signals"].get("unknown_words", [])
+
+    for player_input in ("Go to the old warehouse.", "Take the note from the hidden compartment."):
+        assert (
+            diagnose_turn(
+                {"key": "unknown", "scene": "1A", "player_input": player_input, "candidates_offered": []}, PACKAGE
+            )["cause"]
+            == "unknown_object"
+        )
+
+
+def _synthetic_package(*claims: SimpleNamespace) -> SimpleNamespace:
+    entity = SimpleNamespace(
+        id="known_entity",
+        name="known entity",
+        aliases=(),
+        scoped_aliases=(),
+        description="",
+        narrator_bio="",
+    )
+    location = SimpleNamespace(
+        id="known_place",
+        name="known place",
+        aliases=(),
+        scoped_aliases=(),
+        parent=None,
+        description="",
+        narrator_bio="",
+    )
+    metadata = SimpleNamespace(
+        scene_id="scene",
+        participant_ids=("known_entity",),
+        item_ids=(),
+        location_id="known_place",
+        item_placements={},
+        character_placements={},
+        entry_text="",
+        entry_variants=(),
+    )
+    by_id = {claim.id: claim for claim in claims}
+    return SimpleNamespace(
+        world=SimpleNamespace(locations=(location,), npcs=(entity,), items=(), groups=()),
+        scenes=(SimpleNamespace(metadata=metadata),),
+        knowledge=SimpleNamespace(knowledge=()),
+        knowledge_indexes=SimpleNamespace(
+            scene_to_candidates={"scene": tuple(claim.id for claim in claims)},
+            by_id=by_id,
+            entity_alias_to_entities={},
+            alias_to_knowledge={},
+        ),
+    )
+
+
+def test_claim_wording_miss_requires_exactly_one_missing_group() -> None:
+    wording = SimpleNamespace(id="claim_wording", action_evidence=(("inspect",), ("known entity",)))
+    row = diagnose_turn(
+        {"key": "wording", "scene": "scene", "player_input": "Question known entity", "candidates_offered": []},
+        _synthetic_package(wording),
+    )
+    assert row["cause"] == "claim_wording_miss"
+    assert row["signals"] == {
+        "claim_ids": ["claim_wording"],
+        "missing": [{"claim_id": "claim_wording", "group": 0}],
+        "decided_by": "rule",
+    }
+    assert "claim_wording" in row["why"]
+
+    all_groups = SimpleNamespace(id="claim_all", action_evidence=(("inspect",), ("known entity",)))
+    assert (
+        diagnose_turn(
+            {"key": "all", "scene": "scene", "player_input": "Inspect known entity", "candidates_offered": []},
+            _synthetic_package(all_groups),
+        )["cause"]
+        == "claim_not_offered"
+    )
+
+    two_missing = SimpleNamespace(id="claim_two", action_evidence=(("inspect",), ("known entity",), ("detail",)))
+    assert (
+        diagnose_turn(
+            {"key": "two", "scene": "scene", "player_input": "Inspect", "candidates_offered": []},
+            _synthetic_package(two_missing),
+        )["cause"]
+        != "claim_wording_miss"
+    )
+
+    single_group = SimpleNamespace(id="claim_single", action_evidence=(("inspect",),))
+    assert (
+        diagnose_turn(
+            {"key": "single", "scene": "scene", "player_input": "Inspect", "candidates_offered": []},
+            _synthetic_package(single_group),
+        )["cause"]
+        == "claim_not_offered"
+    )
+
+    unoffered = SimpleNamespace(id="claim_unoffered", action_evidence=(("inspect",), ("known entity",)))
+    assert (
+        diagnose_turn(
+            {"key": "unoffered", "scene": "scene", "player_input": "Inspect known entity", "candidates_offered": []},
+            _synthetic_package(unoffered),
+        )["cause"]
+        == "claim_not_offered"
+    )
+
+
+def test_causes_and_classifier_accept_only_non_unclear_causes() -> None:
+    assert "claim_wording_miss" in CAUSES
+    assert CAUSES[-1] == "unclear"
+    assert DIAGNOSE_VERSION == "diagnose-v2"
 
 
 def test_handler_skips_classifier_when_rules_decide_every_turn() -> None:
@@ -87,7 +219,7 @@ def test_handler_classifies_unclear_turn_once_and_keeps_bad_answers_unclear() ->
     def classifier(_ticket, prompt: str, _now: datetime) -> ClassifierReply:
         prompts.append(prompt)
         return ClassifierReply(
-            '{"unclear": {"cause": "no_authored_outcome", "why": "The command has no authored result."}}', 17
+            '{"unclear": {"cause": "claim_wording_miss", "why": "The claim misses one phrase."}}', 17
         )
 
     result = diagnose_handler(classifier=classifier)(ticket({"failing_turns": [packet]}), NOW)
@@ -95,11 +227,17 @@ def test_handler_classifies_unclear_turn_once_and_keeps_bad_answers_unclear() ->
     assert len(prompts) == 1
     assert DIAGNOSE_BRIEF in prompts[0]
     assert '"player_input"' in prompts[0]
-    assert row["cause"] == "no_authored_outcome"
+    assert row["cause"] == "claim_wording_miss"
     assert row["signals"]["decided_by"] == "classifier"
     assert result.tokens == 17
 
-    for answer in ("{}", "[]", '{"unclear": {"cause": "not-a-cause", "why": "bad"}}', "garbage"):
+    for answer in (
+        "{}",
+        "[]",
+        '{"unclear": {"cause": "unclear", "why": "bad"}}',
+        '{"unclear": {"cause": "not-a-cause", "why": "bad"}}',
+        "garbage",
+    ):
 
         def stub(*_args, answer=answer) -> ClassifierReply:
             return ClassifierReply(answer, 1)

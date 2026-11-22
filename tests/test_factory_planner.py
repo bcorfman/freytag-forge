@@ -35,6 +35,10 @@ def test_planner_brief_mentions_the_causes() -> None:
     assert "cause of each failing turn" in PLANNER_BRIEF
     assert "how many turns share each cause" in PLANNER_BRIEF
     assert "most common cause" in PLANNER_BRIEF
+    assert (
+        "A claim_wording_miss turn names a claim that misses only one wording; "
+        "edit_claim_evidence fits it when the failing turn's own words supply the phrase." in PLANNER_BRIEF
+    )
 
 
 def test_planner_brief_contains_the_opus_fun_sentences() -> None:

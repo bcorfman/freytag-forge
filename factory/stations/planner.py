@@ -48,6 +48,8 @@ If none covers the case, begin reason with "Precedent: none"; list checks and th
 After the cause, name in a few words the detail that makes the fix fun.
 Keep reason at 400 characters or fewer.
 The evidence lists the cause of each failing turn and how many turns share each cause.
+A claim_wording_miss turn names a claim that misses only one wording; \
+edit_claim_evidence fits it when the failing turn's own words supply the phrase.
 Choose the fix for the most common cause that a proven technique in the precedents can fix,
 and name that cause in the reason.
 

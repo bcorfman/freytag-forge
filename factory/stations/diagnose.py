@@ -22,15 +22,34 @@ from storygame.story_package.loader import load_story_package
 
 from .wiring import _story_root
 
+MATCH_MISS_ON_OFFERED_CANDIDATE = "match_miss_on_offered_candidate"
+CLAIM_NOT_OFFERED = "claim_not_offered"
+CLAIM_WORDING_MISS = "claim_wording_miss"
+LEAD_OUTSIDE_SCENE = "lead_outside_scene"
+UNKNOWN_OBJECT = "unknown_object"
+NO_AUTHORED_OUTCOME = "no_authored_outcome"
+UNCLEAR = "unclear"
+
 CAUSES = (
-    "match_miss_on_offered_candidate",
-    "claim_not_offered",
-    "lead_outside_scene",
-    "unknown_object",
-    "no_authored_outcome",
-    "unclear",
+    MATCH_MISS_ON_OFFERED_CANDIDATE,
+    CLAIM_NOT_OFFERED,
+    CLAIM_WORDING_MISS,
+    LEAD_OUTSIDE_SCENE,
+    UNKNOWN_OBJECT,
+    NO_AUTHORED_OUTCOME,
+    UNCLEAR,
 )
-DIAGNOSE_VERSION = "diagnose-v1"
+CLASSIFIABLE_CAUSES = frozenset(
+    {
+        MATCH_MISS_ON_OFFERED_CANDIDATE,
+        CLAIM_NOT_OFFERED,
+        CLAIM_WORDING_MISS,
+        LEAD_OUTSIDE_SCENE,
+        UNKNOWN_OBJECT,
+        NO_AUTHORED_OUTCOME,
+    }
+)
+DIAGNOSE_VERSION = "diagnose-v2"
 DIAGNOSE_MODEL_ID = "claude-sonnet-5-5"
 DIAGNOSE_EFFORT = "high"
 
@@ -160,13 +179,14 @@ DIAGNOSE_BRIEF = """Diagnose each failing turn using one cause.
 
 match_miss_on_offered_candidate: a listed candidate matched, but nothing was committed.
 claim_not_offered: the command satisfies an authored claim that was not offered.
+claim_wording_miss: an authored claim matches all but one evidence group, so one wording is missing.
 lead_outside_scene: the command names a story entity that belongs to another scene.
 unknown_object: a meaningful command word is absent from the story vocabulary.
 no_authored_outcome: the command concerns this scene, but no authored outcome was found.
-unclear: use this only when the first five causes cannot be supported by the evidence.
+unclear: use this only when every cause except unclear cannot be supported by the evidence.
 
-Return ONE JSON object mapping every listed turn key to an object with exactly a cause from
-the first five causes and one plain sentence explaining why. Return nothing else."""
+Return ONE JSON object mapping every listed turn key to an object with exactly one cause from the causes above
+other than unclear, and one plain sentence explaining why. Return nothing else."""
 
 
 @dataclass(frozen=True)
@@ -191,6 +211,23 @@ def _contains(text: str, term: object) -> bool:
     if not phrase:
         return False
     return re.search(rf"(?<!\w){re.escape(phrase)}(?!\w)", text.lower()) is not None
+
+
+def _word_stems(word: str) -> tuple[str, ...]:
+    """Return the small set of suffix-stripped forms used by diagnosis."""
+
+    stems = {word}
+    for suffix in ("ing", "ed", "es", "s"):
+        if word.endswith(suffix) and len(word) > len(suffix) + 1:
+            stem = word[: -len(suffix)]
+            stems.add(stem)
+            if suffix == "ing":
+                stems.add(stem + "e")
+    return tuple(stems)
+
+
+def _known_word(word: str, vocabulary: set[str]) -> bool:
+    return any(stem in vocabulary for stem in _word_stems(word))
 
 
 def _iter_values(value: object) -> Iterable[Any]:
@@ -292,12 +329,27 @@ def _claims_with_evidence(package: Any, scene_id: str) -> Iterable[Any]:
 
 
 def _matches_evidence(player_input: str, evidence: object) -> bool:
+    matches = _evidence_group_matches(player_input, evidence)
+    return bool(matches) and all(matches)
+
+
+def _evidence_group_matches(player_input: str, evidence: object) -> tuple[bool, ...]:
     groups = evidence if isinstance(evidence, (tuple, list)) else ()
-    return bool(groups) and all(
+    return tuple(
         any(_contains(player_input, term) for term in group if isinstance(term, str))
         for group in groups
         if isinstance(group, (tuple, list))
     )
+
+
+def _claim_wording_misses(player_input: str, package: Any, scene_id: str) -> list[tuple[str, int]]:
+    misses: list[tuple[str, int]] = []
+    for claim in _claims_with_evidence(package, scene_id):
+        matches = _evidence_group_matches(player_input, getattr(claim, "action_evidence", ()))
+        missing = [index for index, matched in enumerate(matches) if not matched]
+        if len(matches) >= 2 and len(missing) == 1:
+            misses.append((str(claim.id), missing[0]))
+    return sorted(misses)
 
 
 def _story_vocabulary(package: Any) -> set[str]:
@@ -331,6 +383,30 @@ def _acting_verb(text: str) -> bool:
     return any(word in ACTING_VERBS for word in _words(text))
 
 
+def _modifier_words(text: str, package: Any, entity_ids: Iterable[str]) -> set[str]:
+    tokens = _WORD_RE.findall(text.lower())
+    modifiers: set[str] = set()
+    surfaces = _entity_surfaces(package)
+    for entity_id in entity_ids:
+        for surface in surfaces.get(entity_id, ()):
+            surface_tokens = _WORD_RE.findall(surface.lower())
+            if not surface_tokens:
+                continue
+            width = len(surface_tokens)
+            for start in range(len(tokens) - width + 1):
+                if tokens[start : start + width] == surface_tokens and start:
+                    modifiers.add(tokens[start - 1])
+    return modifiers
+
+
+def _unknown_words(text: str, vocabulary: set[str], modifiers: set[str]) -> list[str]:
+    return sorted(
+        word
+        for word in _words(text)
+        if len(word) >= 4 and word not in STOPWORDS and not _known_word(word, vocabulary) and word not in modifiers
+    )[:8]
+
+
 def diagnose_turn(packet: dict, package: Any) -> dict:
     """Return a deterministic diagnosis for one failing-turn packet."""
 
@@ -340,7 +416,7 @@ def diagnose_turn(packet: dict, package: Any) -> dict:
     if matched is not None and packet.get("committed") is None:
         return {
             "key": key,
-            "cause": CAUSES[0],
+            "cause": MATCH_MISS_ON_OFFERED_CANDIDATE,
             "why": f"Matched claim {matched}, but nothing was committed.",
             "signals": {"matched_candidate": matched, "decided_by": "rule"},
         }
@@ -355,46 +431,61 @@ def diagnose_turn(packet: dict, package: Any) -> dict:
     if missing_claims:
         return {
             "key": key,
-            "cause": CAUSES[1],
+            "cause": CLAIM_NOT_OFFERED,
             "why": f"The command satisfies authored claims not offered: {', '.join(missing_claims)}.",
             "signals": {"claim_ids": missing_claims, "decided_by": "rule"},
         }
 
     named_ids = _named_entity_ids(player_input, package)
     scene_ids = _scene_entity_ids(package, scene_id)
+    scene_named_ids = named_ids & scene_ids
+    vocabulary = _story_vocabulary(package)
+    modifiers = _modifier_words(player_input, package, scene_named_ids)
+    unknown_words = _unknown_words(player_input, vocabulary, modifiers)
     outside_names = _entity_names(package, named_ids - scene_ids)
+
+    wording_misses = [] if unknown_words or outside_names else _claim_wording_misses(player_input, package, scene_id)
+    if wording_misses:
+        claim_ids = sorted({claim_id for claim_id, _ in wording_misses})
+        return {
+            "key": key,
+            "cause": CLAIM_WORDING_MISS,
+            "why": f"The command nearly matches authored claims {', '.join(claim_ids)}, missing one wording group.",
+            "signals": {
+                "claim_ids": claim_ids,
+                "missing": [{"claim_id": claim_id, "group": group} for claim_id, group in wording_misses],
+                "decided_by": "rule",
+            },
+        }
+
     if outside_names:
         return {
             "key": key,
-            "cause": CAUSES[2],
+            "cause": LEAD_OUTSIDE_SCENE,
             "why": f"The command names {', '.join(outside_names)}, which belong to another scene.",
             "signals": {"entities": outside_names, "decided_by": "rule"},
         }
 
-    vocabulary = _story_vocabulary(package)
-    unknown_words = sorted(
-        word for word in _words(player_input) if len(word) >= 4 and word not in STOPWORDS and word not in vocabulary
-    )[:8]
     if unknown_words:
         return {
             "key": key,
-            "cause": CAUSES[3],
+            "cause": UNKNOWN_OBJECT,
             "why": f"The command contains words absent from the story vocabulary: {', '.join(unknown_words)}.",
             "signals": {"unknown_words": unknown_words, "decided_by": "rule"},
         }
 
-    scene_names = _entity_names(package, named_ids & scene_ids)
+    scene_names = _entity_names(package, scene_named_ids)
     if scene_names or _acting_verb(player_input):
         return {
             "key": key,
-            "cause": CAUSES[4],
+            "cause": NO_AUTHORED_OUTCOME,
             "why": "The command concerns this scene, but no authored outcome applies.",
             "signals": {"scene_entities": scene_names, "decided_by": "rule"},
         }
 
     return {
         "key": key,
-        "cause": CAUSES[5],
+        "cause": UNCLEAR,
         "why": "The available evidence does not identify a cause.",
         "signals": {"decided_by": "rule"},
     }
@@ -499,11 +590,15 @@ def _apply_classifier(
         return rows, total_tokens
     updated = []
     for row in rows:
-        if row["cause"] != "unclear":
+        if row["cause"] != UNCLEAR:
             updated.append(row)
             continue
         answer = parsed.get(row["key"])
-        if isinstance(answer, dict) and answer.get("cause") in CAUSES[:5] and isinstance(answer.get("why"), str):
+        if (
+            isinstance(answer, dict)
+            and answer.get("cause") in CLASSIFIABLE_CAUSES
+            and isinstance(answer.get("why"), str)
+        ):
             updated.append(
                 {
                     **row,
