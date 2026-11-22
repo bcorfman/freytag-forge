@@ -11,7 +11,7 @@ from factory.checks.gap_delta import DEFAULT_ROOT
 from factory.manifests import lint_check
 from factory.stations.planner import PlanOutcome
 from factory.stations.tree import ticket_tree
-from factory.stations.wiring import MAX_REPLANS, _clear_previous, wiring_handler, wiring_spec
+from factory.stations.wiring import MAX_REPLANS, PROBE_CHECK_LABEL, _clear_previous, wiring_handler, wiring_spec
 from factory.tickets import Station, Ticket
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -183,6 +183,36 @@ def test_wiring_plans_missing_payload_plan_and_preserves_ticket(tmp_path: Path) 
     assert len(calls) == 1
     assert ticket.payload == {key: value for key, value in original_payload.items() if key != "plan"}
     assert json.loads((workspace / "planner-wiring" / "plan.json").read_text(encoding="utf-8")) == plan
+
+
+def test_wiring_probe_retry_passes_verdict_feedback_only_to_first_planner_call(tmp_path: Path) -> None:
+    repository = init_repo(tmp_path)
+    workspace = tmp_path / "workspace"
+    feedback_plan = beat_plan("probe-feedback")
+    ticket = make_ticket(feedback_plan, workspace, "probe-feedback")
+    del ticket.payload["plan"]
+    ticket.payload["feedback_plan"] = feedback_plan
+    ticket.payload["probe_feedback"] = "verdict reject control 1 2 0 0 0 0 candidate 2 2 0 0 0 0"
+    calls = []
+
+    def planner(_ticket, _package, _now, **kwargs):
+        calls.append(kwargs)
+        return PlanOutcome(feedback_plan, 7, [], 1)
+
+    result = wiring_handler(
+        repository,
+        run_ringer=stub_ringer(repository, tmp_path / "scratch-probe-feedback"),
+        planner=planner,
+    )(ticket, NOW)
+
+    assert result.passed, result.output
+    assert calls == [
+        {
+            "feedback_plan": feedback_plan,
+            "check_output": ticket.payload["probe_feedback"],
+            "check_label": PROBE_CHECK_LABEL,
+        }
+    ]
 
 
 def test_wiring_planner_failure_creates_no_tree(tmp_path: Path) -> None:

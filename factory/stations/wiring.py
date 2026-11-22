@@ -21,6 +21,7 @@ from storygame.story_package.loader import load_story_package
 from .fix_plan import lint_plan
 
 MAX_REPLANS = 3
+PROBE_CHECK_LABEL = "Check output (this plan was applied and tried in play; the replay verdict follows):"
 
 
 def _repository_root() -> Path:
@@ -279,6 +280,11 @@ def wiring_handler(
         working_payload = dict(payload)
         plan = working_payload.get("plan")
         planner_driven = not isinstance(plan, dict)
+        probe_retry = (
+            planner_driven
+            and isinstance(working_payload.get("feedback_plan"), dict)
+            and isinstance(working_payload.get("probe_feedback"), str)
+        )
         workspace_value = working_payload.get("workspace")
         planner_tokens = 0
         if planner_driven and planner is None:
@@ -290,7 +296,16 @@ def wiring_handler(
         try:
             package = load_story_package(story_root)
             if planner_driven:
-                outcome = planner(ticket, package, now)
+                planner_kwargs = (
+                    {
+                        "feedback_plan": working_payload["feedback_plan"],
+                        "check_output": working_payload["probe_feedback"],
+                        "check_label": PROBE_CHECK_LABEL,
+                    }
+                    if probe_retry
+                    else {}
+                )
+                outcome = planner(ticket, package, now, **planner_kwargs)
                 planner_tokens = outcome.tokens
                 plan = outcome.plan
                 if not isinstance(plan, dict):

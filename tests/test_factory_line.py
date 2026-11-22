@@ -94,7 +94,7 @@ def test_live_playtest_failure_with_turns_moves_to_triage(tmp_path):
     assert saved.payload["turns"] == turns
 
 
-def test_merge_ticket_delivers_after_station_nine_and_keeps_payload_updates(tmp_path):
+def test_merge_ticket_delivers_after_probe_and_keeps_payload_updates(tmp_path):
     ticket = make_ticket("merge", station=Station.PROMPT_SNAPSHOT)
     ticket.payload["merge_to_main"] = True
 
@@ -106,12 +106,15 @@ def test_merge_ticket_delivers_after_station_nine_and_keeps_payload_updates(tmp_
         [ticket],
         {
             Station.PROMPT_SNAPSHOT: passing,
+            Station.PROBE: passing,
             Station.FUN_REVIEW: passing,
             Station.DELIVER: delivery,
             Station.LIVE_PLAYTEST: passing,
         },
     )
 
+    assert line.step(NOW).kind == "advanced"
+    assert queue.get("merge").station is Station.PROBE
     assert line.step(NOW).kind == "advanced"
     assert queue.get("merge").station is Station.FUN_REVIEW
     assert line.step(NOW).kind == "advanced"

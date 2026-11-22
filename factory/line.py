@@ -26,6 +26,7 @@ class StationResult:
 
 
 StationHandler = Callable[[Ticket, datetime], StationResult]
+MAX_PROBE_ROUNDS = 3
 
 
 @dataclass
@@ -138,18 +139,21 @@ class FactoryLine:
                 outcome = StepOutcome("delivered", ticket.id)
             else:
                 updated = self.queue.get(ticket.id)
+                if ticket.station is Station.PROBE:
+                    updated.payload.pop("probe_feedback", None)
+                    updated.payload.pop("feedback_plan", None)
                 if ticket.station is Station.DIAGNOSE:
                     updated.station = Station.WIRING
-                elif (
-                    ticket.station is Station.LIVE_PLAYTEST
-                    or ticket.station is Station.PROMPT_SNAPSHOT
-                    and merge_to_main
-                ):
+                elif ticket.station is Station.PROMPT_SNAPSHOT:
+                    updated.station = Station.PROBE if merge_to_main else Station.LIVE_PLAYTEST
+                elif ticket.station is Station.LIVE_PLAYTEST:
                     updated.station = Station.FUN_REVIEW if merge_to_main else Station.DELIVER
                 elif ticket.station is Station.FUN_REVIEW and merge_to_main:
                     updated.station = Station.DELIVER
                 elif ticket.station is Station.DELIVER and merge_to_main:
                     updated.station = Station.LIVE_PLAYTEST
+                elif ticket.station is Station.PROBE:
+                    updated.station = Station.FUN_REVIEW
                 else:
                     updated.station = Station(ticket.station + 1)
                 updated.status = Status.QUEUED
@@ -161,7 +165,43 @@ class FactoryLine:
                 self.queue.save(updated)
                 outcome = StepOutcome("advanced", ticket.id)
         else:
-            if ticket.station is Station.LIVE_PLAYTEST and isinstance(result.turns, list) and result.turns:
+            probe_update = result.payload_updates.get("probe") if isinstance(result.payload_updates, dict) else None
+            probe_verdict = probe_update.get("verdict") if isinstance(probe_update, dict) else None
+            if ticket.station is Station.PROBE and probe_verdict in {"reject", "inconclusive"}:
+                probe_rounds = ticket.payload.get("probe_rounds", 0)
+                if not isinstance(probe_rounds, int) or isinstance(probe_rounds, bool):
+                    probe_rounds = 0
+                next_probe_round = probe_rounds + 1
+                if next_probe_round < MAX_PROBE_ROUNDS:
+                    updated = self.queue.get(ticket.id)
+                    updated.station = Station.WIRING
+                    updated.status = Status.QUEUED
+                    updated.attempts = 0
+                    updated.ladder_rung = LadderRung.LUNA_RETRY
+                    updated.provider = None
+                    updated.sleep_until = None
+                    updated.return_after = None
+                    updated.payload["probe_rounds"] = next_probe_round
+                    updated.payload["feedback_plan"] = ticket.payload.get("plan")
+                    feedback = probe_update.get("feedback")
+                    updated.payload["probe_feedback"] = feedback if isinstance(feedback, str) else result.output
+                    updated.payload.pop("plan", None)
+                    self.queue.save(updated)
+                    outcome = StepOutcome("probe_rejected", ticket.id)
+                else:
+                    updated = self.queue.get(ticket.id)
+                    updated.ladder_rung = LadderRung.OPUS_REFRESH
+                    self.queue.save(updated)
+                    self.queue.record_failure(
+                        ticket.id,
+                        result.check,
+                        result.output,
+                        now,
+                        max_attempts=1,
+                        set_aside_s=self.set_aside_s,
+                    )
+                    outcome = StepOutcome("failed_attempt", ticket.id)
+            elif ticket.station is Station.LIVE_PLAYTEST and isinstance(result.turns, list) and result.turns:
                 updated = self.queue.get(ticket.id)
                 updated.station = Station.TRIAGE
                 updated.status = Status.QUEUED

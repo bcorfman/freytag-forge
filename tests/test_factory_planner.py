@@ -111,6 +111,20 @@ def test_build_prompt_adds_check_output_after_previous_plan() -> None:
     assert build_prompt(evidence, previous_plan=previous, check_output=None) == without_check
 
 
+def test_build_prompt_default_check_section_is_byte_stable_and_accepts_probe_label() -> None:
+    evidence = {"scene": "1A"}
+    check_output = "verdict reject control 1 2 0 0 0 0 candidate 2 2 0 0 0 0"
+    old_label = "Check output (this plan was applied and the check failed):"
+
+    prompt = build_prompt(evidence, check_output=check_output)
+    assert f"{old_label}\n{check_output}" in prompt
+
+    probe_label = "Check output (this plan was applied and tried in play; the replay verdict follows):"
+    probe_prompt = build_prompt(evidence, check_output=check_output, check_label=probe_label)
+    assert f"{probe_label}\n{check_output}" in probe_prompt
+    assert old_label not in probe_prompt
+
+
 def test_planner_prompt_includes_the_precedents_text(tmp_path: Path, monkeypatch) -> None:
     precedents_path = tmp_path / "precedents.md"
     precedents_path.write_text("TEMP PRECEDENT MARKER", encoding="utf-8")

@@ -108,6 +108,7 @@ def build_prompt(
     problems: list[str] | None = None,
     previous_plan: dict | None = None,
     check_output: str | None = None,
+    check_label: str | None = None,
 ) -> str:
     """Compose the fixed brief, evidence, and optional verbatim retry verdicts."""
 
@@ -115,7 +116,8 @@ def build_prompt(
     if previous_plan is not None:
         sections.append("Previous plan:\n" + _compact_json(previous_plan))
     if check_output is not None:
-        sections.append("Check output (this plan was applied and the check failed):\n" + check_output)
+        label = check_label if check_label is not None else "Check output (this plan was applied and the check failed):"
+        sections.append(label + "\n" + check_output)
     if problems is not None:
         sections.append("Lint problems:\n" + "\n".join(problems))
     return "\n\n".join(sections)
@@ -278,6 +280,7 @@ def make_planner(
         *,
         feedback_plan: dict | None = None,
         check_output: str | None = None,
+        check_label: str | None = None,
     ) -> PlanOutcome:
         evidence = build_evidence(ticket.payload, package)
         ticket_payload = dict(ticket.payload)
@@ -293,6 +296,7 @@ def make_planner(
                 problems if attempts else None,
                 previous_plan,
                 check_output if not attempts else None,
+                check_label if not attempts else None,
             )
             result = guarded_call(
                 guard=guard,
