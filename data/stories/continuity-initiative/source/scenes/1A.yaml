@@ -416,6 +416,18 @@ beats:
   say:
   - text: The patrol is checking parked vehicles and speaking to neighbors. The house is no longer the only place under watch.
     verbatim: false
+- id: drawer_gap_returns_1a
+  at_turn: 12
+  when:
+    drawer_opened: false
+    memory_card_recovered: false
+    patrol_in_house: false
+  sets:
+    drawer_opened: true
+  say:
+  - text: With the patrol gone, the kitchen goes quiet. The workstation drawer has crept open an inch, and the dark space beneath it is wide enough for Kristin's fingers.
+    verbatim: true
+  trailing: true
 reveals:
 - id: sl_1a_a
   storylet_id: SL-1A-A
