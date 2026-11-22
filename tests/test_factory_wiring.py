@@ -24,16 +24,16 @@ def beat_plan(ticket_id: str = "wire-ticket") -> dict:
         "ticket_id": ticket_id,
         "scene": "1A",
         "kind": "add_pacing_beat",
-        "reason": "A concrete authored beat is needed before the scene handoff.",
+        "reason": "Precedent: fact-gated pacing beat; a concrete authored beat is needed before the scene handoff.",
         "evidence_keys": ["turn-1"],
         "beat": {
             "id": "truck_laptop_wire_1a",
-            "at_turn": 10,
+            "at_turn": 12,
             "text": "Check the truck and laptop before the patrol returns to the house.",
             "verbatim": True,
             "trailing": True,
             "when": {"drawer_opened": False},
-            "sets": {"drawer_opened": True},
+            "sets": {},
         },
     }
 
@@ -44,7 +44,7 @@ def text_plan(ticket_id: str = "wire-ticket") -> dict:
         "ticket_id": ticket_id,
         "scene": "1A",
         "kind": "set_text",
-        "reason": "The authored handoff should make the next move explicit.",
+        "reason": "Precedent: concise handoff wording; the authored handoff should make the next move explicit.",
         "evidence_keys": ["turn-1"],
         "set_text": {
             "address": "claim:k_sl_1a_b_r1.text",

@@ -1,0 +1,26 @@
+{
+  "name": "probe-1a-control-laptop",
+  "story_package": "data/stories/continuity-initiative",
+  "runtime": true,
+  "item_facts": {
+    "mode": "single_call",
+    "seed_from_package": true
+  },
+  "fixed_refusal": true,
+  "engine_refusal": true,
+  "fixed_turns": 5,
+  "scripts": {
+    "1A": [
+      {
+        "name": "laptop",
+        "inputs": [
+          "Search the kitchen and the back door for concrete signs of what happened here - the overturned chair, the forced lock, her phone left on the floor.",
+          "Search under the drawer in her workstation.",
+          "Read the files on Michelle's memory card.",
+          "Retrieve my laptop from my truck.",
+          "Carry my laptop into the kitchen."
+        ]
+      }
+    ]
+  }
+}

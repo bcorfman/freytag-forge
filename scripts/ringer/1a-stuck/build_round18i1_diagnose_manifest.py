@@ -1,0 +1,132 @@
+# ruff: noqa: E501  (spec strings are prose briefs for a worker)
+"""Round 18i-1: station 11, diagnosis of failing turns by cause (deterministic rules, Sonnet only when unclear). FREE.
+
+One Codex task. Usage: build_round18i1_diagnose_manifest.py
+"""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+REPO = "/home/bcorfman/dev/freytag-forge"
+WORK = "/home/bcorfman/dev/ringer-work/factory-diagnose"
+OWNED = [
+    "factory/stations/diagnose.py",
+    "factory/stations/__init__.py",
+    "factory/tickets.py",
+    "factory/config/allowlist.json",
+    "tests/test_factory_diagnose.py",
+    "tests/test_factory_stations.py",
+    "tests/test_factory_guard.py",
+    "tests/test_factory_preflight.py",
+    "tests/test_factory_tickets.py",
+    "tests/shard_durations.json",
+]
+ALLOW_RE = (
+    "^(factory/stations/diagnose\\.py|factory/stations/__init__\\.py|factory/tickets\\.py|factory/config/allowlist\\.json|"
+    "tests/test_factory_[a-z0-9_]+\\.py|tests/shard_durations\\.json)$"
+)
+
+SPEC = """You are a Python engineer. Your current working directory IS a git worktree of @REPO@ (detached at HEAD). Edit files here directly. NEVER git commit, never touch @REPO@ itself, never run `uv`, NEVER call a model (not `claude`, not `codex`), NEVER use the network. FIRST run: [ -e .venv ] || ln -s @REPO@/.venv .venv . Environment for every command: `export PYTHONPATH=$PWD:$PWD/packages/worldkeeper/src TMPDIR=/tmp`. Ruff: `.venv/bin/python -m ruff check <files>` and `.venv/bin/python -m ruff format <files>` (line length 120, Python 3.12). Never pass --cov to pytest. Run tests as `.venv/bin/python -m pytest -q -p no:cacheprovider -n 0 <files>`.
+
+BACKGROUND. The story factory is a Python state machine (`factory/line.py`, `factory/tickets.py`, stations in `factory/stations/`). A live playtest produces failing-turn packets (see `factory/stations/live_playtest.py` `_packet_for_turn`, and the real fixture `tests/fixtures/factory/stuck_packets_1a.json`: 21 packets with `key`, `scene`, `player_input`, `narration`, `stuck`, `candidates_offered` (claim ids), `matched_candidate`, `committed`, `match_issues`, ...). Triage (`factory/stations/triage.py`) routes a turn to a ticket class by rule. A story-data ticket then goes to a planner (`factory/stations/planner.py`, `fix_plan.py`) that proposes one fix. The project's scene-fixing guide says: read the failure and find its cause before proposing any fix. A human did that by hand for 21 stuck turns; the owner wants it to be a station that runs by itself, for every story-data ticket, with no human. Read `factory/stations/triage.py`, `deliver.py` and `fun_review.py` (handler conventions: `StationHandler`, `StationResult`, lazy model use, the per-ticket record file under `<workspace>/<safe ticket id>/`, `_atomic_json_write`, `_record`, `_safe_id`), `factory/stations/planner.py` (`claude_call`, the guarded call pattern) and `storygame/story_package/models.py` (`StoryPackage`, `KnowledgeDefinition` with `action_evidence`, `KnowledgeIndexes` with `scene_to_candidates`, `alias_to_knowledge`, `entity_alias_to_entities`) first.
+
+BUILD 1, the enum. `factory/tickets.py`: add `DIAGNOSE = 11` to `Station` (do NOT renumber; do not add routing in this round).
+
+BUILD 2, the station, new `factory/stations/diagnose.py`, story-agnostic (no story names, places, characters or facts in the module):
+`CAUSES`: a tuple of exactly: `match_miss_on_offered_candidate`, `claim_not_offered`, `lead_outside_scene`, `unknown_object`, `no_authored_outcome`, `unclear`.
+`diagnose_turn(packet: dict, package: Any) -> dict` is a PURE function returning `{"key", "cause", "why", "signals"}`. Rules, first match wins, all deterministic, reading only the packet and the `StoryPackage` (use the model fields; find the scene's claims through `package.knowledge_indexes.scene_to_candidates[scene]` and `by_id[...].action_evidence`; find the entity names and aliases a command may name through the package's world and knowledge indexes; read the code to find the right fields):
+ 1. `match_miss_on_offered_candidate`: `matched_candidate` is not None and `committed` is None. `why`: the matched claim id and that nothing was committed.
+ 2. `claim_not_offered`: some claim of the packet's scene that is NOT in `candidates_offered` has `action_evidence` (a tuple of groups; every group must be satisfied, a group is satisfied when any one of its terms appears in the lower-cased `player_input` as a whole word or phrase). `signals.claim_ids` lists them (sorted); `why` names them. A claim with empty `action_evidence` never matches.
+ 3. `lead_outside_scene`: the command names (whole word or phrase, case-insensitive, by name or alias) a place or thing that exists in the story but not in this packet's scene (it belongs to another scene's cast, places or things and not to this scene's). `signals.entities` lists them (sorted); `why` names the entities and says they belong to another scene.
+ 4. `unknown_object`: the command has content words (length of at least 4, not in a fixed stopword set you define in the module: common verbs of acting such as search, look, take, open, examine, check, go, enter, and the usual articles, prepositions and pronouns) that appear nowhere in the story's vocabulary (all names, aliases, place and thing descriptions, claim `says` sentences and scene entry texts of the whole package, lower-cased and word-split). `signals.unknown_words` lists them (sorted, at most 8); `why` names them.
+ 5. `no_authored_outcome`: the command names something that exists in this scene (a thing, person or place of the scene), or uses an acting verb, and no rule above applies. `signals.scene_entities` lists the scene entities named.
+ 6. `unclear`: anything else.
+`diagnose_turns(packets, package) -> list[dict]` maps the pure function over the list in order.
+The classifier for unclear turns: `ClassifierReply` a frozen dataclass `(text: str, tokens: int)`; the handler takes `classifier: Callable[[Any, str, datetime], ClassifierReply] | None = None`. When at least one turn is `unclear`, the handler calls the classifier ONCE with a bounded prompt (a constant `DIAGNOSE_BRIEF` in plain words at a 12th grade reading level that lists the six causes with one line each, asks for ONE JSON object mapping each listed turn key to `{"cause": <one of the first five causes>, "why": "<one plain sentence>"}` and nothing else; then for each unclear turn its key, `player_input`, `narration` cut to 300 characters, `candidates_offered`, and the scene's claim ids with their `says` sentences (at most 40 claims, each cut to 160 characters)). Parse with `extract_plan` from `factory/stations/planner.py` (reuse it). A key whose answer is missing, not an object or has a cause outside the first five stays `unclear` (never raise). The default classifier (`default_classifier(root=None)`, built like `default_reviewer` in `fun_review.py`, resolved lazily on the first unclear turn so building the handler reads no config) uses `guarded_call` with `station="diagnose"`, `model_id="claude-sonnet-5-5"`, `effort="high"` and `claude_call` from `planner.py`. `LimitSleep`, `BudgetExhausted` and `ModelNotAllowed` propagate unchanged. Rows decided by the classifier carry `signals.decided_by` equal `classifier`; rule rows carry `rule`.
+The handler `diagnose_handler(root=None, *, classifier=None, package_loader=None) -> StationHandler`: (a) fails with `missing payload key: failing_turns` unless `payload["failing_turns"]` is a non-empty list of dicts; (b) loads the package with `package_loader` (default: `load_story_package(_story_root(Path(root)))`, importing `_story_root` from `factory/stations/wiring.py` and `load_story_package` from `storygame.story_package.loader`) and fails with `could not load the story package for the diagnosis` when that raises; (c) when `payload["workspace"]` is a string, saves `<workspace>/<safe id>/diagnosis.json` holding `{input_hash, rows, counts}` where `input_hash` is the sha256 of the sorted-key JSON of the failing turns plus the module constant `DIAGNOSE_VERSION` (a string you define), and REUSES a saved record with the same hash with no classifier call; (d) passes with `StationResult(True, "diagnose", <one line: counts per cause, e.g. 'lead_outside_scene 7, claim_not_offered 4'>, tokens=<classifier tokens>, payload_updates={"diagnosis": {"rows": rows, "counts": counts}})`. It always passes when it produced one row per packet; `unclear` rows are allowed. Never mutate `ticket.payload`.
+`factory/stations/__init__.py`: register `Station.DIAGNOSE: diagnose_handler(root)` in `build_handlers` (keep the `_HandlerRegistry` key enumeration for older callers stable the same way as the other late stations).
+`factory/config/allowlist.json`: add the station key `diagnose` pinned to `claude-sonnet-5-5`, effort `high`, provider `claude_code` (same shape as `triage`). Touch nothing else in that file.
+
+TESTS (hermetic; stubs only). New `tests/test_factory_diagnose.py`. GOLD tests on the real fixture `tests/fixtures/factory/stuck_packets_1a.json` and the real default story (`load_story_package(Path("data/stories/continuity-initiative"))`), keyed by `key` (the suffix after `smoke18c-1A-`): `r2-t11` is `match_miss_on_offered_candidate`; `r1-t6`, `r1-t8` and `r3-t11` (park bench commands) are `lead_outside_scene`; `r2-t4` (calendar) is `claim_not_offered` with `k_sl_1a_g_r2` in `signals.claim_ids`; `r2-t13` (Walt) is `claim_not_offered` with `k_sl_1a_i_r1`; `r3-t3` (Michelle's text) is `claim_not_offered` with `k_sl_1a_j_r1`. If a gold case does not come out as listed, find out WHY by reading the package data and fix your rules or your reading of the fields; do not change the gold expectations; if after real investigation a gold case is impossible under the stated rule, keep that test, mark it `xfail` with a reason string, and say so in NOTES_18I1.txt. Also: every one of the 21 fixture packets gets exactly one row with a cause from `CAUSES`; the counts line is stable; pure functions are deterministic (same input, same output); the stopword and word rules (a short synthetic packet against the real package: a made-up object word gives `unknown_object` with that word in `signals.unknown_words`); a classifier stub is NOT called when no turn is unclear; it is called exactly once when some are, with a prompt containing the brief, the unclear turn's key and `player_input`, and a claim `says` sentence; a valid classifier answer sets the row's cause with `decided_by` classifier; a missing key, a non-object answer or a bad cause leaves the row `unclear`; garbage text leaves all unclear and does not raise; classifier tokens are counted; `LimitSleep` from the classifier propagates and saves nothing; the saved `diagnosis.json` is reused with no classifier call on a second run with the same failing turns and recomputed when a packet changes; missing or empty `failing_turns` fails with the exact message; an unloadable package fails closed with the exact message; the handler never mutates the payload; `default_classifier` with a stub `run` (same stream shape as `tests/fixtures/factory/claude_planner_stream.jsonl`; copy it to a new fixture file if you need different text) goes through the guard pin for `diagnose`, writes one ledger row with station `diagnose` (temporary copies of the config and ledger, never the real ones) and with a non-pinned model id raises `ModelNotAllowed` before any call; the real allowlist pins `claude-sonnet-5-5` high for `diagnose`. Update any existing factory test the new enum member or the allowlist key legitimately changes (any `tests/test_factory_*.py`, minimally). Add the new test file to `tests/shard_durations.json` with `.venv/bin/python scripts/regen_shard_durations.py --missing-only` (read its usage; keep that diff to the one new entry). The new test file runs in under 15 seconds.
+
+HARD LIMITS. Edit only the owned files: @OWNED@ (plus an existing `tests/test_factory_*.py` only where the new enum member or allowlist key forces it). Never edit `factory/line.py`, `factory/followups.py`, `factory/stations/wiring.py`, `planner.py`, `fix_plan.py`, `triage.py`, `deliver.py`, `fun_review.py`, other config files, story data or `storygame/`. No story names, places, characters or facts in `diagnose.py`. Write NOTES_18I1.txt (worktree root, never committed) listing every ambiguity and your choice."""
+
+CHECK = """set -eo pipefail
+WORK=@WORK@
+mkdir -p "$WORK/out"
+export PYTHONPATH=$PWD:$PWD/packages/worldkeeper/src TMPDIR=/tmp
+[ -e .venv ] || ln -s @REPO@/.venv .venv
+test -f factory/stations/diagnose.py || { echo "factory/stations/diagnose.py missing"; exit 1; }
+git add -A -- factory tests
+bad=$(git diff --cached --name-only | grep -vE '@ALLOW_RE@' || true)
+[ -z "$bad" ] || { echo "files outside ownership staged: $bad"; exit 1; }
+others=$(git diff --cached --name-only | grep '^factory/config/' | grep -vx 'factory/config/allowlist.json' || true)
+[ -z "$others" ] || { echo "other config files touched: $others"; exit 1; }
+if grep -n -i -E "michelle|kristin|drawer|memory_card|laptop|continuity.initiative|reyes|walt|bench|warehouse" factory/stations/diagnose.py; then echo "story-specific word in diagnose.py"; exit 1; fi
+grep -q "DIAGNOSE" factory/tickets.py || { echo "DIAGNOSE missing from the Station enum"; exit 1; }
+.venv/bin/python - <<'PY'
+import json, sys
+data = json.load(open("factory/config/allowlist.json"))
+pins = data["stations"].get("diagnose")
+ok = pins == [{"model_id": "claude-sonnet-5-5", "effort": "high", "provider": "claude_code"}]
+print("diagnose pin:", pins)
+sys.exit(0 if ok else 1)
+PY
+start=$(date +%s)
+.venv/bin/python -m pytest -q -p no:cacheprovider -n 0 tests/test_factory_diagnose.py
+took=$(( $(date +%s) - start ))
+echo "diagnose tests took $took s (budget 15 s)"
+[ "$took" -le 15 ] || { echo "over the 15 s budget"; exit 1; }
+start=$(date +%s)
+.venv/bin/python -m pytest -q -p no:cacheprovider -n 8 tests/test_factory_line.py tests/test_factory_stations.py tests/test_factory_tickets.py tests/test_factory_guard.py tests/test_factory_preflight.py tests/test_factory_frozen.py tests/test_factory_triage.py tests/test_factory_followups.py tests/test_factory_fun_review.py tests/test_factory_deliver.py tests/test_factory_wiring.py tests/test_factory_planner.py tests/test_factory_fix_plan.py
+took=$(( $(date +%s) - start ))
+echo "factory tests took $took s (budget 150 s)"
+[ "$took" -le 150 ] || { echo "over the 150 s budget"; exit 1; }
+.venv/bin/python -m ruff check factory tests/test_factory_diagnose.py
+.venv/bin/python -m ruff format --check factory tests/test_factory_diagnose.py
+[ ! -e factory/state/ledger.jsonl ] || { echo "a test wrote factory/state/ledger.jsonl"; exit 1; }
+git diff --cached > "$WORK/out/diagnose.patch"
+test -s "$WORK/out/diagnose.patch"
+"""
+
+
+def build() -> dict:
+    def fill(text: str) -> str:
+        return (
+            text.replace("@REPO@", REPO)
+            .replace("@WORK@", WORK)
+            .replace("@OWNED@", ", ".join(OWNED))
+            .replace("@ALLOW_RE@", ALLOW_RE)
+        )
+
+    return {
+        "run_name": "factory-diagnose",
+        "workdir": WORK,
+        "max_parallel": 1,
+        "worktrees": True,
+        "repo": REPO,
+        "tasks": [
+            {
+                "key": "diagnose",
+                "task_type": "code-feature",
+                "engine": "codex",
+                "engine_args": ["-c", "model_reasoning_effort=high"],
+                "max_attempts": 2,
+                "timeout_s": 3600,
+                "check_timeout_s": 900,
+                "ownership": OWNED,
+                "spec": fill(SPEC),
+                "check": fill(CHECK),
+                "expect_files": [],
+                "verified": "Station 11 gives every failing turn a cause by deterministic rules read against the story package, calls Sonnet (pinned, guarded) once only for unclear turns, saves and reuses its record by input hash, and matches the gold causes on the 21 real stuck turns; tests use stubs only.",
+            }
+        ],
+    }
+
+
+if __name__ == "__main__":
+    out = Path(__file__).with_name("round18i1-diagnose-manifest.json")
+    out.write_text(json.dumps(build(), indent=2) + "\n")
+    print(out)

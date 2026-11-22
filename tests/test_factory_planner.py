@@ -24,13 +24,25 @@ def test_planner_brief_mentions_redundant_fact_rule() -> None:
     assert "opposite value" in PLANNER_BRIEF
 
 
+def test_planner_brief_asks_for_precedents_first() -> None:
+    assert "precedents" in PLANNER_BRIEF
+    assert "Precedent:" in PLANNER_BRIEF
+    assert "Precedent: none" in PLANNER_BRIEF
+
+
+def test_planner_brief_mentions_the_causes() -> None:
+    assert "cause of each failing turn" in PLANNER_BRIEF
+    assert "how many turns share each cause" in PLANNER_BRIEF
+    assert "most common cause" in PLANNER_BRIEF
+
+
 def _plan(ticket_id: str = "wrong", *, at_turn: int = 10, text: str | None = None) -> dict:
     return {
         "version": 1,
         "ticket_id": ticket_id,
         "scene": "wrong-scene",
         "kind": "add_pacing_beat",
-        "reason": "A small beat keeps the failing turn inside the scene.",
+        "reason": "Precedent: fact-gated pacing beat; a small beat keeps the failing turn inside the scene.",
         "evidence_keys": ["turn-1"],
         "beat": {
             "id": "planner_retry_1a",
@@ -72,7 +84,7 @@ def _fake_claude(monkeypatch, outputs: list[CallResult], prompts: list[str]):
 
 def test_build_prompt_is_brief_evidence_then_verbatim_retry_context() -> None:
     evidence = {"scene": "1A", "fix_menu": [{"kind": "set_text"}]}
-    previous = {"kind": "set_text", "reason": "old"}
+    previous = {"kind": "set_text", "reason": "Precedent: old"}
     problems = ["plan.text text is too short", "plan.evidence evidence is missing"]
 
     prompt = build_prompt(evidence, problems, previous)
@@ -86,7 +98,7 @@ def test_build_prompt_is_brief_evidence_then_verbatim_retry_context() -> None:
 
 def test_build_prompt_adds_check_output_after_previous_plan() -> None:
     evidence = {"scene": "1A", "fix_menu": [{"kind": "set_text"}]}
-    previous = {"kind": "set_text", "reason": "old"}
+    previous = {"kind": "set_text", "reason": "Precedent: old"}
     check_output = "CHECK FAILED: compiled claim text differs from plan.json\n"
 
     prompt = build_prompt(evidence, previous_plan=previous, check_output=check_output)
@@ -97,6 +109,36 @@ def test_build_prompt_adds_check_output_after_previous_plan() -> None:
     without_check = build_prompt(evidence, previous_plan=previous)
     assert "Check output (this plan was applied and the check failed):" not in without_check
     assert build_prompt(evidence, previous_plan=previous, check_output=None) == without_check
+
+
+def test_planner_prompt_includes_the_precedents_text(tmp_path: Path, monkeypatch) -> None:
+    precedents_path = tmp_path / "precedents.md"
+    precedents_path.write_text("TEMP PRECEDENT MARKER", encoding="utf-8")
+    ticket = _ticket()
+    ticket.payload["precedents_path"] = str(precedents_path)
+    guard, caps, ledger = _guard_and_caps(tmp_path)
+    prompts: list[str] = []
+    _fake_claude(monkeypatch, [CallResult(json.dumps(_plan()), 1)], prompts)
+
+    outcome = make_planner(guard=guard, ledger=ledger, caps=caps)(ticket, load_story_package(DEFAULT_STORY), NOW)
+
+    assert outcome.plan is not None
+    assert "TEMP PRECEDENT MARKER" in prompts[0]
+
+
+def test_planner_prompt_includes_diagnosis_from_payload(tmp_path: Path, monkeypatch) -> None:
+    ticket = _ticket()
+    ticket.payload["diagnosis"] = {
+        "counts": {"claim_not_offered": 1},
+        "rows": [{"key": "turn-1", "cause": "claim_not_offered", "why": "The claim was not offered."}],
+    }
+    guard, caps, ledger = _guard_and_caps(tmp_path)
+    prompts: list[str] = []
+    _fake_claude(monkeypatch, [CallResult(json.dumps(_plan()), 1)], prompts)
+
+    make_planner(guard=guard, ledger=ledger, caps=caps)(ticket, load_story_package(DEFAULT_STORY), NOW)
+
+    assert '"diagnosis":{"counts":{"claim_not_offered":1},"rows":[{"key":"turn-1"' in prompts[0]
 
 
 @pytest.mark.parametrize(
@@ -253,7 +295,10 @@ def test_make_planner_puts_check_feedback_in_first_prompt(tmp_path: Path, monkey
     assert prompts[0].index("Previous plan:") < prompts[0].index(
         "Check output (this plan was applied and the check failed):"
     )
-    assert '"reason":"A small beat keeps the failing turn inside the scene."' in prompts[0]
+    assert (
+        '"reason":"Precedent: fact-gated pacing beat; a small beat keeps the failing turn inside the scene."'
+        in prompts[0]
+    )
     assert check_output in prompts[0]
 
 

@@ -32,6 +32,14 @@ Read the evidence packet as the complete context for this ticket.
 Choose exactly one fix from the two kinds listed in the evidence packet's fix_menu.
 Prefer the smallest change that would have let the failing turns succeed.
 Timing and wording are your decision, and nobody will be asked to choose them.
+The evidence includes precedents: fixes the project proved, fixes that lost, and things that must never be done.
+Try a proven technique first, and never choose a fix listed as lost or never do.
+Begin reason with "Precedent: " followed by the proven technique you follow.
+If none covers the case, begin reason with "Precedent: none"; list checks and the reason it does not apply.
+Keep reason at 400 characters or fewer.
+The evidence lists the cause of each failing turn and how many turns share each cause.
+Choose the fix for the most common cause that a proven technique in the precedents can fix,
+and name that cause in the reason.
 
 Return one plan object with exactly this JSON shape.
 The version field is an integer.

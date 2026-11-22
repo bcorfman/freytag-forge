@@ -104,9 +104,16 @@ def test_merge_ticket_delivers_after_station_nine_and_keeps_payload_updates(tmp_
     line, queue, _ = make_line(
         tmp_path,
         [ticket],
-        {Station.PROMPT_SNAPSHOT: passing, Station.DELIVER: delivery, Station.LIVE_PLAYTEST: passing},
+        {
+            Station.PROMPT_SNAPSHOT: passing,
+            Station.FUN_REVIEW: passing,
+            Station.DELIVER: delivery,
+            Station.LIVE_PLAYTEST: passing,
+        },
     )
 
+    assert line.step(NOW).kind == "advanced"
+    assert queue.get("merge").station is Station.FUN_REVIEW
     assert line.step(NOW).kind == "advanced"
     assert queue.get("merge").station is Station.DELIVER
     assert line.step(NOW).kind == "advanced"
@@ -115,6 +122,61 @@ def test_merge_ticket_delivers_after_station_nine_and_keeps_payload_updates(tmp_
     assert saved.payload["merged_sha"] == "abc"
     assert line.step(NOW).kind == "delivered"
     assert queue.get("merge").status is Status.PASSED
+
+
+@pytest.mark.parametrize("merge_to_main", [False, True])
+def test_diagnose_pass_always_routes_to_wiring_and_resets_attempts(tmp_path, merge_to_main):
+    ticket = make_ticket("diagnose", station=Station.DIAGNOSE)
+    ticket.payload["merge_to_main"] = merge_to_main
+    ticket.attempts = 2
+    ticket.ladder_rung = LadderRung.OPUS_REFRESH
+    ticket.provider = "old-provider"
+    ticket.sleep_until = (NOW + timedelta(hours=1)).isoformat()
+    ticket.return_after = (NOW + timedelta(hours=2)).isoformat()
+    line, queue, _ = make_line(tmp_path, [ticket], {Station.DIAGNOSE: passing})
+
+    assert line.step(NOW).kind == "advanced"
+
+    saved = queue.get("diagnose")
+    assert saved.station is Station.WIRING
+    assert saved.status is Status.QUEUED
+    assert saved.attempts == 0
+    assert saved.ladder_rung is LadderRung.LUNA_RETRY
+    assert saved.provider is None
+    assert saved.sleep_until is None
+    assert saved.return_after is None
+
+
+def test_failed_diagnose_records_failure_and_stays_at_diagnose(tmp_path):
+    ticket = make_ticket("diagnose-fail", station=Station.DIAGNOSE)
+    line, queue, _ = make_line(tmp_path, [ticket], {Station.DIAGNOSE: failing})
+
+    assert line.step(NOW).kind == "failed_attempt"
+
+    saved = queue.get("diagnose-fail")
+    assert saved.station is Station.DIAGNOSE
+    assert saved.failures[-1].check == "quality"
+
+
+def test_failed_fun_review_records_failure_and_stays_at_station_ten(tmp_path):
+    ticket = make_ticket("fun-fail", station=Station.FUN_REVIEW)
+    ticket.payload["merge_to_main"] = True
+    line, queue, _ = make_line(tmp_path, [ticket], {Station.FUN_REVIEW: failing})
+
+    outcome = line.step(NOW)
+
+    saved = queue.get("fun-fail")
+    assert outcome.kind == "failed_attempt"
+    assert saved.station is Station.FUN_REVIEW
+    assert saved.failures[-1].check == "quality"
+
+
+def test_non_merge_ticket_still_goes_from_prompt_snapshot_to_live_playtest(tmp_path):
+    ticket = make_ticket("no-merge", station=Station.PROMPT_SNAPSHOT)
+    line, queue, _ = make_line(tmp_path, [ticket], {Station.PROMPT_SNAPSHOT: passing})
+
+    assert line.step(NOW).kind == "advanced"
+    assert queue.get("no-merge").station is Station.LIVE_PLAYTEST
 
 
 def test_live_playtest_infrastructure_failure_retries(tmp_path):
@@ -148,7 +210,7 @@ def test_triage_pass_opens_followups_and_passes_parent(tmp_path):
     assert outcome.kind == "triaged"
     assert outcome.detail == "triage-parent-1A-story_data"
     assert queue.get("triage-parent").status is Status.PASSED
-    assert queue.get("triage-parent-1A-story_data").station is Station.WIRING
+    assert queue.get("triage-parent-1A-story_data").station is Station.DIAGNOSE
     assert all(saved.station is not Station.DELIVER for saved in queue.all())
 
 

@@ -47,6 +47,8 @@ class Station(IntEnum):
     LIVE_PLAYTEST = 7
     TRIAGE = 8
     DELIVER = 9
+    FUN_REVIEW = 10
+    DIAGNOSE = 11
 
 
 class LadderRung(IntEnum):

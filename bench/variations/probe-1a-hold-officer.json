@@ -1,0 +1,63 @@
+{
+  "name": "probe-1a-hold-officer",
+  "story_package": "data/stories/continuity-initiative",
+  "runtime": true,
+  "item_facts": {
+    "mode": "single_call",
+    "seed_from_package": true
+  },
+  "fixed_refusal": true,
+  "engine_refusal": true,
+  "fixed_turns": 8,
+  "overrides": {
+    "source/scenes/1A.yaml": {
+      "replacements": [
+        {
+          "old": "      entities:\n      - kristin\n      - kristin_truck\n      - park_bench\n      reach:\n      - kristin_truck\n      relevance:\n        entity_ids:\n        - kristin\n        - kristin_truck\n        - park_bench\n        priority: 0\n      audience:\n        kind: public\n        character_ids: []\n        player_visible: true\n      voiceable: false\n      repeatable: true\n      when:\n        michelle_lead_actionable: true\n      text: Kristin does not pull away yet.",
+          "new": "      entities:\n      - kristin\n      - kristin_truck\n      - park_bench\n      reach: []\n      relevance:\n        entity_ids:\n        - kristin\n        - kristin_truck\n        - park_bench\n        priority: 0\n      audience:\n        kind: public\n        character_ids: []\n        player_visible: true\n      voiceable: false\n      repeatable: true\n      when:\n        michelle_lead_actionable: true\n      text: Kristin does not pull away yet."
+        },
+        {
+          "old": "text: Kristin does not pull away yet. If anyone is watching the street, driving to the park now would lead them straight to the bench. She waits to see what the street does.",
+          "new": "text: Kristin does not go yet. If anyone is watching the street, going to the park now would lead them straight to the bench. She waits to see what the street does."
+        },
+        {
+          "old": "text: Kristin does not pull away yet. The patrol is still at the house, and the truck would be the first thing they follow. If she drives to the park now, she leads them straight to the bench. She waits to see what the patrol does.",
+          "new": "text: Kristin does not go yet. The patrol is still at the house, and they would follow her to the park. If she goes to the bench now, she leads them straight to it. She waits to see what the patrol does."
+        },
+        {
+          "old": "text: Kristin does not pull away yet. The patrol has only just left, and it could be waiting around the corner. If she drives to the park now, she may lead it straight to the bench. She waits to see what the street does.",
+          "new": "text: Kristin does not go yet. The patrol has only just left, and it could be waiting around the corner. If she goes to the park now, she may lead it straight to the bench. She waits to see what the street does."
+        },
+        {
+          "old": "earn_when: tries to drive or head to the park before the street is clear",
+          "new": "earn_when: tries to drive, head or go to the park, or to search the park bench, before the street is clear"
+        }
+      ]
+    },
+    "source/scenes/1A.match.yaml": {
+      "replacements": [
+        {
+          "old": "      - take the truck\n      - get to\n    - - park\n      - bench\n    must_convey:\n    - - pull away\n      - drive\n    - - park\n    - - bench\n    - - waits\n      - wait\n",
+          "new": "      - take the truck\n      - get to\n      - search\n      - look\n      - investigate\n      - examine\n      - check\n      - feel\n      - visit\n    - - park\n      - bench\n    must_convey:\n    - - pull away\n      - drive\n      - go\n      - goes\n      - going\n    - - park\n    - - bench\n    - - waits\n      - wait\n"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "1A": [
+      {
+        "name": "officer",
+        "inputs": [
+          "Search the kitchen and the back door for concrete signs of what happened here - the overturned chair, the forced lock, her phone left on the floor.",
+          "Search under the drawer in her workstation.",
+          "Read the files on Michelle's memory card.",
+          "Look around.",
+          "Look around.",
+          "Look around.",
+          "Look around.",
+          "Question Officer Reyes about Michelle."
+        ]
+      }
+    ]
+  }
+}

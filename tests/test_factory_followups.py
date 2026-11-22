@@ -54,7 +54,7 @@ def test_followups_group_by_class_and_restart_at_the_expected_station(tmp_path: 
     opened = open_followups(queue, parent(), result, NOW)
 
     by_class = {ticket.ticket_class: ticket for ticket in opened}
-    assert by_class[TicketClass.STORY_DATA].station is Station.WIRING
+    assert by_class[TicketClass.STORY_DATA].station is Station.DIAGNOSE
     assert by_class[TicketClass.NARRATOR_PROMPT].station is Station.WIRING
     assert by_class[TicketClass.WORLD_MODEL].station is Station.WORLD_NEED
     engine = by_class[TicketClass.ENGINE]
@@ -168,7 +168,7 @@ def test_end_to_end_playtest_triage_opens_world_and_wiring_tickets(tmp_path: Pat
     saved = queue.get("playtest")
     assert saved.status is Status.PASSED
     assert any(outcome.kind == "triaged" for outcome in outcomes)
-    assert queue.get("playtest-1A-story_data").station is Station.WIRING
+    assert queue.get("playtest-1A-story_data").station is Station.DIAGNOSE
     assert queue.get("playtest-1A-world_model").station is Station.WORLD_NEED
     assert queue.get("playtest-1A-story_data").payload["failing_turns"] == [turns[0]]
     assert queue.get("playtest-1A-world_model").payload["failing_turns"] == [turns[1]]

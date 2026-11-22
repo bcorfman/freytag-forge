@@ -48,7 +48,7 @@ def beat_plan() -> dict:
         "ticket_id": "ticket-parent-1a-story-data",
         "scene": "1A",
         "kind": "add_pacing_beat",
-        "reason": "The failing turns need a concrete next move before the handoff.",
+        "reason": "Precedent: fact-gated pacing beat; the failing turns need a concrete next move before the handoff.",
         "evidence_keys": ["1A-r1-t6", "1A-r1-t7"],
         "beat": {
             "id": "truck_laptop_1a",
@@ -68,7 +68,9 @@ def text_plan() -> dict:
         "ticket_id": "ticket-parent-1a-story-data",
         "scene": "1A",
         "kind": "set_text",
-        "reason": "The reveal handoff should make the next move explicit to the player.",
+        "reason": (
+            "Precedent: concise handoff wording; the reveal handoff should make the next move explicit to the player."
+        ),
         "evidence_keys": ["1A-r1-t6"],
         "set_text": {
             "address": "claim:k_sl_1a_b_r1.text",
@@ -106,7 +108,9 @@ def test_rejects_pacing_beat_with_redundant_effect() -> None:
 
     assert problems == [
         "plan.redundant_effect beat sets drawer_gap_pointed_out, which pacing event reyes_rams_drawer_1a (turn 8) "
-        "already sets; guard when with drawer_gap_pointed_out: False or set a fact nothing else sets"
+        "already sets; guard when with drawer_gap_pointed_out: False or set a fact nothing else sets",
+        "plan.shared_effect beat sets drawer_gap_pointed_out, which pacing event reyes_rams_drawer_1a (turn 8) "
+        "also sets; set a fact no other pacing event sets",
     ]
 
 
@@ -115,6 +119,76 @@ def test_redundant_effect_is_allowed_with_opposite_guard() -> None:
     plan["beat"]["when"]["drawer_gap_pointed_out"] = False
 
     assert not any(problem.startswith("plan.redundant_effect") for problem in fix_plan.lint_plan(plan, TICKET, PACKAGE))
+
+
+def test_rejects_beat_that_sets_a_fact_any_pacing_event_sets() -> None:
+    plans = []
+    plan = _drawer_gap_plan()
+    plan["beat"].update(
+        {
+            "id": "drawer_gap_noticed_1a",
+            "at_turn": 5,
+            "when": {"drawer_gap_pointed_out": False, "memory_card_recovered": False},
+        }
+    )
+    plans.append(plan)
+
+    plan = _drawer_gap_plan()
+    plan["beat"].update(
+        {
+            "id": "drawer_sits_crooked_1a",
+            "at_turn": 11,
+            "when": {
+                "drawer_gap_pointed_out": False,
+                "memory_card_recovered": False,
+                "patrol_in_house": False,
+            },
+        }
+    )
+    plans.append(plan)
+
+    for plan in plans:
+        problems = fix_plan.lint_plan(plan, TICKET, PACKAGE)
+
+        assert any(
+            problem.startswith("plan.shared_effect") and "reyes_rams_drawer_1a" in problem and "(turn 8)" in problem
+            for problem in problems
+        )
+
+
+def test_shared_effect_is_refused_at_and_after_the_producer_turn_too() -> None:
+    plan = _drawer_gap_plan()
+    plan["beat"].update(
+        {
+            "id": "drawer_gap_noticed_1a",
+            "when": {"drawer_gap_pointed_out": False, "memory_card_recovered": False},
+        }
+    )
+    for at_turn in (8, 9):
+        plan["beat"]["at_turn"] = at_turn
+
+        assert any(
+            problem.startswith("plan.shared_effect") and "reyes_rams_drawer_1a" in problem and "(turn 8)" in problem
+            for problem in fix_plan.lint_plan(plan, TICKET, PACKAGE)
+        )
+
+
+def test_shared_effect_rule_ignores_a_fact_no_pacing_event_sets() -> None:
+    pacing_fact_ids = {
+        fix_plan._value(effect, "fact_id")
+        for event in fix_plan._value(getattr(PACKAGE, "pacing", None), "events", ()) or ()
+        for effect in fix_plan._value(event, "effects", ()) or ()
+    }
+    fact_id = next(fact for fact in sorted(fix_plan._declared_facts(PACKAGE)) if fact not in pacing_fact_ids)
+    plan = beat_plan()
+    plan["beat"]["sets"] = {fact_id: True}
+
+    for at_turn in (5, 11):
+        plan["beat"]["at_turn"] = at_turn
+
+        assert not any(
+            problem.startswith("plan.shared_effect") for problem in fix_plan.lint_plan(plan, TICKET, PACKAGE)
+        )
 
 
 def test_declared_fact_without_matching_producer_is_allowed() -> None:
@@ -199,12 +273,89 @@ def test_evidence_is_deterministic_bounded_and_skips_unknown() -> None:
     second = fix_plan.build_evidence(ticket, PACKAGE)
     assert first == second
     json.dumps(first)
-    assert len(json.dumps(first)) < 12_000
+    bounded_without_precedents = {key: value for key, value in first.items() if key != "precedents"}
+    assert len(json.dumps(bounded_without_precedents)) < 12_000
     assert "unknown_candidate" not in first["candidates"]
     candidate = first["candidates"]["k_sl_1a_b_r1"]
     assert candidate["earn_when"]
     assert isinstance(candidate["requires"], list)
     assert {item["key"] for item in first["failing_turns"]} == {"1A-r1-t6", "1A-r1-t7"}
+
+
+def test_evidence_carries_the_diagnosis() -> None:
+    ticket = copy.deepcopy(TICKET)
+    ticket["diagnosis"] = {
+        "counts": {"claim_not_offered": 2},
+        "rows": [
+            {"key": "1A-r1-t6", "cause": "claim_not_offered", "why": "x" * 200, "signals": ["claim"]},
+            {"key": "1A-r1-t7", "cause": "claim_not_offered", "why": "short"},
+        ],
+    }
+
+    diagnosis = fix_plan.build_evidence(ticket, PACKAGE)["diagnosis"]
+
+    assert diagnosis["counts"] == {"claim_not_offered": 2}
+    assert diagnosis["rows"] == [
+        {"key": "1A-r1-t6", "cause": "claim_not_offered", "why": "x" * 160},
+        {"key": "1A-r1-t7", "cause": "claim_not_offered", "why": "short"},
+    ]
+
+    ticket["diagnosis"]["rows"] = [
+        {"key": f"turn-{index}", "cause": "claim_not_offered", "why": "y" * 160} for index in range(200)
+    ]
+    bounded = fix_plan.build_evidence(ticket, PACKAGE)["diagnosis"]
+    assert len(json.dumps(bounded, ensure_ascii=False, separators=(",", ":"))) <= 6000
+    assert bounded["counts"] == {"claim_not_offered": 2}
+    assert bounded["rows"]
+    assert len(bounded["rows"]) < 200
+    assert all(row["why"] == "" for row in bounded["rows"])
+
+
+def test_evidence_diagnosis_is_null_without_it() -> None:
+    assert fix_plan.build_evidence(TICKET, PACKAGE)["diagnosis"] is None
+    for malformed in (
+        {"counts": [], "rows": []},
+        {"counts": {}, "rows": [{"key": "turn-1", "cause": "unclear"}]},
+    ):
+        ticket = copy.deepcopy(TICKET)
+        ticket["diagnosis"] = malformed
+        assert fix_plan.build_evidence(ticket, PACKAGE)["diagnosis"] is None
+
+
+def test_evidence_carries_the_precedents_text(tmp_path: Path) -> None:
+    default_path = DEFAULT_ROOT.parents[2] / "factory" / "precedents" / "stuck_turns.md"
+    default_text = default_path.read_text(encoding="utf-8")
+    evidence = fix_plan.build_evidence(TICKET, PACKAGE)
+    assert evidence["precedents"] == default_text[:20_000]
+
+    custom_text = "precedent marker\n" + ("x" * 20_100)
+    custom_path = tmp_path / "precedents.md"
+    custom_path.write_text(custom_text, encoding="utf-8")
+    ticket = copy.deepcopy(TICKET)
+    ticket["precedents_path"] = str(custom_path)
+
+    assert fix_plan.build_evidence(ticket, PACKAGE)["precedents"] == custom_text[:20_000]
+
+
+def test_evidence_precedents_is_null_when_the_file_is_missing(tmp_path: Path) -> None:
+    ticket = copy.deepcopy(TICKET)
+    ticket["precedents_path"] = str(tmp_path / "missing.md")
+
+    assert fix_plan.build_evidence(ticket, PACKAGE)["precedents"] is None
+
+
+def test_lint_requires_a_precedent_prefix_in_the_reason() -> None:
+    plan = beat_plan()
+    plan["reason"] = "A fix without its precedent."
+    message = (
+        "plan.precedent reason must begin with Precedent: and name the proven technique followed, "
+        "or Precedent: none with what was checked"
+    )
+
+    assert fix_plan.lint_plan(plan, TICKET, PACKAGE) == [message]
+
+    plan["reason"] = "Precedent: none, nothing covers a fixed exit"
+    assert fix_plan.lint_plan(plan, TICKET, PACKAGE) == []
 
 
 def test_cli_exit_codes(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:

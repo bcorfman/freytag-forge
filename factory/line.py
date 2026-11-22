@@ -138,11 +138,15 @@ class FactoryLine:
                 outcome = StepOutcome("delivered", ticket.id)
             else:
                 updated = self.queue.get(ticket.id)
-                if (
+                if ticket.station is Station.DIAGNOSE:
+                    updated.station = Station.WIRING
+                elif (
                     ticket.station is Station.LIVE_PLAYTEST
                     or ticket.station is Station.PROMPT_SNAPSHOT
                     and merge_to_main
                 ):
+                    updated.station = Station.FUN_REVIEW if merge_to_main else Station.DELIVER
+                elif ticket.station is Station.FUN_REVIEW and merge_to_main:
                     updated.station = Station.DELIVER
                 elif ticket.station is Station.DELIVER and merge_to_main:
                     updated.station = Station.LIVE_PLAYTEST

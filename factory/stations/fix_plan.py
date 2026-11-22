@@ -223,6 +223,30 @@ def _exit_fact_ids(package: StoryPackage, scene: str) -> set[str]:
     return result
 
 
+def _shared_effect_problems(package: StoryPackage, beat: Mapping[str, Any]) -> list[str]:
+    pacing = getattr(package, "pacing", None)
+    events = _value(pacing, "events", ()) or ()
+    matches: list[tuple[str, int, str]] = []
+    for fact_id in sorted(beat["sets"]):
+        value = beat["sets"][fact_id]
+        for event in events:
+            event_turn = _value(event, "at_turn")
+            event_id = _value(event, "id")
+            if not isinstance(event_turn, int) or isinstance(event_turn, bool) or not isinstance(event_id, str):
+                continue
+            if any(
+                _value(effect, "fact_id") == fact_id and _value(effect, "equals") == value
+                for effect in (_value(event, "effects", ()) or ())
+            ):
+                matches.append((fact_id, event_turn, event_id))
+
+    return [
+        f"plan.shared_effect beat sets {fact_id}, which pacing event {event_id} (turn {event_turn}) also sets; "
+        "set a fact no other pacing event sets"
+        for fact_id, event_turn, event_id in sorted(matches, key=lambda match: (match[0], match[1], match[2]))
+    ]
+
+
 def lint_plan(plan: dict, ticket_payload: dict, package: StoryPackage) -> list[str]:
     """Return deterministic rule-labelled problems for one proposed fix plan."""
 
@@ -246,6 +270,11 @@ def lint_plan(plan: dict, ticket_payload: dict, package: StoryPackage) -> list[s
 
     if not plan["reason"].strip() or len(plan["reason"]) > 400:
         problems.append("plan.reason reason must be non-blank and at most 400 characters")
+    if not plan["reason"].lstrip().startswith("Precedent:"):
+        problems.append(
+            "plan.precedent reason must begin with Precedent: and name the proven technique followed, "
+            "or Precedent: none with what was checked"
+        )
 
     if plan["kind"] == "add_pacing_beat":
         beat = plan["beat"]
@@ -272,6 +301,7 @@ def lint_plan(plan: dict, ticket_payload: dict, package: StoryPackage) -> list[s
                     f"plan.redundant_effect beat sets {fact_id}, which {existing[0].text} already sets; "
                     f"guard when with {fact_id}: {not value} or set a fact nothing else sets"
                 )
+        problems.extend(_shared_effect_problems(package, beat))
         if set(beat["sets"]) & _exit_fact_ids(package, plan["scene"]):
             problems.append("plan.exit_trigger beat may not set an exit trigger or dependency")
         if _text_problem(beat["text"], package):
@@ -341,6 +371,23 @@ def _candidate_evidence(package: StoryPackage, candidate_id: str) -> dict[str, o
     }
 
 
+def _precedents_text(ticket_payload: Mapping[str, Any]) -> str | None:
+    repository_root = Path(__file__).resolve().parents[2]
+    raw_path = ticket_payload.get("precedents_path")
+    if raw_path is None:
+        path = repository_root / "factory" / "precedents" / "stuck_turns.md"
+    elif isinstance(raw_path, (str, Path)):
+        path = Path(raw_path)
+        if not path.is_absolute():
+            path = repository_root / path
+    else:
+        return None
+    try:
+        return path.read_text(encoding="utf-8")[:20_000]
+    except (OSError, UnicodeError):
+        return None
+
+
 def _bound_evidence(packet: dict[str, object], limit: int = 12_000) -> dict[str, object]:
     def size() -> int:
         return len(json.dumps(packet, ensure_ascii=False, sort_keys=True, separators=(",", ":")))
@@ -353,6 +400,40 @@ def _bound_evidence(packet: dict[str, object], limit: int = 12_000) -> dict[str,
     while size() > limit and isinstance(candidates, dict) and candidates:
         candidates.pop(sorted(candidates)[-1])
     return packet
+
+
+def _diagnosis_evidence(ticket_payload: Mapping[str, Any]) -> dict[str, object] | None:
+    raw_diagnosis = ticket_payload.get("diagnosis")
+    if not isinstance(raw_diagnosis, Mapping):
+        return None
+    counts = raw_diagnosis.get("counts")
+    raw_rows = raw_diagnosis.get("rows")
+    if not isinstance(counts, Mapping) or not isinstance(raw_rows, list):
+        return None
+
+    rows: list[dict[str, str]] = []
+    for row in raw_rows:
+        if not isinstance(row, Mapping) or any(
+            not isinstance(row.get(field), str) for field in ("key", "cause", "why")
+        ):
+            return None
+        rows.append({"key": row["key"], "cause": row["cause"], "why": row["why"][:160]})
+
+    diagnosis: dict[str, object] = {"counts": _json_safe(counts), "rows": rows}
+
+    def size() -> int:
+        return len(json.dumps(diagnosis, ensure_ascii=False, separators=(",", ":")))
+
+    try:
+        size()
+    except (TypeError, ValueError):
+        return None
+    if size() > 6000:
+        for row in rows:
+            row["why"] = ""
+        while size() > 6000 and rows:
+            rows.pop()
+    return diagnosis
 
 
 def build_evidence(ticket_payload: dict, package: StoryPackage) -> dict:
@@ -410,6 +491,7 @@ def build_evidence(ticket_payload: dict, package: StoryPackage) -> dict:
     evidence: dict[str, object] = {
         "scene": scene,
         "failing_turns": turns,
+        "diagnosis": _diagnosis_evidence(ticket_payload),
         "candidates": {
             candidate_id: detail
             for candidate_id in _candidate_ids(ticket_payload)
@@ -432,7 +514,9 @@ def build_evidence(ticket_payload: dict, package: StoryPackage) -> dict:
             },
         ],
     }
-    return _bound_evidence(evidence)
+    evidence = _bound_evidence(evidence)
+    evidence["precedents"] = _precedents_text(ticket_payload)
+    return evidence
 
 
 def _read_json(path: Path) -> object:
