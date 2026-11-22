@@ -64,6 +64,13 @@
         "provider": "claude_code"
       }
     ],
+    "diagnose": [
+      {
+        "model_id": "claude-sonnet-5-5",
+        "effort": "high",
+        "provider": "claude_code"
+      }
+    ],
     "deliver": [],
     "fun_review": [
       {

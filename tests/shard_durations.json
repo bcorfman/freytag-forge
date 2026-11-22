@@ -210,6 +210,7 @@
     "tests/test_factory_checks.py": 0.02,
     "tests/test_factory_contracts.py": 0.22,
     "tests/test_factory_deliver.py": 0.37,
+    "tests/test_factory_diagnose.py": 0.16,
     "tests/test_factory_drill.py": 0.03,
     "tests/test_factory_entry.py": 0.02,
     "tests/test_factory_fix_plan.py": 0.13,
