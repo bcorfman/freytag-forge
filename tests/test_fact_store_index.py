@@ -33,6 +33,84 @@ def test_index_tracks_assert_retract_and_direct_replacement() -> None:
     assert store.matching("other_fact") == (replacement,)
 
 
+def test_boolean_assertion_replaces_true_with_false_and_updates_index() -> None:
+    true_fact = fact("patrol_in_house", value="true")
+    false_fact = fact("patrol_in_house", value="false")
+    store = FactStore()
+
+    store.assert_fact(true_fact)
+    version_before_flip = store.version
+    store.assert_fact(false_fact)
+
+    assert store.asserted == {false_fact}
+    assert store.matching("patrol_in_house", "story") == (false_fact,)
+    assert store.version == version_before_flip + 2
+
+
+def test_boolean_assertion_replaces_false_with_true_and_updates_index() -> None:
+    false_fact = fact("patrol_in_house", value="false")
+    true_fact = fact("patrol_in_house", value="true")
+    store = FactStore()
+
+    store.assert_fact(false_fact)
+    version_before_flip = store.version
+    store.assert_fact(true_fact)
+
+    assert store.asserted == {true_fact}
+    assert store.matching("patrol_in_house", "story") == (true_fact,)
+    assert store.version == version_before_flip + 2
+
+
+def test_reasserting_the_same_boolean_fact_is_idempotent() -> None:
+    asserted = fact("patrol_in_house", value="true")
+    store = FactStore()
+
+    store.assert_fact(asserted)
+    version_after_first_assertion = store.version
+    store.assert_fact(asserted)
+
+    assert store.asserted == {asserted}
+    assert store.version == version_after_first_assertion
+
+
+def test_non_boolean_fact_values_are_not_retracted() -> None:
+    pending = fact("case_status", value="pending")
+    complete = fact("case_status", value="complete")
+    store = FactStore()
+
+    store.assert_fact(pending)
+    store.assert_fact(complete)
+
+    assert set(store.matching("case_status", "story")) == {pending, complete}
+
+
+def test_boolean_facts_for_different_subjects_do_not_replace_each_other() -> None:
+    story_fact = fact("patrol_in_house", "story", "true")
+    rebecca_false = fact("patrol_in_house", "rebecca", "false")
+    rebecca_true = fact("patrol_in_house", "rebecca", "true")
+    store = FactStore(asserted={story_fact, rebecca_false})
+
+    store.assert_fact(rebecca_true)
+
+    assert store.matching("patrol_in_house", "story") == (story_fact,)
+    assert store.matching("patrol_in_house", "rebecca") == (rebecca_true,)
+
+
+def test_clone_and_model_copy_keep_boolean_replacement_indexes_working() -> None:
+    true_fact = fact("patrol_in_house", value="true")
+    false_fact = fact("patrol_in_house", value="false")
+    original = FactStore(asserted={true_fact})
+    clone = original.clone()
+    copied = original.model_copy()
+
+    clone.assert_fact(false_fact)
+    copied.assert_fact(false_fact)
+
+    assert original.matching("patrol_in_house", "story") == (true_fact,)
+    assert clone.matching("patrol_in_house", "story") == (false_fact,)
+    assert copied.matching("patrol_in_house", "story") == (false_fact,)
+
+
 def test_in_place_asserted_mutations_rebuild_index_and_invalidate_guards() -> None:
     state = RuntimeState.bootstrap(PACKAGE)
     added = fact("added_fact")
