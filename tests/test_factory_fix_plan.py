@@ -282,6 +282,46 @@ def test_evidence_is_deterministic_bounded_and_skips_unknown() -> None:
     assert {item["key"] for item in first["failing_turns"]} == {"1A-r1-t6", "1A-r1-t7"}
 
 
+def test_evidence_carries_the_diagnosis() -> None:
+    ticket = copy.deepcopy(TICKET)
+    ticket["diagnosis"] = {
+        "counts": {"claim_not_offered": 2},
+        "rows": [
+            {"key": "1A-r1-t6", "cause": "claim_not_offered", "why": "x" * 200, "signals": ["claim"]},
+            {"key": "1A-r1-t7", "cause": "claim_not_offered", "why": "short"},
+        ],
+    }
+
+    diagnosis = fix_plan.build_evidence(ticket, PACKAGE)["diagnosis"]
+
+    assert diagnosis["counts"] == {"claim_not_offered": 2}
+    assert diagnosis["rows"] == [
+        {"key": "1A-r1-t6", "cause": "claim_not_offered", "why": "x" * 160},
+        {"key": "1A-r1-t7", "cause": "claim_not_offered", "why": "short"},
+    ]
+
+    ticket["diagnosis"]["rows"] = [
+        {"key": f"turn-{index}", "cause": "claim_not_offered", "why": "y" * 160} for index in range(200)
+    ]
+    bounded = fix_plan.build_evidence(ticket, PACKAGE)["diagnosis"]
+    assert len(json.dumps(bounded, ensure_ascii=False, separators=(",", ":"))) <= 6000
+    assert bounded["counts"] == {"claim_not_offered": 2}
+    assert bounded["rows"]
+    assert len(bounded["rows"]) < 200
+    assert all(row["why"] == "" for row in bounded["rows"])
+
+
+def test_evidence_diagnosis_is_null_without_it() -> None:
+    assert fix_plan.build_evidence(TICKET, PACKAGE)["diagnosis"] is None
+    for malformed in (
+        {"counts": [], "rows": []},
+        {"counts": {}, "rows": [{"key": "turn-1", "cause": "unclear"}]},
+    ):
+        ticket = copy.deepcopy(TICKET)
+        ticket["diagnosis"] = malformed
+        assert fix_plan.build_evidence(ticket, PACKAGE)["diagnosis"] is None
+
+
 def test_evidence_carries_the_precedents_text(tmp_path: Path) -> None:
     default_path = DEFAULT_ROOT.parents[2] / "factory" / "precedents" / "stuck_turns.md"
     default_text = default_path.read_text(encoding="utf-8")

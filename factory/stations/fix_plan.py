@@ -402,6 +402,40 @@ def _bound_evidence(packet: dict[str, object], limit: int = 12_000) -> dict[str,
     return packet
 
 
+def _diagnosis_evidence(ticket_payload: Mapping[str, Any]) -> dict[str, object] | None:
+    raw_diagnosis = ticket_payload.get("diagnosis")
+    if not isinstance(raw_diagnosis, Mapping):
+        return None
+    counts = raw_diagnosis.get("counts")
+    raw_rows = raw_diagnosis.get("rows")
+    if not isinstance(counts, Mapping) or not isinstance(raw_rows, list):
+        return None
+
+    rows: list[dict[str, str]] = []
+    for row in raw_rows:
+        if not isinstance(row, Mapping) or any(
+            not isinstance(row.get(field), str) for field in ("key", "cause", "why")
+        ):
+            return None
+        rows.append({"key": row["key"], "cause": row["cause"], "why": row["why"][:160]})
+
+    diagnosis: dict[str, object] = {"counts": _json_safe(counts), "rows": rows}
+
+    def size() -> int:
+        return len(json.dumps(diagnosis, ensure_ascii=False, separators=(",", ":")))
+
+    try:
+        size()
+    except (TypeError, ValueError):
+        return None
+    if size() > 6000:
+        for row in rows:
+            row["why"] = ""
+        while size() > 6000 and rows:
+            rows.pop()
+    return diagnosis
+
+
 def build_evidence(ticket_payload: dict, package: StoryPackage) -> dict:
     """Build the bounded, JSON-serialisable planner context for a story-data ticket."""
 
@@ -457,6 +491,7 @@ def build_evidence(ticket_payload: dict, package: StoryPackage) -> dict:
     evidence: dict[str, object] = {
         "scene": scene,
         "failing_turns": turns,
+        "diagnosis": _diagnosis_evidence(ticket_payload),
         "candidates": {
             candidate_id: detail
             for candidate_id in _candidate_ids(ticket_payload)

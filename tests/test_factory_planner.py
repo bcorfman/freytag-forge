@@ -30,6 +30,12 @@ def test_planner_brief_asks_for_precedents_first() -> None:
     assert "Precedent: none" in PLANNER_BRIEF
 
 
+def test_planner_brief_mentions_the_causes() -> None:
+    assert "cause of each failing turn" in PLANNER_BRIEF
+    assert "how many turns share each cause" in PLANNER_BRIEF
+    assert "most common cause" in PLANNER_BRIEF
+
+
 def _plan(ticket_id: str = "wrong", *, at_turn: int = 10, text: str | None = None) -> dict:
     return {
         "version": 1,
@@ -118,6 +124,21 @@ def test_planner_prompt_includes_the_precedents_text(tmp_path: Path, monkeypatch
 
     assert outcome.plan is not None
     assert "TEMP PRECEDENT MARKER" in prompts[0]
+
+
+def test_planner_prompt_includes_diagnosis_from_payload(tmp_path: Path, monkeypatch) -> None:
+    ticket = _ticket()
+    ticket.payload["diagnosis"] = {
+        "counts": {"claim_not_offered": 1},
+        "rows": [{"key": "turn-1", "cause": "claim_not_offered", "why": "The claim was not offered."}],
+    }
+    guard, caps, ledger = _guard_and_caps(tmp_path)
+    prompts: list[str] = []
+    _fake_claude(monkeypatch, [CallResult(json.dumps(_plan()), 1)], prompts)
+
+    make_planner(guard=guard, ledger=ledger, caps=caps)(ticket, load_story_package(DEFAULT_STORY), NOW)
+
+    assert '"diagnosis":{"counts":{"claim_not_offered":1},"rows":[{"key":"turn-1"' in prompts[0]
 
 
 @pytest.mark.parametrize(

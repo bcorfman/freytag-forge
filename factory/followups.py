@@ -9,7 +9,7 @@ from typing import Any
 from factory.tickets import Station, Status, Ticket, TicketClass, TicketQueue
 
 FOLLOWUP_STATIONS: dict[TicketClass, Station | None] = {
-    TicketClass.STORY_DATA: Station.WIRING,
+    TicketClass.STORY_DATA: Station.DIAGNOSE,
     TicketClass.NARRATOR_PROMPT: Station.WIRING,
     TicketClass.WORLD_MODEL: Station.WORLD_NEED,
     TicketClass.ENGINE: None,
