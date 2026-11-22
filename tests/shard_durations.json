@@ -230,6 +230,7 @@
     "tests/test_factory_tickets.py": 0.02,
     "tests/test_factory_triage.py": 0.03,
     "tests/test_factory_verdicts.py": 0.01,
+    "tests/test_factory_wiring.py": 27.04,
     "tests/test_factory_world_need.py": 1.15,
     "tests/test_failure_report.py": 0.01,
     "tests/test_fixed_refusal.py": 1.61,

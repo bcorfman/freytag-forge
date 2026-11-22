@@ -8,11 +8,14 @@ import subprocess
 import sys
 import tempfile
 from collections.abc import Callable, Iterable
+from contextlib import suppress
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 from factory.line import StationHandler, StationResult
+
+from .tree import ticket_tree
 
 
 class SnapshotError(RuntimeError):
@@ -197,11 +200,26 @@ def unintended(
     return result
 
 
-def _resolve(root: Path, value: object) -> Path:
+def _resolve(root: Path, value: object, original_root: Path | None = None) -> Path:
     if not isinstance(value, (str, Path)):
         raise TypeError("baseline_dir must be a path")
     path = Path(value)
+    if path.is_absolute() and original_root is not None:
+        with suppress(OSError, RuntimeError, ValueError):
+            path = root / path.resolve().relative_to(original_root.resolve())
     return path if path.is_absolute() else root / path
+
+
+def _package_value(value: object, original_root: Path) -> str | None:
+    if value is None:
+        return None
+    path = Path(value) if isinstance(value, (str, Path)) else None
+    if path is not None and path.is_absolute():
+        try:
+            return path.resolve().relative_to(original_root.resolve()).as_posix()
+        except (OSError, RuntimeError, ValueError):
+            return str(path)
+    return str(value)
 
 
 def _failure_output(lines: list[str]) -> str:
@@ -219,15 +237,17 @@ def prompt_snapshot_handler(
 ) -> StationHandler:
     """Return a handler that checks a scene's prompt payload against its baseline."""
 
-    repository_root = Path(root) if root is not None else _repository_root()
+    base_root = Path(root) if root is not None else _repository_root()
 
     def handle(ticket, now: datetime) -> StationResult:
         del now
+        tree = ticket_tree(ticket.payload, ticket.id, base_root)
+        repository_root = tree if tree is not None else base_root
         payload = ticket.payload
         if "baseline_dir" not in payload:
             return StationResult(False, "prompt_snapshot", "missing payload key: baseline_dir")
         try:
-            baseline_dir = _resolve(repository_root, payload["baseline_dir"])
+            baseline_dir = _resolve(repository_root, payload["baseline_dir"], base_root if tree is not None else None)
         except (TypeError, ValueError) as error:
             return StationResult(False, "prompt_snapshot", str(error))
         if not baseline_dir.is_dir():
@@ -250,7 +270,9 @@ def prompt_snapshot_handler(
         if not isinstance(allowed, list):
             allowed = []
         package = payload.get("package")
-        package_value = str(package) if package is not None else None
+        package_value = (
+            _package_value(package, base_root) if tree is not None else (str(package) if package is not None else None)
+        )
         try:
             with tempfile.TemporaryDirectory() as temporary_name:
                 current_dir = Path(temporary_name)

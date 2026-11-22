@@ -9,6 +9,7 @@ from .free_gates import free_gates_handler
 from .live_playtest import live_playtest_handler
 from .prompt_snapshot import prompt_snapshot_handler
 from .triage import triage_handler
+from .wiring import wiring_handler
 from .world_need import world_need_handler
 
 
@@ -21,7 +22,7 @@ class _HandlerRegistry(dict[Station, StationHandler]):
     """
 
     def __iter__(self):
-        return (station for station in super().__iter__() if station is not Station.LIVE_PLAYTEST)
+        return (station for station in super().__iter__() if station not in {Station.LIVE_PLAYTEST, Station.WIRING})
 
 
 def build_handlers(root: Path | None = None) -> dict[Station, StationHandler]:
@@ -32,10 +33,11 @@ def build_handlers(root: Path | None = None) -> dict[Station, StationHandler]:
             Station.WORLD_NEED: world_need_handler(root),
             Station.FREE_GATES: free_gates_handler(root),
             Station.PROMPT_SNAPSHOT: prompt_snapshot_handler(root),
+            Station.WIRING: wiring_handler(root),
             Station.LIVE_PLAYTEST: live_playtest_handler(root),
             Station.TRIAGE: triage_handler(root),
         }
     )
 
 
-# Stations 0, 1, 3, 4 and 9 are built in later rounds.
+# Stations 0, 1, 3 and 9 remain unbuilt.

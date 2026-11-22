@@ -162,6 +162,22 @@ def test_handler_passes_unchanged_and_allowed_line(tmp_path: Path) -> None:
     assert result == StationResult(True, "prompt_snapshot", "3 captures compared, 2 intended changed lines")
 
 
+def test_handler_uses_ticket_tree_for_capture_root(tmp_path: Path, monkeypatch) -> None:
+    tree = tmp_path / "tree"
+    tree.mkdir()
+    baseline = tmp_path / "baseline"
+    run, calls = scripted_run()
+    capture_scene("1A", baseline, root=ROOT, run=run)
+    calls.clear()
+    monkeypatch.setattr(snapshots, "ticket_tree", lambda *_args: tree)
+
+    result = snapshots.prompt_snapshot_handler(ROOT, run=run)(make_ticket({"baseline_dir": baseline}), NOW)
+
+    assert result.passed
+    assert calls
+    assert all(kwargs["cwd"] == tree for _, kwargs in calls)
+
+
 def test_handler_fails_with_exact_unintended_line_and_caps_output(tmp_path: Path) -> None:
     baseline = tmp_path / "baseline"
     run, _ = scripted_run()

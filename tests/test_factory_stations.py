@@ -9,6 +9,7 @@ from factory.checks.world_need import check_needs, tickets_for
 from factory.line import FactoryLine
 from factory.state import FactoryState
 from factory.stations import build_handlers
+from factory.stations import free_gates as free_gates_module
 from factory.stations.free_gates import free_gates_handler
 from factory.stations.world_need import world_need_handler
 from factory.tickets import Station, Ticket, TicketQueue
@@ -153,6 +154,36 @@ def test_free_gates_filter_non_python_paths_and_timeout_is_failure(tmp_path: Pat
     assert "timed out" in result.output
     assert len(runner.calls) == 1
     assert runner.calls[0][0][-1] == "changed.py"
+
+
+def test_free_gates_uses_ticket_tree_for_paths_and_commands(tmp_path: Path, monkeypatch) -> None:
+    tree = tmp_path / "tree"
+    tree.mkdir()
+    baseline = tmp_path / "gaps.json"
+    baseline.write_text("{}", encoding="utf-8")
+    runner = Runner([0, 0, 0])
+    monkeypatch.setattr(free_gates_module, "ticket_tree", lambda *_args: tree)
+    monkeypatch.setattr(free_gates_module, "snapshot", lambda root, anchors=None: {})
+    monkeypatch.setattr(free_gates_module, "load_baseline", lambda path: {})
+
+    result = free_gates_handler(ROOT, runner)(
+        make_ticket(
+            {
+                "gap_baseline": str(baseline),
+                "story_root": "data/stories/continuity-initiative",
+                "carry_matrix": False,
+                "paths": [str(ROOT / "factory/line.py")],
+                "tests": [str(ROOT / "tests/test_factory_line.py")],
+            },
+            station=Station.FREE_GATES,
+        ),
+        NOW,
+    )
+
+    assert result.passed
+    assert all(kwargs["cwd"] == tree for _, kwargs in runner.calls)
+    assert runner.calls[-1][0][-1] == "tests/test_factory_line.py"
+    assert str(tree) in runner.calls[-1][1]["env"]["PYTHONPATH"].split(":")
 
 
 def test_free_gates_gap_delta_reports_new_result_and_missing_key(tmp_path: Path) -> None:
