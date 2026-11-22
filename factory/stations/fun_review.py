@@ -155,11 +155,16 @@ def _saved_result(saved: dict[str, Any], diff_hash: str) -> StationResult | None
     if saved.get("diff_hash") != diff_hash:
         return None
     verdict = saved.get("verdict")
+    checks = saved.get("checks")
     reasons = saved.get("reasons")
-    if verdict not in {"pass", "block"} or not isinstance(reasons, str):
+    if verdict not in {"pass", "block"} or not isinstance(checks, dict) or not isinstance(reasons, str):
         return None
     reasons = _one_line(reasons)
-    if verdict == "pass":
+    if (
+        verdict == "pass"
+        and reasons
+        and all(checks.get(key) is True for key in ("fits_scene", "gives_a_reason_to_act", "keeps_pace"))
+    ):
         return StationResult(
             True,
             "fun_review",
@@ -297,21 +302,22 @@ def fun_review_handler(
             return StationResult(False, "fun_review", "no usable verdict from the reviewer", tokens=total_tokens)
 
         verdict, checks, reasons = parsed
+        passed = (
+            verdict == "pass"
+            and bool(reasons)
+            and all(checks.get(key) is True for key in ("fits_scene", "gives_a_reason_to_act", "keeps_pace"))
+        )
         if not reasons:
             reasons = "reviewer blocked the fix"
         record = {
             "diff_hash": diff_hash,
-            "verdict": verdict,
+            "verdict": "pass" if passed else "block",
             "reasons": reasons,
             "checks": checks,
             "reviewed_at": now.isoformat(),
         }
         _atomic_json_write(review_path, record)
-        if (
-            verdict == "pass"
-            and reasons != "reviewer blocked the fix"
-            and all(checks.get(key) is True for key in ("fits_scene", "gives_a_reason_to_act", "keeps_pace"))
-        ):
+        if passed:
             return StationResult(
                 True,
                 "fun_review",

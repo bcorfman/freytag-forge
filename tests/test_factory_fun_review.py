@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 from factory.guard import LimitSleep, ModelNotAllowed, SpendLedger
+from factory.stations.deliver import _changed_paths, _diff_hash
 from factory.stations.fun_review import (
     FUN_REVIEW_BRIEF,
     ReviewReply,
@@ -134,6 +135,98 @@ def test_block_and_false_check_are_failures_with_tokens(tmp_path: Path) -> None:
     )(ticket, NOW)
     assert not result.passed
     assert result.output.startswith("fun review blocked the fix:")
+
+
+def test_saved_pass_with_a_false_check_is_not_reused_as_a_pass(tmp_path: Path) -> None:
+    root, _tree, ticket = _fixture(tmp_path)
+    prompts: list[str] = []
+    handler = fun_review_handler(
+        root,
+        reviewer=_reviewer(
+            [_reply(checks={"fits_scene": True, "gives_a_reason_to_act": False, "keeps_pace": True})], prompts
+        ),
+        runner=_runner,
+    )
+
+    first = handler(ticket, NOW)
+    second = handler(ticket, NOW)
+
+    assert not first.passed and not second.passed
+    assert len(prompts) == 1
+    assert second.tokens == 0
+    record = json.loads((tmp_path / "workspace/review-ticket/review.json").read_text(encoding="utf-8"))
+    assert record["verdict"] == "block"
+
+
+def test_saved_record_with_pass_and_a_false_check_blocks_on_reuse(tmp_path: Path) -> None:
+    root, tree, ticket = _fixture(tmp_path)
+    paths, error = _changed_paths(_runner, tree)
+    assert error is None and paths
+    diff_hash, error = _diff_hash(_runner, tree, paths)
+    assert error is None and diff_hash is not None
+    review_path = tmp_path / "workspace/review-ticket/review.json"
+    review_path.parent.mkdir(parents=True, exist_ok=True)
+    review_path.write_text(
+        json.dumps(
+            {
+                "diff_hash": diff_hash,
+                "verdict": "pass",
+                "checks": {"fits_scene": True, "gives_a_reason_to_act": False, "keeps_pace": True},
+                "reasons": "The repair gives the player a next move.",
+            }
+        ),
+        encoding="utf-8",
+    )
+    prompts: list[str] = []
+
+    result = fun_review_handler(root, reviewer=_reviewer([], prompts), runner=_runner)(ticket, NOW)
+
+    assert not result.passed
+    assert result.output == "fun review blocked the fix: The repair gives the player a next move."
+    assert prompts == []
+
+
+def test_pass_with_empty_reasons_blocks_and_stays_blocked_on_retry(tmp_path: Path) -> None:
+    root, _tree, ticket = _fixture(tmp_path)
+    prompts: list[str] = []
+    handler = fun_review_handler(root, reviewer=_reviewer([_reply(reasons="")], prompts), runner=_runner)
+
+    first = handler(ticket, NOW)
+    second = handler(ticket, NOW)
+
+    assert not first.passed and not second.passed
+    assert first.output == "fun review blocked the fix: reviewer blocked the fix"
+    assert second.output == first.output
+    assert len(prompts) == 1
+    assert second.tokens == 0
+    record = json.loads((tmp_path / "workspace/review-ticket/review.json").read_text(encoding="utf-8"))
+    assert record["verdict"] == "block"
+
+
+def test_malformed_saved_record_is_reviewed_again(tmp_path: Path) -> None:
+    root, tree, ticket = _fixture(tmp_path)
+    paths, error = _changed_paths(_runner, tree)
+    assert error is None and paths
+    diff_hash, error = _diff_hash(_runner, tree, paths)
+    assert error is None and diff_hash is not None
+    review_path = tmp_path / "workspace/review-ticket/review.json"
+    review_path.parent.mkdir(parents=True, exist_ok=True)
+    review_path.write_text(
+        json.dumps(
+            {
+                "diff_hash": diff_hash,
+                "verdict": "pass",
+                "reasons": "The repair gives the player a next move.",
+            }
+        ),
+        encoding="utf-8",
+    )
+    prompts: list[str] = []
+
+    result = fun_review_handler(root, reviewer=_reviewer([_reply()], prompts), runner=_runner)(ticket, NOW)
+
+    assert result.passed
+    assert len(prompts) == 1
 
 
 def test_invalid_replies_retry_once_and_tokens_are_summed(tmp_path: Path) -> None:
