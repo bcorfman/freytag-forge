@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
+from factory.breakers import Notifier
 from factory.followups import open_followups
 from factory.guard import LimitSleep
 from factory.lessons import record_lessons
@@ -29,6 +31,8 @@ class StationResult:
 StationHandler = Callable[[Ticket, datetime], StationResult]
 MAX_PROBE_ROUNDS = 3
 MAX_FUN_ROUNDS = 2
+MAX_OWNER_NOTICE_ATTEMPTS = 3
+LOGGER = logging.getLogger(__name__)
 
 
 @dataclass
@@ -57,6 +61,7 @@ class FactoryLine:
         handlers: dict[Station, StationHandler],
         provider_for: Callable[[Ticket], str | None],
         check_breakers: Callable[[datetime], list[str]],
+        notifier: Notifier | None = None,
         max_attempts: int = 3,
         set_aside_s: int = 21600,
         probe_s: int = 1800,
@@ -66,12 +71,16 @@ class FactoryLine:
         self.handlers = handlers
         self.provider_for = provider_for
         self.check_breakers = check_breakers
+        self.notifier = notifier
         self.max_attempts = max_attempts
         self.set_aside_s = set_aside_s
         self.probe_s = probe_s
 
     def _next_ready(self, now: datetime) -> tuple[Ticket, str | None] | None:
         for ticket in self.queue.all():
+            owner_wait = ticket.payload.get("owner_wait")
+            if isinstance(owner_wait, dict) and owner_wait.get("reply") is None:
+                continue
             if ticket.status is Status.QUEUED:
                 ready = True
             elif ticket.status is Status.SLEEPING and ticket.sleep_until is not None:
@@ -88,6 +97,120 @@ class FactoryLine:
                 continue
             return ticket, provider
         return None
+
+    @staticmethod
+    def _clip(value: object) -> str:
+        return str(value)[:160]
+
+    @staticmethod
+    def _notice_attempts(ticket: Ticket) -> int:
+        notice = ticket.payload.get("owner_notice")
+        if not isinstance(notice, dict):
+            return 0
+        attempts = notice.get("attempts")
+        if not isinstance(attempts, int) or isinstance(attempts, bool):
+            return 0
+        return max(0, attempts)
+
+    def _owner_notice_body(self, ticket: Ticket) -> str | None:
+        history = ticket.payload.get("fun_history")
+        if not isinstance(history, list) or len(history) < 2:
+            return None
+
+        lines: list[str] = []
+        for number, entry in enumerate(history[:2], start=1):
+            if not isinstance(entry, dict):
+                entry = {}
+            plan = entry.get("plan")
+            if not isinstance(plan, dict):
+                plan = {}
+            fix_kind = plan.get("kind") if isinstance(plan.get("kind"), str) else "unknown"
+            reason = plan.get("reason") if isinstance(plan.get("reason"), str) else "see ticket"
+            if reason.startswith("Precedent: "):
+                reason = reason[len("Precedent: ") :]
+            failed_checks = entry.get("failed_checks")
+            if isinstance(failed_checks, list):
+                failed = ", ".join(str(check) for check in failed_checks if isinstance(check, str)) or "none"
+            else:
+                failed = "none"
+            reasons = entry.get("reasons") if isinstance(entry.get("reasons"), str) else ""
+            lines.extend(
+                [
+                    f"Fix {number} (blocked): {self._clip(fix_kind)}: {self._clip(reason)}",
+                    f"  Failed: {self._clip(failed)}. Reviewer: {self._clip(reasons)}",
+                ]
+            )
+
+        stuck_summary = ticket.payload.get("stuck_summary")
+        if not isinstance(stuck_summary, str) or not stuck_summary:
+            stuck_summary = "see ticket"
+        advice = history[1].get("fun_advice") if isinstance(history[1], dict) else ""
+        if not isinstance(advice, str):
+            advice = ""
+        return "\n".join(
+            [
+                f"Scene {self._clip(ticket.scene)}, ticket {self._clip(ticket.id)}.",
+                f"Stuck: {self._clip(stuck_summary)}",
+                *lines,
+                f"Last advice: {self._clip(advice)}",
+                "Nothing was merged. The ticket is parked and will not retry until you answer.",
+                "You may: (1) merge fix 1 or 2 anyway, (2) let it retry with a note for the planner, "
+                "(3) drop this scene's ticket.",
+            ]
+        )
+
+    def _send_owner_notice(self, ticket: Ticket, now: datetime) -> None:
+        if self.notifier is None:
+            return
+        notice = ticket.payload.get("owner_notice")
+        if isinstance(notice, dict) and notice.get("sent_at") is not None:
+            return
+        attempts = self._notice_attempts(ticket)
+        if attempts >= MAX_OWNER_NOTICE_ATTEMPTS:
+            return
+        body = self._owner_notice_body(ticket)
+        if body is None:
+            return
+        attempt = attempts + 1
+        subject = f"factory: scene {ticket.scene} needs your call (fun review blocked twice, {ticket.id})"
+        try:
+            self.notifier.notify(subject, body)
+        except Exception as error:
+            LOGGER.exception("owner notification failed for ticket %s", ticket.id)
+            ticket.payload["owner_notice"] = {
+                "sent_at": None,
+                "attempts": attempt,
+                "error": str(error)[:200],
+            }
+        else:
+            ticket.payload["owner_notice"] = {
+                "sent_at": now.astimezone(UTC).isoformat(),
+                "attempts": attempt,
+            }
+        self.queue.save(ticket)
+
+    def _escalate_fun_impasse(self, ticket: Ticket) -> None:
+        history = ticket.payload.get("fun_history")
+        if not isinstance(history, list) or len(history) < 2:
+            return
+        owner_wait = ticket.payload.get("owner_wait")
+        if not isinstance(owner_wait, dict) or not isinstance(owner_wait.get("since"), str):
+            return
+        now = _parse_datetime(owner_wait["since"])
+        self._send_owner_notice(ticket, now)
+
+    def _retry_owner_notifications(self, now: datetime) -> None:
+        if self.notifier is None:
+            return
+        for ticket in self.queue.all():
+            if not isinstance(ticket.payload.get("owner_wait"), dict):
+                continue
+            notice = ticket.payload.get("owner_notice")
+            if isinstance(notice, dict) and notice.get("sent_at") is not None:
+                continue
+            if self._notice_attempts(ticket) >= MAX_OWNER_NOTICE_ATTEMPTS:
+                continue
+            self._send_owner_notice(ticket, now)
 
     def _check_breakers(self, now: datetime) -> None:
         reasons = self.check_breakers(now)
@@ -307,6 +430,7 @@ class FactoryLine:
                             set_aside_s=self.set_aside_s,
                         )
                         self._record_fun_lessons(failed_ticket, "fun_exhausted")
+                        self._escalate_fun_impasse(failed_ticket)
                         outcome = StepOutcome("failed_attempt", ticket.id)
                 elif ticket.station is Station.LIVE_PLAYTEST and isinstance(result.turns, list) and result.turns:
                     updated = self.queue.get(ticket.id)
@@ -342,6 +466,9 @@ class FactoryLine:
     def _next_wake(self, now: datetime) -> datetime | None:
         wake_times: list[datetime] = []
         for ticket in self.queue.all():
+            owner_wait = ticket.payload.get("owner_wait")
+            if isinstance(owner_wait, dict) and owner_wait.get("reply") is None:
+                continue
             if ticket.status is Status.SLEEPING and ticket.sleep_until is not None:
                 wake_times.append(_parse_datetime(ticket.sleep_until))
             elif ticket.status is Status.SET_ASIDE and ticket.return_after is not None:
@@ -358,8 +485,10 @@ class FactoryLine:
         max_steps: int = 10000,
     ) -> list[StepOutcome]:
         outcomes: list[StepOutcome] = []
-        for _ in range(max_steps):
+        for step_number in range(max_steps):
             now = clock()
+            if step_number == 0:
+                self._retry_owner_notifications(now)
             outcome = self.step(now)
             outcomes.append(outcome)
             if outcome.kind == "halted" or self._all_passed():

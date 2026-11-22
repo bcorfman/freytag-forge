@@ -240,6 +240,9 @@ class TicketQueue:
     def next_ready(self, now: datetime) -> Ticket | None:
         ready = []
         for ticket in self.all():
+            owner_wait = ticket.payload.get("owner_wait")
+            if isinstance(owner_wait, dict) and owner_wait.get("reply") is None:
+                continue
             if ticket.status is Status.QUEUED:
                 ready.append(ticket)
             elif ticket.status is Status.SLEEPING and ticket.sleep_until is not None:
@@ -278,6 +281,13 @@ class TicketQueue:
                 ticket.ladder_rung = LadderRung.SET_ASIDE
                 ticket.status = Status.SET_ASIDE
                 ticket.return_after = _utc_iso(now + timedelta(seconds=set_aside_s))
+                history = ticket.payload.get("fun_history")
+                if ticket.station is Station.FUN_REVIEW and isinstance(history, list) and len(history) >= 2:
+                    ticket.payload["owner_wait"] = {
+                        "reason": "fun_review_blocked_twice",
+                        "since": _utc_iso(now),
+                        "reply": None,
+                    }
             else:
                 ticket.ladder_rung = LadderRung(ticket.ladder_rung + 1)
                 ticket.status = Status.QUEUED

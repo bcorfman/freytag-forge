@@ -176,6 +176,7 @@ def _run_factory(args: argparse.Namespace, now_fn: Callable[[], datetime]) -> in
             handlers=handlers,
             provider_for=provider_for,
             check_breakers=breaker_reasons,
+            notifier=notifier,
         )
         if state.started_at is None:
             started = now_fn()
