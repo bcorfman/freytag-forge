@@ -195,6 +195,9 @@ def resolve_variation(variation: dict[str, Any], path: Path) -> dict[str, Any]:
     escalation_judge = variation.get("escalation_judge", False)
     if not isinstance(escalation_judge, bool):
         raise ValueError("escalation_judge must be a boolean")
+    canon_judge = variation.get("canon_judge", True)
+    if not isinstance(canon_judge, bool):
+        raise ValueError("canon_judge must be a boolean")
     fixed_turns = variation.get("fixed_turns")
     if fixed_turns is not None and (
         isinstance(fixed_turns, bool) or not isinstance(fixed_turns, int) or fixed_turns <= 0

@@ -99,6 +99,7 @@ def build_variation(*, name: str, package_path: str, scene: str, run: dict) -> d
         "item_facts": {"mode": "single_call", "seed_from_package": True},
         "fixed_refusal": True,
         "engine_refusal": True,
+        "canon_judge": False,
         "fixed_turns": len(inputs),
         "scripts": {scene: [{"name": run["run"], "inputs": inputs}]},
     }
@@ -373,14 +374,27 @@ def _record_probe_spend(
     )
 
 
+def _summary_quota(text: str) -> dict[str, Any] | None:
+    decoder = json.JSONDecoder()
+    for start, character in enumerate(text):
+        if character != "{":
+            continue
+        try:
+            value, _end = decoder.raw_decode(text, start)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(value, dict) and isinstance(value.get("quota"), dict):
+            return value["quota"]
+    return None
+
+
 def _raise_probe_quota(text: str, now: datetime) -> None:
-    upper = text.upper()
-    if "QUOTA" not in upper:
-        return
     try:
         _raise_quota(text, now)
     except LimitSleep:
         raise
+    if _summary_quota(text) is None:
+        return
     report = None
     raise LimitSleep("cloudflare", _next_midnight(now)) from ProviderLimit(_next_midnight(now), report)
 
@@ -452,6 +466,15 @@ def probe_handler(
         ):
             return _result(saved)
 
+        before = _safe_budget_read(budget_reader)
+        if before is None:
+            return StationResult(
+                False,
+                "probe",
+                "cannot read the Worker budget: set CLOUDFLARE_WORKER_URL and CLOUDFLARE_WORKER_TOKEN",
+                tokens=0,
+            )
+
         try:
             config = _factory_config(repository_root)
             caps = Caps.from_dict(config["caps"])
@@ -477,7 +500,6 @@ def probe_handler(
             lock_path.write_text(f"{getattr(ticket, 'id', '')}\n{now.isoformat()}\n", encoding="utf-8")
         except OSError as error:
             return StationResult(False, "probe", f"could not create staged run lock: {error}", tokens=0)
-        before = _safe_budget_read(budget_reader)
         try:
             arm_files: dict[str, list[Path]] = {"control": [], "candidate": []}
             scene = getattr(ticket, "scene", payload.get("scene", ""))

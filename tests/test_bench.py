@@ -1114,6 +1114,62 @@ def test_focused_run_allows_one_explicit_replicate_without_calling_live_services
     assert summary["judge_failure_reason"] is None
 
 
+def test_run_without_canon_judge_keeps_completed_runs_and_turn_records(monkeypatch, tmp_path) -> None:
+    variation = {
+        "name": "probe",
+        "canon_judge": False,
+        "_package_path": str(PACKAGE),
+        "_variation_hash": "variation-hash",
+        "_package_hash": "package-hash",
+    }
+    script = {"name": "e2e", "inputs": ["Look around."]}
+    record = {
+        "status": "ok",
+        "replicate": 0,
+        "script": "e2e",
+        "scene_id": "1A",
+        "opening": "Opening.",
+        "turns": [{"player_input": "Look around."}],
+        "completed": True,
+        "quota": None,
+        "narration_turns": 1,
+        "narration_requests": 1,
+        "recovery_requests": 0,
+        "package": str(PACKAGE),
+    }
+    judge_calls = []
+    monkeypatch.setattr(bench_cli, "load_variation", lambda _: variation)
+    monkeypatch.setattr(bench_cli, "scripts_for", lambda *_: [script])
+    monkeypatch.setattr(bench_cli, "run_scene", lambda *_: record.copy())
+    monkeypatch.setattr(
+        bench_cli, "run_judges", lambda *_: judge_calls.append(True) or pytest.fail("canon judge called")
+    )
+    monkeypatch.setattr(bench_cli, "LEDGER_PATH", tmp_path / "ledger.jsonl")
+    args = bench_cli.parser().parse_args(
+        [
+            "run",
+            "--variation",
+            str(VARIATION),
+            "--scene",
+            "1A",
+            "--replicates",
+            "1",
+            "--out",
+            str(tmp_path),
+        ]
+    )
+
+    assert bench_cli._run(args) == 0
+    assert judge_calls == []
+    turn_records = json.loads((tmp_path / "turn-records.json").read_text(encoding="utf-8"))
+    assert len(turn_records["runs"]) == 1
+    assert turn_records["runs"][0]["status"] == "ok"
+    assert turn_records["runs"][0]["completed"] is True
+    summary = json.loads((tmp_path / "summary.json").read_text(encoding="utf-8"))
+    assert summary["failures"] == []
+    assert summary["budget"]["actual_openai_judge_calls"] == 0
+
+
 def test_main_judge_failure_is_recorded_on_summary_and_failures(monkeypatch, tmp_path) -> None:
     variation = {
         "name": "judge-failure",
@@ -1330,6 +1386,12 @@ def test_escalation_judge_absent_is_not_called_and_not_recorded(monkeypatch, tmp
             "invalid-continuity.json",
             "continuity_judge must be a boolean",
             id="non_boolean_continuity_judge_is_rejected",
+        ),
+        pytest.param(
+            "canon_judge",
+            "invalid-canon.json",
+            "canon_judge must be a boolean",
+            id="non_boolean_canon_judge_is_rejected",
         ),
     ],
 )

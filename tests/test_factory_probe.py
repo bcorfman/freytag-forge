@@ -22,6 +22,7 @@ ROOT = Path(__file__).resolve().parents[1]
 FIXTURE = ROOT / "tests/fixtures/factory/probe_turn_records.json"
 NOW = datetime(2026, 11, 22, 12, tzinfo=UTC)
 RULES = {**PROBE_RULES, "replicates": 2}
+BUDGET = {"day": "2026-11-22", "spent_micro_usd": 100}
 
 
 def make_ticket(payload: dict, *, scene: str = "synthetic") -> Ticket:
@@ -103,6 +104,7 @@ def test_build_variation_is_story_package_only_and_bench_describes(tmp_path: Pat
 
     assert completed.returncode == 0, completed.stderr
     assert json.loads(completed.stdout)["name"] == "control"
+    assert control["canon_judge"] is False
     assert control["story_package"].startswith("/")
     assert {key: control[key] for key in control if key not in {"name", "story_package"}} == {
         key: candidate[key] for key in candidate if key not in {"name", "story_package"}
@@ -219,6 +221,45 @@ def make_runner(calls: list[list[str]], records: Path = FIXTURE):
     return run
 
 
+@pytest.mark.parametrize("text", ['{"quota": null}', "prose mentions QUOTA", '{"quota_label": "QUOTA"}'])
+def test_probe_quota_null_or_unstructured_signal_does_not_sleep(text: str) -> None:
+    probe._raise_probe_quota(text, NOW)
+
+
+def test_probe_quota_non_null_summary_sleeps() -> None:
+    with pytest.raises(LimitSleep) as raised:
+        probe._raise_probe_quota('{"quota": {"error": "AI_DAILY_BUDGET_EXCEEDED"}}', NOW)
+    assert raised.value.provider == "cloudflare"
+
+
+@pytest.mark.parametrize("marker", ["AI_QUOTA_EXCEEDED", "AI_DAILY_BUDGET_EXCEEDED", "HTTP 429"])
+def test_probe_quota_provider_markers_still_sleep(marker: str) -> None:
+    with pytest.raises(LimitSleep) as raised:
+        probe._raise_probe_quota(marker, NOW)
+    assert raised.value.provider == "cloudflare"
+
+
+def test_handler_unreadable_budget_refuses_before_runner(tmp_path: Path, monkeypatch) -> None:
+    root, tree = configure_probe_root(tmp_path)
+    monkeypatch.setattr(probe, "ticket_tree", lambda payload, ticket_id, root: tree)
+    payload = {
+        "workspace": str(tmp_path),
+        "story_package": "data/stories/base",
+        "runs": [{"run": "synthetic-r1", "scene": "synthetic", "inputs": ["Inspect the shelf.", "Open the drawer."]}],
+        "billed_run_approved": True,
+    }
+    calls: list[list[str]] = []
+
+    result = probe_handler(root, runner=make_runner(calls), rules=RULES, read_budget=lambda: None)(
+        make_ticket(payload), NOW
+    )
+
+    assert result.output == "cannot read the Worker budget: set CLOUDFLARE_WORKER_URL and CLOUDFLARE_WORKER_TOKEN"
+    assert calls == []
+    assert not (root / "factory/state/staged_run.lock").exists()
+    assert not (tmp_path / "probe-ticket/probe").exists()
+
+
 def test_handler_failures_happen_before_runner_and_payload_stays_unchanged(tmp_path: Path, monkeypatch) -> None:
     calls: list[list[str]] = []
     handler = probe_handler(tmp_path, runner=make_runner(calls), rules=RULES, read_budget=lambda: None)
@@ -280,7 +321,12 @@ def test_handler_staged_lock_and_spend_cap_block_runner(tmp_path: Path, monkeypa
         encoding="utf-8",
     )
     with pytest.raises(LimitSleep) as raised:
-        probe_handler(root, runner=make_runner(calls), rules=RULES, read_budget=lambda: None)(make_ticket(payload), NOW)
+        probe_handler(
+            root,
+            runner=make_runner(calls),
+            rules=RULES,
+            read_budget=lambda: dict(BUDGET),
+        )(make_ticket(payload), NOW)
     assert raised.value.provider == "cloudflare"
     assert calls == []
 
@@ -324,12 +370,19 @@ def test_handler_full_path_reuses_hashes_and_records_spend(tmp_path: Path, monke
     assert ledger_rows[0]["station"] == "probe"
     assert ledger_rows[0]["provider"] == "cloudflare"
     assert ledger_rows[0]["estimate_usd"] == projected_cost_usd(payload["runs"], RULES["replicates"], RULES)
-    saved_handler = probe_handler(root, runner=make_runner(calls), rules=RULES, read_budget=lambda: None)
+    budget_reads: list[bool] = []
+
+    def saved_budget_reader() -> dict | None:
+        budget_reads.append(True)
+        return None
+
+    saved_handler = probe_handler(root, runner=make_runner(calls), rules=RULES, read_budget=saved_budget_reader)
     saved = saved_handler(make_ticket(payload), NOW)
     assert saved.passed
     assert len(calls) == 2
+    assert budget_reads == []
     (tree / "data/stories/base/package.txt").write_bytes(b"changed")
-    budgets = iter([None, None])
+    budgets = iter([dict(BUDGET), dict(BUDGET)])
     changed = probe_handler(root, runner=make_runner(calls), rules=RULES, read_budget=lambda: next(budgets))
     changed(make_ticket(payload), NOW)
     assert len(calls) == 4
@@ -348,7 +401,10 @@ def test_handler_unknown_spend_and_runner_errors_do_not_save(tmp_path: Path, mon
     def failed(root, argv, env, timeout_s):
         return subprocess.CompletedProcess(argv, 7, stdout="", stderr="failure detail" * 100)
 
-    result = probe_handler(root, runner=failed, rules=RULES, read_budget=lambda: None)(make_ticket(payload), NOW)
+    budgets = iter([dict(BUDGET), None])
+    result = probe_handler(root, runner=failed, rules=RULES, read_budget=lambda: next(budgets))(
+        make_ticket(payload), NOW
+    )
     assert not result.passed
     assert "failure detail" in result.output
     assert not (tmp_path / "probe-ticket/probe.json").exists()
@@ -356,10 +412,17 @@ def test_handler_unknown_spend_and_runner_errors_do_not_save(tmp_path: Path, mon
     assert row["station"] == "probe" and row["cost_kind"] == "unknown"
 
     def quota(root, argv, env, timeout_s):
-        return subprocess.CompletedProcess(argv, 1, stdout="QUOTA", stderr="")
+        return subprocess.CompletedProcess(
+            argv, 1, stdout=json.dumps({"quota": {"error": "AI_QUOTA_EXCEEDED"}}), stderr=""
+        )
 
     with pytest.raises(LimitSleep) as raised:
-        probe_handler(root, runner=quota, rules=RULES, read_budget=lambda: None)(make_ticket(payload), NOW)
+        probe_handler(
+            root,
+            runner=quota,
+            rules=RULES,
+            read_budget=lambda: dict(BUDGET),
+        )(make_ticket(payload), NOW)
     assert raised.value.provider == "cloudflare"
 
 
