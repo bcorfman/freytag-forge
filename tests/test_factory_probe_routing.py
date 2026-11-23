@@ -4,6 +4,7 @@ import pytest
 
 from factory.line import MAX_PROBE_ROUNDS, FactoryLine, StationResult
 from factory.state import FactoryState
+from factory.stations import probe
 from factory.tickets import LadderRung, Station, Status, Ticket, TicketQueue
 
 NOW = datetime(2026, 1, 1, 12, tzinfo=UTC)
@@ -144,6 +145,43 @@ def test_probe_verdict_retry_preserves_failure_fields_and_requeues_wiring(tmp_pa
     assert (saved.attempts, saved.tokens_used, [(item.check, item.output_hash) for item in saved.failures]) == (
         before_failure_fields
     )
+
+
+def test_probe_rejection_preserves_consumed_approval_when_replanning(tmp_path) -> None:
+    ticket = make_ticket(
+        "probe-consumed-reject",
+        Station.PROBE,
+        {
+            "plan": {"kind": "set_text", "reason": "old"},
+            "probe_rounds": 0,
+            "billed_run_approved": True,
+            "billed_run_approval_id": "a1",
+        },
+    )
+
+    def reject_probe(_ticket, _now):
+        result = probe_verdict("reject")
+        result.payload_updates = {
+            **(result.payload_updates or {}),
+            "billed_run_approved": False,
+            "billed_runs_consumed": 1,
+            "billed_run_consumed_approval_id": "a1",
+        }
+        return result
+
+    line, queue = make_line(tmp_path, ticket, reject_probe)
+
+    assert line.step(NOW).kind == "probe_rejected"
+    saved = queue.get(ticket.id)
+    assert saved.station is Station.WIRING
+    assert saved.payload["billed_run_approved"] is False
+    assert saved.payload["billed_runs_consumed"] == 1
+    assert saved.payload["billed_run_consumed_approval_id"] == "a1"
+    assert probe._approval_error(saved.payload)
+
+    reapproved = {**saved.payload, "billed_run_approved": True}
+    assert probe._approval_error(reapproved)
+    assert probe._approval_error({**reapproved, "billed_run_approval_id": "a2"}) is None
 
 
 def test_third_probe_reject_uses_ladder_to_set_aside_and_records_evidence(tmp_path) -> None:

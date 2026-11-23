@@ -234,6 +234,47 @@ def test_prior_narration_proves_unknown_referent() -> None:
     assert "notebook" in row["signals"]["previous_narration"]
 
 
+def test_missing_prior_narration_is_not_prior_provenance() -> None:
+    packets = [
+        {"key": "missing", "scene": "1A", "player_input": "Open the notebook", "candidates_offered": []},
+        {
+            "key": "none",
+            "scene": "1A",
+            "player_input": "Open the notebook",
+            "previous_narration": None,
+            "candidates_offered": [],
+        },
+        {
+            "key": "irrelevant",
+            "scene": "1A",
+            "player_input": "Open the notebook",
+            "previous_narration": "Nothing relevant happens here.",
+            "candidates_offered": [],
+        },
+    ]
+
+    for packet in packets:
+        row = diagnose_turn(packet, PACKAGE)
+        assert row["cause"] == "unknown_object"
+        assert row["cause"] != "follows_prior_narration"
+        assert "previous_narration" not in row["signals"]
+        assert "introduced_words" not in row["signals"]
+
+    sibling = diagnose_turn(
+        {
+            "key": "sibling",
+            "scene": "1A",
+            "player_input": "Open the notebook",
+            "previous_narration": "Kristin finds a small notebook belonging to Michelle.",
+            "candidates_offered": [],
+        },
+        PACKAGE,
+    )
+    assert sibling["cause"] == "follows_prior_narration"
+    assert sibling["signals"]["introduced_words"] == ["notebook"]
+    assert "notebook" in sibling["signals"]["previous_narration"]
+
+
 def test_delivered_claim_is_not_reported_as_newly_unoffered() -> None:
     row = diagnose_turn(
         {

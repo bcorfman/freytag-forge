@@ -14,6 +14,7 @@ REPO = "/home/bcorfman/dev/freytag-forge"
 WORK = "/home/bcorfman/dev/ringer-work/factory-20"
 AUDIT = "/home/bcorfman/dev/ringer-work/qual-20261122/qualification/foundation.md"
 OWNED = ["factory/stations/probe.py", "tests/test_factory_probe.py"]
+OWNED_D3 = ["tests/test_factory_probe_routing.py", "tests/test_factory_diagnose.py"]
 
 COMMON = """You are a factory engineer. Your current working directory IS a git worktree of @REPO@ (detached at HEAD). Edit files here directly. NEVER git commit, never touch @REPO@ itself, never run `uv`, NEVER call a model (not `claude`, not `codex`), NEVER use the network, never run `python -m bench run`, never write factory/state/. FIRST run: [ -e .venv ] || ln -s @REPO@/.venv .venv . Environment for every command: `export PYTHONPATH=$PWD:$PWD/packages/worldkeeper/src TMPDIR=/tmp`. Ruff (python files only): `.venv/bin/python -m ruff check <files>` / `.venv/bin/python -m ruff format <files>` (line length 120, Python 3.12). Never pass --cov to pytest. Run tests as `.venv/bin/python -m pytest -q -p no:cacheprovider -n 8 <files>`. Tests must be hermetic (fake runner, no network). The module must stay story-agnostic (an existing test checks this; do not add story names). If an OLD test pins behaviour this change deliberately changes, update it and say so in NOTES.txt. Write NOTES.txt (worktree root, never committed) listing every ambiguity and your choice. Read first: AGENTS.md, factory/stations/probe.py, tests/test_factory_probe.py, and the audit in @AUDIT@ (rows 'Failure visibility' and 'Spend: restart / quota sleep'). You may edit ONLY factory/stations/probe.py and tests/test_factory_probe.py. Other tests that import probe (tests/test_factory_probe_routing.py, tests/test_factory_line.py and any other tests/test_factory_*.py) must keep passing unchanged; if one cannot, keep your change backward compatible instead of editing it."""
 
@@ -33,6 +34,10 @@ D2B = """
 PROBLEM (defect D2b, found reviewing the D2 patch). A resume of a slept or crashed run bypasses `_approval_error` entirely, including its first test `billed_run_approved is not True`. Reproduced: run the handler with a runner that raises LimitSleep, then set payload["billed_run_approved"] = False and call the handler again: the runner is called a second time. Revoking the approval during a sleep must stop the run.
 
 CHANGE. A resume still needs `payload.get("billed_run_approved") is True` (the owner's standing go), and still needs NO fresh approval id. Make that the only part of the approval check a resume keeps; the single-use consumed-id check stays bypassed for a resume of the same input hash and approval id. Revoked approval returns a failing StationResult with the message 'probe not approved: set billed_run_approved' and calls the runner zero times, and it must not delete the attempt sidecar or any saved arm output (a later re-approval can resume). Add one hermetic test for that (runner raising LimitSleep first, then approval False, then assert zero further runner calls and the sidecar still exists, then approval True resumes). Change nothing else.
+"""
+
+D3 = """
+TASK (qualification Phase 1 regression tests; test-only, no production code change). Add two hermetic tests, nothing else. (A) In tests/test_factory_probe_routing.py: a probe station that REJECTS (use the file's existing helpers `make_line`, `make_ticket`, `probe_verdict`, and a handler that returns the verdict result with `payload_updates` containing the probe verdict AND the consumed-approval fields exactly as probe._consume_approval produces them: billed_run_approved False, billed_runs_consumed 1, billed_run_consumed_approval_id 'a1'). After `line.step(NOW)` returns 'probe_rejected', assert the saved ticket is back at WIRING and its payload still holds billed_run_approved False, billed_runs_consumed 1 and the consumed approval id (the replan must not restore a consumed allowance); then assert `factory.stations.probe._approval_error(saved.payload)` is truthy and, if the payload is re-approved with `billed_run_approved` True but the same approval id 'a1', is still refused, while a fresh `billed_run_approval_id` 'a2' is accepted (returns None). Look at how the existing round tests build the payload; if `probe_verdict` cannot carry payload_updates, build the StationResult directly. (B) In tests/test_factory_diagnose.py: missing history is reported as missing. For a packet with player_input 'Open the notebook' and candidates_offered [] on the module's PACKAGE and scene '1A', with (i) no `previous_narration` key, (ii) `previous_narration` None, (iii) `previous_narration` 'Nothing relevant happens here.', assert `diagnose_turn(...)['cause']` is not 'follows_prior_narration' (today it is 'unknown_object' for all three; assert that value too) and that `signals` carries no `previous_narration` and no `introduced_words` key; and a sibling case where `previous_narration` mentions the notebook still gives 'follows_prior_narration' (reuse the existing assertion style). Do not modify existing tests. You may edit ONLY tests/test_factory_probe_routing.py and tests/test_factory_diagnose.py.
 """
 
 CHECK = """set -eo pipefail
@@ -59,25 +64,38 @@ test -s "$WORK/out/@NAME@.patch"
 
 EXTRA = {
     "d1": "grep -q failed_replicates factory/stations/probe.py || { echo 'failed_replicates missing'; exit 1; }",
+    "d3": "git diff --cached --name-only | grep -q test_factory_probe_routing.py || { echo 'routing test missing'; exit 1; }\ngit diff --cached --name-only | grep -q test_factory_diagnose.py || { echo 'diagnose test missing'; exit 1; }",
     "d2b": "grep -q 'probe not approved' factory/stations/probe.py || { echo 'revocation message missing'; exit 1; }",
     "d2": "grep -q probe-attempt factory/stations/probe.py || { echo 'probe-attempt sidecar missing'; exit 1; }\ngrep -q MAX_RESUMES factory/stations/probe.py || { echo 'MAX_RESUMES missing'; exit 1; }",
 }
 
 
 def build(which: str) -> dict:
+    owned = OWNED_D3 if which == "d3" else OWNED
+
     def fill(text: str) -> str:
+        if which == "d3":
+            text = text.replace(
+                "You may edit ONLY factory/stations/probe.py and tests/test_factory_probe.py.",
+                "You may edit ONLY " + " and ".join(owned) + ".",
+            )
+            text = "\n".join(
+                line
+                for line in text.split("\n")
+                if "probe.py unchanged" not in line and "tests unchanged" not in line
+            )
         return (
             text.replace("@REPO@", REPO)
             .replace("@WORK@", WORK)
             .replace("@AUDIT@", AUDIT)
-            .replace("@OWNED_RE@", "|".join(path.replace(".", "\\.") for path in OWNED))
+            .replace("@OWNED_RE@", "|".join(path.replace(".", "\\.") for path in owned))
             .replace("@EXTRA@", EXTRA[which])
             .replace("@NAME@", f"probe-{which}")
         )
 
-    spec = COMMON + {"d1": D1, "d2": D2, "d2b": D2B}[which]
+    spec = COMMON + {"d1": D1, "d2": D2, "d2b": D2B, "d3": D3}[which]
     return {
-        "run_name": f"factory-20{ {'d1':'a','d2':'b','d2b':'c'}[which] }-probe-{which}",
+        "run_name": f"factory-20{ {'d1':'a','d2':'b','d2b':'c','d3':'d'}[which] }-probe-{which}",
         "workdir": WORK,
         "max_parallel": 1,
         "worktrees": True,
@@ -91,7 +109,7 @@ def build(which: str) -> dict:
                 "max_attempts": 2,
                 "timeout_s": 3600,
                 "check_timeout_s": 900,
-                "ownership": OWNED,
+                "ownership": owned,
                 "spec": fill(spec),
                 "check": fill(CHECK),
                 "expect_files": [],
@@ -105,6 +123,6 @@ def build(which: str) -> dict:
 
 if __name__ == "__main__":
     which = sys.argv[1] if len(sys.argv) > 1 else "d1"
-    out = Path(__file__).with_name(f"round20{ {'d1':'a','d2':'b','d2b':'c'}[which] }-probe-{which}-manifest.json")
+    out = Path(__file__).with_name(f"round20{ {'d1':'a','d2':'b','d2b':'c','d3':'d'}[which] }-probe-{which}-manifest.json")
     out.write_text(json.dumps(build(which), indent=2) + "\n")
     print(out)
