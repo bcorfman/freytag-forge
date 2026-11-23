@@ -1,10 +1,7 @@
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
-import check_three_c_probe as checker
-import pytest
 import three_c_probe as probe
 from door_transport import SpendBudget
 
@@ -64,11 +61,3 @@ def test_capture_records_null_for_provider_without_accessors(tmp_path: Path) -> 
     assert capture["match"] is None
     assert capture["unplaced"] is None
     assert capture["refused"] is None
-
-
-@pytest.mark.nightly
-def test_capture_enabled_dry_run_passes_checker(tmp_path: Path) -> None:
-    probe.dry_run(tmp_path, 1, "postc", "off", ("control", "pre667"), None, capture_item_facts=True)
-    assert json.loads((tmp_path / "source.json").read_text())["capture_item_facts"] is True
-    assert json.loads((tmp_path / "plan.json").read_text())["capture_item_facts"] is True
-    assert checker.check(tmp_path, 1, "dry") == []

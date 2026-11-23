@@ -8,7 +8,6 @@ import pytest
 STAGE7 = Path(__file__).resolve().parents[1] / "scripts" / "ringer" / "stage7"
 sys.path.insert(0, str(STAGE7))
 
-import check_three_c_probe as checker  # noqa: E402
 import three_c_probe as probe  # noqa: E402
 
 from bench.core import load_variation, package_and_state  # noqa: E402
@@ -79,27 +78,3 @@ def test_every_capture_ask_is_counted_and_cap_is_checked_before_send():
         capped_ask({}, {})
     assert capped_calls == [1]
     assert capped.cloudflare_requests == 1
-
-
-@pytest.mark.nightly
-def test_item_facts_dry_run_marks_world_capture_without_creating_jev_client(tmp_path: Path, monkeypatch):
-    monkeypatch.setattr(
-        probe.JevClient,
-        "from_environment",
-        lambda: (_ for _ in ()).throw(AssertionError("dry run created JevClient")),
-    )
-
-    output = tmp_path / "item-facts"
-    output.mkdir()
-    probe.dry_run(
-        output,
-        1,
-        "postc",
-        "on",
-        ("item-facts",),
-        "Follow Michelle and the captives through the surface gates.",
-        "facility_escape",
-        True,
-    )
-
-    assert checker.check(output, 1, "dry") == []

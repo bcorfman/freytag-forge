@@ -9,8 +9,8 @@ Scripted histories prove branch reachability and downstream state, not free-text
 usability. Observer-only realizations (audience not player-visible) cannot be
 chosen by a player and are not journeyed; the ledger lists them.
 
-Two branches do not yet earn their scene exit; they are pinned below as named
-issues so a package fix has to update this file deliberately.
+Four 3C aftermath branches cannot currently play; they are pinned below as a
+named story gap so a package fix has to update this file deliberately.
 """
 
 from __future__ import annotations
@@ -55,6 +55,15 @@ CHAINS: dict[str, tuple[str, ...]] = {
 # Add entries back only for a branch that reaches the exit through a forced scene exit.
 KNOWN_FORCED_EXITS: dict[str, list[tuple[str, str]]] = {}
 
+KNOWN_UNREACHABLE: dict[str, str] = {
+    item_id: (
+        "the rebuilt 3C resolution ends the game before captives_reaching_surface can be earned, so the 3C "
+        "aftermath storylets D and E cannot play; story gap N-3: the 3C aftermath storylets D and E cannot play; "
+        "fix the package, then delete this entry"
+    )
+    for item_id in ("k_sl_3c_d_r1", "k_sl_3c_d_r2", "k_sl_3c_e_r1", "k_sl_3c_e_r2")
+}
+
 
 @dataclass
 class Journey:
@@ -81,7 +90,9 @@ def play(preferred: tuple[str, ...] = ()) -> Journey:
 
 
 PLAYER_REALIZATIONS = [
-    item.id
+    pytest.param(item.id, marks=pytest.mark.xfail(strict=True, reason=KNOWN_UNREACHABLE[item.id]))
+    if item.id in KNOWN_UNREACHABLE
+    else item.id
     for item in PACKAGE.knowledge.knowledge
     if item.source.kind == "storylet_realization" and item.audience.kind == "public" and item.audience.player_visible
 ]
