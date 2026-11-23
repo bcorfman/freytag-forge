@@ -400,7 +400,7 @@ def _record_dollars(ledger: SpendLedger, provider: str, usd: float, at: datetime
     ("seed_provider", "seed_usd", "expected"),
     [
         ("openai", 5.0, BudgetExhausted),
-        ("openai", 1.01, BudgetExhausted),
+        ("openai", 1.51, BudgetExhausted),
         ("openai", 2.0, LimitSleep),
         ("cloudflare", 2.0, LimitSleep),
     ],
@@ -478,6 +478,44 @@ def test_packets_have_triage_shape_and_documented_routes() -> None:
         "unclear",
     ]
     assert report_to_packets(clean_report()) == []
+
+
+def test_packets_carry_bounded_turn_provenance() -> None:
+    value = {
+        "replicates": [
+            {
+                "replicate": 1,
+                "scene": "1A",
+                "turns": [
+                    {
+                        "turn": 1,
+                        "raw_input": "Search the desk.",
+                        "text": "A prior narration.",
+                        "selected_knowledge_ids": ["k_old"],
+                        "outcome": "committed",
+                    },
+                    {
+                        "turn": 2,
+                        "raw_input": "Open the notebook.",
+                        "text": "The turn failed.",
+                        "selected_knowledge_ids": [],
+                        "rejected": True,
+                        "guard_rejections": [{"code": "known_term", "message": "term was unavailable"}],
+                        "facts_before": {"patrol_in_house": False},
+                        "outcome": "rejected",
+                    },
+                ],
+                "stuck_turns": [2],
+            }
+        ]
+    }
+    packet = report_to_packets(value)[0]
+    assert packet["previous_narration"] == "A prior narration."
+    assert packet["delivered_before"] == ["k_old"]
+    assert packet["delivered_before_turns"] == {"k_old": 1}
+    assert packet["rejected_code"] == "known_term"
+    assert packet["rejected_message"] == "term was unavailable"
+    assert packet["facts_before"] == {"patrol_in_house": False}
 
 
 def _report_with_turn(turn: dict, *, stuck: bool = True) -> dict:

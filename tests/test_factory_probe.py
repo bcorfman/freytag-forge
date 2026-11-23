@@ -12,6 +12,7 @@ from factory.stations.probe import (
     build_variation,
     judge_probe,
     probe_handler,
+    projected_cost_usd,
     runs_from_report,
     summarize_arm,
 )
@@ -21,6 +22,7 @@ ROOT = Path(__file__).resolve().parents[1]
 FIXTURE = ROOT / "tests/fixtures/factory/probe_turn_records.json"
 NOW = datetime(2026, 11, 22, 12, tzinfo=UTC)
 RULES = {**PROBE_RULES, "replicates": 2}
+BUDGET = {"day": "2026-11-22", "spent_micro_usd": 100}
 
 
 def make_ticket(payload: dict, *, scene: str = "synthetic") -> Ticket:
@@ -66,6 +68,29 @@ def test_runs_from_report_uses_typed_inputs_and_caps() -> None:
     assert runs[0]["inputs"][0] == "Inspect item 0."
 
 
+def test_projected_cost_usd_sums_turns_across_runs() -> None:
+    rate = 0.0015
+    runs = [
+        {"inputs": ["Inspect the shelf."] * 16},
+        {"inputs": ["Inspect the shelf."] * 13},
+        {"inputs": ["Inspect the shelf."] * 15},
+    ]
+
+    assert projected_cost_usd(runs, 3, {"estimated_usd_per_turn": rate}) == pytest.approx(0.396)
+
+
+def test_projected_cost_usd_single_run() -> None:
+    rate = 0.0015
+
+    assert projected_cost_usd(
+        [{"inputs": ["Inspect the shelf."] * 10}], 1, {"estimated_usd_per_turn": rate}
+    ) == pytest.approx(2 * 10 * rate)
+
+
+def test_projected_cost_usd_empty_runs() -> None:
+    assert projected_cost_usd([], 3, {"estimated_usd_per_turn": 0.0015}) == 0
+
+
 def test_build_variation_is_story_package_only_and_bench_describes(tmp_path: Path) -> None:
     run = {"run": "synthetic-r1", "scene": "synthetic", "inputs": ["Inspect the shelf.", "Open the drawer."]}
     control = build_variation(
@@ -102,6 +127,7 @@ def test_build_variation_is_story_package_only_and_bench_describes(tmp_path: Pat
 
     assert completed.returncode == 0, completed.stderr
     assert json.loads(completed.stdout)["name"] == "control"
+    assert control["canon_judge"] is False
     assert control["story_package"].startswith("/")
     assert {key: control[key] for key in control if key not in {"name", "story_package"}} == {
         key: candidate[key] for key in candidate if key not in {"name", "story_package"}
@@ -117,8 +143,11 @@ def test_summarize_arm_counts_fixture_and_rejects_malformed(tmp_path: Path) -> N
         "stuck_turns": 1,
         "rejected_turns": 0,
         "game_breaks": 0,
-        "earned_exits": 2,
+        "earned_exits": 0,
         "forced_exits": 0,
+        "unknown_exits": 2,
+        "provider_features": None,
+        "semantic_ask_missing": False,
     }
 
     extra = {
@@ -149,6 +178,9 @@ def test_summarize_arm_counts_fixture_and_rejects_malformed(tmp_path: Path) -> N
         "game_breaks": 1,
         "earned_exits": 0,
         "forced_exits": 1,
+        "unknown_exits": 0,
+        "provider_features": None,
+        "semantic_ask_missing": False,
     }
 
     malformed = tmp_path / "malformed.json"
@@ -166,6 +198,9 @@ def base_summary(**changes: int) -> dict:
         "game_breaks": 0,
         "earned_exits": 10,
         "forced_exits": 0,
+        "unknown_exits": 0,
+        "provider_features": None,
+        "semantic_ask_missing": False,
     }
     value.update(changes)
     return value
@@ -183,6 +218,67 @@ def test_judge_probe_all_branches_and_ratio_boundary() -> None:
     assert judge_probe(control, base_summary(game_breaks=1), PROBE_RULES)["verdict"] == "reject"
     assert judge_probe(control, base_summary(earned_exits=9), PROBE_RULES)["verdict"] == "reject"
     assert judge_probe(control, base_summary(stuck_turns=8), PROBE_RULES)["verdict"] == "keep"
+
+
+def test_summarize_arm_classifies_exit_causes_and_old_records(tmp_path: Path) -> None:
+    records = {
+        "runs": [
+            {
+                "status": "completed",
+                "completed": True,
+                "turns": [
+                    {
+                        "turn_number": 1,
+                        "left_scene": True,
+                        "transition_cause": cause,
+                        **({} if cause is not None else {}),
+                    }
+                ],
+            }
+            for cause in ("earned", "timer", "forced", None)
+        ]
+    }
+    for run, cause in zip(records["runs"], ("earned", "timer", "forced", None), strict=True):
+        if cause is None:
+            run["turns"][0].pop("transition_cause")
+    path = tmp_path / "causes.json"
+    path.write_text(json.dumps(records), encoding="utf-8")
+
+    summary = summarize_arm([path])
+
+    assert summary["earned_exits"] == 1
+    assert summary["forced_exits"] == 2
+    assert summary["unknown_exits"] == 1
+
+    old_path = tmp_path / "old.json"
+    old_path.write_text(
+        json.dumps(
+            {
+                "runs": [
+                    {
+                        "status": "ok",
+                        "completed": True,
+                        "turns": [{"turn_number": 1, "left_scene": True}],
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    old_summary = summarize_arm([old_path])
+    assert old_summary["earned_exits"] == 0
+    assert old_summary["unknown_exits"] == 1
+
+
+def test_probe_result_marks_incomplete_exit_and_missing_semantic_evidence() -> None:
+    control = base_summary(unknown_exits=1, semantic_ask_missing=True)
+    candidate = base_summary()
+
+    result = judge_probe(control, candidate, PROBE_RULES)
+
+    assert result["exit_evidence"] == "incomplete"
+    assert result["semantic_ask_missing"] is True
+    assert result["verdict"] == "inconclusive"
 
 
 def configure_probe_root(tmp_path: Path) -> tuple[Path, Path]:
@@ -218,6 +314,45 @@ def make_runner(calls: list[list[str]], records: Path = FIXTURE):
     return run
 
 
+@pytest.mark.parametrize("text", ['{"quota": null}', "prose mentions QUOTA", '{"quota_label": "QUOTA"}'])
+def test_probe_quota_null_or_unstructured_signal_does_not_sleep(text: str) -> None:
+    probe._raise_probe_quota(text, NOW)
+
+
+def test_probe_quota_non_null_summary_sleeps() -> None:
+    with pytest.raises(LimitSleep) as raised:
+        probe._raise_probe_quota('{"quota": {"error": "AI_DAILY_BUDGET_EXCEEDED"}}', NOW)
+    assert raised.value.provider == "cloudflare"
+
+
+@pytest.mark.parametrize("marker", ["AI_QUOTA_EXCEEDED", "AI_DAILY_BUDGET_EXCEEDED", "HTTP 429"])
+def test_probe_quota_provider_markers_still_sleep(marker: str) -> None:
+    with pytest.raises(LimitSleep) as raised:
+        probe._raise_probe_quota(marker, NOW)
+    assert raised.value.provider == "cloudflare"
+
+
+def test_handler_unreadable_budget_refuses_before_runner(tmp_path: Path, monkeypatch) -> None:
+    root, tree = configure_probe_root(tmp_path)
+    monkeypatch.setattr(probe, "ticket_tree", lambda payload, ticket_id, root: tree)
+    payload = {
+        "workspace": str(tmp_path),
+        "story_package": "data/stories/base",
+        "runs": [{"run": "synthetic-r1", "scene": "synthetic", "inputs": ["Inspect the shelf.", "Open the drawer."]}],
+        "billed_run_approved": True,
+    }
+    calls: list[list[str]] = []
+
+    result = probe_handler(root, runner=make_runner(calls), rules=RULES, read_budget=lambda: None)(
+        make_ticket(payload), NOW
+    )
+
+    assert result.output == "cannot read the Worker budget: set CLOUDFLARE_WORKER_URL and CLOUDFLARE_WORKER_TOKEN"
+    assert calls == []
+    assert not (root / "factory/state/staged_run.lock").exists()
+    assert not (tmp_path / "probe-ticket/probe").exists()
+
+
 def test_handler_failures_happen_before_runner_and_payload_stays_unchanged(tmp_path: Path, monkeypatch) -> None:
     calls: list[list[str]] = []
     handler = probe_handler(tmp_path, runner=make_runner(calls), rules=RULES, read_budget=lambda: None)
@@ -242,7 +377,23 @@ def test_handler_staged_lock_and_spend_cap_block_runner(tmp_path: Path, monkeypa
     payload = {
         "workspace": str(tmp_path),
         "story_package": "data/stories/base",
-        "runs": [{"run": "synthetic-r1", "scene": "synthetic", "inputs": ["Inspect the shelf.", "Open the drawer."]}],
+        "runs": [
+            {
+                "run": "synthetic-r1",
+                "scene": "synthetic",
+                "inputs": [f"Inspect item {index}." for index in range(40)],
+            },
+            {
+                "run": "synthetic-r2",
+                "scene": "synthetic",
+                "inputs": [f"Inspect item {index}." for index in range(45)],
+            },
+            {
+                "run": "synthetic-r3",
+                "scene": "synthetic",
+                "inputs": [f"Inspect item {index}." for index in range(45)],
+            },
+        ],
         "billed_run_approved": True,
     }
     calls: list[list[str]] = []
@@ -257,7 +408,7 @@ def test_handler_staged_lock_and_spend_cap_block_runner(tmp_path: Path, monkeypa
     lock.unlink()
     config_path = root / "factory/config/factory.json"
     config = json.loads(config_path.read_text(encoding="utf-8"))
-    config["caps"]["daily_cap_usd"]["cloudflare"] = 0.5
+    config["caps"]["daily_cap_usd"]["cloudflare"] = 1.0
     config_path.write_text(json.dumps(config), encoding="utf-8")
     ledger = root / "factory/state/ledger.jsonl"
     ledger.write_text(
@@ -270,7 +421,7 @@ def test_handler_staged_lock_and_spend_cap_block_runner(tmp_path: Path, monkeypa
                 "scene": "synthetic",
                 "ticket_id": "old",
                 "tokens": 0,
-                "usd": 0.5,
+                "usd": 0.25,
                 "cost_kind": "dollars",
                 "limits": None,
             }
@@ -278,9 +429,14 @@ def test_handler_staged_lock_and_spend_cap_block_runner(tmp_path: Path, monkeypa
         + "\n",
         encoding="utf-8",
     )
-    with pytest.raises(LimitSleep) as raised:
-        probe_handler(root, runner=make_runner(calls), rules=RULES, read_budget=lambda: None)(make_ticket(payload), NOW)
-    assert raised.value.provider == "cloudflare"
+    result = probe_handler(
+        root,
+        runner=make_runner(calls),
+        rules=RULES,
+        read_budget=lambda: dict(BUDGET),
+    )(make_ticket(payload), NOW)
+    assert not result.passed
+    assert result.output == "projected probe cost $0.7800 is above the remaining budget"
     assert calls == []
 
 
@@ -290,7 +446,23 @@ def test_handler_full_path_reuses_hashes_and_records_spend(tmp_path: Path, monke
     payload = {
         "workspace": str(tmp_path),
         "story_package": "data/stories/base",
-        "runs": [{"run": "synthetic-r1", "scene": "synthetic", "inputs": ["Inspect the shelf.", "Open the drawer."]}],
+        "runs": [
+            {
+                "run": "synthetic-r1",
+                "scene": "synthetic",
+                "inputs": ["Inspect the shelf."] * 16,
+            },
+            {
+                "run": "synthetic-r2",
+                "scene": "synthetic",
+                "inputs": ["Inspect the shelf."] * 13,
+            },
+            {
+                "run": "synthetic-r3",
+                "scene": "synthetic",
+                "inputs": ["Inspect the shelf."] * 15,
+            },
+        ],
         "billed_run_approved": True,
     }
     calls: list[list[str]] = []
@@ -312,25 +484,38 @@ def test_handler_full_path_reuses_hashes_and_records_spend(tmp_path: Path, monke
     handler = probe_handler(root, runner=improved_runner, rules=RULES, read_budget=lambda: next(budgets))
     original = dict(payload)
     result = handler(make_ticket(payload), NOW)
-    assert result.passed
-    assert result.payload_updates["probe"]["feedback"].startswith("verdict keep")
+    assert not result.passed
+    assert result.payload_updates["probe"]["feedback"].startswith("verdict inconclusive")
+    assert result.payload_updates["probe"]["exit_evidence"] == "incomplete"
+    assert result.payload_updates["billed_run_approved"] is False
+    assert result.payload_updates["billed_runs_consumed"] == 1
     assert "Inspect the shelf" not in result.payload_updates["probe"]["feedback"]
-    assert len(calls) == 2
+    assert len(calls) == 6
     assert (tmp_path / "probe-ticket/probe/control-synthetic-r1.json").is_file()
     assert payload == original
     ledger_rows = [json.loads(line) for line in (root / "factory/state/ledger.jsonl").read_text().splitlines()]
     assert len(ledger_rows) == 1
     assert ledger_rows[0]["station"] == "probe"
     assert ledger_rows[0]["provider"] == "cloudflare"
-    saved_handler = probe_handler(root, runner=make_runner(calls), rules=RULES, read_budget=lambda: None)
+    expected_estimate = projected_cost_usd(payload["runs"], RULES["replicates"], RULES)
+    assert expected_estimate == pytest.approx(0.264)
+    assert ledger_rows[0]["estimate_usd"] == expected_estimate
+    budget_reads: list[bool] = []
+
+    def saved_budget_reader() -> dict | None:
+        budget_reads.append(True)
+        return None
+
+    saved_handler = probe_handler(root, runner=make_runner(calls), rules=RULES, read_budget=saved_budget_reader)
     saved = saved_handler(make_ticket(payload), NOW)
-    assert saved.passed
-    assert len(calls) == 2
+    assert not saved.passed
+    assert len(calls) == 6
+    assert budget_reads == []
     (tree / "data/stories/base/package.txt").write_bytes(b"changed")
-    budgets = iter([None, None])
+    budgets = iter([dict(BUDGET), dict(BUDGET)])
     changed = probe_handler(root, runner=make_runner(calls), rules=RULES, read_budget=lambda: next(budgets))
     changed(make_ticket(payload), NOW)
-    assert len(calls) == 4
+    assert len(calls) == 12
 
 
 def test_handler_unknown_spend_and_runner_errors_do_not_save(tmp_path: Path, monkeypatch) -> None:
@@ -346,7 +531,10 @@ def test_handler_unknown_spend_and_runner_errors_do_not_save(tmp_path: Path, mon
     def failed(root, argv, env, timeout_s):
         return subprocess.CompletedProcess(argv, 7, stdout="", stderr="failure detail" * 100)
 
-    result = probe_handler(root, runner=failed, rules=RULES, read_budget=lambda: None)(make_ticket(payload), NOW)
+    budgets = iter([dict(BUDGET), None])
+    result = probe_handler(root, runner=failed, rules=RULES, read_budget=lambda: next(budgets))(
+        make_ticket(payload), NOW
+    )
     assert not result.passed
     assert "failure detail" in result.output
     assert not (tmp_path / "probe-ticket/probe.json").exists()
@@ -354,11 +542,59 @@ def test_handler_unknown_spend_and_runner_errors_do_not_save(tmp_path: Path, mon
     assert row["station"] == "probe" and row["cost_kind"] == "unknown"
 
     def quota(root, argv, env, timeout_s):
-        return subprocess.CompletedProcess(argv, 1, stdout="QUOTA", stderr="")
+        return subprocess.CompletedProcess(
+            argv, 1, stdout=json.dumps({"quota": {"error": "AI_QUOTA_EXCEEDED"}}), stderr=""
+        )
 
     with pytest.raises(LimitSleep) as raised:
-        probe_handler(root, runner=quota, rules=RULES, read_budget=lambda: None)(make_ticket(payload), NOW)
+        probe_handler(
+            root,
+            runner=quota,
+            rules=RULES,
+            read_budget=lambda: dict(BUDGET),
+        )(make_ticket(payload), NOW)
     assert raised.value.provider == "cloudflare"
+
+
+def test_billed_approval_is_single_use_and_ceiling_blocks_runner(tmp_path: Path, monkeypatch) -> None:
+    root, tree = configure_probe_root(tmp_path)
+    monkeypatch.setattr(probe, "ticket_tree", lambda payload, ticket_id, root: tree)
+    payload = {
+        "workspace": str(tmp_path),
+        "story_package": "data/stories/base",
+        "runs": [{"run": "synthetic-r1", "scene": "synthetic", "inputs": ["Inspect the shelf."] * 2}],
+        "billed_run_approved": True,
+    }
+    calls: list[list[str]] = []
+    handler = probe_handler(root, runner=make_runner(calls), rules=RULES, read_budget=lambda: dict(BUDGET))
+
+    first = handler(make_ticket(payload), NOW)
+    assert len(calls) == 2
+    payload.update(first.payload_updates or {})
+    payload["billed_run_approved"] = True
+
+    refused = handler(make_ticket(payload), NOW)
+    assert not refused.passed
+    assert "approval already consumed" in refused.output
+    assert len(calls) == 2
+
+    ceiling_payload = {
+        **payload,
+        "workspace": str(tmp_path / "ceiling"),
+        "billed_run_approved": True,
+        "billed_runs_consumed": 0,
+        "billed_usd_ceiling": 0.001,
+    }
+    ceiling_calls: list[list[str]] = []
+    ceiling_result = probe_handler(
+        root,
+        runner=make_runner(ceiling_calls),
+        rules=RULES,
+        read_budget=lambda: dict(BUDGET),
+    )(make_ticket(ceiling_payload), NOW)
+    assert not ceiling_result.passed
+    assert "billed_usd_ceiling" in ceiling_result.output
+    assert ceiling_calls == []
 
 
 def test_probe_module_is_story_agnostic_and_rules_have_exact_keys() -> None:

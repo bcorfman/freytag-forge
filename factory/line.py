@@ -223,6 +223,27 @@ class FactoryLine:
             self.state.trip_breaker("; ".join(reasons), now)
             self.state.save()
 
+    def _park_unsupported(self, ticket: Ticket, marker: dict, now: datetime) -> StepOutcome:
+        reroute = marker.get("reroute") if isinstance(marker.get("reroute"), str) else "station_code"
+        reason = marker.get("reason") if isinstance(marker.get("reason"), str) else "Reroute: unsupported repair"
+        since = marker.get("since") if isinstance(marker.get("since"), str) else now.astimezone(UTC).isoformat()
+        updated = self.queue.get(ticket.id)
+        updated.payload["reroute"] = reroute
+        updated.payload["reroute_reason"] = reason
+        updated.payload["owner_wait"] = {
+            "reason": "unsupported_repair",
+            "reroute": reroute,
+            "detail": reason,
+            "since": since,
+            "reply": None,
+        }
+        updated.status = Status.SET_ASIDE
+        updated.provider = None
+        updated.sleep_until = None
+        updated.return_after = None
+        self.queue.save(updated)
+        return StepOutcome("owner_wait", ticket.id, reroute)
+
     def _record_fun_lessons(self, ticket: Ticket, outcome: str) -> None:
         history = ticket.payload.get("fun_history")
         if not isinstance(history, list) or not history:
@@ -257,6 +278,8 @@ class FactoryLine:
             self._check_breakers(now)
             return StepOutcome("slept", ticket.id)
 
+        unsupported = ticket.payload.get("unsupported_reroute")
+        unsupported = dict(unsupported) if isinstance(unsupported, dict) else None
         if provider is not None:
             self.state.lane_succeeded(provider)
         self.queue.record_tokens(ticket.id, result.tokens)
@@ -264,6 +287,10 @@ class FactoryLine:
             updated = self.queue.get(ticket.id)
             updated.payload.update(result.payload_updates)
             self.queue.save(updated)
+        if unsupported is not None:
+            outcome = self._park_unsupported(ticket, unsupported, now)
+            self._check_breakers(now)
+            return outcome
         if result.passed:
             merged_payload = {**ticket.payload, **(result.payload_updates or {})}
             merge_to_main = merged_payload.get("merge_to_main") is True

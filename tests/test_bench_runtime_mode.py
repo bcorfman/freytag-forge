@@ -89,6 +89,63 @@ def test_runtime_mode_exit_turn_records_facts_before_transition(
     assert turn["item_facts_after"]["Kristin"]["place"] != "Los Angeles park"
 
 
+def test_runtime_mode_records_transition_cause_and_provider_features(
+    monkeypatch: pytest.MonkeyPatch, fake_jev: list[dict]
+) -> None:
+    def leave_scene(engine):
+        world = world_for(engine.state.package, engine.state.facts)
+        assert world.move("kristin", "los_angeles_park").ok
+        engine.state.current_scene_id = "1B"
+        return (NarrationSegment(kind="narration", text="Kristin reaches the park."),)
+
+    original_turn = core.RuntimeEngine.turn
+
+    def earned_turn(engine, player_input):
+        result = original_turn(engine, player_input)
+        assert engine.last_attempt is not None
+        engine.last_attempt = engine.last_attempt.model_copy(update={"transition_cause": "earned"})
+        return result
+
+    def unavailable_git(*_args, **_kwargs):
+        raise OSError("git unavailable")
+
+    monkeypatch.setattr(core.RuntimeEngine, "_apply_authored_transition", leave_scene)
+    monkeypatch.setattr(core.RuntimeEngine, "turn", earned_turn)
+    monkeypatch.setattr(core.subprocess, "run", unavailable_git)
+    original_builder = core.build_capture_provider
+
+    def builder_without_semantic(*args, **kwargs):
+        provider = original_builder(*args, **kwargs)
+        provider.semantic_ask = None
+        return provider
+
+    monkeypatch.setattr(core, "build_capture_provider", builder_without_semantic)
+    without_semantic = _run(monkeypatch, RUNTIME, turns=1)
+    monkeypatch.setattr(core, "build_capture_provider", original_builder)
+
+    turn = without_semantic["turns"][0]
+    assert turn["transition_cause"] == "earned"
+    assert without_semantic["scene_transitions"][0]["cause"] == "earned"
+    assert without_semantic["provider_features"]["item_facts_mode"] == "single_call"
+    assert without_semantic["provider_features"]["semantic_ask"] is False
+    assert without_semantic["provider_features"]["code_head"] is None
+
+    def semantic_builder(*args, **kwargs):
+        provider = original_builder(*args, **kwargs)
+        provider.semantic_ask = lambda *_ask_args: {}
+        return provider
+
+    monkeypatch.setattr(core, "build_capture_provider", semantic_builder)
+    with_semantic = _run(monkeypatch, RUNTIME, turns=1)
+    assert with_semantic["provider_features"]["semantic_ask"] is True
+
+
+def test_non_runtime_records_no_transition_cause(monkeypatch: pytest.MonkeyPatch) -> None:
+    result = _run(monkeypatch, NORMAL, turns=1)
+
+    assert "transition_cause" not in result["turns"][0]
+
+
 def test_runtime_mode_exit_turn_narration_leaves_out_bridge_and_entry(
     monkeypatch: pytest.MonkeyPatch, fake_jev: list[dict]
 ) -> None:

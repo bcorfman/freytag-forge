@@ -362,6 +362,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
             token=base.token,
             state=state,
             projector=base.projector,
+            semantic_ask=base.semantic_ask,
             prompt_variant=prompt_variant,
             item_facts=item_facts,
             mode=mode,

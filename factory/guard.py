@@ -105,6 +105,7 @@ class Usage:
     list_usd: float | None = None
     limits: LimitReport | None = None
     paid_usage: str | None = None
+    estimate_usd: float | None = None
 
     def __post_init__(self) -> None:
         if self.at.tzinfo is None or self.at.utcoffset() is None:
@@ -116,6 +117,12 @@ class Usage:
                 raise ValueError("dollar usage requires a numeric usd value")
         elif self.usd is not None:
             raise ValueError(f"{self.cost_kind} usage must not have a usd value")
+        if self.estimate_usd is not None and (
+            isinstance(self.estimate_usd, bool) or not isinstance(self.estimate_usd, (int, float))
+        ):
+            raise ValueError("estimate_usd must be a number or null")
+        if self.estimate_usd is not None and self.estimate_usd < 0:
+            raise ValueError("estimate_usd must not be negative")
 
 
 def _limits_payload(report: LimitReport | None) -> dict[str, Any] | None:
@@ -185,6 +192,7 @@ class SpendLedger:
             "ticket_id": usage.ticket_id,
             "tokens": usage.tokens,
             "usd": usage.usd,
+            "estimate_usd": usage.estimate_usd,
             "cost_kind": usage.cost_kind,
             "list_usd": usage.list_usd,
             "paid_usage": usage.paid_usage,
@@ -221,6 +229,7 @@ class SpendLedger:
                         list_usd=payload.get("list_usd"),
                         limits=_limits_from_payload(payload.get("limits")),
                         paid_usage=payload.get("paid_usage"),
+                        estimate_usd=payload.get("estimate_usd"),
                     )
                 except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
                     raise ValueError(f"corrupt ledger line {line_number}: {exc}") from exc
@@ -262,6 +271,39 @@ class SpendLedger:
 
     def paid_usage_reasons(self) -> list[str]:
         return [usage.paid_usage for usage in self._read() if usage.paid_usage is not None]
+
+    def estimate_report(self) -> list[dict]:
+        grouped: dict[str, dict[str, float | int]] = {}
+        for usage in self._read():
+            if usage.cost_kind != "dollars":
+                continue
+            if (
+                isinstance(usage.estimate_usd, bool)
+                or not isinstance(usage.estimate_usd, (int, float))
+                or isinstance(usage.usd, bool)
+                or not isinstance(usage.usd, (int, float))
+            ):
+                continue
+            entry = grouped.setdefault(usage.station, {"calls": 0, "estimate_usd": 0.0, "actual_usd": 0.0})
+            entry["calls"] += 1
+            entry["estimate_usd"] += usage.estimate_usd
+            entry["actual_usd"] += usage.usd
+
+        report = []
+        for station in sorted(grouped):
+            entry = grouped[station]
+            estimate_usd = entry["estimate_usd"]
+            actual_usd = entry["actual_usd"]
+            report.append(
+                {
+                    "station": station,
+                    "calls": entry["calls"],
+                    "estimate_usd": estimate_usd,
+                    "actual_usd": actual_usd,
+                    "ratio": round(actual_usd / estimate_usd, 2) if estimate_usd else None,
+                }
+            )
+        return report
 
 
 @dataclass(frozen=True)
@@ -356,6 +398,7 @@ def guarded_call(
     fn: Callable[[], CallResult],
     sleep: Callable[[float], None] = time.sleep,
     rand: Callable[[], float] = random.random,
+    estimate_usd: float | None = None,
 ) -> CallResult:
     pin = guard.check(station, model_id, effort)
     policy = caps.providers.get(pin.provider, ProviderPolicy("reported", {}))
@@ -432,6 +475,7 @@ def guarded_call(
             list_usd=result.usd if is_subscription else None,
             limits=result.limits,
             paid_usage=paid_reason,
+            estimate_usd=estimate_usd,
         )
     )
     return result

@@ -29,7 +29,9 @@ from .fix_plan import build_evidence, lint_plan
 
 PLANNER_BRIEF = """You are a story-data fixer for an interactive-fiction engine.
 Read the evidence packet as the complete context for this ticket.
-Choose exactly one fix from the three kinds listed in the evidence packet's fix_menu.
+Choose exactly one fix from the three supported kinds listed in the evidence packet's fix_menu, or return
+"unsupported" when none of those menu fixes matches the evidence's real cause. Never force an unsupported cause
+into a pacing beat, text change, or evidence phrase.
 Among the fixes that would have let the failing turns succeed, choose the one the player would enjoy most.
 Fun means Freytag pacing, quality characters, and continuity in and between scenes.
 A fix is more fun when it uses a detail already in the scene to plant a clue, pay off an earlier detail, show a
@@ -52,18 +54,25 @@ A claim_wording_miss turn names a claim that misses only one wording; \
 edit_claim_evidence fits it when the failing turn's own words supply the phrase.
 Choose the fix for the most common cause that a proven technique in the precedents can fix,
 and name that cause in the reason.
+For unsupported, begin reason with "Reroute: ", explain the mismatch in 400 characters or fewer, and include
+reroute as one of "station_code" (harness, diagnosis, or provider-wiring defect), "story_edit" (a bounded story
+restructure the three fixes cannot express), or "adaptive_probe" (the hypothesis needs a responding player rather
+than a fixed replay). Unsupported plans never reach wiring and do not consume a replan attempt.
+For add_pacing_beat, the beat test field is "fixed_replay" when the hypothesis concerns the same typed action, or
+"adaptive_player" when the beat is a cue intended to change the player's next choice. The test field is required.
 
 Return one plan object with exactly this JSON shape.
 The version field is an integer.
 The ticket_id, scene, kind, and reason fields are strings.
 The evidence_keys field is a list of strings.
-The kind field is one of "add_pacing_beat", "set_text", or "edit_claim_evidence".
-For add_pacing_beat, include only the beat object below.
+The kind field is one of "add_pacing_beat", "set_text", "edit_claim_evidence", or "unsupported".
+For add_pacing_beat, include only the beat object below and its required test field.
 The beat id is a string.
 The beat at_turn is an integer.
 The beat text is a string.
 The beat verbatim and trailing fields are booleans.
 The beat when and sets fields map string fact names to boolean values.
+A beat's sets field must name at least one story fact, because a beat with no effect cannot compile.
 A beat must not set a fact another beat or claim sets unless its when guard pins that fact to the opposite value.
 For set_text, include only the set_text object below.
 The set_text address and text fields are strings.
@@ -101,11 +110,13 @@ Never resubmit the blocked fix with only its words moved around.
     "text": "string",
     "verbatim": true,
     "trailing": false,
+    "test": "fixed_replay or adaptive_player",
     "when": {"string": true},
     "sets": {"string": true}
   },
   "set_text": {"address": "string", "text": "string"},
-  "claim_edit": {"claim_id": "string", "group": 0, "phrase": "string"}
+  "claim_edit": {"claim_id": "string", "group": 0, "phrase": "string"},
+  "reroute": "station_code, story_edit, or adaptive_probe"
 }
 """
 
@@ -118,6 +129,16 @@ class PlanOutcome:
     tokens: int
     problems: list[str]
     attempts: int
+
+
+def _record_unsupported(ticket: Any, plan: dict, now: datetime) -> None:
+    """Leave a planner marker for the line without returning an executable wiring plan."""
+
+    ticket.payload["unsupported_reroute"] = {
+        "reroute": plan["reroute"],
+        "reason": plan["reason"],
+        "since": now.isoformat(),
+    }
 
 
 def _compact_json(value: object) -> str:
@@ -342,6 +363,9 @@ def make_planner(
                 plan["scene"] = ticket.scene
                 problems = lint_plan(plan, ticket_payload, package)
                 if not problems:
+                    if plan["kind"] == "unsupported":
+                        _record_unsupported(ticket, plan, now)
+                        return PlanOutcome(None, total_tokens, [], attempts)
                     return PlanOutcome(plan, total_tokens, [], attempts)
                 previous_plan = plan
             if total_tokens >= ticket.token_budget:

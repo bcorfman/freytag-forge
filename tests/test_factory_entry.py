@@ -42,6 +42,7 @@ def test_status_reports_empty_state_and_breaker(tmp_path, capsys):
     assert "sleeping lanes: none" in output
     assert "breaker: clear" in output
     assert "total spend: 0.000000 USD" in output
+    assert "estimate vs actual" not in output
 
     from factory.state import FactoryState
 
@@ -120,6 +121,16 @@ def test_status_reports_unknown_minimum_limits_and_limited_since(tmp_path, capsy
     assert "total spend: 0.000000 USD (a minimum: 1 calls of unknown cost)" in output
     assert "codex windows: five_hour 19%, seven_day 6%" in output
     assert f"codex limited since {(NOW - timedelta(hours=2)).isoformat()}" in output
+
+
+def test_status_reports_estimate_vs_actual_when_available(tmp_path, capsys):
+    config = make_config(tmp_path)
+    ledger = SpendLedger(tmp_path / "factory/state/ledger.jsonl")
+    ledger.record(Usage(NOW, "cloudflare", "model", "probe", "scene", "ticket", 1, 0.5, estimate_usd=0.25))
+
+    assert main(["--root", str(tmp_path), "--config", str(config), "status"], now_fn=lambda: NOW) == 0
+    output = capsys.readouterr().out
+    assert "estimate vs actual probe: estimated 0.250000 USD, actual 0.500000 USD, ratio 2.00 over 1 call(s)" in output
 
 
 def test_run_refusals_and_one_passing_ticket(tmp_path, monkeypatch, capsys):

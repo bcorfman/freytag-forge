@@ -7,7 +7,7 @@ import shlex
 import shutil
 import subprocess
 import sys
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
@@ -111,6 +111,42 @@ def claim_evidence_change_error(before: object, after: object, claim_id: str, gr
     return _first_difference(expected, after)
 
 
+def beat_position_error(events: Sequence[object], beat_id: str, scene_id: str) -> str | None:
+    """Return an error when a beat is not placed before the first later-turn event in its scene."""
+
+    scene_events = [event for event in events if getattr(event, "scene_id", None) == scene_id]
+    beat_position = next(
+        (position for position, event in enumerate(scene_events) if getattr(event, "id", None) == beat_id), None
+    )
+    if beat_position is None:
+        return f"beat {beat_id} is missing from scene {scene_id}"
+
+    beat = scene_events[beat_position]
+    beat_turn = getattr(beat, "at_turn", None)
+    later_position = next(
+        (
+            position
+            for position, event in enumerate(scene_events)
+            if position != beat_position and getattr(event, "at_turn", None) > beat_turn
+        ),
+        None,
+    )
+    expected_position = len(scene_events) - 1 if later_position is None else later_position - 1
+    if beat_position == expected_position:
+        return None
+    if later_position is None:
+        return (
+            f"beat {beat_id} (turn {beat_turn}) must sit at the end of its scene's events; "
+            f"it sits at position {beat_position + 1}"
+        )
+    later_event = scene_events[later_position]
+    return (
+        f"beat {beat_id} (turn {beat_turn}) must sit directly before event {getattr(later_event, 'id', None)} "
+        f"(turn {getattr(later_event, 'at_turn', None)}), the first later-turn event of its scene; "
+        f"it sits at position {beat_position + 1}"
+    )
+
+
 def wiring_spec(plan: dict, story_root_relative: str | Path) -> str:
     """Build the self-contained, story-neutral worker brief for one plan."""
 
@@ -125,6 +161,10 @@ Use the story CLI from the repository root and read every value from plan.json. 
 `.venv/bin/python -m storygame.story_cli set beat:<id>.sets '<sets mapping>'`,
 `.venv/bin/python -m storygame.story_cli set beat:<id>.trailing <trailing>`, and
 `.venv/bin/python -m storygame.story_cli set beat:<id>.say[0].verbatim <verbatim>`.
+The new beat must sit directly before the first other event in this scene whose at_turn is greater than the new beat's
+at_turn; if there is no such event, it goes at the end. The CLI appends a new beat at the end, so after the `new beat`
+and `set` commands, move only the beat record in the scene file's beats list to the right position by hand; do not
+change the record or any other record, keep the file's formatting, and ensure `story_cli fmt --check` still passes.
 The exact address forms come from storygame/story_cmds/cmd_new.py and cmd_set.py. If the
 CLI refuses a field, make the smallest hand edit necessary. Preserve every other record and
 file. The authoritative story root is {story_root_relative}."""
@@ -172,7 +212,7 @@ from pathlib import Path
 from storygame.story_package.loader import load_story_package
 from storygame.story_source import check_source_tree
 from storygame.story_source.lookup import story_text
-from factory.stations.wiring import claim_evidence_change_error
+from factory.stations.wiring import beat_position_error, claim_evidence_change_error
 
 plan_path = Path(sys.argv[1])
 story_root = Path(sys.argv[2])
@@ -217,6 +257,9 @@ if plan["kind"] == "add_pacing_beat":
         raise SystemExit("compiled beat text differs from plan.json")
     if realizations[0].verbatim != expected["verbatim"]:
         raise SystemExit("compiled beat verbatim flag differs from plan.json")
+    position_error = beat_position_error(package.pacing.events, expected["id"], plan["scene"])
+    if position_error:
+        raise SystemExit(position_error)
 elif plan["kind"] == "edit_claim_evidence":
     match_paths = [path for path in owned if path.endswith(".match.yaml")]
     if len(match_paths) != 1:

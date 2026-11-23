@@ -99,6 +99,7 @@ def build_variation(*, name: str, package_path: str, scene: str, run: dict) -> d
         "item_facts": {"mode": "single_call", "seed_from_package": True},
         "fixed_refusal": True,
         "engine_refusal": True,
+        "canon_judge": False,
         "fixed_turns": len(inputs),
         "scripts": {scene: [{"name": run["run"], "inputs": inputs}]},
     }
@@ -157,7 +158,13 @@ def summarize_arm(turn_records_files: list[Path]) -> dict:
         "game_breaks": 0,
         "earned_exits": 0,
         "forced_exits": 0,
+        "unknown_exits": 0,
+        "provider_features": None,
+        "semantic_ask_missing": False,
     }
+    first_provider_features: dict[str, Any] | None = None
+    provider_features_seen = False
+    provider_features_consistent = True
     for raw_path in turn_records_files:
         path = Path(raw_path)
         runs = _turns_in_file(path)
@@ -171,12 +178,21 @@ def summarize_arm(turn_records_files: list[Path]) -> dict:
                 raise ValueError(f"malformed turn-records file: {path}")
             turns = [turn for turn in raw_turns if isinstance(turn, dict)]
             summary["replicates"] += 1
+            run_features = run.get("provider_features")
+            normalized_features = dict(run_features) if isinstance(run_features, dict) else None
+            if not provider_features_seen:
+                first_provider_features = normalized_features
+                provider_features_seen = True
+            elif normalized_features != first_provider_features:
+                provider_features_consistent = False
+            if isinstance(run_features, dict) and run_features.get("semantic_ask") is False:
+                summary["semantic_ask_missing"] = True
             rejected = _rejected_count(run, turns)
             summary["turns"] += len(turns) + rejected
             summary["rejected_turns"] += rejected
             earlier_grounding: set[str] = set()
             left_scene = False
-            forced = False
+            exit_cause: str | None = None
             for turn in turns:
                 grounding = turn.get("grounding_ids")
                 grounding_ids = (
@@ -194,22 +210,25 @@ def summarize_arm(turn_records_files: list[Path]) -> dict:
                     summary["game_breaks"] += 1
                 if turn.get("left_scene") is True:
                     left_scene = True
-                    forced = _transition_cause(run, turn) in {"forced", "timer"}
+                    exit_cause = _transition_cause(run, turn)
             if left_scene:
-                summary["forced_exits" if forced else "earned_exits"] += 1
+                if exit_cause == "earned":
+                    summary["earned_exits"] += 1
+                elif exit_cause in {"forced", "timer"}:
+                    summary["forced_exits"] += 1
+                else:
+                    summary["unknown_exits"] += 1
+    if provider_features_seen and first_provider_features is not None:
+        first_provider_features["consistent"] = provider_features_consistent
+        summary["provider_features"] = first_provider_features
     return summary
 
 
 def projected_cost_usd(runs: list[dict], replicates: int, rules: dict) -> float:
     """Estimate both arms' billed narrator cost for the selected replay scripts."""
 
-    return (
-        2
-        * len(runs)
-        * replicates
-        * sum(len(run.get("inputs", ())) for run in runs)
-        * float(rules["estimated_usd_per_turn"])
-    )
+    total_turns = sum(len(run.get("inputs", ())) for run in runs)
+    return 2 * replicates * total_turns * float(rules["estimated_usd_per_turn"])
 
 
 def _rate(summary: dict, field: str, denominator: str) -> float:
@@ -222,6 +241,9 @@ def judge_probe(control: dict, candidate: dict, rules: dict) -> dict:
 
     rules = _rules(rules)
     reasons: list[str] = []
+    exit_evidence = "incomplete" if control.get("unknown_exits", 0) or candidate.get("unknown_exits", 0) else "complete"
+    if exit_evidence == "incomplete":
+        reasons.append("Exit evidence is incomplete because one or both arms have unknown exits.")
     if control["stuck_turns"] < rules["min_control_stuck_turns"]:
         reasons.append(
             f"Control stuck turns {control['stuck_turns']} are below the minimum {rules['min_control_stuck_turns']}."
@@ -244,14 +266,28 @@ def judge_probe(control: dict, candidate: dict, rules: dict) -> dict:
             )
         if candidate["game_breaks"] > control["game_breaks"]:
             reasons.append(f"Candidate game breaks {candidate['game_breaks']} exceed control {control['game_breaks']}.")
-        control_exit_rate = _rate(control, "earned_exits", "replicates")
-        candidate_exit_rate = _rate(candidate, "earned_exits", "replicates")
-        if candidate_exit_rate < control_exit_rate:
-            reasons.append(
-                f"Candidate earned-exit rate {candidate_exit_rate:.6f} is below control {control_exit_rate:.6f}."
-            )
+        if exit_evidence == "complete":
+            control_exit_rate = _rate(control, "earned_exits", "replicates")
+            candidate_exit_rate = _rate(candidate, "earned_exits", "replicates")
+            if candidate_exit_rate < control_exit_rate:
+                reasons.append(
+                    f"Candidate earned-exit rate {candidate_exit_rate:.6f} is below control {control_exit_rate:.6f}."
+                )
         verdict = "reject" if reasons else "keep"
-    return {"verdict": verdict, "reasons": reasons, "control": control, "candidate": candidate}
+        if exit_evidence == "incomplete":
+            verdict = "inconclusive"
+    return {
+        "verdict": verdict,
+        "reasons": reasons,
+        "control": control,
+        "candidate": candidate,
+        "exit_evidence": exit_evidence,
+        "semantic_ask_missing": bool(control.get("semantic_ask_missing") or candidate.get("semantic_ask_missing")),
+        "provider_features": {
+            "control": control.get("provider_features"),
+            "candidate": candidate.get("provider_features"),
+        },
+    }
 
 
 def default_runner(root: Path, argv: list[str], env: dict[str, str], timeout_s: int):
@@ -314,7 +350,8 @@ def _line(result: dict) -> str:
         f"{result['verdict']}: control stuck {control['stuck_turns']}/{control['turns']} "
         f"candidate stuck {candidate['stuck_turns']}/{candidate['turns']} "
         f"rejected {control['rejected_turns']}/{candidate['rejected_turns']} "
-        f"exits {control['earned_exits']}/{candidate['earned_exits']}"
+        f"exits {control['earned_exits']}/{candidate['earned_exits']} "
+        f"unknown {control.get('unknown_exits', 0)}/{candidate.get('unknown_exits', 0)}"
     )
 
 
@@ -322,27 +359,50 @@ def _feedback(result: dict) -> str:
     return (
         f"verdict {result['verdict']} control {result['control']['stuck_turns']} {result['control']['turns']} "
         f"{result['control']['rejected_turns']} {result['control']['game_breaks']} "
-        f"{result['control']['earned_exits']} {result['control']['forced_exits']} candidate "
+        f"{result['control']['earned_exits']} {result['control']['forced_exits']} "
+        f"{result['control'].get('unknown_exits', 0)} candidate "
         f"{result['candidate']['stuck_turns']} {result['candidate']['turns']} "
         f"{result['candidate']['rejected_turns']} {result['candidate']['game_breaks']} "
-        f"{result['candidate']['earned_exits']} {result['candidate']['forced_exits']}"
+        f"{result['candidate']['earned_exits']} {result['candidate']['forced_exits']} "
+        f"{result['candidate'].get('unknown_exits', 0)}"
     )
 
 
-def _result(result: dict) -> StationResult:
+def _result(result: dict, payload_updates: dict[str, Any] | None = None) -> StationResult:
     result = {
         "verdict": result["verdict"],
         "reasons": list(result["reasons"]),
         "control": dict(result["control"]),
         "candidate": dict(result["candidate"]),
     }
+    result["exit_evidence"] = result.get(
+        "exit_evidence",
+        "incomplete"
+        if any(summary.get("unknown_exits", 0) for summary in (result["control"], result["candidate"]))
+        else "complete",
+    )
+    result["semantic_ask_missing"] = bool(
+        result.get("semantic_ask_missing")
+        or result["control"].get("semantic_ask_missing")
+        or result["candidate"].get("semantic_ask_missing")
+    )
+    result["provider_features"] = result.get(
+        "provider_features",
+        {
+            "control": result["control"].get("provider_features"),
+            "candidate": result["candidate"].get("provider_features"),
+        },
+    )
     result["feedback"] = _feedback(result)
+    updates = {"probe": result}
+    if payload_updates:
+        updates.update(payload_updates)
     return StationResult(
         result["verdict"] == "keep",
         "probe",
         _line(result),
         tokens=0,
-        payload_updates={"probe": result},
+        payload_updates=updates,
     )
 
 
@@ -354,6 +414,7 @@ def _record_probe_spend(
     now: datetime,
     scene: str,
     ticket_id: str,
+    estimate_usd: float | None,
 ) -> None:
     micro_usd = spend_between(before, after)
     ledger.record(
@@ -367,18 +428,82 @@ def _record_probe_spend(
             tokens=0,
             usd=micro_usd / 1_000_000 if micro_usd is not None else None,
             cost_kind="dollars" if micro_usd is not None else "unknown",
+            estimate_usd=estimate_usd,
         )
     )
 
 
+def _ticket_spent_usd(ledger: SpendLedger, ticket_id: str) -> float:
+    """Sum this ticket's actual spend, falling back to estimates for unknown rows."""
+
+    spent = 0.0
+    for usage in ledger._read():
+        if usage.ticket_id != ticket_id:
+            continue
+        if usage.cost_kind == "dollars" and isinstance(usage.usd, (int, float)) and not isinstance(usage.usd, bool):
+            spent += float(usage.usd)
+        elif isinstance(usage.estimate_usd, (int, float)) and not isinstance(usage.estimate_usd, bool):
+            spent += float(usage.estimate_usd)
+    return spent
+
+
+def _approval_error(payload: dict[str, Any]) -> str | None:
+    if payload.get("billed_run_approved") is not True:
+        return "probe not approved: set billed_run_approved"
+    consumed = payload.get("billed_runs_consumed", 0)
+    if isinstance(consumed, bool) or not isinstance(consumed, int) or consumed < 0:
+        return "billed_runs_consumed must be a nonnegative integer"
+    if consumed == 0:
+        return None
+    approval_id = payload.get("billed_run_approval_id")
+    recorded_id = payload.get("billed_run_consumed_approval_id")
+    if not isinstance(approval_id, str) or not approval_id or approval_id == recorded_id:
+        return "billed run approval already consumed; provide a fresh billed_run_approval_id"
+    return None
+
+
+def _consume_approval(payload: dict[str, Any]) -> dict[str, Any]:
+    consumed = payload.get("billed_runs_consumed", 0)
+    return {
+        "billed_run_approved": False,
+        "billed_runs_consumed": consumed + 1,
+        "billed_run_consumed_approval_id": payload.get("billed_run_approval_id"),
+    }
+
+
+def _ceiling_error(payload: dict[str, Any], ledger: SpendLedger, ticket_id: str, projected: float) -> str | None:
+    ceiling = payload.get("billed_usd_ceiling")
+    if ceiling is None:
+        return None
+    if isinstance(ceiling, bool) or not isinstance(ceiling, (int, float)) or ceiling < 0:
+        return "billed_usd_ceiling must be a nonnegative number"
+    spent = _ticket_spent_usd(ledger, ticket_id)
+    if spent + projected > float(ceiling):
+        return f"projected billed spend ${spent + projected:.4f} exceeds billed_usd_ceiling ${float(ceiling):.4f}"
+    return None
+
+
+def _summary_quota(text: str) -> dict[str, Any] | None:
+    decoder = json.JSONDecoder()
+    for start, character in enumerate(text):
+        if character != "{":
+            continue
+        try:
+            value, _end = decoder.raw_decode(text, start)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(value, dict) and isinstance(value.get("quota"), dict):
+            return value["quota"]
+    return None
+
+
 def _raise_probe_quota(text: str, now: datetime) -> None:
-    upper = text.upper()
-    if "QUOTA" not in upper:
-        return
     try:
         _raise_quota(text, now)
     except LimitSleep:
         raise
+    if _summary_quota(text) is None:
+        return
     report = None
     raise LimitSleep("cloudflare", _next_midnight(now)) from ProviderLimit(_next_midnight(now), report)
 
@@ -419,12 +544,14 @@ def probe_handler(
         tree = ticket_tree(payload, str(getattr(ticket, "id", "")), repository_root)
         if tree is None:
             return StationResult(False, "probe", "no ticket tree to probe", tokens=0)
-        if payload.get("billed_run_approved") is not True:
-            return StationResult(False, "probe", "probe not approved: set billed_run_approved", tokens=0)
+        approval_error = _approval_error(payload)
+        if approval_error is not None:
+            return StationResult(False, "probe", approval_error, tokens=0)
         lock_path = _staged_lock_path(repository_root)
         if lock_path.exists() and _fresh_staged_lock(lock_path, now):
             return StationResult(False, "probe", "a staged run is in progress", tokens=0)
 
+        projected: float | None = None
         try:
             control_package, candidate_package = _story_packages(repository_root, tree, payload)
             package_hash = _package_hash(candidate_package)
@@ -449,6 +576,15 @@ def probe_handler(
         ):
             return _result(saved)
 
+        before = _safe_budget_read(budget_reader)
+        if before is None:
+            return StationResult(
+                False,
+                "probe",
+                "cannot read the Worker budget: set CLOUDFLARE_WORKER_URL and CLOUDFLARE_WORKER_TOKEN",
+                tokens=0,
+            )
+
         try:
             config = _factory_config(repository_root)
             caps = Caps.from_dict(config["caps"])
@@ -466,15 +602,18 @@ def probe_handler(
                 return StationResult(
                     False, "probe", f"projected probe cost ${projected:.4f} is above the remaining budget", tokens=0
                 )
+            ceiling_error = _ceiling_error(payload, ledger, str(getattr(ticket, "id", "")), projected)
+            if ceiling_error is not None:
+                return StationResult(False, "probe", ceiling_error, tokens=0)
         except (KeyError, TypeError, ValueError, BudgetExhausted) as error:
             return StationResult(False, "probe", f"invalid factory budget configuration: {error}", tokens=0)
 
+        approval_updates = _consume_approval(payload)
         lock_path.parent.mkdir(parents=True, exist_ok=True)
         try:
             lock_path.write_text(f"{getattr(ticket, 'id', '')}\n{now.isoformat()}\n", encoding="utf-8")
         except OSError as error:
             return StationResult(False, "probe", f"could not create staged run lock: {error}", tokens=0)
-        before = _safe_budget_read(budget_reader)
         try:
             arm_files: dict[str, list[Path]] = {"control": [], "candidate": []}
             scene = getattr(ticket, "scene", payload.get("scene", ""))
@@ -514,22 +653,40 @@ def probe_handler(
                     except (LimitSleep, ProviderLimit):
                         raise
                     except Exception as error:
-                        return StationResult(False, "probe", f"runner failed: {str(error)[:300]}", tokens=0)
+                        return StationResult(
+                            False,
+                            "probe",
+                            f"runner failed: {str(error)[:300]}",
+                            tokens=0,
+                            payload_updates=approval_updates,
+                        )
                     combined = "\n".join(str(getattr(completed, field, "") or "") for field in ("stdout", "stderr"))
                     _raise_probe_quota(combined, now)
                     stderr = str(getattr(completed, "stderr", "") or "")
                     if getattr(completed, "returncode", 0) != 0:
-                        return StationResult(False, "probe", f"runner failed: {stderr[:300]}", tokens=0)
+                        return StationResult(
+                            False,
+                            "probe",
+                            f"runner failed: {stderr[:300]}",
+                            tokens=0,
+                            payload_updates=approval_updates,
+                        )
                     records_path = output_dir / "turn-records.json"
                     if not records_path.is_file():
-                        return StationResult(False, "probe", "runner failed: no output file", tokens=0)
+                        return StationResult(
+                            False,
+                            "probe",
+                            "runner failed: no output file",
+                            tokens=0,
+                            payload_updates=approval_updates,
+                        )
                     arm_files[arm].append(records_path)
             result = judge_probe(
                 summarize_arm(arm_files["control"]), summarize_arm(arm_files["candidate"]), selected_rules
             )
             saved_result = {"input_hash": input_hash, **result, "feedback": _feedback(result)}
             _atomic_json_write(saved_path, saved_result)
-            return _result(saved_result)
+            return _result(saved_result, approval_updates)
         finally:
             after = _safe_budget_read(budget_reader)
             _record_probe_spend(
@@ -539,6 +696,7 @@ def probe_handler(
                 now=now,
                 scene=getattr(ticket, "scene", payload.get("scene", "")),
                 ticket_id=str(getattr(ticket, "id", "")),
+                estimate_usd=projected,
             )
             with contextlib.suppress(OSError):
                 lock_path.unlink()

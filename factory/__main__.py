@@ -102,6 +102,12 @@ def _status(root: Path, config_path: Path, now: datetime) -> int:
     unknown_rows = ledger.unknown_cost_rows()
     unknown_note = f" (a minimum: {unknown_rows} calls of unknown cost)" if unknown_rows > 0 else ""
     print(f"total spend: {total_usd:.6f} USD{unknown_note}")
+    for entry in ledger.estimate_report():
+        ratio = "n/a" if entry["ratio"] is None else f"{entry['ratio']:.2f}"
+        print(
+            f"estimate vs actual {entry['station']}: estimated {entry['estimate_usd']:.6f} USD, "
+            f"actual {entry['actual_usd']:.6f} USD, ratio {ratio} over {entry['calls']} call(s)"
+        )
     providers = set(config.get("caps", {}).get("providers", {}))
     providers.update(config.get("caps", {}).get("daily_cap_usd", {}))
     for provider in sorted(providers):

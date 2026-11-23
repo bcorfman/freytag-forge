@@ -195,6 +195,33 @@ def test_live_playtest_infrastructure_failure_retries(tmp_path):
     assert queue.get("playtest-retry").attempts == 1
 
 
+def test_unsupported_repair_is_parked_without_failure_or_wiring_retry(tmp_path):
+    ticket = make_ticket("unsupported", station=Station.WIRING)
+
+    def planner_result(ticket, now):
+        ticket.payload["unsupported_reroute"] = {
+            "reroute": "station_code",
+            "reason": "Reroute: provider wiring defect is outside the story-fix menu.",
+            "since": now.isoformat(),
+        }
+        return StationResult(False, "wiring", "", tokens=9)
+
+    line, queue, _ = make_line(tmp_path, [ticket], {Station.WIRING: planner_result})
+
+    outcome = line.step(NOW)
+
+    saved = queue.get("unsupported")
+    assert outcome.kind == "owner_wait"
+    assert outcome.detail == "station_code"
+    assert saved.status is Status.SET_ASIDE
+    assert saved.attempts == 0
+    assert saved.failures == []
+    assert saved.payload["reroute"] == "station_code"
+    assert saved.payload["reroute_reason"].startswith("Reroute:")
+    assert saved.payload["owner_wait"]["reply"] is None
+    assert line.step(NOW).kind == "idle"
+
+
 def test_triage_pass_opens_followups_and_passes_parent(tmp_path):
     ticket = make_ticket("triage-parent", station=Station.TRIAGE)
     routing = {

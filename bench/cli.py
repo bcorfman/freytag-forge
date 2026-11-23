@@ -401,6 +401,7 @@ def _run(args: argparse.Namespace) -> int:
             file=sys.stderr,
         )
     variation = load_variation(args.variation)
+    canon_judge = variation.get("canon_judge", True)
     scripts = scripts_for(variation, args.scene)
     if args.script:
         scripts = [script for script in scripts if script["name"] == args.script]
@@ -479,7 +480,7 @@ def _run(args: argparse.Namespace) -> int:
     judged_path = args.out / "judgments.json"
     judged = {"judgments": [], "judge_calls": 0}
     judge_failure_reason = None
-    if judged_runs:
+    if canon_judge and judged_runs:
         try:
             judged = run_judges(pending, judged_path)
         except (OSError, ValueError, RuntimeError) as error:
@@ -488,7 +489,7 @@ def _run(args: argparse.Namespace) -> int:
             failed_runs.extend(judged_runs)
             judged_runs = []
     judgments = judged["judgments"]
-    if len(judgments) < len(judged_runs):
+    if canon_judge and len(judgments) < len(judged_runs):
         missing = judged_runs[len(judgments) :]
         for run in missing:
             run["status"] = "failed"
