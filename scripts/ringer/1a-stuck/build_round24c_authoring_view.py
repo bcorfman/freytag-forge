@@ -1,3 +1,4 @@
+# ruff: noqa: E501
 """Round 24c: export the live story package in the shapes the frontend judging tools read."""
 
 import json

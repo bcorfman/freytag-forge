@@ -1,3 +1,4 @@
+# ruff: noqa: E501
 """Round 24d: repoint the frontend judging tools at the live story through the authoring view."""
 
 import json
@@ -21,7 +22,8 @@ OWNED = [
 ]
 
 SPEC = b.COMMON + (
-    "You may edit ONLY these files under frontend/e2e/: " + ", ".join(p.removeprefix("frontend/e2e/") for p in OWNED)
+    "You may edit ONLY these files under frontend/e2e/: "
+    + ", ".join(p.removeprefix("frontend/e2e/") for p in OWNED)
     + " (story-view.js and story-view.test.js are new). Never touch Python, story data or other JavaScript.\n\n"
     "BACKGROUND. Seven node test files fail on main: attribution-audit, authored-spans, judge-journeys, "
     "knowledge-available, roleplay-judge, scene-partition (they read data/stories/continuity-initiative/knowledge.yaml, "
