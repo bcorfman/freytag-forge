@@ -193,6 +193,10 @@ def _turn_narration(turn: dict[str, Any]) -> str | None:
 def _selected_ids(turn: dict[str, Any]) -> list[str]:
     values = turn.get("selected_knowledge_ids")
     if not isinstance(values, list):
+        # Live smoke reports record a delivery as a matched candidate whose outcome is "committed".
+        matched = turn.get("matched_candidate")
+        if isinstance(matched, str) and turn.get("outcome") == "committed":
+            return [matched]
         return []
     return list(dict.fromkeys(value for value in values if isinstance(value, str)))
 

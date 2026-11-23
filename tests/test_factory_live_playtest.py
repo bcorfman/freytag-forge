@@ -872,3 +872,28 @@ def test_cli_exit_codes_and_build_registration(tmp_path: Path, capsys) -> None:
     assert json.loads(capsys.readouterr().out)["packets"]
     assert main(["grade", str(tmp_path / "missing.json")]) == 2
     assert Station.LIVE_PLAYTEST in build_handlers(ROOT)
+
+
+def test_packets_treat_a_committed_matched_candidate_as_delivered() -> None:
+    value = {
+        "replicates": [
+            {
+                "replicate": 1,
+                "scene": "1A",
+                "turns": [
+                    {
+                        "turn": 3,
+                        "raw_input": "Examine the manuscript pages.",
+                        "text": "Pages.",
+                        "matched_candidate": "k_sl_1a_g_r1",
+                        "outcome": "committed",
+                    },
+                    {"turn": 4, "raw_input": "Examine the red markings.", "text": "Marks.", "outcome": "committed"},
+                ],
+                "stuck_turns": [4],
+            }
+        ]
+    }
+    packet = report_to_packets(value)[0]
+    assert packet["delivered_before"] == ["k_sl_1a_g_r1"]
+    assert packet["delivered_before_turns"] == {"k_sl_1a_g_r1": 3}
