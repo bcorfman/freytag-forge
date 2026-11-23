@@ -4,7 +4,9 @@ Payload keys accepted by :func:`live_playtest_handler` are ``scene`` (defaults
 to the ticket scene), ``expected_sha`` (required for a live run), ``profile``
 (``canonical`` by default), ``replicates`` (one by default and capped at three),
 ``report_path`` (grade a saved report without making any calls), and
-``billed_run_approved`` (required by the default billed runner).
+``billed_run_approved`` (required by the default billed runner), ``max_usd``
+(the required positive live-run spend cap), and ``turn_cap`` (the optional
+positive counted-turn estimate input).
 
 The saved report is the only evidence used to construct station-8 packets.  A
 live run first checks the staging identity, then invokes the runner exactly once
@@ -35,6 +37,8 @@ EARNED_EXIT_CAUSES = frozenset({"play", "earned"})
 
 _DEFAULT_PROFILE = "canonical"
 _MAX_REPLICATES = 3
+_USD_PER_COUNTED_TURN = 0.0074
+_DEFAULT_TURN_CAP = 20
 _TURN_TIMEOUT_MS = "90000"
 _RUN_TIMEOUT_S = 2400
 _RUNNER_OUTPUT_TAIL = 2_000
@@ -71,6 +75,10 @@ def _nonnegative_number(value: object) -> bool:
         return math.isfinite(float(value)) and value >= 0
     except (OverflowError, ValueError):
         return False
+
+
+def _positive_number(value: object) -> bool:
+    return _nonnegative_number(value) and isinstance(value, (int, float)) and value > 0
 
 
 def _usage_values(player_usage: object) -> tuple[str, int, int, int, int] | None:
@@ -537,6 +545,7 @@ def _record_cloudflare_spend(
     now: datetime,
     scene: str,
     ticket_id: str,
+    estimate_usd: float,
 ) -> int | None:
     micro_usd = spend_between(before, after)
     ledger.record(
@@ -550,6 +559,7 @@ def _record_cloudflare_spend(
             tokens=0,
             usd=micro_usd / 1_000_000 if micro_usd is not None else None,
             cost_kind="dollars" if micro_usd is not None else "unknown",
+            estimate_usd=estimate_usd,
         )
     )
     return micro_usd
@@ -689,19 +699,37 @@ def live_playtest_handler(
             from factory.stations.probe import runs_from_report
 
             runs = runs_from_report(report, scene)
-            payload_updates = {"runs": runs} if runs else None
+            saved_payload_updates = {"runs": runs} if runs else None
             packets = report_to_packets(report)
             spend, _tokens, calls, _missing = player_spend(report, _prices_for_root(repository_root))
             output = _summary_line(summary, packets, spend, calls)
             if _gate_passes(summary) and not packets:
-                return StationResult(True, "live_playtest", output, payload_updates=payload_updates)
-            return StationResult(False, "live_playtest", output, turns=packets or None, payload_updates=payload_updates)
+                return StationResult(True, "live_playtest", output, payload_updates=saved_payload_updates)
+            return StationResult(
+                False, "live_playtest", output, turns=packets or None, payload_updates=saved_payload_updates
+            )
 
         expected_sha = payload.get("expected_sha")
         if not isinstance(expected_sha, str) or not expected_sha:
             return StationResult(False, "live_playtest", "missing payload key: expected_sha", turns=None)
         if runner is None and payload.get("billed_run_approved") is not True:
             return StationResult(False, "live_playtest", "billed_run_approved must be true", turns=None)
+        if "max_usd" not in payload:
+            return StationResult(False, "live_playtest", "missing payload key: max_usd", turns=None)
+        max_usd = payload["max_usd"]
+        if not _positive_number(max_usd):
+            return StationResult(False, "live_playtest", "max_usd must be a positive number", turns=None)
+        turn_cap = payload.get("turn_cap", _DEFAULT_TURN_CAP)
+        if isinstance(turn_cap, bool) or not isinstance(turn_cap, int) or turn_cap < 1:
+            return StationResult(False, "live_playtest", "turn_cap must be a positive integer", turns=None)
+        estimate_usd = replicates * turn_cap * _USD_PER_COUNTED_TURN
+        if estimate_usd > max_usd:
+            return StationResult(
+                False,
+                "live_playtest",
+                f"estimated spend ${estimate_usd:.4f} exceeds max_usd ${max_usd:.4f}",
+                turns=None,
+            )
 
         version_fetch = fetch_version or _fetch_version
         try:
@@ -777,6 +805,7 @@ def live_playtest_handler(
                     now=now,
                     scene=scene,
                     ticket_id=ticket_id,
+                    estimate_usd=estimate_usd,
                 )
                 raise
             except Exception as error:
@@ -796,6 +825,7 @@ def live_playtest_handler(
                     now=now,
                     scene=scene,
                     ticket_id=ticket_id,
+                    estimate_usd=estimate_usd,
                 )
                 _raise_quota(str(error), now)
                 return StationResult(False, "live_playtest", f"runner failed: {error}", turns=None)
@@ -825,6 +855,7 @@ def live_playtest_handler(
                 now=now,
                 scene=scene,
                 ticket_id=ticket_id,
+                estimate_usd=estimate_usd,
             )
             raise
         except Exception as error:
@@ -843,6 +874,7 @@ def live_playtest_handler(
                 now=now,
                 scene=scene,
                 ticket_id=ticket_id,
+                estimate_usd=estimate_usd,
             )
             _raise_quota(str(error), now)
             return StationResult(False, "live_playtest", f"runner failed: {error}", turns=None)
@@ -863,6 +895,7 @@ def live_playtest_handler(
             now=now,
             scene=scene,
             ticket_id=ticket_id,
+            estimate_usd=estimate_usd,
         )
         returncode = getattr(completed, "returncode", 0)
         if returncode != 0:
@@ -879,18 +912,31 @@ def live_playtest_handler(
         from factory.stations.probe import runs_from_report
 
         runs = runs_from_report(report, scene)
-        payload_updates = {"runs": runs} if runs else None
+        cap_exceeded: list[str] = []
+        if spend is not None and spend > max_usd:
+            cap_exceeded.append(f"openai=${spend:.4f} allowed=${max_usd:.4f}")
+        cloudflare_usd = micro_usd / 1_000_000 if micro_usd is not None else None
+        if cloudflare_usd is not None and cloudflare_usd > max_usd:
+            cap_exceeded.append(f"cloudflare=${cloudflare_usd:.4f} allowed=${max_usd:.4f}")
+        payload_updates: dict[str, Any] = {"runs": runs} if runs else {}
+        if cap_exceeded:
+            payload_updates["cap_exceeded"] = True
         packets = report_to_packets(report)
         output = _summary_line(
             summary,
             packets,
             spend,
             calls,
-            micro_usd / 1_000_000 if micro_usd is not None else None,
+            cloudflare_usd,
         )
+        if cap_exceeded:
+            output += " cap_exceeded " + " ".join(cap_exceeded)
+        result_payload_updates = payload_updates or None
         if _gate_passes(summary) and not packets:
-            return StationResult(True, "live_playtest", output, payload_updates=payload_updates)
-        return StationResult(False, "live_playtest", output, turns=packets or None, payload_updates=payload_updates)
+            return StationResult(True, "live_playtest", output, payload_updates=result_payload_updates)
+        return StationResult(
+            False, "live_playtest", output, turns=packets or None, payload_updates=result_payload_updates
+        )
 
     return handle
 
