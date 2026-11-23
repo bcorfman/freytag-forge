@@ -111,7 +111,6 @@
     "tests/test_3c_item_facts_arm.py": 1.34,
     "tests/test_3c_item_facts_capture.py": 1.48,
     "tests/test_3c_kristin_place.py": 0.0,
-    "tests/test_3c_no_close_arm.py": 37.61,
     "tests/test_3c_phase_one_delivery.py": 0.23,
     "tests/test_3c_pump_need.py": 1.97,
     "tests/test_3c_recall_live.py": 5.06,

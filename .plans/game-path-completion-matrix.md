@@ -271,8 +271,9 @@ Scripted histories prove reachability and downstream state, not free-text usabil
 |---|---|---|
 | N-1 | SL-1C-C-R2 (architects strategy) | Earned through 1C-C, but the 1C exit is forced: `bridge_1c_infiltration_needed` needs `national_detention_network_known`, which only R1 sets. |
 | N-2 | SL-2B-B-R3 (Kristin was bait) | The 2B exit is forced: `bridge_2b_archive_crisis` needs two of three Brandon/Michelle facts and R3 supplies none, leaving at most `michelle_resistance_known`. |
+| N-3 | SL-3C-D-R1, SL-3C-G-R1 (as `k_sl_3c_d_r2`), SL-3C-E-R1, SL-3C-E-R2 (3C aftermath) | Never offered. They need `captives_reaching_surface`, which only the old `resolution_escape` event sets; since `06b2ccb3` (3C rebuilt as a finite evacuation) the game ends through `resolution_archive_and_rebecca` / `evacuation_complete` first, so the Phase One / Phase Two reveal never plays. Pinned as a strict xfail in `tests/test_game_path_journeys.py` (`KNOWN_UNREACHABLE`); the nightly was red from 2026-11-02 until this pin. Authoring decision: make the epilogue reachable after the ending latch, or retire the storylets (weigh how fun the Phase One reveal is before deleting). |
 | J-1 | SL-1A-D-R1 (remaining files) | Reachable only after SL-1A-B-R2 (recording first); chained journey passes. The default policy never plays D. |
 | O-1 | SL-2C-A-R1 and both SL-2A-C rebecca_observes rows | Observer-only (not player-visible); not journeyed. Withholding the player-visible sibling of an observer row makes a required storylet unfinishable, which is a test artifact. |
 
 Not yet covered: the eight combinations of the three evidence-gap facts, E-R1 versus E-R2 composed text and ending (step 5), the 3C live loop, and live free-text evidence.
-N-1 and N-2 are authoring decisions: either the alternative should also establish the bridge fact, or the bridge should accept the alternative. Story meaning changes start in plot.md.
+N-1, N-2 and N-3 are authoring decisions: either the alternative should also establish the bridge fact, or the bridge should accept the alternative. Story meaning changes start in plot.md.

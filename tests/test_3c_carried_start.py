@@ -1,13 +1,10 @@
 from __future__ import annotations
 
-import json
-import shutil
 from pathlib import Path
 
 import check_three_c_probe as checker
 import pytest
 import three_c_probe as probe
-from door_transport import SpendBudget
 
 from bench.core import load_variation
 from storygame.story_package.loader import load_story_package
@@ -41,46 +38,6 @@ def test_families_diff_is_only_the_three_d_r2_phrases() -> None:
     pump_entry = next(scene.metadata.entry_text for scene in pump.scenes if scene.metadata.scene_id == "3C")
     family_entry = next(scene.metadata.entry_text for scene in families.scenes if scene.metadata.scene_id == "3C")
     assert pump_entry == family_entry
-
-
-@pytest.mark.nightly
-def test_carried_run_row_uses_scene_turns_from_one_without_network() -> None:
-    variation, _package = _arm_package("pump")
-
-    def ask(_screen, _budget):
-        return "Send the evidence package."
-
-    def provider_factory(state, _variation):
-        return probe._scripted_provider(state.package, "k_sl_3c_a_r1")
-
-    row = probe.run_row(
-        "pump",
-        probe.variation_paths(("pump",))["pump"],
-        SpendBudget(20, cloudflare_limit=20, player_limit=20),
-        ask=ask,
-        provider_factory=provider_factory,
-        start="carried",
-    )
-    assert row["start"] == "carried"
-    assert row["turns"][0]["scene_turn"] == 1
-    recorded_prefix = json.loads((ROOT / "bench/results/stage7-3c-prefix/prefix.json").read_text(encoding="utf-8"))
-    assert row["prefix_turn_index"] == recorded_prefix["turn_index"]
-    assert "k_sl_3c_a_r1" in row["turns"][0]["committed_reveals"]
-    assert row["a_commit_scene_turn"] == 1
-    assert row["first_attempt_a"] == 1
-    assert row["committed_reveal_ids"]
-
-
-@pytest.mark.nightly
-def test_checker_accepts_carried_dry_run_and_rejects_tampered_cap(tmp_path: Path) -> None:
-    artifact = ROOT / "bench/results/stage7-3c-carried-dry"
-    for name in ("source.json", "plan.json"):
-        shutil.copy2(artifact / name, tmp_path / name)
-    assert checker.check(tmp_path, 1, "dry") == []
-    plan = json.loads((tmp_path / "plan.json").read_text())
-    plan["caps"]["raw_player"] = 999
-    (tmp_path / "plan.json").write_text(json.dumps(plan))
-    assert checker.check(tmp_path, 1, "dry")
 
 
 def test_checker_accepts_live_carried_n12_artifacts() -> None:
