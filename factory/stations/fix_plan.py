@@ -18,7 +18,7 @@ from storygame.story_package.models import StoryPackage
 from storygame.story_source.lookup import _source_tree, story_text
 
 PLAN_VERSION = 1
-EVIDENCE_LIMIT_CHARS = 20_000
+EVIDENCE_LIMIT_CHARS = 24_000
 _KINDS = frozenset({"add_pacing_beat", "set_text", "edit_claim_evidence", "unsupported"})
 _REROUTES = frozenset({"station_code", "story_edit", "adaptive_probe"})
 _BEAT_ID = re.compile(r"^[a-z][a-z0-9_]*_(?P<scene>[1-9][a-z])$")

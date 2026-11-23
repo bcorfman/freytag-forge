@@ -421,8 +421,8 @@ def test_bound_evidence_keeps_a_turn_and_reports_all_cuts() -> None:
             {
                 "key": f"turn-{index}",
                 "player_input": "I search for the next lead.",
-                "narration": "n" * 600,
-                "previous_narration": "p" * 600,
+                "narration": "n" * 900,
+                "previous_narration": "p" * 900,
                 "rejected_code": "c" * 600,
                 "rejected_message": "m" * 600,
             }
