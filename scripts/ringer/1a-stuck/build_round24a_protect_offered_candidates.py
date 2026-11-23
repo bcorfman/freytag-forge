@@ -1,3 +1,4 @@
+# ruff: noqa: E501
 """Round 24a: planner evidence keeps the candidates the failing turns offered or matched."""
 
 import json
@@ -57,4 +58,6 @@ manifest = {
         }
     ],
 }
-Path(__file__).with_name("round24a-protect-offered-candidates-manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
+Path(__file__).with_name("round24a-protect-offered-candidates-manifest.json").write_text(
+    json.dumps(manifest, indent=2) + "\n"
+)

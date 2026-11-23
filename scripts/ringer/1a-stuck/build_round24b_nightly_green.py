@@ -1,3 +1,4 @@
+# ruff: noqa: E501
 """Round 24b: make the coverage nightly honest again (red since 2026-11-02, the 3C finite-evacuation rebuild)."""
 
 import json
