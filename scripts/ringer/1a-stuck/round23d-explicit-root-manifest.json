@@ -1,0 +1,31 @@
+{
+  "run_name": "entry-snapshot-explicit-root",
+  "workdir": "/home/bcorfman/dev/ringer-work/factory-23",
+  "max_parallel": 1,
+  "worktrees": true,
+  "repo": "/home/bcorfman/dev/ringer-work/pr-seeded-entry",
+  "tasks": [
+    {
+      "key": "explicit-root",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=high"
+      ],
+      "max_attempts": 2,
+      "timeout_s": 2400,
+      "check_timeout_s": 900,
+      "ownership": [
+        "storygame/runtime/entry_snapshots.py",
+        "storygame/web_demo.py",
+        "tests/test_entry_snapshots.py",
+        "tests/test_start_scene_session.py"
+      ],
+      "spec": "You are an engineer. Your current working directory IS a git worktree of the freytag-forge repository (detached at HEAD). Edit files here directly. NEVER git commit, never touch any other checkout, never run `uv`, NEVER call a model (not `claude`, not `codex`), NEVER use the network, never run `python -m bench run`, never write factory/state/. FIRST run: [ -e .venv ] || ln -s /home/bcorfman/dev/freytag-forge/.venv .venv . Environment for every command: `export PYTHONPATH=$PWD:$PWD/packages/worldkeeper/src TMPDIR=/tmp`. Ruff (python files only): `.venv/bin/python -m ruff check <files>` / `.venv/bin/python -m ruff format <files>` (line length 120, Python 3.12). Never pass --cov to pytest. Run tests as `.venv/bin/python -m pytest -q -p no:cacheprovider -n 8 <files>`. Tests must be hermetic (no network, no real model). Shared code must stay story-agnostic (no story, scene or character names in production code; tests may use the repository's real story package and must also cover a synthetic package). ARCHITECTURE RULE (AGENTS.md, firm): world-model logic, meaning anything that reads or changes only world state, is a `World` method in packages/worldkeeper with its tests in packages/worldkeeper/tests; `storygame` only adapts and calls it. If an OLD test pins behaviour this change deliberately changes, update it and say so in NOTES.txt. Write NOTES.txt (worktree root, never committed) listing every ambiguity and your choice. Read first: AGENTS.md, docs/contributor-guide.md, docs/world-model-grounding.md. \n\nYou may edit ONLY: storygame/runtime/entry_snapshots.py, storygame/web_demo.py, tests/test_entry_snapshots.py, tests/test_start_scene_session.py.\n\nPROBLEM. `state_from_snapshot(package, snapshot)` in storygame/runtime/entry_snapshots.py finds the package's source root with `_package_root(package)`, which imports the private `storygame.story_source.lookup._source_trees` and falls back to `Path.cwd() / 'data' / 'stories' / story_id`. In the full test suite another test clears that registry and the guess raises `EntrySnapshotError: cannot determine the source root` (tests/test_start_scene_session.py::test_canonical_default_session_matches_snapshot_and_accepts_turn fails in the full run but passes alone). Guessing a root is a latent production bug too.\n\nCHANGE. Delete `_package_root` and its private import. `state_from_snapshot(package, snapshot, story_root)` takes the root as a required third argument (a `Path`), uses it for the fingerprint comparison, and nothing else changes. Update every caller: web_demo.py already knows each package's root (`package_roots_by_id`), `check_entry_snapshots`, `write_entry_snapshots` and any helper in entry_snapshots.py that called `_package_root` or `_package_fingerprint` pass the root they already have; update all tests. Add a test in tests/test_entry_snapshots.py proving there is no ambient lookup: clear any module-level source-tree cache you can reach (or run in a subprocess started in a temporary working directory) and show `state_from_snapshot` still works with an explicit root and raises `EntrySnapshotError` (not a different error) when the root's files do not match the snapshot fingerprint. Run: tests/test_entry_snapshots.py tests/test_start_scene_session.py tests/test_web_demo.py tests/test_canonical_entry_path.py tests/test_world_model.py packages/worldkeeper/tests, then ALSO the whole `tests/` directory once (`.venv/bin/python -m pytest -q -p no:cacheprovider -n 8 tests`; about 3 minutes) and report its result in NOTES.txt.",
+      "check": "set -eo pipefail\nWORK=/home/bcorfman/dev/ringer-work/factory-23\nmkdir -p \"$WORK/out\"\nexport PYTHONPATH=$PWD:$PWD/packages/worldkeeper/src TMPDIR=/tmp\n[ -e .venv ] || ln -s /home/bcorfman/dev/freytag-forge/.venv .venv\ngit add -A -- storygame bench tests packages docs\nbad=$(git diff --cached --name-only | grep -vE '^(storygame/runtime/entry_snapshots\\.py|storygame/web_demo\\.py|tests/test_entry_snapshots\\.py|tests/test_start_scene_session\\.py)$' || true)\n[ -z \"$bad\" ] || { echo \"files outside ownership staged: $bad\"; exit 1; }\nstart=$(date +%s)\n.venv/bin/python -m pytest -q -p no:cacheprovider -n 8 tests packages/worldkeeper/tests\n.venv/bin/python -m storygame.runtime.entry_snapshots check\nif grep -n \"_source_trees\\|_package_root\" storygame/runtime/entry_snapshots.py; then echo 'root guessing remains'; exit 1; fi\ntook=$(( $(date +%s) - start ))\necho \"checks took $took s (budget 600 s)\"\n[ \"$took\" -le 600 ] || { echo \"over the 600 s budget\"; exit 1; }\nPYFILES=$(git diff --cached --name-only | grep '\\.py$' || true)\n[ -z \"$PYFILES\" ] || .venv/bin/python -m ruff check $PYFILES\n[ -z \"$PYFILES\" ] || .venv/bin/python -m ruff format --check $PYFILES\ngit diff --cached > \"$WORK/out/explicit-root.patch\"\ntest -s \"$WORK/out/explicit-root.patch\"\n",
+      "expect_files": [],
+      "verified": "state_from_snapshot never guesses its root, and the full suite passes."
+    }
+  ]
+}
