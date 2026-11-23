@@ -1,0 +1,29 @@
+{
+  "run_name": "factory-21d-evidence-limit-24k",
+  "workdir": "/home/bcorfman/dev/ringer-work/factory-21",
+  "max_parallel": 1,
+  "worktrees": true,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "evidence-limit-24k",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=medium"
+      ],
+      "max_attempts": 2,
+      "timeout_s": 1800,
+      "check_timeout_s": 900,
+      "ownership": [
+        "factory/stations/fix_plan.py",
+        "tests/test_factory_fix_plan.py"
+      ],
+      "spec": "You are a factory engineer. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge (detached at HEAD). Edit files here directly. NEVER git commit, never touch /home/bcorfman/dev/freytag-forge itself, never run `uv`, NEVER call a model (not `claude`, not `codex`), NEVER use the network, never run `python -m bench run`, never write factory/state/. FIRST run: [ -e .venv ] || ln -s /home/bcorfman/dev/freytag-forge/.venv .venv . Environment for every command: `export PYTHONPATH=$PWD:$PWD/packages/worldkeeper/src TMPDIR=/tmp`. Ruff (python files only): `.venv/bin/python -m ruff check <files>` / `.venv/bin/python -m ruff format <files>` (line length 120, Python 3.12). Never pass --cov to pytest. Run tests as `.venv/bin/python -m pytest -q -p no:cacheprovider -n 8 <files>`. Tests must be hermetic (fake runner, no network, no real `claude`). Shared code must stay story-agnostic (no story, scene or character names in production code). If an OLD test pins behaviour this change deliberately changes, update it and say so in NOTES.txt. Write NOTES.txt (worktree root, never committed) listing every ambiguity and your choice. Read first: AGENTS.md and docs/contributor-guide.md. You may edit ONLY: factory/stations/fix_plan.py and tests/test_factory_fix_plan.py.\n\nTASK (one constant). `EVIDENCE_LIMIT_CHARS` in factory/stations/fix_plan.py is 20_000. Measured on two real saved 1A cases (23 and 21 failing turns), 20_000 still cuts every beat and exit because diagnosis (5.8k), protected candidates (3.3k) and fix_menu (0.7k) are fixed overhead; 24_000 keeps every failing turn (text shortened to 150 characters), every beat and exit, and cuts only fact_readers and unprotected candidates. Change the constant to 24_000. Then check every test in tests/test_factory_fix_plan.py still describes real behaviour at that limit: a test that builds a packet to be 'over the default limit' must still be over 24_000 (grow its fixture, do not weaken its assertion), and the packet shaped like the measured case (added in the previous round) must still keep all beats and exits and at least 10 failing turns. Say in NOTES.txt which fixtures you grew. Change nothing else.",
+      "check": "set -eo pipefail\nWORK=/home/bcorfman/dev/ringer-work/factory-21\nmkdir -p \"$WORK/out\"\nexport PYTHONPATH=$PWD:$PWD/packages/worldkeeper/src TMPDIR=/tmp\n[ -e .venv ] || ln -s /home/bcorfman/dev/freytag-forge/.venv .venv\ngit add -A -- factory tests\nbad=$(git diff --cached --name-only | grep -vE '^(factory/stations/fix_plan\\.py|tests/test_factory_fix_plan\\.py)$' || true)\n[ -z \"$bad\" ] || { echo \"files outside ownership staged: $bad\"; exit 1; }\nstart=$(date +%s)\n.venv/bin/python -m pytest -q -p no:cacheprovider -n 8 tests/test_factory_fix_plan.py tests/test_factory_planner.py tests/test_factory_qualification_run_case.py\ntook=$(( $(date +%s) - start ))\necho \"tests took $took s (budget 300 s)\"\n[ \"$took\" -le 300 ] || { echo \"over the 300 s budget\"; exit 1; }\nPYFILES=$(git diff --cached --name-only | grep '\\.py$' || true)\n[ -z \"$PYFILES\" ] || .venv/bin/python -m ruff check $PYFILES\n[ -z \"$PYFILES\" ] || .venv/bin/python -m ruff format --check $PYFILES\ngrep -Eq 'EVIDENCE_LIMIT_CHARS *(: *int)? *= *24_?000' factory/stations/fix_plan.py || { echo 'EVIDENCE_LIMIT_CHARS is not 24000'; exit 1; }\ngit diff --cached > \"$WORK/out/evidence-limit-24k.patch\"\ntest -s \"$WORK/out/evidence-limit-24k.patch\"\n",
+      "expect_files": [],
+      "verified": "The evidence limit is 24,000 and tests still exercise real truncation."
+    }
+  ]
+}

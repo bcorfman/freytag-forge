@@ -18,6 +18,7 @@ from storygame.story_package.models import StoryPackage
 from storygame.story_source.lookup import _source_tree, story_text
 
 PLAN_VERSION = 1
+EVIDENCE_LIMIT_CHARS = 24_000
 _KINDS = frozenset({"add_pacing_beat", "set_text", "edit_claim_evidence", "unsupported"})
 _REROUTES = frozenset({"station_code", "story_edit", "adaptive_probe"})
 _BEAT_ID = re.compile(r"^[a-z][a-z0-9_]*_(?P<scene>[1-9][a-z])$")
@@ -702,21 +703,92 @@ def _precedents_text(ticket_payload: Mapping[str, Any]) -> str | None:
 
 
 def _bound_evidence(
-    packet: dict[str, object], limit: int = 12_000, protected_candidates: set[str] | None = None
+    packet: dict[str, object],
+    limit: int = EVIDENCE_LIMIT_CHARS,
+    protected_candidates: set[str] | None = None,
+    protected_turn_keys: set[str] | None = None,
 ) -> dict[str, object]:
     def size() -> int:
         return len(json.dumps(packet, ensure_ascii=False, sort_keys=True, separators=(",", ":")))
 
-    for key in ("failing_turns", "beats", "exits"):
-        values = packet[key]
+    truncation: dict[str, object] = {}
+
+    def record_count(key: str, kept: int, original: int) -> None:
+        truncation[key] = {"kept": kept, "of": original}
+        packet["truncated"] = truncation
+
+    candidates = packet.get("candidates")
+    original_candidate_count = len(candidates) if isinstance(candidates, dict) else 0
+    protected_candidate_ids = protected_candidates or set()
+    while size() > limit and isinstance(candidates, dict) and candidates:
+        removable = [candidate_id for candidate_id in sorted(candidates) if candidate_id not in protected_candidate_ids]
+        if not removable:
+            break
+        candidates.pop(removable[-1])
+        record_count("candidates", len(candidates), original_candidate_count)
+
+    fact_readers = packet.get("fact_readers")
+    original_fact_reader_count = len(fact_readers) if isinstance(fact_readers, dict) else 0
+    while size() > limit and isinstance(fact_readers, dict) and fact_readers:
+        without_readers = [
+            fact_id for fact_id, entry in fact_readers.items() if isinstance(entry, dict) and not entry.get("readers")
+        ]
+        fact_id = sorted(without_readers or fact_readers)[-1]
+        fact_readers.pop(fact_id)
+        record_count("fact_readers", len(fact_readers), original_fact_reader_count)
+
+    turns = packet.get("failing_turns")
+    original_turn_count = len(turns) if isinstance(turns, list) else 0
+    for text_limit in (300, 150):
+        if size() <= limit or not isinstance(turns, list):
+            break
+        shortened = False
+        for turn in turns:
+            if not isinstance(turn, dict):
+                continue
+            for field in ("narration", "previous_narration", "rejected_code", "rejected_message"):
+                value = turn.get(field)
+                if isinstance(value, str) and len(value) > text_limit:
+                    turn[field] = value[:text_limit]
+                    shortened = True
+        if shortened:
+            truncation["text_shortened_to"] = text_limit
+            packet["truncated"] = truncation
+
+    for key in ("beats", "exits"):
+        values = packet.get(key)
+        original_count = len(values) if isinstance(values, list) else 0
         while size() > limit and isinstance(values, list) and values:
             values.pop()
-    candidates = packet["candidates"]
-    while size() > limit and isinstance(candidates, dict) and candidates:
-        removable = [
-            candidate_id for candidate_id in sorted(candidates) if candidate_id not in (protected_candidates or set())
+            record_count(key, len(values), original_count)
+
+    if size() > limit and isinstance(turns, list):
+        text_limit = 80
+        shortened = False
+        for turn in turns:
+            if not isinstance(turn, dict):
+                continue
+            for field in ("narration", "previous_narration", "rejected_code", "rejected_message"):
+                value = turn.get(field)
+                if isinstance(value, str) and len(value) > text_limit:
+                    turn[field] = value[:text_limit]
+                    shortened = True
+        if shortened:
+            truncation["text_shortened_to"] = text_limit
+            packet["truncated"] = truncation
+
+    protected_keys = protected_turn_keys or set()
+    while size() > limit and isinstance(turns, list) and len(turns) > (1 if original_turn_count else 0):
+        removable_indexes = [
+            index
+            for index, turn in enumerate(turns)
+            if not isinstance(turn, dict)
+            or not isinstance(turn.get("key"), str)
+            or turn.get("key") not in protected_keys
         ]
-        candidates.pop(removable[-1] if removable else sorted(candidates)[-1])
+        index = removable_indexes[-1] if removable_indexes else len(turns) - 1
+        turns.pop(index)
+        record_count("failing_turns", len(turns), original_turn_count)
     return packet
 
 
@@ -829,10 +901,25 @@ def build_evidence(ticket_payload: dict, package: StoryPackage) -> dict:
         for transition in sorted(transitions, key=lambda item: _value(item, "id", ""))
     ]
     minimum, nudge, handoff = _window_numbers(package, scene)
+    diagnosis = _diagnosis_evidence(ticket_payload)
+    diagnosis_rows = _value(ticket_payload.get("diagnosis"), "rows", ())
+    protected_turn_keys: set[str] = set()
+    if isinstance(diagnosis_rows, list):
+        protected_turn_keys = {
+            row["key"] for row in diagnosis_rows if isinstance(row, Mapping) and isinstance(row.get("key"), str)
+        }
+    protected_candidates = _diagnosis_claim_ids(ticket_payload)
+    for turn in turns:
+        offered = turn.get("candidates_offered")
+        if isinstance(offered, list):
+            protected_candidates.update(item for item in offered if isinstance(item, str))
+        matched_candidate = turn.get("matched_candidate")
+        if isinstance(matched_candidate, str):
+            protected_candidates.add(matched_candidate)
     evidence: dict[str, object] = {
         "scene": scene,
         "failing_turns": turns,
-        "diagnosis": _diagnosis_evidence(ticket_payload),
+        "diagnosis": diagnosis,
         "candidates": {
             candidate_id: detail
             for candidate_id in _candidate_ids(ticket_payload)
@@ -868,7 +955,11 @@ def build_evidence(ticket_payload: dict, package: StoryPackage) -> dict:
             },
         ],
     }
-    evidence = _bound_evidence(evidence, protected_candidates=_diagnosis_claim_ids(ticket_payload))
+    evidence = _bound_evidence(
+        evidence,
+        protected_candidates=protected_candidates,
+        protected_turn_keys=protected_turn_keys,
+    )
     evidence["precedents"] = _precedents_text(ticket_payload)
     fun_lessons_path = lessons_path(ticket_payload)
     try:

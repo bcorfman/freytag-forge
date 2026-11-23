@@ -1,6 +1,6 @@
 """Station 7 billed smoke on one scene: waits for staging to report SHA, then runs the live playtest.
 
-Usage (with .env sourced): smoke_station7.py TICKET_ID SCENE REPLICATES SHA
+Usage (with .env sourced): smoke_station7.py TICKET_ID SCENE REPLICATES SHA MAX_USD [TURN_CAP]
 Needs the owner's go for each billed run; sets billed_run_approved itself.
 """
 
@@ -30,7 +30,7 @@ def _staging_sha() -> str | None:
         return None
 
 
-def main(ticket_id: str, scene: str, replicates: int, sha: str) -> int:
+def main(ticket_id: str, scene: str, replicates: int, sha: str, max_usd: float, turn_cap: int | None) -> int:
     deadline = time.time() + 45 * 60
     while _staging_sha() != sha:
         if time.time() > deadline:
@@ -52,6 +52,8 @@ def main(ticket_id: str, scene: str, replicates: int, sha: str) -> int:
             "replicates": replicates,
             "expected_sha": sha,
             "billed_run_approved": True,
+            "max_usd": max_usd,
+            **({"turn_cap": turn_cap} if turn_cap else {}),
         },
     )
     result = live_playtest_handler(ROOT)(ticket, now)
@@ -61,4 +63,13 @@ def main(ticket_id: str, scene: str, replicates: int, sha: str) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main(sys.argv[1], sys.argv[2], int(sys.argv[3]), sys.argv[4]))
+    raise SystemExit(
+        main(
+            sys.argv[1],
+            sys.argv[2],
+            int(sys.argv[3]),
+            sys.argv[4],
+            float(sys.argv[5]),
+            int(sys.argv[6]) if len(sys.argv) > 6 else None,
+        )
+    )

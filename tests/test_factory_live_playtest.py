@@ -115,6 +115,126 @@ def _live_handler(tmp_path: Path, runner, ledger: SpendLedger, read_budget=lambd
     )
 
 
+def test_live_missing_max_usd_fails_before_runner_or_identity_fetch(tmp_path: Path) -> None:
+    calls = {"runner": 0, "fetch": 0}
+
+    def runner(_env, _timeout):
+        calls["runner"] += 1
+        return subprocess.CompletedProcess([], 0)
+
+    def fetch(_url):
+        calls["fetch"] += 1
+        return {"channel": "staging", "runtime": "scene-v1", "sha": "abc"}
+
+    result = live_playtest_handler(
+        tmp_path,
+        runner=runner,
+        fetch_version=fetch,
+        ledger=SpendLedger(tmp_path / "ledger.jsonl"),
+    )(ticket({"expected_sha": "abc"}), NOW)
+
+    assert not result.passed
+    assert result.turns is None
+    assert result.output == "missing payload key: max_usd"
+    assert calls == {"runner": 0, "fetch": 0}
+
+
+@pytest.mark.parametrize("max_usd", [0, -0.1, True, "0.10"])
+def test_live_invalid_max_usd_fails_before_runner(tmp_path: Path, max_usd) -> None:
+    called = False
+
+    def runner(_env, _timeout):
+        nonlocal called
+        called = True
+        return subprocess.CompletedProcess([], 0)
+
+    result = _live_handler(tmp_path, runner, SpendLedger(tmp_path / "ledger.jsonl"))(
+        ticket({"expected_sha": "abc", "max_usd": max_usd}), NOW
+    )
+
+    assert not result.passed
+    assert result.turns is None
+    assert "max_usd must be a positive number" in result.output
+    assert called is False
+
+
+def test_live_estimate_above_max_usd_fails_before_runner(tmp_path: Path) -> None:
+    called = False
+
+    def runner(_env, _timeout):
+        nonlocal called
+        called = True
+        return subprocess.CompletedProcess([], 0)
+
+    result = _live_handler(tmp_path, runner, SpendLedger(tmp_path / "ledger.jsonl"))(
+        ticket({"expected_sha": "abc", "max_usd": 0.10, "replicates": 3}), NOW
+    )
+
+    assert not result.passed
+    assert result.turns is None
+    assert "estimated spend" in result.output
+    assert "max_usd" in result.output
+    assert called is False
+
+
+@pytest.mark.parametrize(
+    ("turn_cap", "expected_estimate"),
+    [(None, 1 * 20 * 0.0074), (5, 1 * 5 * 0.0074)],
+)
+def test_live_estimate_uses_default_or_overridden_turn_cap(
+    tmp_path: Path, turn_cap: int | None, expected_estimate: float
+) -> None:
+    ledger = SpendLedger(tmp_path / "ledger.jsonl")
+
+    def runner(_env, _timeout):
+        write_artifact(tmp_path, clean_report())
+        return subprocess.CompletedProcess([], 0)
+
+    payload = {"expected_sha": "abc", "max_usd": 1.0}
+    if turn_cap is not None:
+        payload["turn_cap"] = turn_cap
+    result = _live_handler(tmp_path, runner, ledger)(ticket(payload), NOW)
+
+    assert result.passed
+    assert _ledger_rows(tmp_path / "ledger.jsonl")[-1].estimate_usd == pytest.approx(expected_estimate)
+
+
+def test_live_measured_cloudflare_cap_exceeded_keeps_report_packets(tmp_path: Path) -> None:
+    ledger = SpendLedger(tmp_path / "ledger.jsonl")
+
+    def runner(_env, _timeout):
+        write_artifact(tmp_path, report())
+        return subprocess.CompletedProcess([], 0)
+
+    readings = iter(
+        [
+            {
+                "status": "ok",
+                "day": "2026-01-01",
+                "spent_micro_usd": 0,
+                "reserved_micro_usd": 0,
+                "limit_micro_usd": 500_000,
+            },
+            {
+                "status": "ok",
+                "day": "2026-01-01",
+                "spent_micro_usd": 200_000,
+                "reserved_micro_usd": 0,
+                "limit_micro_usd": 500_000,
+            },
+        ]
+    )
+    result = _live_handler(tmp_path, runner, ledger, lambda: next(readings))(
+        ticket({"expected_sha": "abc", "max_usd": 0.15}), NOW
+    )
+
+    assert not result.passed
+    assert "cap_exceeded" in result.output
+    assert result.payload_updates and result.payload_updates["cap_exceeded"] is True
+    assert result.payload_updates["runs"]
+    assert result.turns
+
+
 def test_read_worker_budget_validates_response_and_uses_origin() -> None:
     token = "secret-token"
     calls = []
@@ -283,7 +403,9 @@ def test_live_run_records_player_spend_and_grade_path_does_not(tmp_path: Path) -
             },
         ]
     )
-    result = _live_handler(tmp_path, runner, ledger, lambda: next(readings))(ticket({"expected_sha": "abc"}), NOW)
+    result = _live_handler(tmp_path, runner, ledger, lambda: next(readings))(
+        ticket({"expected_sha": "abc", "max_usd": 1.0}), NOW
+    )
     assert result.passed
     rows = _ledger_rows(ledger_path)
     assert len(rows) == 2
@@ -333,7 +455,9 @@ def test_day_change_between_worker_readings_records_unknown_cloudflare_spend(tmp
             },
         ]
     )
-    result = _live_handler(tmp_path, runner, ledger, lambda: next(readings))(ticket({"expected_sha": "abc"}), NOW)
+    result = _live_handler(tmp_path, runner, ledger, lambda: next(readings))(
+        ticket({"expected_sha": "abc", "max_usd": 1.0}), NOW
+    )
     assert result.passed
     rows = _ledger_rows(tmp_path / "ledger.jsonl")
     assert rows[-1].provider == "cloudflare"
@@ -350,7 +474,7 @@ def test_missing_player_usage_records_one_unknown_row(tmp_path: Path) -> None:
         write_artifact(tmp_path, report())
         return subprocess.CompletedProcess([], 0, stdout="", stderr="")
 
-    result = _live_handler(tmp_path, runner, ledger)(ticket({"expected_sha": "abc"}), NOW)
+    result = _live_handler(tmp_path, runner, ledger)(ticket({"expected_sha": "abc", "max_usd": 1.0}), NOW)
     assert not result.passed
     rows = _ledger_rows(ledger_path)
     assert len(rows) == 2
@@ -369,7 +493,7 @@ def test_runner_failure_records_unknown_spend(tmp_path: Path) -> None:
     def runner(_env, _timeout):
         raise RuntimeError("runner died")
 
-    result = _live_handler(tmp_path, runner, ledger)(ticket({"expected_sha": "abc"}), NOW)
+    result = _live_handler(tmp_path, runner, ledger)(ticket({"expected_sha": "abc", "max_usd": 1.0}), NOW)
     assert not result.passed
     rows = _ledger_rows(ledger_path)
     assert len(rows) == 2
@@ -417,7 +541,7 @@ def test_live_budget_gates_refuse_before_runner(tmp_path: Path, seed_provider: s
         return subprocess.CompletedProcess([], 0)
 
     with pytest.raises(expected) as raised:
-        _live_handler(tmp_path, runner, ledger)(ticket({"expected_sha": "abc"}), NOW)
+        _live_handler(tmp_path, runner, ledger)(ticket({"expected_sha": "abc", "max_usd": 1.0}), NOW)
     assert calls == 0
     if expected is LimitSleep:
         assert raised.value.provider == seed_provider
@@ -438,7 +562,7 @@ def test_missing_openai_daily_cap_fails_before_runner(tmp_path: Path) -> None:
         calls += 1
         return subprocess.CompletedProcess([], 0)
 
-    result = _live_handler(tmp_path, runner, ledger)(ticket({"expected_sha": "abc"}), NOW)
+    result = _live_handler(tmp_path, runner, ledger)(ticket({"expected_sha": "abc", "max_usd": 1.0}), NOW)
     assert not result.passed
     assert result.turns is None
     assert "missing daily cap for openai" in result.output
@@ -455,7 +579,7 @@ def test_live_run_under_all_caps_proceeds(tmp_path: Path) -> None:
         write_artifact(tmp_path, clean_report())
         return subprocess.CompletedProcess([], 0)
 
-    result = _live_handler(tmp_path, runner, ledger)(ticket({"expected_sha": "abc"}), NOW)
+    result = _live_handler(tmp_path, runner, ledger)(ticket({"expected_sha": "abc", "max_usd": 1.0}), NOW)
     assert result.passed
     assert calls == 1
 
@@ -714,8 +838,8 @@ def test_saved_and_live_reports_carry_replayable_runs_on_pass_and_failure(tmp_pa
         return subprocess.CompletedProcess([], 0, stdout="", stderr="")
 
     live = _live_handler(tmp_path, runner, SpendLedger(tmp_path / "live-ledger.jsonl"))
-    live_pass = live(ticket({"expected_sha": "abc"}), NOW)
-    live_fail = live(ticket({"expected_sha": "abc"}), NOW)
+    live_pass = live(ticket({"expected_sha": "abc", "max_usd": 1.0}), NOW)
+    live_fail = live(ticket({"expected_sha": "abc", "max_usd": 1.0}), NOW)
     assert live_pass.passed and live_pass.payload_updates and live_pass.payload_updates["runs"]
     assert not live_fail.passed and live_fail.turns and live_fail.payload_updates and live_fail.payload_updates["runs"]
 
@@ -739,7 +863,7 @@ def test_live_identity_failures_never_call_runner(tmp_path: Path, monkeypatch) -
             fetch_version=lambda _url, version=version: version,
             ledger=SpendLedger(tmp_path / "ledger.jsonl"),
         )
-        payload = {"expected_sha": expected}
+        payload = {"expected_sha": expected, "max_usd": 1.0}
         result = handler(ticket(payload), NOW)
         assert not result.passed and result.turns is None
     assert calls == []
@@ -764,7 +888,7 @@ def test_live_runner_called_once_and_stale_artifact_ignored(tmp_path: Path, monk
         fetch_version=lambda url: {"channel": "staging", "runtime": "scene-v1", "sha": "abc"},
         now_fn=lambda: NOW,
         ledger=SpendLedger(tmp_path / "ledger.jsonl"),
-    )(ticket({"expected_sha": "abc", "scene": "1A", "profile": "raw", "replicates": 3}), NOW)
+    )(ticket({"expected_sha": "abc", "max_usd": 1.0, "scene": "1A", "profile": "raw", "replicates": 3}), NOW)
     assert result.passed
     assert len(calls) == 1
     assert calls[0][0]["E2E_BLIND_SCENE"] == "1A"
@@ -786,7 +910,7 @@ def test_live_runner_lock_exists_only_during_call_and_is_removed_on_failure(tmp_
         return subprocess.CompletedProcess([], 0, stdout="", stderr="")
 
     handler = _live_handler(tmp_path, runner, SpendLedger(tmp_path / "ledger.jsonl"))
-    assert handler(ticket({"expected_sha": "abc"}), NOW).passed
+    assert handler(ticket({"expected_sha": "abc", "max_usd": 1.0}), NOW).passed
     assert seen == [True]
     assert not (tmp_path / "factory/state/staged_run.lock").exists()
 
@@ -796,7 +920,7 @@ def test_live_runner_lock_exists_only_during_call_and_is_removed_on_failure(tmp_
         raise RuntimeError("runner failed")
 
     failed = _live_handler(tmp_path, raising_runner, SpendLedger(tmp_path / "ledger-2.jsonl"))(
-        ticket({"expected_sha": "abc"}), NOW
+        ticket({"expected_sha": "abc", "max_usd": 1.0}), NOW
     )
     assert not failed.passed
     assert not (tmp_path / "factory/state/staged_run.lock").exists()
@@ -817,7 +941,7 @@ def test_fresh_live_staged_lock_blocks_runner(tmp_path: Path, monkeypatch) -> No
         return subprocess.CompletedProcess([], 0)
 
     result = _live_handler(tmp_path, runner, SpendLedger(tmp_path / "ledger.jsonl"))(
-        ticket({"expected_sha": "abc"}), NOW
+        ticket({"expected_sha": "abc", "max_usd": 1.0}), NOW
     )
     assert not result.passed and result.output == "staged run already in progress"
     assert called is False
@@ -832,13 +956,13 @@ def test_live_missing_fresh_report_and_default_runner_approval(tmp_path: Path, m
         now_fn=lambda: NOW,
         ledger=SpendLedger(tmp_path / "ledger.jsonl"),
     )
-    missing = handler(ticket({"expected_sha": "abc"}), NOW)
+    missing = handler(ticket({"expected_sha": "abc", "max_usd": 1.0}), NOW)
     assert not missing.passed and missing.turns is None
     refused = live_playtest_handler(
         tmp_path,
         fetch_version=lambda _url: {"channel": "staging", "runtime": "scene-v1", "sha": "abc"},
         ledger=SpendLedger(tmp_path / "ledger.jsonl"),
-    )(ticket({"expected_sha": "abc"}), NOW)
+    )(ticket({"expected_sha": "abc", "max_usd": 1.0}), NOW)
     assert not refused.passed and "billed_run_approved" in refused.output and refused.turns is None
 
 
@@ -856,9 +980,71 @@ def test_quota_raises_provider_limit_without_station_failure(tmp_path: Path, mon
         ledger=SpendLedger(tmp_path / "ledger.jsonl"),
     )
     with pytest.raises(LimitSleep) as raised:
-        handler(ticket({"expected_sha": "abc"}), NOW)
+        handler(ticket({"expected_sha": "abc", "max_usd": 1.0}), NOW)
     assert raised.value.provider == "cloudflare"
     assert raised.value.resume_at == datetime(2026, 1, 2, tzinfo=UTC)
+
+
+def test_nonzero_live_runner_keeps_exit_code_and_stderr_tail(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setenv("E2E_API_BASE_URL", "https://staging.example")
+
+    def runner(_env, _timeout):
+        return subprocess.CompletedProcess([], 7, stdout="stdout detail", stderr="stderr detail")
+
+    result = _live_handler(tmp_path, runner, SpendLedger(tmp_path / "ledger.jsonl"))(
+        ticket({"expected_sha": "abc", "max_usd": 1.0}), NOW
+    )
+
+    assert not result.passed
+    assert "exit 7" in result.output
+    assert "stderr detail" in result.output
+
+
+def test_nonzero_live_runner_limits_failure_output_to_last_2000_characters(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setenv("E2E_API_BASE_URL", "https://staging.example")
+    output = "a" * 2_000 + "tail"
+
+    def runner(_env, _timeout):
+        return subprocess.CompletedProcess([], 1, stdout=output, stderr="")
+
+    result = _live_handler(tmp_path, runner, SpendLedger(tmp_path / "ledger.jsonl"))(
+        ticket({"expected_sha": "abc", "max_usd": 1.0}), NOW
+    )
+
+    assert not result.passed
+    tail = result.output.rsplit(": ", 1)[1]
+    assert len(tail) == 2_000
+    assert tail == output[-2_000:]
+
+
+def test_nonzero_live_runner_redacts_sensitive_environment_values(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setenv("LIVE_PLAYTEST_SECRET", "runner-secret-value")
+    monkeypatch.setenv("E2E_API_BASE_URL", "https://staging.example")
+
+    def runner(_env, _timeout):
+        return subprocess.CompletedProcess([], 1, stdout="runner-secret-value", stderr="")
+
+    result = _live_handler(tmp_path, runner, SpendLedger(tmp_path / "ledger.jsonl"))(
+        ticket({"expected_sha": "abc", "max_usd": 1.0}), NOW
+    )
+
+    assert not result.passed
+    assert "runner-secret-value" not in result.output
+    assert "[redacted]" in result.output
+
+
+def test_nonzero_live_runner_with_empty_output_keeps_old_message(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setenv("E2E_API_BASE_URL", "https://staging.example")
+
+    def runner(_env, _timeout):
+        return subprocess.CompletedProcess([], 1, stdout="", stderr="")
+
+    result = _live_handler(tmp_path, runner, SpendLedger(tmp_path / "ledger.jsonl"))(
+        ticket({"expected_sha": "abc", "max_usd": 1.0}), NOW
+    )
+
+    assert not result.passed
+    assert result.output == "live playtest runner failed"
 
 
 def test_cli_exit_codes_and_build_registration(tmp_path: Path, capsys) -> None:
