@@ -1,0 +1,29 @@
+{
+  "run_name": "factory-24a-protect-offered-candidates",
+  "workdir": "/home/bcorfman/dev/ringer-work/factory-24",
+  "max_parallel": 1,
+  "worktrees": true,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "protect-offered-candidates",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=medium"
+      ],
+      "max_attempts": 2,
+      "timeout_s": 1800,
+      "check_timeout_s": 900,
+      "ownership": [
+        "factory/stations/fix_plan.py",
+        "tests/test_factory_fix_plan.py"
+      ],
+      "spec": "You are a factory engineer. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge (detached at HEAD). Edit files here directly. NEVER git commit, never touch /home/bcorfman/dev/freytag-forge itself, never run `uv`, NEVER call a model (not `claude`, not `codex`), NEVER use the network, never run `python -m bench run`, never write factory/state/. FIRST run: [ -e .venv ] || ln -s /home/bcorfman/dev/freytag-forge/.venv .venv . Environment for every command: `export PYTHONPATH=$PWD:$PWD/packages/worldkeeper/src TMPDIR=/tmp`. Ruff (python files only): `.venv/bin/python -m ruff check <files>` / `.venv/bin/python -m ruff format <files>` (line length 120, Python 3.12). Never pass --cov to pytest. Run tests as `.venv/bin/python -m pytest -q -p no:cacheprovider -n 8 <files>`. Tests must be hermetic (fake runner, no network, no real `claude`). Shared code must stay story-agnostic (no story, scene or character names in production code). If an OLD test pins behaviour this change deliberately changes, update it and say so in NOTES.txt. Write NOTES.txt (worktree root, never committed) listing every ambiguity and your choice. Read first: AGENTS.md and docs/contributor-guide.md. You may edit ONLY: factory/stations/fix_plan.py and tests/test_factory_fix_plan.py.\n\nTASK. In factory/stations/fix_plan.py, `build_evidence` passes `protected_candidates=_diagnosis_claim_ids(ticket_payload)` to `_bound_evidence`. A ticket with no diagnosis rows therefore protects no candidates, and when the packet is over EVIDENCE_LIMIT_CHARS the cut removes candidates in reverse-sorted order, which can drop the very claim the failing turns offered. Real failure: tests/test_factory_claim_edit.py::test_evidence_menu_and_candidate_matcher_context_are_bounded raises KeyError for the offered claim 'k_sl_1a_k_r1' because it sorts last and is cut first.\nChange: protect, in addition to the diagnosis claim ids, every claim id that appears in a failing turn's `candidates_offered` or equals its `matched_candidate` (string values only; use the turns you already built for the evidence, so the set matches what the planner sees). Protected candidates are never cut; if the packet is still over the limit after the other cuts, the existing loops already stop, so do not add new cuts. Add one test in tests/test_factory_fix_plan.py: a ticket with no diagnosis whose failing turn offers the claim that sorts LAST among the scene candidates, and a limit small enough to force candidate cuts (call build_evidence after monkeypatching fix_plan.EVIDENCE_LIMIT_CHARS, or call _bound_evidence directly with the same protected set); assert that claim is still in evidence['candidates'] and that evidence['truncated']['candidates'] shows some other candidates were cut. Do NOT edit tests/test_factory_claim_edit.py; it must pass unchanged. Change nothing else.",
+      "check": "set -eo pipefail\nWORK=/home/bcorfman/dev/ringer-work/factory-24\nmkdir -p \"$WORK/out\"\nexport PYTHONPATH=$PWD:$PWD/packages/worldkeeper/src TMPDIR=/tmp\n[ -e .venv ] || ln -s /home/bcorfman/dev/freytag-forge/.venv .venv\ngit add -A -- factory tests\nbad=$(git diff --cached --name-only | grep -vE '^(factory/stations/fix_plan\\.py|tests/test_factory_fix_plan\\.py)$' || true)\n[ -z \"$bad\" ] || { echo \"files outside ownership staged: $bad\"; exit 1; }\nstart=$(date +%s)\n.venv/bin/python -m pytest -q -p no:cacheprovider -n 8 tests/test_factory_fix_plan.py tests/test_factory_claim_edit.py tests/test_factory_planner.py tests/test_factory_qualification_run_case.py\ntook=$(( $(date +%s) - start ))\necho \"tests took $took s (budget 300 s)\"\n[ \"$took\" -le 300 ] || { echo \"over the 300 s budget\"; exit 1; }\nPYFILES=$(git diff --cached --name-only | grep '\\.py$' || true)\n[ -z \"$PYFILES\" ] || .venv/bin/python -m ruff check $PYFILES\n[ -z \"$PYFILES\" ] || .venv/bin/python -m ruff format --check $PYFILES\ngrep -q 'candidates_offered' factory/stations/fix_plan.py && grep -Eq 'protected_candidates *=' factory/stations/fix_plan.py || { echo 'protected_candidates not widened'; exit 1; }\ngit diff --cached > \"$WORK/out/protect-offered-candidates.patch\"\ntest -s \"$WORK/out/protect-offered-candidates.patch\"\n",
+      "expect_files": [],
+      "verified": "Candidates offered or matched by failing turns survive the evidence cut; claim_edit test passes unchanged."
+    }
+  ]
+}

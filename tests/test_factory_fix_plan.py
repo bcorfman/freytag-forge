@@ -478,6 +478,32 @@ def test_bound_evidence_cuts_candidates_before_failing_turns() -> None:
     assert "failing_turns" not in bounded["truncated"]
 
 
+def test_bound_evidence_protects_offered_last_sorted_candidate() -> None:
+    candidate_ids = [
+        "k_sl_1a_a_r1",
+        "k_sl_1a_b_r1",
+        "k_sl_1a_c_r1",
+        "k_sl_1a_k_r1",
+    ]
+    ticket = {
+        "scene": "1A",
+        "diagnosis": None,
+        "failing_turns": [{"key": "turn-1", "candidates_offered": ["k_sl_1a_k_r1"]}],
+    }
+    packet = {
+        "failing_turns": ticket["failing_turns"],
+        "candidates": {candidate_id: {"text": "candidate"} for candidate_id in candidate_ids},
+        "fact_readers": {},
+        "beats": [],
+        "exits": [],
+    }
+
+    bounded = fix_plan._bound_evidence(packet, limit=100, protected_candidates={"k_sl_1a_k_r1"})
+
+    assert "k_sl_1a_k_r1" in bounded["candidates"]
+    assert bounded["truncated"]["candidates"]["kept"] < len(candidate_ids)
+
+
 def test_bound_evidence_leaves_small_packet_unchanged() -> None:
     packet = {"failing_turns": [], "candidates": {}, "fact_readers": {}, "beats": [], "exits": []}
     original = copy.deepcopy(packet)

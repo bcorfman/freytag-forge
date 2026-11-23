@@ -908,6 +908,14 @@ def build_evidence(ticket_payload: dict, package: StoryPackage) -> dict:
         protected_turn_keys = {
             row["key"] for row in diagnosis_rows if isinstance(row, Mapping) and isinstance(row.get("key"), str)
         }
+    protected_candidates = _diagnosis_claim_ids(ticket_payload)
+    for turn in turns:
+        offered = turn.get("candidates_offered")
+        if isinstance(offered, list):
+            protected_candidates.update(item for item in offered if isinstance(item, str))
+        matched_candidate = turn.get("matched_candidate")
+        if isinstance(matched_candidate, str):
+            protected_candidates.add(matched_candidate)
     evidence: dict[str, object] = {
         "scene": scene,
         "failing_turns": turns,
@@ -949,7 +957,7 @@ def build_evidence(ticket_payload: dict, package: StoryPackage) -> dict:
     }
     evidence = _bound_evidence(
         evidence,
-        protected_candidates=_diagnosis_claim_ids(ticket_payload),
+        protected_candidates=protected_candidates,
         protected_turn_keys=protected_turn_keys,
     )
     evidence["precedents"] = _precedents_text(ticket_payload)
