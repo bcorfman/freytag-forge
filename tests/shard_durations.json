@@ -130,6 +130,7 @@
     "tests/test_audit_budget_branches.py": 13.33,
     "tests/test_audit_copied_prose.py": 3.0,
     "tests/test_audit_unbound_item.py": 1.67,
+    "tests/test_authoring_view.py": 6.33,
     "tests/test_bench.py": 5.07,
     "tests/test_bench_item_facts.py": 17.81,
     "tests/test_bench_runtime_mode.py": 3.65,
