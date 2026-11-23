@@ -1,0 +1,29 @@
+{
+  "run_name": "factory-21c-evidence-limit",
+  "workdir": "/home/bcorfman/dev/ringer-work/factory-21",
+  "max_parallel": 1,
+  "worktrees": true,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "evidence-limit",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=high"
+      ],
+      "max_attempts": 2,
+      "timeout_s": 2400,
+      "check_timeout_s": 900,
+      "ownership": [
+        "factory/stations/fix_plan.py",
+        "tests/test_factory_fix_plan.py"
+      ],
+      "spec": "You are a factory engineer. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge (detached at HEAD). Edit files here directly. NEVER git commit, never touch /home/bcorfman/dev/freytag-forge itself, never run `uv`, NEVER call a model (not `claude`, not `codex`), NEVER use the network, never run `python -m bench run`, never write factory/state/. FIRST run: [ -e .venv ] || ln -s /home/bcorfman/dev/freytag-forge/.venv .venv . Environment for every command: `export PYTHONPATH=$PWD:$PWD/packages/worldkeeper/src TMPDIR=/tmp`. Ruff (python files only): `.venv/bin/python -m ruff check <files>` / `.venv/bin/python -m ruff format <files>` (line length 120, Python 3.12). Never pass --cov to pytest. Run tests as `.venv/bin/python -m pytest -q -p no:cacheprovider -n 8 <files>`. Tests must be hermetic (fake runner, no network, no real `claude`). Shared code must stay story-agnostic (no story, scene or character names in production code). If an OLD test pins behaviour this change deliberately changes, update it and say so in NOTES.txt. Write NOTES.txt (worktree root, never committed) listing every ambiguity and your choice. Read first: AGENTS.md and docs/contributor-guide.md. You may edit ONLY: factory/stations/fix_plan.py and tests/test_factory_fix_plan.py.\n\nPROBLEM (measured on two real saved cases, 1A with 21 to 23 failing turns). The planner evidence packet is about 38.7k and 42.4k characters before bounding: failing_turns 18.3k to 22.2k, diagnosis 5.8k, candidates 10k, fact_readers 2.3k, beats 1.1k to 1.3k, exits 0.2k, fix_menu 0.7k. `_bound_evidence` (just repaired in the previous round) keeps the limit at 12,000, but the diagnosis and fix_menu alone take about 6.5k, so the cut removes ALL beats, exits and fact_readers, shortens turn text to 80 characters and keeps only 4 of 23 turns. The planner cannot choose a pacing beat or judge an exit without beats and exits, which are small structured facts.\n\nCHANGE.\n1. Raise the default `limit` of `_bound_evidence` to 20_000 characters (a module constant `EVIDENCE_LIMIT_CHARS`, used as the default).\n2. Change the cut order to: (a) unprotected candidates; (b) fact_readers; (c) shorten failing-turn text fields to 300, then 150 characters; (d) beats, then exits, from the end; (e) shorten turn text to 80; (f) drop failing turns from the end, protected turn keys last, never to zero when the input had at least one. Beats and exits are therefore cut only after turn text is already at 150 characters.\n3. Keep the `truncated` marker behaviour exactly as is (counts kept and original, `text_shortened_to` the last length applied).\n\nTESTS. Update the tests added in the previous round only where this order change requires it (say which in NOTES.txt), and add: (a) a packet shaped like the measured one (25 turns with 600-character narrations and previous narrations, 10 candidates of 500 characters, a 6,000-character `diagnosis` value, 2,300 characters of fact_readers, 8 small beats, 1 exit) bounded at the default limit keeps ALL beats and exits, keeps at least 10 failing turns, is within the limit, and reports `truncated`; (b) beats and exits are still cut when the limit is so small that shortening text to 150 is not enough, and only then. Assert survival and counts, not exact strings.",
+      "check": "set -eo pipefail\nWORK=/home/bcorfman/dev/ringer-work/factory-21\nmkdir -p \"$WORK/out\"\nexport PYTHONPATH=$PWD:$PWD/packages/worldkeeper/src TMPDIR=/tmp\n[ -e .venv ] || ln -s /home/bcorfman/dev/freytag-forge/.venv .venv\ngit add -A -- factory tests\nbad=$(git diff --cached --name-only | grep -vE '^(factory/stations/fix_plan\\.py|tests/test_factory_fix_plan\\.py)$' || true)\n[ -z \"$bad\" ] || { echo \"files outside ownership staged: $bad\"; exit 1; }\nstart=$(date +%s)\n.venv/bin/python -m pytest -q -p no:cacheprovider -n 8 tests/test_factory_fix_plan.py tests/test_factory_planner.py tests/test_factory_qualification_run_case.py\ntook=$(( $(date +%s) - start ))\necho \"tests took $took s (budget 300 s)\"\n[ \"$took\" -le 300 ] || { echo \"over the 300 s budget\"; exit 1; }\nPYFILES=$(git diff --cached --name-only | grep '\\.py$' || true)\n[ -z \"$PYFILES\" ] || .venv/bin/python -m ruff check $PYFILES\n[ -z \"$PYFILES\" ] || .venv/bin/python -m ruff format --check $PYFILES\ngrep -q 'EVIDENCE_LIMIT_CHARS' factory/stations/fix_plan.py || { echo 'no EVIDENCE_LIMIT_CHARS constant'; exit 1; }\ngit diff --cached > \"$WORK/out/evidence-limit.patch\"\ntest -s \"$WORK/out/evidence-limit.patch\"\n",
+      "expect_files": [],
+      "verified": "Planner evidence keeps beats, exits and at least 10 failing turns on a packet shaped like the measured 1A case."
+    }
+  ]
+}

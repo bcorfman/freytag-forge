@@ -18,6 +18,7 @@ from storygame.story_package.models import StoryPackage
 from storygame.story_source.lookup import _source_tree, story_text
 
 PLAN_VERSION = 1
+EVIDENCE_LIMIT_CHARS = 20_000
 _KINDS = frozenset({"add_pacing_beat", "set_text", "edit_claim_evidence", "unsupported"})
 _REROUTES = frozenset({"station_code", "story_edit", "adaptive_probe"})
 _BEAT_ID = re.compile(r"^[a-z][a-z0-9_]*_(?P<scene>[1-9][a-z])$")
@@ -703,7 +704,7 @@ def _precedents_text(ticket_payload: Mapping[str, Any]) -> str | None:
 
 def _bound_evidence(
     packet: dict[str, object],
-    limit: int = 12_000,
+    limit: int = EVIDENCE_LIMIT_CHARS,
     protected_candidates: set[str] | None = None,
     protected_turn_keys: set[str] | None = None,
 ) -> dict[str, object]:
@@ -736,6 +737,24 @@ def _bound_evidence(
         fact_readers.pop(fact_id)
         record_count("fact_readers", len(fact_readers), original_fact_reader_count)
 
+    turns = packet.get("failing_turns")
+    original_turn_count = len(turns) if isinstance(turns, list) else 0
+    for text_limit in (300, 150):
+        if size() <= limit or not isinstance(turns, list):
+            break
+        shortened = False
+        for turn in turns:
+            if not isinstance(turn, dict):
+                continue
+            for field in ("narration", "previous_narration", "rejected_code", "rejected_message"):
+                value = turn.get(field)
+                if isinstance(value, str) and len(value) > text_limit:
+                    turn[field] = value[:text_limit]
+                    shortened = True
+        if shortened:
+            truncation["text_shortened_to"] = text_limit
+            packet["truncated"] = truncation
+
     for key in ("beats", "exits"):
         values = packet.get(key)
         original_count = len(values) if isinstance(values, list) else 0
@@ -743,11 +762,8 @@ def _bound_evidence(
             values.pop()
             record_count(key, len(values), original_count)
 
-    turns = packet.get("failing_turns")
-    original_turn_count = len(turns) if isinstance(turns, list) else 0
-    for text_limit in (300, 150, 80):
-        if size() <= limit or not isinstance(turns, list):
-            break
+    if size() > limit and isinstance(turns, list):
+        text_limit = 80
         shortened = False
         for turn in turns:
             if not isinstance(turn, dict):

@@ -407,7 +407,7 @@ def test_evidence_is_deterministic_bounded_and_skips_unknown() -> None:
     bounded_without_curated_text = {
         key: value for key, value in first.items() if key not in {"precedents", "fun_lessons"}
     }
-    assert len(json.dumps(bounded_without_curated_text)) < 12_000
+    assert len(json.dumps(bounded_without_curated_text)) <= fix_plan.EVIDENCE_LIMIT_CHARS
     assert "unknown_candidate" not in first["candidates"]
     candidate = first["candidates"]["k_sl_1a_b_r1"]
     assert candidate["earn_when"]
@@ -437,9 +437,9 @@ def test_bound_evidence_keeps_a_turn_and_reports_all_cuts() -> None:
     bounded = fix_plan._bound_evidence(packet)
 
     assert bounded["failing_turns"]
-    assert len(json.dumps(bounded, ensure_ascii=False, separators=(",", ":"))) <= 12_000
+    assert len(json.dumps(bounded, ensure_ascii=False, separators=(",", ":"))) <= fix_plan.EVIDENCE_LIMIT_CHARS
     assert bounded["truncated"]["candidates"] == {"kept": 0, "of": 12}
-    assert bounded["truncated"]["text_shortened_to"] in {150, 80}
+    assert bounded["truncated"]["text_shortened_to"] == 150
     if "failing_turns" in bounded["truncated"]:
         assert bounded["truncated"]["failing_turns"] == {"kept": len(bounded["failing_turns"]), "of": 25}
 
@@ -501,6 +501,71 @@ def test_bound_evidence_handles_zero_failing_turns_when_over_limit() -> None:
     assert bounded["truncated"]["candidates"] == {"kept": 0, "of": 8}
 
 
+def test_bound_evidence_keeps_structured_pacing_evidence_at_default_limit() -> None:
+    packet = {
+        "failing_turns": [
+            {
+                "key": f"turn-{index}",
+                "narration": "n" * 600,
+                "previous_narration": "p" * 600,
+            }
+            for index in range(25)
+        ],
+        "candidates": {f"candidate-{index:02d}": {"text": "c" * 500} for index in range(10)},
+        "diagnosis": "d" * 6_000,
+        "fact_readers": {"facts": "r" * 2_300},
+        "beats": [{"id": f"beat-{index}", "at_turn": index} for index in range(8)],
+        "exits": [{"id": "exit-1", "to": "next"}],
+    }
+
+    bounded = fix_plan._bound_evidence(packet)
+
+    assert len(json.dumps(bounded, ensure_ascii=False, separators=(",", ":"))) <= fix_plan.EVIDENCE_LIMIT_CHARS
+    assert bounded["truncated"]
+    assert len(bounded["failing_turns"]) >= 10
+    assert len(bounded["beats"]) == 8
+    assert len(bounded["exits"]) == 1
+
+
+def test_bound_evidence_cuts_pacing_evidence_after_150_character_text() -> None:
+    packet = {
+        "failing_turns": [
+            {
+                "key": "turn-1",
+                "narration": "n" * 600,
+                "previous_narration": "p" * 600,
+            }
+        ],
+        "candidates": {},
+        "fact_readers": {},
+        "beats": [{"id": f"beat-{index}", "detail": "b" * 200} for index in range(3)],
+        "exits": [{"id": f"exit-{index}", "detail": "e" * 200} for index in range(2)],
+    }
+
+    after_150 = copy.deepcopy(packet)
+    after_150["failing_turns"][0]["narration"] = "n" * 150
+    after_150["failing_turns"][0]["previous_narration"] = "p" * 150
+    after_150["beats"] = []
+    after_150["exits"] = []
+    after_150["truncated"] = {
+        "text_shortened_to": 150,
+        "beats": {"kept": 0, "of": 3},
+        "exits": {"kept": 0, "of": 2},
+    }
+    limit = len(json.dumps(after_150, ensure_ascii=False, separators=(",", ":")))
+
+    bounded = fix_plan._bound_evidence(packet, limit=limit)
+
+    assert bounded["truncated"]["text_shortened_to"] == 150
+    assert bounded["truncated"]["beats"] == {"kept": 0, "of": 3}
+    assert bounded["truncated"]["exits"] == {"kept": 0, "of": 2}
+    assert len(json.dumps(bounded, ensure_ascii=False, separators=(",", ":"))) <= limit
+    assert len(bounded["failing_turns"]) == 1
+    assert all(
+        len(turn[field]) == 150 for turn in bounded["failing_turns"] for field in ("narration", "previous_narration")
+    )
+
+
 def test_build_evidence_protects_diagnosis_row_turns() -> None:
     ticket = copy.deepcopy(TICKET)
     ticket["failing_turns"] = [
@@ -522,7 +587,7 @@ def test_build_evidence_protects_diagnosis_row_turns() -> None:
     evidence = fix_plan.build_evidence(ticket, PACKAGE)
 
     assert "diagnosed" in {turn["key"] for turn in evidence["failing_turns"]}
-    assert len(evidence["failing_turns"]) < 4
+    assert len(evidence["failing_turns"]) == 4
 
 
 def test_evidence_ignores_lesson_rendering_errors(monkeypatch: pytest.MonkeyPatch) -> None:
