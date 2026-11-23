@@ -532,11 +532,9 @@ reveals:
 
       - Michelle''s workstation
 
-      - Mug of tea, reading glasses, manuscript pages, wall calendar, and lake photograph'
+      - Mug of tea, reading glasses, and manuscript pages'
     dramatic_purpose: '- Let the kitchen read as a person''s last hour so Michelle''s disappearance feels like a loss.'
-    possible_realizations: '- Kristin reads the workstation as Michelle''s last hour: a faintly warm mug of tea and her reading glasses folded on red-penned manuscript pages.
-
-      - Kristin reads the kitchen walls as a life interrupted: the calendar with Saturday circled and the photograph of the two of them at a lake.'
+    possible_realizations: '- Kristin reads the workstation as Michelle''s last hour: a faintly warm mug of tea and her reading glasses folded on red-penned manuscript pages.'
     effects: '- Sets `kitchen_last_hour_read` and preserves the existing abduction suspicion.'
     completion: '- Kristin has read the kitchen as Michelle''s last hour.'
     abort: '- Kristin leaves scene 1A.'
@@ -572,12 +570,41 @@ reveals:
         patrol_in_house: false
       text: A mug of tea sits on Michelle's workstation, the bag still in it, faintly warm. Her reading glasses lie folded on her manuscript pages, which are marked in red pen. She never goes anywhere without them. Michelle did not plan to be gone.
       earn_when: looks closely at the workstation, the mug, the reading glasses or the manuscript pages
-    r2:
-      realization_id: SL-1A-G-R2
+- id: sl_1a_l
+  storylet_id: SL-1A-L
+  title: The Walls of the Kitchen
+  guidance:
+    pressure_role: Let the kitchen walls read as a life interrupted so Michelle's disappearance feels personal.
+    window:
+      earliest_turn: 0
+      target_turn: 4
+      latest_turn: 11
+    available_while:
+      patrol_in_house: false
+    boundaries:
+    - janus_selection_system
+    - brandon_history
+    - janus_phase_two
+  from_outline:
+  - 1A.1
+  notes:
+    available_when: '- Kristin is at the house.
+
+      - The patrol is not in the house.'
+    participants: '- Kristin Schweitzer
+
+      - Wall calendar, lake photograph, and refrigerator'
+    dramatic_purpose: '- Let the kitchen walls read as a life interrupted so Michelle''s disappearance feels personal.'
+    possible_realizations: '- Kristin reads the kitchen walls as a life interrupted: the calendar with Saturday circled and the photograph of the two of them at a lake.'
+    effects: '- Sets `lemon_cake_calendar_read`.'
+    completion: '- Kristin has read the kitchen walls as a life interrupted.'
+    abort: '- Kristin leaves scene 1A.'
+    protected_boundary: '- Does not reveal who took Michelle, JANUS, Brandon’s role, the detention network, or the true mechanics of the disappearances.'
+  variants:
+    r1:
+      realization_id: SL-1A-L-R1
       intent: Kristin reads the kitchen walls as a life interrupted through the calendar and lake photograph.
       commits:
-        kitchen_last_hour_read: true
-        michelle_abduction_suspicion: true
         lemon_cake_calendar_read: true
       helps_exit: []
       from_outline:
@@ -1499,6 +1526,7 @@ order:
   storylets:
   - SL-1A-A
   - SL-1A-G
+  - SL-1A-L
   - SL-1A-H
   - SL-1A-I
   - SL-1A-J

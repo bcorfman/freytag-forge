@@ -87,7 +87,7 @@ def test_established_knowledge_makes_the_deep_prompt_longer(tmp_path: Path) -> N
 def test_all_alternates_are_reported_and_make_the_prompt_larger(tmp_path: Path) -> None:
     result = deep_turn_budget(_package(tmp_path, alternate=True), "1A")
 
-    assert result["alternate_pairs"] == ["SL-1A-A", "SL-1A-B", "SL-1A-C", "SL-1A-F", "SL-1A-G", "SL-1A-J"]
+    assert result["alternate_pairs"] == ["SL-1A-A", "SL-1A-B", "SL-1A-C", "SL-1A-F", "SL-1A-J"]
     assert result["narration_chars_all_alternates"] > result["narration_chars"]
 
 

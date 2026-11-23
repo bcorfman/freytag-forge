@@ -426,11 +426,7 @@ def test_the_calendar_reveal_in_1a_alone_earns_the_lemon_cake_fact():
     ]
     assert earning == ["k_sl_1a_g_r2"]
     facts = {(operation.fact_id, operation.value) for operation in entries["k_sl_1a_g_r2"].establishes}
-    assert facts == {
-        ("kitchen_last_hour_read", True),
-        ("michelle_abduction_suspicion", True),
-        ("lemon_cake_calendar_read", True),
-    }
+    assert facts == {("lemon_cake_calendar_read", True)}
 
 
 def test_four_new_optional_storylets_share_their_beats_windows_and_conditions():

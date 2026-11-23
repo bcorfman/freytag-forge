@@ -272,15 +272,15 @@ def test_sibling_delivery_explains_unoffered_alternative() -> None:
         {
             "key": "sibling",
             "scene": "1A",
-            "player_input": "Inspect the calendar and photograph",
+            "player_input": "Check the front gate",
             "candidates_offered": [],
-            "delivered_before": ["k_sl_1a_g_r1"],
-            "delivered_before_turns": {"k_sl_1a_g_r1": 3},
+            "delivered_before": ["k_sl_1a_c_r1"],
+            "delivered_before_turns": {"k_sl_1a_c_r1": 3},
         },
         PACKAGE,
     )
     assert row["cause"] == "claim_not_offered"
-    assert row["signals"]["spent_by_sibling"] == "k_sl_1a_g_r1"
+    assert row["signals"]["spent_by_sibling"] == "k_sl_1a_c_r1"
 
 
 def test_legacy_packet_keeps_unknown_object_label() -> None:

@@ -5,7 +5,10 @@ from __future__ import annotations
 from pathlib import Path
 
 from storygame.runtime.engine import RuntimeEngine
+from storygame.runtime.facts import Fact
+from storygame.runtime.reveal_eligibility import explain_reveal
 from storygame.runtime.state import RuntimeState
+from storygame.story_package.dependencies import producers
 from storygame.story_package.loader import load_story_package
 
 ROOT = Path("data/stories/continuity-initiative")
@@ -67,15 +70,17 @@ def test_the_kitchen_storylet_has_two_separate_reveals():
     assert "calendar" in walls.delivery_text and "lemon cake" in walls.delivery_text
     assert "photograph" in walls.delivery_text and "tea" not in walls.delivery_text
     assert set(walls.reach_entity_ids) == {"kitchen_calendar", "lake_photograph"}
-    storylet = next(item for item in PACKAGE.storylet_routes.storylets if item.id == "SL-1A-G")
-    assert [realization.id for realization in storylet.realizations] == ["SL-1A-G-R1", "SL-1A-G-R2"]
+    workstation_storylet = next(item for item in PACKAGE.storylet_routes.storylets if item.id == "SL-1A-G")
+    walls_storylet = next(item for item in PACKAGE.storylet_routes.storylets if item.id == "SL-1A-L")
+    assert [realization.id for realization in workstation_storylet.realizations] == ["SL-1A-G-R1"]
+    assert [realization.id for realization in walls_storylet.realizations] == ["SL-1A-L-R1"]
+    assert walls.source.storylet_id == "SL-1A-L"
+    assert walls.source.realization_id == "SL-1A-L-R1"
     assert {operation.fact_id for operation in workstation.establishes} == {
         "kitchen_last_hour_read",
         "michelle_abduction_suspicion",
     }
     assert {operation.fact_id for operation in walls.establishes} == {
-        "kitchen_last_hour_read",
-        "michelle_abduction_suspicion",
         "lemon_cake_calendar_read",
     }
 
@@ -88,6 +93,100 @@ def test_a_calendar_command_offers_only_the_walls_reveal():
         candidate.id for candidate in engine.projector.project(state, "player", "Look at the wall calendar.").candidates
     ]
     assert ranked[0] == "k_sl_1a_g_r2"  # the command's own evidence ranks first; free slots may hold ambient reveals
+
+
+def _deliver_1a_claim(claim_id: str, command: str) -> tuple[RuntimeState, RuntimeEngine]:
+    state = RuntimeState.bootstrap(PACKAGE)
+    entry = _knowledge()[claim_id]
+
+    def provider(_command: str) -> dict:
+        return {
+            "segments": [{"kind": "narration", "text": entry.delivery_text, "grounding_ids": [claim_id]}],
+            "selected_knowledge_ids": [claim_id],
+        }
+
+    engine = RuntimeEngine(state, provider)
+    engine._activate_pacing()
+    assert explain_reveal(state, "player", entry).eligible
+    engine.turn(command)
+    return state, engine
+
+
+def _true_fact(state: RuntimeState, fact_id: str) -> bool:
+    return any(fact.predicate == fact_id and fact.value == "true" for fact in state.facts.asserted)
+
+
+def test_workstation_first_leaves_the_calendar_reveal_eligible_and_deliverable():
+    state, _engine = _deliver_1a_claim("k_sl_1a_g_r1", "Look closely at the workstation.")
+    calendar = _knowledge()["k_sl_1a_g_r2"]
+
+    assert explain_reveal(state, "player", calendar).reason != "storylet_spent"
+    assert explain_reveal(state, "player", calendar).eligible
+
+    _deliver_1a_claim_after_state = RuntimeEngine(
+        state,
+        lambda _command: {
+            "segments": [{"kind": "narration", "text": calendar.delivery_text, "grounding_ids": [calendar.id]}],
+            "selected_knowledge_ids": [calendar.id],
+        },
+    )
+    _deliver_1a_claim_after_state._activate_pacing()
+    _deliver_1a_claim_after_state.turn("Look closely at the wall calendar.")
+    assert _true_fact(state, "lemon_cake_calendar_read")
+
+
+def test_calendar_first_leaves_the_workstation_reveal_eligible_and_deliverable():
+    state, _engine = _deliver_1a_claim("k_sl_1a_g_r2", "Look closely at the wall calendar.")
+    workstation = _knowledge()["k_sl_1a_g_r1"]
+
+    assert explain_reveal(state, "player", workstation).reason != "storylet_spent"
+    assert explain_reveal(state, "player", workstation).eligible
+
+    workstation_engine = RuntimeEngine(
+        state,
+        lambda _command: {
+            "segments": [{"kind": "narration", "text": workstation.delivery_text, "grounding_ids": [workstation.id]}],
+            "selected_knowledge_ids": [workstation.id],
+        },
+    )
+    workstation_engine._activate_pacing()
+    workstation_engine.turn("Look closely at the workstation.")
+    assert _true_fact(state, "kitchen_last_hour_read")
+
+
+def test_kitchen_reveals_are_blocked_while_the_patrol_is_in_the_house():
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.facts.assert_fact(Fact(predicate="patrol_in_house", subject="story", value="true"))
+    engine = RuntimeEngine(state, lambda _command: {"segments": [{"kind": "narration", "text": "Blocked."}]})
+    engine._activate_pacing()
+
+    for claim_id in ("k_sl_1a_g_r1", "k_sl_1a_g_r2"):
+        result = explain_reveal(state, "player", _knowledge()[claim_id])
+        assert not result.eligible
+        assert result.reason == "prerequisite_missing"
+
+
+def test_kitchen_reveals_are_not_repeatable():
+    for claim_id, command in (
+        ("k_sl_1a_g_r1", "Look closely at the workstation."),
+        ("k_sl_1a_g_r2", "Look closely at the wall calendar."),
+    ):
+        state, _engine = _deliver_1a_claim(claim_id, command)
+        result = explain_reveal(state, "player", _knowledge()[claim_id])
+        assert not result.eligible
+        assert result.reason == "already_established"
+
+
+def test_calendar_claim_alone_produces_the_scene_3a_gate_fact():
+    calendar = _knowledge()["k_sl_1a_g_r2"]
+    assert {(operation.fact_id, operation.value) for operation in calendar.establishes} == {
+        ("lemon_cake_calendar_read", True)
+    }
+    assert [
+        (producer.kind, producer.record_id)
+        for producer in producers(PACKAGE, "lemon_cake_calendar_read")
+        if producer.kind == "claim"
+    ] == [("claim", "k_sl_1a_g_r2")]
 
 
 def test_the_neighbor_does_not_depend_on_the_patrol_being_away():

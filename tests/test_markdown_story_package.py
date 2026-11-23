@@ -294,7 +294,7 @@ def test_continuity_package_loads_all_scene_headings_and_storylets() -> None:
         "3B",
         "3C",
     ]
-    assert len(package.storylets) == 68  # SL-1A-K adds one authored storylet.
+    assert len(package.storylets) == 69  # SL-1A-K and SL-1A-L each add one authored storylet.
     assert all(storylet.source_links and storylet.sections["Protected boundary"] for storylet in package.storylets)
     assert package.knowledge.schema_version == "2.0"
     assert package.scenes[0].metadata.item_placements == {
