@@ -127,6 +127,7 @@ test("loads the real package and resolves turn milestones", () => {
       "patrol_leaves_1a",
       "patrol_returns_1a",
       "home_search_narrows_1a",
+      "drawer_gap_returns_1a",
       "pursuit_1b",
       "park_lockdown_1b",
       "transfer_window_1c",

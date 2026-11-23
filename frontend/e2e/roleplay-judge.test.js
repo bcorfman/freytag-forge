@@ -1,10 +1,8 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-import { createRequire } from "node:module";
 import test from "node:test";
-import { resolve } from "node:path";
 
 import { judgeRoleplayTurn, judgeSceneNarration, sceneCanon } from "./roleplay-judge.js";
+import { loadAuthoringView } from "./story-view.js";
 
 test("roleplay judge sends the transcript and parses a passing structured verdict", async () => {
   let request;
@@ -182,11 +180,7 @@ test("scene canon judge distinguishes protected facts from ordinary invented det
 
 test("sceneCanon returns only revealed knowledge for the current scene", () => {
   const canon = sceneCanon("1A", ["k_sl_1a_a_r1", "k_sl_1a_b_r1", "k_sl_1b_a_r1", "scene:1A"]);
-  const require = createRequire(import.meta.url);
-  const YAML = require("yaml");
-  const knowledgePackage = YAML.parse(
-    readFileSync(resolve(import.meta.dirname, "../../data/stories/continuity-initiative/knowledge.yaml"), "utf8"),
-  );
+  const knowledgePackage = loadAuthoringView().knowledge;
   const expectedIds = ["k_sl_1a_a_r1", "k_sl_1a_b_r1"];
   const expectedKnowledge = expectedIds.map((id) => {
     const entry = knowledgePackage.knowledge.find((knowledge) => knowledge.id === id);

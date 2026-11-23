@@ -10,7 +10,7 @@ test("audits joined turns, skips missing bundles, and reports suspicious forced 
   const dir = mkdtempSync(join(tmpdir(), "attribution-audit-"));
   const scenes = { "rep-1": { "1A": { turns: [
     { turn: 1, text: "No bundle." },
-    { turn: 2, text: "Michelle's phone is still here, and it is not damaged. Her tablet and work bag are gone. Her chair is tipped over and the back door was forced, but nothing else was taken. This was not looting. Someone came for Michelle." },
+    { turn: 2, text: "Kristin makes herself breathe and look. Michelle's phone is still here - damaged a bit but still working. Her tablet and work bag are gone, and her chair is tipped over. Then she sees the back door. The splinters around the frame point outward, away from the house. A door forced from outside would splinter inward. Someone broke this one from inside to make it look like a break-in. It looks staged." },
     { turn: 3, text: "Forced narrator only.", rejected: false },
   ] } } };
   const bundles = { "rep-1": { "1A": { bundles: [
