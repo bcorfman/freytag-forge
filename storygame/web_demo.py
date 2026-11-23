@@ -330,7 +330,7 @@ def create_demo_app(
                 state = RuntimeState.bootstrap(package)
             elif body.start_state == "canonical":
                 snapshot = load_entry_snapshot(package_roots_by_id[package.story_id], body.start_scene)
-                state = state_from_snapshot(package, snapshot)
+                state = state_from_snapshot(package, snapshot, package_roots_by_id[package.story_id])
             elif body.start_state == "bare":
                 state = bare_state_for_scene(package, body.start_scene)
             else:

@@ -57,24 +57,6 @@ def _source_fingerprint(story_root: Path) -> str:
     return digest.hexdigest()
 
 
-def _package_root(package: StoryPackage) -> Path:
-    """Find the source package used to load ``package`` for fingerprint checks."""
-
-    try:
-        from storygame.story_source.lookup import _source_trees
-
-        trees = _source_trees(package)
-    except (ImportError, OSError):
-        trees = ()
-    if trees:
-        source_root = trees[0].root.resolve()
-        return source_root.parent if source_root.name == "source" else source_root
-    candidate = Path.cwd() / "data" / "stories" / package.story_id
-    if candidate.is_dir():
-        return candidate
-    raise EntrySnapshotError(f"cannot determine the source root for package {package.story_id}")
-
-
 def _fact_row(fact: Fact) -> dict[str, str | None]:
     return {
         "predicate": fact.predicate,
@@ -239,11 +221,11 @@ def _require_mapping(value: object, name: str) -> Mapping[str, Any]:
     return value
 
 
-def _package_fingerprint(package: StoryPackage) -> str:
-    return _source_fingerprint(_package_root(package))
+def _package_fingerprint(story_root: Path) -> str:
+    return _source_fingerprint(story_root)
 
 
-def state_from_snapshot(package: StoryPackage, snapshot: dict[str, object]) -> RuntimeState:
+def state_from_snapshot(package: StoryPackage, snapshot: dict[str, object], story_root: Path) -> RuntimeState:
     """Rebuild a runtime state from a trusted, package-matching snapshot."""
 
     if not isinstance(snapshot, dict):
@@ -256,10 +238,7 @@ def state_from_snapshot(package: StoryPackage, snapshot: dict[str, object]) -> R
     if not isinstance(scene_id, str):
         raise EntrySnapshotError("entry snapshot scene_id is missing")
     scene = _scene(package, scene_id)
-    try:
-        expected_fingerprint = _package_fingerprint(package)
-    except EntrySnapshotError:
-        raise
+    expected_fingerprint = _package_fingerprint(story_root)
     if snapshot.get("source_fingerprint") != expected_fingerprint:
         raise EntrySnapshotError("entry snapshot source_fingerprint does not match the loaded package")
 
@@ -460,7 +439,7 @@ def check_entry_snapshots(story_root: Path) -> list[str]:
             problems.append(f"snapshot scene_id mismatch for scene {scene_id}")
         if snapshot.get("source_fingerprint") == fingerprint:
             try:
-                state_from_snapshot(package, snapshot)
+                state_from_snapshot(package, snapshot, story_root)
             except EntrySnapshotError as error:
                 problems.append(f"entry invariant problem in scene {scene_id}: {error}")
 

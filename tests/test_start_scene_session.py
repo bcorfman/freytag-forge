@@ -60,7 +60,7 @@ def test_canonical_default_session_matches_snapshot_and_accepts_turn(monkeypatch
             json={"session_id": payload["session_id"], "player_input": "Inspect the room."},
         )
 
-    expected = state_from_snapshot(PACKAGE, load_entry_snapshot(STORY_ROOT, SECOND_SCENE_ID))
+    expected = state_from_snapshot(PACKAGE, load_entry_snapshot(STORY_ROOT, SECOND_SCENE_ID), STORY_ROOT)
     assert response.status_code == 200
     assert actual.facts == expected.facts
     assert world_for(PACKAGE, actual.facts).export_state() == world_for(PACKAGE, expected.facts).export_state()

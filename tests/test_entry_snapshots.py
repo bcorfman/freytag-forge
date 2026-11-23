@@ -10,6 +10,7 @@ from types import SimpleNamespace
 import pytest
 
 import storygame.runtime.entry_snapshots as snapshots_module
+import storygame.story_source.lookup as story_lookup
 from storygame.runtime.entry_seed import advance_state_to_scene
 from storygame.runtime.entry_snapshots import (
     EntrySnapshotError,
@@ -96,11 +97,30 @@ def test_state_from_snapshot_matches_canonical_path_facts_and_world() -> None:
         if scene_id != SCENE_IDS[0]:
             advance_state_to_scene(PACKAGE, state, scene_id, persona="canonical")
         snapshot = load_entry_snapshot(STORY_ROOT, scene_id)
-        restored = state_from_snapshot(PACKAGE, snapshot)
+        restored = state_from_snapshot(PACKAGE, snapshot, STORY_ROOT)
         assert restored.facts == state.facts
         assert world_for(PACKAGE, restored.facts).export_state() == world_for(PACKAGE, state.facts).export_state()
         world = world_for(PACKAGE, restored.facts)
         assert world.entry_problems(PACKAGE.world.protagonist_id, world.area(PACKAGE.world.protagonist_id)) == ()
+
+
+def test_state_from_snapshot_uses_explicit_root_without_ambient_lookup(tmp_path: Path, monkeypatch) -> None:
+    root = _copy_story(tmp_path)
+    package = load_story_package(root)
+    snapshot = load_entry_snapshot(root, "1A")
+    unrelated = tmp_path / "unrelated"
+    unrelated.mkdir()
+    monkeypatch.chdir(unrelated)
+    monkeypatch.setattr(story_lookup, "_REGISTERED", {})
+
+    restored = state_from_snapshot(package, snapshot, root)
+    assert restored.current_scene_id == "1A"
+
+    source = root / "source" / "story.yaml"
+    source.write_text(source.read_text(encoding="utf-8") + "\n# source changed\n", encoding="utf-8")
+    edited_package = load_story_package(root)
+    with pytest.raises(EntrySnapshotError, match="source_fingerprint"):
+        state_from_snapshot(edited_package, snapshot, root)
 
 
 def test_tampered_world_fact_is_reported_as_drift_with_entity_id(tmp_path: Path) -> None:
@@ -143,7 +163,7 @@ def test_source_edit_stales_every_snapshot_and_blocks_resume(tmp_path: Path) -> 
 
     assert sum(problem.startswith("stale fingerprint") for problem in problems) == len(SCENE_IDS)
     with pytest.raises(EntrySnapshotError, match="source_fingerprint"):
-        state_from_snapshot(edited_package, old_snapshot)
+        state_from_snapshot(edited_package, old_snapshot, root)
     assert package.story_id == edited_package.story_id
 
 
@@ -155,7 +175,7 @@ def test_hidden_held_item_in_snapshot_is_refused(tmp_path: Path) -> None:
         {"predicate": "wk_hidden", "subject": "memory_card", "object": None, "value": "true"}
     )
     with pytest.raises(EntrySnapshotError, match="held item memory_card is hidden"):
-        state_from_snapshot(load_story_package(root), snapshot)
+        state_from_snapshot(load_story_package(root), snapshot, root)
 
 
 def test_carry_in_report_has_shape_and_synthetic_fixture_detects_missing_supply() -> None:
