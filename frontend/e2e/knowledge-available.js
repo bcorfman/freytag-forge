@@ -1,6 +1,5 @@
-import { readFileSync } from "node:fs";
-import { createRequire } from "node:module";
 import { resolve } from "node:path";
+import { loadAuthoringView } from "./story-view.js";
 
 const DEFAULT_ROOT = resolve(import.meta.dirname, "../..");
 
@@ -116,12 +115,10 @@ export function protectedFactsForScene({ entries, sceneId, availableIds }) {
 }
 
 export function loadCanonSources(root = DEFAULT_ROOT) {
-  const require = createRequire(import.meta.url);
-  const YAML = require("yaml");
-  const storyRoot = resolve(root, "data/stories/continuity-initiative");
+  const { knowledge, routes } = loadAuthoringView(root);
   return {
-    knowledgePackage: YAML.parse(readFileSync(resolve(storyRoot, "knowledge.yaml"), "utf8")),
-    routePackage: YAML.parse(readFileSync(resolve(storyRoot, "storylet-routes.yaml"), "utf8")),
+    knowledgePackage: knowledge,
+    routePackage: routes,
   };
 }
 

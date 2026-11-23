@@ -25,6 +25,7 @@ cd frontend && npm test && npm run build
 ```
 
 **Pass:** all tests pass; Ruff reports no remaining issues; `npm test` passes and Vite writes `frontend/dist/`.
+The judging tools in `frontend/e2e` read the live story through `python -m storygame.story_package.authoring_view`, so run `uv sync` first (they use `.venv/bin/python`; set `FREYTAG_PYTHON` to use another interpreter).
 
 **Cleanup:** None. `frontend/dist/` is generated; delete it freely.
 

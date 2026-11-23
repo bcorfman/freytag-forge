@@ -1,35 +1,9 @@
-import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { createRequire } from "node:module";
-
-const require = createRequire(import.meta.url);
-const YAML = require("yaml");
-
-function parseYaml(root, name) {
-  return YAML.parse(readFileSync(resolve(root, "data/stories/continuity-initiative", name), "utf8"));
-}
-
-function parsePlot(root) {
-  const source = readFileSync(resolve(root, "data/stories/continuity-initiative/plot.md"), "utf8");
-  const lines = source.split(/\r?\n/);
-  const scenes = new Map();
-  for (let index = 0; index < lines.length; index += 1) {
-    if (lines[index] !== "---") continue;
-    const end = lines.indexOf("---", index + 1);
-    if (end < 0) break;
-    const frame = YAML.parse(lines.slice(index + 1, end).join("\n"));
-    if (frame?.scene_id) scenes.set(frame.scene_id, frame);
-    index = end;
-  }
-  return scenes;
-}
+import { loadAuthoringView } from "./story-view.js";
 
 export function loadAuthoredText(root = resolve(import.meta.dirname, "../..")) {
-  const knowledge = parseYaml(root, "knowledge.yaml");
-  const handoffs = parseYaml(root, "handoffs.yaml");
-  const pacing = parseYaml(root, "pacing.yaml");
-  const routes = parseYaml(root, "storylet-routes.yaml");
-  const frames = parsePlot(root);
+  const { knowledge, handoffs, pacing, routes, frames: frameObject } = loadAuthoringView(root);
+  const frames = new Map(Object.entries(frameObject || {}));
   const knowledgeDeliveryTexts = new Map(
     (knowledge.knowledge || []).filter((item) => item.delivery_text).map((item) => [item.id, item.delivery_text]),
   );
