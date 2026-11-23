@@ -582,6 +582,125 @@ def test_handler_full_path_reuses_hashes_and_records_spend(tmp_path: Path, monke
     assert len(calls) == 12
 
 
+def test_handler_resumes_after_limit_sleep_and_reuses_completed_outputs(tmp_path: Path, monkeypatch) -> None:
+    root, tree = configure_probe_root(tmp_path)
+    monkeypatch.setattr(probe, "ticket_tree", lambda payload, ticket_id, root: tree)
+    payload = {
+        "workspace": str(tmp_path),
+        "story_package": "data/stories/base",
+        "runs": [
+            {"run": "synthetic-r1", "scene": "synthetic", "inputs": ["Inspect the shelf."] * 2},
+            {"run": "synthetic-r2", "scene": "synthetic", "inputs": ["Open the drawer."] * 2},
+        ],
+        "billed_run_approved": True,
+        "billed_run_approval_id": "approval-1",
+    }
+    calls: list[list[str]] = []
+
+    def flaky_runner(root: Path, argv: list[str], env: dict[str, str], timeout_s: int):
+        calls.append(argv)
+        if len(calls) == 2:
+            raise LimitSleep("cloudflare", NOW)
+        out = Path(argv[argv.index("--out") + 1])
+        out.mkdir(parents=True, exist_ok=True)
+        (out / "turn-records.json").write_text(FIXTURE.read_text(encoding="utf-8"), encoding="utf-8")
+        return subprocess.CompletedProcess(argv, 0, stdout="", stderr="")
+
+    budgets = iter(
+        [
+            {"day": "2026-11-22", "spent_micro_usd": 100},
+            {"day": "2026-11-22", "spent_micro_usd": 125},
+            {"day": "2026-11-22", "spent_micro_usd": 125},
+            {"day": "2026-11-22", "spent_micro_usd": 175},
+        ]
+    )
+    handler = probe_handler(root, runner=flaky_runner, rules=RULES, read_budget=lambda: next(budgets))
+
+    with pytest.raises(LimitSleep):
+        handler(make_ticket(payload), NOW)
+
+    attempt_path = tmp_path / "probe-ticket/probe-attempt.json"
+    assert json.loads(attempt_path.read_text(encoding="utf-8"))["resumes"] == 0
+
+    resumed = handler(make_ticket(payload), NOW)
+
+    assert resumed.payload_updates is not None
+    assert "probe" in resumed.payload_updates
+    assert len(calls) == 5
+    output_names = [Path(argv[argv.index("--out") + 1]).name for argv in calls]
+    assert output_names.count("control-synthetic-r1") == 1
+    assert not attempt_path.exists()
+    ledger_rows = [json.loads(line) for line in (root / "factory/state/ledger.jsonl").read_text().splitlines()]
+    assert sum(row["usd"] for row in ledger_rows) == pytest.approx(75 / 1_000_000)
+
+
+def test_handler_refuses_a_third_resume_without_runner_call(tmp_path: Path, monkeypatch) -> None:
+    root, tree = configure_probe_root(tmp_path)
+    monkeypatch.setattr(probe, "ticket_tree", lambda payload, ticket_id, root: tree)
+    payload = {
+        "workspace": str(tmp_path),
+        "story_package": "data/stories/base",
+        "runs": [{"run": "synthetic-r1", "scene": "synthetic", "inputs": ["Inspect the shelf."] * 2}],
+        "billed_run_approved": True,
+        "billed_run_approval_id": "approval-1",
+    }
+    calls: list[list[str]] = []
+
+    def sleeping_runner(root: Path, argv: list[str], env: dict[str, str], timeout_s: int):
+        calls.append(argv)
+        raise LimitSleep("cloudflare", NOW)
+
+    handler = probe_handler(root, runner=sleeping_runner, rules=RULES, read_budget=lambda: dict(BUDGET))
+    for _ in range(3):
+        with pytest.raises(LimitSleep):
+            handler(make_ticket(payload), NOW)
+
+    refused = handler(make_ticket(payload), NOW)
+
+    assert not refused.passed
+    assert "maximum 2 resumes" in refused.output
+    assert len(calls) == 3
+    assert json.loads((tmp_path / "probe-ticket/probe-attempt.json").read_text())["resumes"] == 2
+
+
+def test_handler_changed_input_after_sleep_requires_fresh_approval(tmp_path: Path, monkeypatch) -> None:
+    root, tree = configure_probe_root(tmp_path)
+    monkeypatch.setattr(probe, "ticket_tree", lambda payload, ticket_id, root: tree)
+    payload = {
+        "workspace": str(tmp_path),
+        "story_package": "data/stories/base",
+        "runs": [{"run": "synthetic-r1", "scene": "synthetic", "inputs": ["Inspect the shelf."] * 2}],
+        "billed_run_approved": True,
+        "billed_run_approval_id": "approval-1",
+    }
+    calls: list[list[str]] = []
+
+    def sleeping_runner(root: Path, argv: list[str], env: dict[str, str], timeout_s: int):
+        calls.append(argv)
+        raise LimitSleep("cloudflare", NOW)
+
+    handler = probe_handler(root, runner=sleeping_runner, rules=RULES, read_budget=lambda: dict(BUDGET))
+    with pytest.raises(LimitSleep):
+        handler(make_ticket(payload), NOW)
+
+    payload["runs"] = [
+        {"run": "synthetic-r1", "scene": "synthetic", "inputs": ["Inspect the shelf."] * 3},
+    ]
+    payload.update(
+        {
+            "billed_runs_consumed": 1,
+            "billed_run_consumed_approval_id": "approval-1",
+        }
+    )
+    refused = probe_handler(root, runner=make_runner(calls), rules=RULES, read_budget=lambda: dict(BUDGET))(
+        make_ticket(payload), NOW
+    )
+
+    assert not refused.passed
+    assert "approval already consumed" in refused.output
+    assert len(calls) == 1
+
+
 def test_handler_unknown_spend_and_runner_errors_do_not_save(tmp_path: Path, monkeypatch) -> None:
     root, tree = configure_probe_root(tmp_path)
     monkeypatch.setattr(probe, "ticket_tree", lambda payload, ticket_id, root: tree)

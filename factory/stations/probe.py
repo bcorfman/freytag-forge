@@ -50,6 +50,7 @@ PROBE_VERSION = "probe-v1"
 _RULES_PATH = Path(__file__).resolve().parents[1] / "config" / "probe_rules.json"
 PROBE_RULES: dict[str, Any] = json.loads(_RULES_PATH.read_text(encoding="utf-8"))
 _RUN_TIMEOUT_S = 2400
+MAX_RESUMES = 2
 
 
 def _rules(value: dict[str, Any] | None) -> dict[str, Any]:
@@ -554,27 +555,46 @@ def probe_handler(
         tree = ticket_tree(payload, str(getattr(ticket, "id", "")), repository_root)
         if tree is None:
             return StationResult(False, "probe", "no ticket tree to probe", tokens=0)
-        approval_error = _approval_error(payload)
-        if approval_error is not None:
-            return StationResult(False, "probe", approval_error, tokens=0)
         lock_path = _staged_lock_path(repository_root)
         if lock_path.exists() and _fresh_staged_lock(lock_path, now):
             return StationResult(False, "probe", "a staged run is in progress", tokens=0)
 
+        if "workspace" not in payload:
+            approval_error = _approval_error(payload)
+            if approval_error is not None:
+                return StationResult(False, "probe", approval_error, tokens=0)
+        ticket_dir = Path(str(payload["workspace"])).expanduser().resolve() / _safe_id(str(getattr(ticket, "id", "")))
+        saved_path = ticket_dir / "probe.json"
+        attempt_path = ticket_dir / "probe-attempt.json"
+        approval_id = payload.get("billed_run_approval_id")
+        if not isinstance(approval_id, str) or not approval_id:
+            approval_id = "default"
+        try:
+            attempt = json.loads(attempt_path.read_text(encoding="utf-8")) if attempt_path.is_file() else None
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError, TypeError):
+            attempt = None
+        same_approval_attempt = (
+            isinstance(attempt, dict)
+            and attempt.get("approval_id") == approval_id
+            and isinstance(attempt.get("input_hash"), str)
+        )
+
         projected: float | None = None
         try:
+            if not same_approval_attempt:
+                approval_error = _approval_error(payload)
+                if approval_error is not None:
+                    return StationResult(False, "probe", approval_error, tokens=0)
             control_package, candidate_package = _story_packages(repository_root, tree, payload)
             package_hash = _package_hash(candidate_package)
         except (OSError, RuntimeError, ValueError) as error:
             return StationResult(False, "probe", str(error), tokens=0)
         input_hash = _input_hash(runs, selected_rules, package_hash)
-        workspace = Path(str(payload["workspace"])).expanduser().resolve()
-        saved_path = workspace / _safe_id(str(getattr(ticket, "id", ""))) / "probe.json"
         try:
             saved = json.loads(saved_path.read_text(encoding="utf-8")) if saved_path.is_file() else None
         except (OSError, UnicodeDecodeError, json.JSONDecodeError):
             saved = None
-        if (
+        saved_final = (
             isinstance(saved, dict)
             and saved.get("input_hash") == input_hash
             and saved.get("verdict")
@@ -583,8 +603,42 @@ def probe_handler(
                 "reject",
                 "inconclusive",
             }
-        ):
+        )
+        if saved_final:
+            if same_approval_attempt:
+                approval_error = _approval_error(payload)
+                if approval_error is not None:
+                    return StationResult(False, "probe", approval_error, tokens=0)
+            with contextlib.suppress(OSError):
+                attempt_path.unlink()
             return _result(saved)
+
+        is_resume = False
+        if same_approval_attempt and attempt.get("input_hash") == input_hash:
+            resumes = attempt.get("resumes")
+            if isinstance(resumes, int) and not isinstance(resumes, bool) and resumes >= 0:
+                if resumes >= MAX_RESUMES:
+                    return StationResult(
+                        False,
+                        "probe",
+                        f"probe resume limit exceeded: maximum {MAX_RESUMES} resumes",
+                        tokens=0,
+                    )
+                is_resume = True
+                attempt = {
+                    "input_hash": input_hash,
+                    "approval_id": approval_id,
+                    "resumes": resumes + 1,
+                    "started": attempt.get("started") if isinstance(attempt.get("started"), str) else now.isoformat(),
+                }
+                try:
+                    _atomic_json_write(attempt_path, attempt)
+                except OSError as error:
+                    return StationResult(False, "probe", f"could not save probe attempt: {error}", tokens=0)
+        if not is_resume:
+            approval_error = _approval_error(payload)
+            if approval_error is not None:
+                return StationResult(False, "probe", approval_error, tokens=0)
 
         before = _safe_budget_read(budget_reader)
         if before is None:
@@ -599,7 +653,35 @@ def probe_handler(
             config = _factory_config(repository_root)
             caps = Caps.from_dict(config["caps"])
             ledger = SpendLedger(_resolve(repository_root, config["paths"]["ledger"]))
-            projected = projected_cost_usd(runs, int(selected_rules["replicates"]), selected_rules)
+            scene = getattr(ticket, "scene", payload.get("scene", ""))
+            probe_dir = ticket_dir / "probe"
+            reusable_records: set[tuple[str, str]] = set()
+            if is_resume:
+                for run in runs:
+                    safe_run = _safe_id(str(run["run"]))
+                    for arm in ("control", "candidate"):
+                        records_path = probe_dir / f"{arm}-{safe_run}" / "turn-records.json"
+                        if not records_path.is_file():
+                            continue
+                        try:
+                            _turns_in_file(records_path)
+                        except ValueError:
+                            with contextlib.suppress(OSError):
+                                records_path.unlink()
+                        else:
+                            reusable_records.add((arm, safe_run))
+            if is_resume:
+                pending_turns = sum(
+                    len(run.get("inputs", ()))
+                    for run in runs
+                    for arm in ("control", "candidate")
+                    if (arm, _safe_id(str(run["run"]))) not in reusable_records
+                )
+                projected = (
+                    pending_turns * int(selected_rules["replicates"]) * float(selected_rules["estimated_usd_per_turn"])
+                )
+            else:
+                projected = projected_cost_usd(runs, int(selected_rules["replicates"]), selected_rules)
             budget_error = _pre_run_budget_gate(ledger, caps, now)
             if budget_error is not None:
                 return StationResult(False, "probe", budget_error, tokens=0)
@@ -618,6 +700,20 @@ def probe_handler(
         except (KeyError, TypeError, ValueError, BudgetExhausted) as error:
             return StationResult(False, "probe", f"invalid factory budget configuration: {error}", tokens=0)
 
+        if not is_resume:
+            try:
+                _atomic_json_write(
+                    attempt_path,
+                    {
+                        "input_hash": input_hash,
+                        "approval_id": approval_id,
+                        "resumes": 0,
+                        "started": now.isoformat(),
+                    },
+                )
+            except OSError as error:
+                return StationResult(False, "probe", f"could not save probe attempt: {error}", tokens=0)
+
         approval_updates = _consume_approval(payload)
         lock_path.parent.mkdir(parents=True, exist_ok=True)
         try:
@@ -626,13 +722,15 @@ def probe_handler(
             return StationResult(False, "probe", f"could not create staged run lock: {error}", tokens=0)
         try:
             arm_files: dict[str, list[Path]] = {"control": [], "candidate": []}
-            scene = getattr(ticket, "scene", payload.get("scene", ""))
             for run in runs:
                 for arm, package in (("control", control_package), ("candidate", candidate_package)):
                     safe_run = _safe_id(str(run["run"]))
-                    probe_dir = workspace / _safe_id(str(getattr(ticket, "id", ""))) / "probe"
                     variation_path = probe_dir / f"{arm}-{safe_run}.json"
                     output_dir = probe_dir / f"{arm}-{safe_run}"
+                    records_path = output_dir / "turn-records.json"
+                    if is_resume and (arm, safe_run) in reusable_records:
+                        arm_files[arm].append(records_path)
+                        continue
                     variation = build_variation(
                         name=f"probe-{arm}-{run['run']}",
                         package_path=str(package),
@@ -651,8 +749,9 @@ def probe_handler(
                         str(output_dir),
                         "--confirm",
                     ]
-                    with contextlib.suppress(OSError):
-                        (output_dir / "turn-records.json").unlink()
+                    if not is_resume:
+                        with contextlib.suppress(OSError):
+                            records_path.unlink()
                     try:
                         completed = (runner or default_runner)(
                             repository_root,
@@ -681,7 +780,6 @@ def probe_handler(
                             tokens=0,
                             payload_updates=approval_updates,
                         )
-                    records_path = output_dir / "turn-records.json"
                     if not records_path.is_file():
                         return StationResult(
                             False,
@@ -696,6 +794,8 @@ def probe_handler(
             )
             saved_result = {"input_hash": input_hash, **result, "feedback": _feedback(result)}
             _atomic_json_write(saved_path, saved_result)
+            with contextlib.suppress(OSError):
+                attempt_path.unlink()
             return _result(saved_result, approval_updates)
         finally:
             after = _safe_budget_read(budget_reader)
