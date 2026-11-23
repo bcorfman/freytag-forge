@@ -1,0 +1,227 @@
+"""Build the round 21a manifest: qualification evaluation runner (R1) and live-playtest failure output (3B finding)."""
+
+import json
+from pathlib import Path
+
+WORK = "/home/bcorfman/dev/ringer-work/factory-21"
+REPO = "/home/bcorfman/dev/freytag-forge"
+CASES = "/home/bcorfman/dev/ringer-work/qual-20261122/cases"
+
+COMMON = (
+    "You are a factory engineer. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge "
+    "(detached at HEAD). Edit files here directly. NEVER git commit, never touch /home/bcorfman/dev/freytag-forge "
+    "itself, never run `uv`, NEVER call a model (not `claude`, not `codex`), NEVER use the network, never run "
+    "`python -m bench run`, never write factory/state/. FIRST run: [ -e .venv ] || ln -s "
+    "/home/bcorfman/dev/freytag-forge/.venv .venv . Environment for every command: "
+    "`export PYTHONPATH=$PWD:$PWD/packages/worldkeeper/src TMPDIR=/tmp`. Ruff (python files only): "
+    "`.venv/bin/python -m ruff check <files>` / `.venv/bin/python -m ruff format <files>` (line length 120, "
+    "Python 3.12). Never pass --cov to pytest. Run tests as "
+    "`.venv/bin/python -m pytest -q -p no:cacheprovider -n 8 <files>`. Tests must be hermetic (fake runner, no "
+    "network, no real `claude`). Shared code must stay story-agnostic (no story, scene or character names in "
+    "production code). If an OLD test pins behaviour this change deliberately changes, update it and say so in "
+    "NOTES.txt. Write NOTES.txt (worktree root, never committed) listing every ambiguity and your choice. Read "
+    "first: AGENTS.md and docs/contributor-guide.md. "
+)
+
+RUNNER_SPEC = COMMON + (
+    "You may edit or create ONLY: factory/qualification/__init__.py, factory/qualification/run_case.py, "
+    "tests/test_factory_qualification_run_case.py, tests/shard_durations.json.\n\n"
+    "TASK. Build the offline evaluation runner for the factory's diagnostic qualification (plan: "
+    "/home/bcorfman/dev/freytag-forge/.plans/dark-factory-diagnostic-qualification-plan.md, Phase 3 'model-evaluation "
+    "runner'). It runs the REAL current diagnosis and planner path on one saved case and logs everything. It never "
+    "wires a patch, never calls the live narrator, never writes story files.\n\n"
+    "CASE LAYOUT (read-only input). A case directory CASE contains `solver/records.json` (shape: {\"runs\": [{\"replicate\": "
+    "1, \"scene\": \"1A\", \"turns\": [turn records as in a blind-player report], \"stuck_turns\": [turn numbers], "
+    "\"exit_cause\": \"play\"|\"forced\"|\"timer\"|null}]}), `solver/repo/` (a git-archive snapshot of the story "
+    "repository: `solver/repo/data/stories/<story>/...`), `manifest.json` (hashes) and `private/` (answers the "
+    "runner must NEVER open). Real examples to study: "
+    f"{CASES}/dev-1A-15d and {CASES}/heldout-cand-3A.\n\n"
+    "BUILD `factory/qualification/run_case.py` with a `main(argv)` and `python -m factory.qualification.run_case` "
+    "CLI: `--case-dir CASE --out OUTDIR --max-calls N --max-tokens N [--dry-run] [--story STORY_DIR_NAME]`. Behaviour:\n"
+    "1. REFUSE to start (exit code 2, message on stderr, nothing written) unless both --max-calls and --max-tokens "
+    "are positive integers. Even --dry-run requires them (so a later billed run cannot omit them).\n"
+    "2. Read only files under CASE/solver and CASE/manifest.json. Never open anything under CASE/private. Convert "
+    "records.json into the report shape `factory.stations.live_playtest.report_to_packets` accepts "
+    "({\"replicates\": [{replicate, scene, turns, stuck_turns, exit_cause}]}) and call it to get the failing-turn "
+    "packets (study live_playtest._scene_runs/_turn_fails/_packet_for_turn for the exact shape; replicate must pass "
+    "its validity check). Load the case's own story package from CASE/solver/repo with the same loader "
+    "factory.stations.diagnose uses (`load_story_package` on the story root; see factory/stations/wiring._story_root "
+    "for how the root is derived and generalise it to take an explicit repo root without changing existing "
+    "behaviour; if that needs a change in wiring.py, instead add a small private helper inside run_case.py).\n"
+    "3. Diagnose: build a ticket (factory.tickets.Ticket, a wiring-station story_data ticket, token_budget = "
+    "--max-tokens, payload with scene and failing_turns) and run `factory.stations.diagnose.diagnose_handler(...)` "
+    "with `package_loader` returning the case's package and a classifier built from the real guarded path "
+    "(`default_classifier`, using THIS repository's guard, ledger and caps, with its `run` argument wrapped as "
+    "below). Then run the real planner `factory.stations.planner.make_planner(...)` built from this repository's "
+    "guard, ledger and caps (see planner.default_planner for how they are loaded) on a ticket whose payload carries "
+    "the diagnosis rows, against the case's package, with `run` wrapped as below. Use the same model ids and efforts "
+    "the stations already pin; do not hardcode new ids.\n"
+    "4. THE CEILING WRAPPER. Wrap `subprocess.run` so every model call (an argv whose first element is `claude`) "
+    "goes through a counter: before running it, if calls already made >= --max-calls or recorded tokens >= "
+    "--max-tokens, raise a clear `CeilingReached` error and do NOT run it; after running it, record the call "
+    "(argv, the full prompt from `input`, the full stdout and stderr, returncode, wall seconds, tokens parsed from "
+    "the stream the same way planner._usage_tokens does). The runner catches CeilingReached and finishes with a "
+    "result whose status is `ceiling_reached`; it never retries into a limit and never loops. Station-level "
+    "LimitSleep/ProviderLimit/BudgetExhausted/ModelNotAllowed errors are caught and recorded as status "
+    "`blocked` with the exception text; they are never retried or slept on.\n"
+    "5. Write to OUTDIR: `transcript.jsonl` (one JSON object per model call with the fields above, full text, no "
+    "truncation), `packets.json`, `diagnosis.json` (rows and counts), `plan.json` (the PlanOutcome: plan or None, "
+    "tokens, problems, attempts), and `result.json` with: case id (from manifest.json), the manifest's "
+    "solver_tree_sha256, `git rev-parse HEAD` of the running repository if available (else null), the model ids and "
+    "efforts used, ceilings, calls made, tokens, status (`complete`, `dry_run`, `ceiling_reached`, `blocked`), and "
+    "the prompt texts under the exact keys `classifier_prompt` (null when no row is unclear) and `planner_prompt`. Write each file atomically (temp file then rename). Never write "
+    "outside OUTDIR (the guard ledger the existing guarded_call already appends to is the one allowed exception).\n"
+    "6. `--dry-run`: perform steps 1-2 and the rule-only diagnosis (no classifier call), build the classifier prompt "
+    "(only if some row is `unclear`) and the planner prompt exactly as the real path would build them, estimate "
+    "tokens as len(prompt)//4 for each, write the same output files with status `dry_run` and the estimates in "
+    "result.json, and make ZERO model calls and zero ledger writes. Print one summary line to stdout.\n\n"
+    "TESTS (new file tests/test_factory_qualification_run_case.py, hermetic, fast: whole file under 20 s; build a "
+    "tiny fixture case in tmp_path from the repository's existing small test story fixtures, see how "
+    "tests/test_factory_diagnose.py builds its package; do not copy the 3 MB real case). Cover: (a) refuses "
+    "without ceilings and with zero/negative/non-integer values, exit 2, nothing written; (b) a fake `run` proves "
+    "--max-calls 1 stops the second model call before it runs and the status is `ceiling_reached`; same for "
+    "--max-tokens; (c) a fixture case with a `private/answer.json` holding a unique sentinel string: patch "
+    "builtins.open and pathlib.Path.read_text/read_bytes to record every path opened during main(), then assert no "
+    "recorded path is under CASE/private, and that the sentinel appears in no output file; (d) dry-run makes zero "
+    "calls (fake run raises if called), writes the prompts and estimates, and leaves a temporary ledger "
+    "untouched; (e) a full fake run writes all five output files, transcript lines contain the complete prompt and "
+    "reply, and result.json carries the ceilings, calls, tokens and manifest hash; (f) a provider-limit error from "
+    "the fake run is recorded as `blocked` and not retried (call count stays 1). Use a temporary guard allowlist, "
+    "ledger and caps (see tests/test_factory_planner.py for how they build these). Then add this new test file to "
+    "tests/shard_durations.json by running `.venv/bin/python scripts/regen_shard_durations.py --missing-only` "
+    "(never `uv`; if the script needs network or uv, add the entry by hand with a measured duration rounded up).\n"
+    "Keep the module small and readable (aim under 350 lines); reuse the existing station functions instead of "
+    "re-implementing diagnosis, packet building or planning."
+)
+
+LIVE_SPEC = COMMON + (
+    "You may edit ONLY: factory/stations/live_playtest.py and tests/test_factory_live_playtest.py.\n\n"
+    "TASK (one bounded fix; production change plus its test). In factory/stations/live_playtest.py the handler "
+    "returns `StationResult(False, \"live_playtest\", \"live playtest runner failed\", turns=None)` when the runner "
+    "exits non-zero, and the runner's stdout and stderr (`completed.stdout`, `completed.stderr`) are dropped, so a "
+    "failed billed run (scene 3B on 2026-11-22, $0.224 spent, no report) cannot be diagnosed. Change that "
+    "branch so the failure output keeps the exit code and the LAST 2,000 characters of the combined stderr then "
+    "stdout (stderr first), appended to the message, e.g. `live playtest runner failed (exit 1): <tail>`. Redact "
+    "before returning: any substring equal to the value of an environment variable whose name contains KEY, "
+    "TOKEN, SECRET or PASSWORD (value at least 8 characters) is replaced with `[redacted]`; also apply the "
+    "redaction to the tail the station logs elsewhere if the same output is already being logged. Keep the "
+    "station's other behaviour (spend recording, quota detection through `_raise_quota`, lock handling) exactly as "
+    "is; the quota check on the combined output must still run BEFORE this branch. Tests (extend "
+    "tests/test_factory_live_playtest.py, hermetic with the file's existing fake runner): a non-zero exit with "
+    "stderr text returns a failed result whose output contains the exit code and the stderr tail; output longer "
+    "than 2,000 chars is cut to the last 2,000; a secret value set in the environment (monkeypatch.setenv) that "
+    "the fake runner prints is absent from the result; empty output still returns the old message form; a "
+    "quota-limit message still raises as before. Do not assert exact full sentences beyond those facts."
+)
+
+CHECK_TAIL = r'''
+.venv/bin/python -m ruff check $PYFILES
+.venv/bin/python -m ruff format --check $PYFILES
+'''
+
+
+def check(owned_re: str, tests: str, budget: int, extra: str, patch: str) -> str:
+    return f"""set -eo pipefail
+WORK={WORK}
+mkdir -p "$WORK/out"
+export PYTHONPATH=$PWD:$PWD/packages/worldkeeper/src TMPDIR=/tmp
+[ -e .venv ] || ln -s {REPO}/.venv .venv
+git add -A -- factory tests
+bad=$(git diff --cached --name-only | grep -vE '^({owned_re})$' || true)
+[ -z "$bad" ] || {{ echo "files outside ownership staged: $bad"; exit 1; }}
+start=$(date +%s)
+.venv/bin/python -m pytest -q -p no:cacheprovider -n 8 {tests}
+took=$(( $(date +%s) - start ))
+echo "tests took $took s (budget {budget} s)"
+[ "$took" -le {budget} ] || {{ echo "over the {budget} s budget"; exit 1; }}
+PYFILES=$(git diff --cached --name-only | grep '\\.py$' || true)
+[ -z "$PYFILES" ] || .venv/bin/python -m ruff check $PYFILES
+[ -z "$PYFILES" ] || .venv/bin/python -m ruff format --check $PYFILES
+{extra}
+git diff --cached > "$WORK/out/{patch}.patch"
+test -s "$WORK/out/{patch}.patch"
+"""
+
+
+RUNNER_EXTRA = f"""FAKE=$WORK/out/fakebin
+mkdir -p "$FAKE"
+printf '#!/bin/sh\\necho "a model was called" >&2\\nexit 99\\n' > "$FAKE/claude"
+chmod +x "$FAKE/claude"
+for CASE in dev-1A-15d heldout-cand-3A; do
+  OUT="$WORK/out/dry-$CASE"
+  rm -rf "$OUT"
+  if PATH="$FAKE:$PATH" .venv/bin/python -m factory.qualification.run_case --case-dir {CASES}/$CASE --out "$OUT" --max-calls 5 --max-tokens 100000 --dry-run; then :; else echo "dry run failed on $CASE"; exit 1; fi
+  .venv/bin/python - "$OUT" <<'PYV'
+import json, sys
+from pathlib import Path
+out = Path(sys.argv[1])
+result = json.loads((out / "result.json").read_text())
+assert result["status"] == "dry_run", result["status"]
+assert result["calls"] == 0, "dry run made a call"
+packets = json.loads((out / "packets.json").read_text())
+assert packets, "no failing-turn packets built from the case"
+assert isinstance(result.get("planner_prompt"), str) and result["planner_prompt"], "planner prompt missing"
+assert "classifier_prompt" in result, "classifier_prompt key missing"
+transcript = out / "transcript.jsonl"
+assert not transcript.exists() or transcript.read_text().strip() == "", "dry run wrote model calls"
+print(out.name, "packets", len(packets), "ok")
+PYV
+done
+if .venv/bin/python -m factory.qualification.run_case --case-dir {CASES}/dev-1A-15d --out "$WORK/out/noceiling" --dry-run 2>/dev/null; then echo "runner started without ceilings"; exit 1; fi
+test ! -e "$WORK/out/noceiling" || {{ echo "refusal wrote output"; exit 1; }}"""
+
+manifest = {
+    "run_name": "factory-21a-qualification-runner",
+    "workdir": WORK,
+    "max_parallel": 2,
+    "worktrees": True,
+    "repo": REPO,
+    "tasks": [
+        {
+            "key": "qualification-runner",
+            "task_type": "code-feature",
+            "engine": "codex",
+            "engine_args": ["-c", "model_reasoning_effort=high"],
+            "max_attempts": 2,
+            "timeout_s": 3600,
+            "check_timeout_s": 900,
+            "ownership": [
+                "factory/qualification/__init__.py",
+                "factory/qualification/run_case.py",
+                "tests/test_factory_qualification_run_case.py",
+                "tests/shard_durations.json",
+            ],
+            "spec": RUNNER_SPEC,
+            "check": check(
+                r"factory/qualification/__init__\.py|factory/qualification/run_case\.py|tests/test_factory_qualification_run_case\.py|tests/shard_durations\.json",
+                "tests/test_factory_qualification_run_case.py tests/test_factory_diagnose.py tests/test_factory_planner.py tests/test_factory_live_playtest.py",
+                300,
+                RUNNER_EXTRA,
+                "qualification-runner",
+            ),
+            "expect_files": [],
+            "verified": "A dry run on two real cases builds packets and prompts with zero model calls; ceilings are mandatory; private/ is never read.",
+        },
+        {
+            "key": "live-playtest-failure-output",
+            "task_type": "code-fix",
+            "engine": "codex",
+            "engine_args": ["-c", "model_reasoning_effort=high"],
+            "max_attempts": 2,
+            "timeout_s": 2400,
+            "check_timeout_s": 900,
+            "ownership": ["factory/stations/live_playtest.py", "tests/test_factory_live_playtest.py"],
+            "spec": LIVE_SPEC,
+            "check": check(
+                r"factory/stations/live_playtest\.py|tests/test_factory_live_playtest\.py",
+                "tests/test_factory_live_playtest.py tests/test_factory_probe.py tests/test_factory_line.py",
+                300,
+                "grep -q '2000\\|2_000' factory/stations/live_playtest.py || { echo 'no 2000-character tail limit found'; exit 1; }",
+                "live-playtest-failure-output",
+            ),
+            "expect_files": [],
+            "verified": "A failed live-playtest runner now reports its exit code and redacted output tail.",
+        },
+    ],
+}
+Path(__file__).with_name("round21a-qualification-runner-manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")

@@ -861,6 +861,68 @@ def test_quota_raises_provider_limit_without_station_failure(tmp_path: Path, mon
     assert raised.value.resume_at == datetime(2026, 1, 2, tzinfo=UTC)
 
 
+def test_nonzero_live_runner_keeps_exit_code_and_stderr_tail(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setenv("E2E_API_BASE_URL", "https://staging.example")
+
+    def runner(_env, _timeout):
+        return subprocess.CompletedProcess([], 7, stdout="stdout detail", stderr="stderr detail")
+
+    result = _live_handler(tmp_path, runner, SpendLedger(tmp_path / "ledger.jsonl"))(
+        ticket({"expected_sha": "abc"}), NOW
+    )
+
+    assert not result.passed
+    assert "exit 7" in result.output
+    assert "stderr detail" in result.output
+
+
+def test_nonzero_live_runner_limits_failure_output_to_last_2000_characters(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setenv("E2E_API_BASE_URL", "https://staging.example")
+    output = "a" * 2_000 + "tail"
+
+    def runner(_env, _timeout):
+        return subprocess.CompletedProcess([], 1, stdout=output, stderr="")
+
+    result = _live_handler(tmp_path, runner, SpendLedger(tmp_path / "ledger.jsonl"))(
+        ticket({"expected_sha": "abc"}), NOW
+    )
+
+    assert not result.passed
+    tail = result.output.rsplit(": ", 1)[1]
+    assert len(tail) == 2_000
+    assert tail == output[-2_000:]
+
+
+def test_nonzero_live_runner_redacts_sensitive_environment_values(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setenv("LIVE_PLAYTEST_SECRET", "runner-secret-value")
+    monkeypatch.setenv("E2E_API_BASE_URL", "https://staging.example")
+
+    def runner(_env, _timeout):
+        return subprocess.CompletedProcess([], 1, stdout="runner-secret-value", stderr="")
+
+    result = _live_handler(tmp_path, runner, SpendLedger(tmp_path / "ledger.jsonl"))(
+        ticket({"expected_sha": "abc"}), NOW
+    )
+
+    assert not result.passed
+    assert "runner-secret-value" not in result.output
+    assert "[redacted]" in result.output
+
+
+def test_nonzero_live_runner_with_empty_output_keeps_old_message(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setenv("E2E_API_BASE_URL", "https://staging.example")
+
+    def runner(_env, _timeout):
+        return subprocess.CompletedProcess([], 1, stdout="", stderr="")
+
+    result = _live_handler(tmp_path, runner, SpendLedger(tmp_path / "ledger.jsonl"))(
+        ticket({"expected_sha": "abc"}), NOW
+    )
+
+    assert not result.passed
+    assert result.output == "live playtest runner failed"
+
+
 def test_cli_exit_codes_and_build_registration(tmp_path: Path, capsys) -> None:
     clean = tmp_path / "clean.json"
     clean.write_text(json.dumps(clean_report()), encoding="utf-8")

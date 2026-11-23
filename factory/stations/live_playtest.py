@@ -37,6 +37,8 @@ _DEFAULT_PROFILE = "canonical"
 _MAX_REPLICATES = 3
 _TURN_TIMEOUT_MS = "90000"
 _RUN_TIMEOUT_S = 2400
+_RUNNER_OUTPUT_TAIL = 2_000
+_SENSITIVE_ENV_MARKERS = ("KEY", "TOKEN", "SECRET", "PASSWORD")
 _DEFAULTS: dict[str, Any] = {
     "player_input": "",
     "narration": "",
@@ -577,6 +579,21 @@ def _raise_quota(text: str, now: datetime) -> None:
         raise LimitSleep("cloudflare", resume_at) from ProviderLimit(resume_at, report)
 
 
+def _redact_sensitive_output(text: str) -> str:
+    sensitive_values = sorted(
+        {
+            value
+            for name, value in os.environ.items()
+            if any(marker in name.upper() for marker in _SENSITIVE_ENV_MARKERS) and len(value) >= 8
+        },
+        key=len,
+        reverse=True,
+    )
+    for value in sensitive_values:
+        text = text.replace(value, "[redacted]")
+    return text
+
+
 def _fetch_version(url: str) -> dict[str, Any]:
     with urllib.request.urlopen(url, timeout=20) as response:
         value = json.loads(response.read().decode("utf-8"))
@@ -788,7 +805,9 @@ def live_playtest_handler(
 
         budget_after = _safe_budget_read(read_budget)
         try:
-            combined = "\n".join(str(getattr(completed, field, "") or "") for field in ("stdout", "stderr"))
+            combined = "\n".join(
+                part for part in (str(getattr(completed, field, "") or "") for field in ("stderr", "stdout")) if part
+            )
             _raise_quota(combined, now)
         except (LimitSleep, ProviderLimit):
             _record_player_spend(
@@ -845,8 +864,13 @@ def live_playtest_handler(
             scene=scene,
             ticket_id=ticket_id,
         )
-        if getattr(completed, "returncode", 0) != 0:
-            return StationResult(False, "live_playtest", "live playtest runner failed", turns=None)
+        returncode = getattr(completed, "returncode", 0)
+        if returncode != 0:
+            tail = _redact_sensitive_output(combined)[-_RUNNER_OUTPUT_TAIL:]
+            failure = "live playtest runner failed"
+            if tail:
+                failure = f"{failure} (exit {returncode}): {tail}"
+            return StationResult(False, "live_playtest", failure, turns=None)
         if report is None:
             return StationResult(False, "live_playtest", "no fresh e2e-blind-player report", turns=None)
         summary = playtest_summary(report)

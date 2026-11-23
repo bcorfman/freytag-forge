@@ -237,6 +237,7 @@
     "tests/test_factory_probe.py": 1.92,
     "tests/test_factory_probe_routing.py": 0.45,
     "tests/test_factory_prompt_snapshot.py": 32.72,
+    "tests/test_factory_qualification_run_case.py": 0.25,
     "tests/test_factory_state.py": 0.01,
     "tests/test_factory_stations.py": 5.45,
     "tests/test_factory_tickets.py": 0.02,
