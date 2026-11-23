@@ -148,10 +148,11 @@ def _run_is_complete(run: dict[str, Any]) -> bool:
 
 
 def summarize_arm(turn_records_files: list[Path]) -> dict:
-    """Summarize completed bench runs, rejecting malformed record files."""
+    """Summarize bench runs, rejecting malformed record files."""
 
     summary = {
         "replicates": 0,
+        "failed_replicates": 0,
         "turns": 0,
         "stuck_turns": 0,
         "rejected_turns": 0,
@@ -172,6 +173,7 @@ def summarize_arm(turn_records_files: list[Path]) -> dict:
             if not isinstance(run, dict):
                 raise ValueError(f"malformed turn-records file: {path}")
             if not _run_is_complete(run):
+                summary["failed_replicates"] += 1
                 continue
             raw_turns = run.get("turns")
             if not isinstance(raw_turns, list) or any(not isinstance(turn, dict) for turn in raw_turns):
@@ -251,6 +253,11 @@ def judge_probe(control: dict, candidate: dict, rules: dict) -> dict:
     if not control["replicates"] or not candidate["replicates"]:
         reasons.append(
             f"Completed replicates are control {control['replicates']} and candidate {candidate['replicates']}."
+        )
+    if control.get("failed_replicates", 0) > 0 or candidate.get("failed_replicates", 0) > 0:
+        reasons.append(
+            f"Failed replicates: control {control.get('failed_replicates', 0)}, "
+            f"candidate {candidate.get('failed_replicates', 0)}."
         )
     if reasons:
         verdict = "inconclusive"
@@ -351,7 +358,8 @@ def _line(result: dict) -> str:
         f"candidate stuck {candidate['stuck_turns']}/{candidate['turns']} "
         f"rejected {control['rejected_turns']}/{candidate['rejected_turns']} "
         f"exits {control['earned_exits']}/{candidate['earned_exits']} "
-        f"unknown {control.get('unknown_exits', 0)}/{candidate.get('unknown_exits', 0)}"
+        f"unknown {control.get('unknown_exits', 0)}/{candidate.get('unknown_exits', 0)} "
+        f"failed {control.get('failed_replicates', 0)}/{candidate.get('failed_replicates', 0)}"
     )
 
 
@@ -360,11 +368,13 @@ def _feedback(result: dict) -> str:
         f"verdict {result['verdict']} control {result['control']['stuck_turns']} {result['control']['turns']} "
         f"{result['control']['rejected_turns']} {result['control']['game_breaks']} "
         f"{result['control']['earned_exits']} {result['control']['forced_exits']} "
-        f"{result['control'].get('unknown_exits', 0)} candidate "
+        f"{result['control'].get('unknown_exits', 0)} "
+        f"{result['control'].get('failed_replicates', 0)} candidate "
         f"{result['candidate']['stuck_turns']} {result['candidate']['turns']} "
         f"{result['candidate']['rejected_turns']} {result['candidate']['game_breaks']} "
         f"{result['candidate']['earned_exits']} {result['candidate']['forced_exits']} "
-        f"{result['candidate'].get('unknown_exits', 0)}"
+        f"{result['candidate'].get('unknown_exits', 0)} "
+        f"{result['candidate'].get('failed_replicates', 0)}"
     )
 
 

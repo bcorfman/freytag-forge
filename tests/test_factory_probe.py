@@ -139,6 +139,7 @@ def test_summarize_arm_counts_fixture_and_rejects_malformed(tmp_path: Path) -> N
 
     assert summary == {
         "replicates": 2,
+        "failed_replicates": 0,
         "turns": 8,
         "stuck_turns": 1,
         "rejected_turns": 0,
@@ -172,6 +173,7 @@ def test_summarize_arm_counts_fixture_and_rejects_malformed(tmp_path: Path) -> N
     extra_path.write_text(json.dumps(extra), encoding="utf-8")
     assert summarize_arm([extra_path]) == {
         "replicates": 1,
+        "failed_replicates": 1,
         "turns": 3,
         "stuck_turns": 0,
         "rejected_turns": 1,
@@ -192,6 +194,7 @@ def test_summarize_arm_counts_fixture_and_rejects_malformed(tmp_path: Path) -> N
 def base_summary(**changes: int) -> dict:
     value = {
         "replicates": 10,
+        "failed_replicates": 0,
         "turns": 10,
         "stuck_turns": 0,
         "rejected_turns": 0,
@@ -218,6 +221,67 @@ def test_judge_probe_all_branches_and_ratio_boundary() -> None:
     assert judge_probe(control, base_summary(game_breaks=1), PROBE_RULES)["verdict"] == "reject"
     assert judge_probe(control, base_summary(earned_exits=9), PROBE_RULES)["verdict"] == "reject"
     assert judge_probe(control, base_summary(stuck_turns=8), PROBE_RULES)["verdict"] == "keep"
+
+
+def test_summarize_arm_counts_failed_run_without_its_turns(tmp_path: Path) -> None:
+    path = tmp_path / "failed.json"
+    path.write_text(
+        json.dumps(
+            {
+                "runs": [
+                    {
+                        "status": "failed",
+                        "completed": False,
+                        "turns": [
+                            {
+                                "rejected": False,
+                                "selected_knowledge_ids": [],
+                                "left_scene": True,
+                                "game_break": {},
+                            }
+                        ],
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    assert summarize_arm([path]) == {
+        "replicates": 0,
+        "failed_replicates": 1,
+        "turns": 0,
+        "stuck_turns": 0,
+        "rejected_turns": 0,
+        "game_breaks": 0,
+        "earned_exits": 0,
+        "forced_exits": 0,
+        "unknown_exits": 0,
+        "provider_features": None,
+        "semantic_ask_missing": False,
+    }
+
+
+def test_failed_replicates_force_inconclusive_before_comparison() -> None:
+    control = base_summary(stuck_turns=10)
+    candidate = base_summary(failed_replicates=1, stuck_turns=0)
+
+    result = judge_probe(control, candidate, PROBE_RULES)
+
+    assert result["verdict"] == "inconclusive"
+    assert result["reasons"] == ["Failed replicates: control 0, candidate 1."]
+    assert result["control"]["failed_replicates"] == 0
+    assert result["candidate"]["failed_replicates"] == 1
+
+
+def test_all_ok_summary_exposes_zero_failed_replicates(tmp_path: Path) -> None:
+    path = tmp_path / "ok.json"
+    path.write_text(
+        json.dumps({"runs": [{"status": "ok", "completed": True, "turns": []}]}),
+        encoding="utf-8",
+    )
+
+    assert summarize_arm([path])["failed_replicates"] == 0
 
 
 def test_summarize_arm_classifies_exit_causes_and_old_records(tmp_path: Path) -> None:
