@@ -425,6 +425,7 @@
     "tests/test_staged_cue_reach.py": 0.16,
     "tests/test_staged_cues.py": 0.04,
     "tests/test_stall_exit_audit.py": 4.2,
+    "tests/test_start_scene_session.py": 1.6,
     "tests/test_story_ending.py": 0.09,
     "tests/test_story_package_cache.py": 0.67,
     "tests/test_story_review_scripts.py": 0.01,

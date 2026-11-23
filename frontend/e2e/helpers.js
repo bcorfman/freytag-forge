@@ -88,17 +88,50 @@ export async function installPackageClock(page, { controller } = {}) {
   return packageClockController;
 }
 
-export async function startSceneSession(page) {
+export function sessionBodyWithStart(body, startScene, startState = "thorough") {
+  const parsedBody = typeof body === "string" ? JSON.parse(body) : body;
+  return JSON.stringify({ ...parsedBody, start_scene: startScene, start_state: startState });
+}
+
+export async function installStartSceneRoute(page, { startScene, startState = "thorough" } = {}) {
+  if (startScene === undefined) return false;
+
+  await page.route("**/api/v1/session", async (route) => {
+    const request = route.request();
+    let pathname;
+    try {
+      pathname = new URL(request.url()).pathname;
+    } catch {
+      await route.fallback();
+      return;
+    }
+    if (request.method() !== "POST" || pathname !== "/api/v1/session") {
+      await route.fallback();
+      return;
+    }
+    await route.fallback({
+      postData: sessionBodyWithStart(request.postData() || "{}", startScene, startState),
+    });
+  });
+  return true;
+}
+
+export async function startSceneSession(page, options = {}) {
+  const hasStartScene = options.startScene !== undefined;
+  if (hasStartScene && !process.env.FREYTAG_TEST_CLOCK_TOKEN) {
+    throw new Error("FREYTAG_TEST_CLOCK_TOKEN is required when startScene is set; the server would return HTTP 403.");
+  }
   await installApiToken(page, {
     apiBaseUrl: process.env.E2E_API_BASE_URL,
     token: process.env.FREYTAG_TEST_CLOCK_TOKEN,
   });
+  if (hasStartScene) await installStartSceneRoute(page, options);
   await page.goto("/");
   const controller = packageClockControllers.get(page);
   const sessionState = controller ? sessionResponseFor(page, controller) : null;
   await page.getByRole("button", { name: "New Session" }).click();
   const payload = sessionState ? await sessionState : undefined;
-  await expect(page.locator("#status-line")).toContainText("Scene 1A");
+  await expect(page.locator("#status-line")).toContainText(`Scene ${hasStartScene ? options.startScene : "1A"}`);
   await expect(page.locator("#transcript")).not.toBeEmpty();
   return payload;
 }

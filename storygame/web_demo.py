@@ -21,6 +21,7 @@ from storygame.runtime.capture import WorldCapture, build_capture_provider
 from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
 from storygame.runtime.contracts import ResolvedTurnProposal, RuntimeContractError, contract_error_summary
 from storygame.runtime.engine import ClarificationTurn, RuntimeEngine
+from storygame.runtime.entry_seed import advance_state_to_scene, bare_state_for_scene
 from storygame.runtime.item_facts import ItemFactsProvider
 from storygame.runtime.jev import JevClient
 from storygame.runtime.knowledge_audit import build_knowledge_audit
@@ -46,6 +47,8 @@ class _Request(BaseModel):
 
 class SessionRequest(_Request):
     story_id: str = Field(min_length=1)
+    start_scene: str | None = Field(default=None, min_length=1)
+    start_state: str = Field(default="thorough", pattern="^(thorough|bare)$")
 
 
 class TurnRequest(_Request):
@@ -313,11 +316,25 @@ def create_demo_app(
 
     @app.post("/api/v1/session")
     def create_session(body: SessionRequest, request: Request) -> dict[str, object]:
+        if body.start_scene is not None and (
+            resolved_channel == "production"
+            or not _test_clock_token_matches(request.headers.get("X-Freytag-Test-Clock-Token", ""))
+        ):
+            raise HTTPException(status_code=403, detail="start_scene requires an opted-in staging test")
         require_session_rate_limit(request)
         package = packages.get(body.story_id)
         if package is None:
             raise HTTPException(status_code=404, detail="story does not exist")
-        state = RuntimeState.bootstrap(package)
+        try:
+            if body.start_scene is None:
+                state = RuntimeState.bootstrap(package)
+            elif body.start_state == "bare":
+                state = bare_state_for_scene(package, body.start_scene)
+            else:
+                state = RuntimeState.bootstrap(package)
+                advance_state_to_scene(package, state, body.start_scene)
+        except (RuntimeError, ValueError) as error:
+            raise HTTPException(status_code=422, detail=str(error)) from error
         try:
             provider = provider_for(state)
             opening = engine_for(state, provider).opening()
@@ -330,7 +347,7 @@ def create_demo_app(
             raise HTTPException(status_code=409, detail=str(error), headers=headers) from error
         session_id = uuid4().hex
         store.save(session_id, state)
-        scene = package.scenes[0].metadata
+        scene = next(item.metadata for item in package.scenes if item.metadata.scene_id == state.current_scene_id)
         payload = {
             "session_id": session_id,
             "state": _state_summary(state),

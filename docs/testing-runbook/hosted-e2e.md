@@ -19,6 +19,9 @@ Part of [the testing runbook](../testing-runbook.md).
 **Purpose:** Exercise the deployed frontend, FastAPI service, and Cloudflare
 Worker end to end.
 
+The blind player enters later scenes with seeded entry on staging only; results
+from seeded runs are labelled `seeded entry`.
+
 **Setup:** `npx playwright install chromium` once in `frontend/`. Source the
 root `.env` before changing directory (there is no `frontend/.env`); it sets
 `E2E_API_BASE_URL` and `E2E_DEPLOYMENT_CHANNEL`.
