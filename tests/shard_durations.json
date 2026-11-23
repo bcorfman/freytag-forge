@@ -193,6 +193,7 @@
     "tests/test_enforce_stage1_harness.py": 0.01,
     "tests/test_enforce_stage2_harness.py": 0.01,
     "tests/test_engine_error_line.py": 0.64,
+    "tests/test_entry_snapshot_errors.py": 9.24,
     "tests/test_entry_snapshots.py": 30.97,
     "tests/test_entry_variants.py": 0.11,
     "tests/test_environment_baseline.py": 6.55,
