@@ -406,6 +406,24 @@ class World(IncidentalWorldMixin):
     def __init__(self, schema, backend, *, make_fact=Fact, resolver: Callable | None = None):
         self.schema, self.backend, self.make_fact, self.resolver = schema, backend, make_fact, resolver
 
+    def export_state(self) -> dict:
+        """Return the deterministic, world-only state snapshot."""
+        from .state_export import export_state
+
+        return export_state(self)
+
+    def import_state(self, state: dict) -> OpResult:
+        """Replace world facts with a validated state snapshot."""
+        from .state_export import import_state
+
+        return import_state(self, state)
+
+    def entry_problems(self, protagonist_id: str, location_id: str) -> tuple[str, ...]:
+        """Return violations of the invariants required for scene entry."""
+        from .state_export import entry_problems
+
+        return entry_problems(self, protagonist_id, location_id)
+
     # Encoding: identity and free text are values; short keys are objects.
     def _fact(self, predicate, subject, object_value=None, value=None):
         return self.make_fact(predicate=predicate, subject=subject, object=object_value, value=value)

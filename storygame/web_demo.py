@@ -21,6 +21,8 @@ from storygame.runtime.capture import WorldCapture, build_capture_provider
 from storygame.runtime.cloudflare import CloudflareTurnProvider, NarrationProviderError
 from storygame.runtime.contracts import ResolvedTurnProposal, RuntimeContractError, contract_error_summary
 from storygame.runtime.engine import ClarificationTurn, RuntimeEngine
+from storygame.runtime.entry_seed import advance_state_to_scene, bare_state_for_scene
+from storygame.runtime.entry_snapshots import EntrySnapshotError, load_entry_snapshot, state_from_snapshot
 from storygame.runtime.item_facts import ItemFactsProvider
 from storygame.runtime.jev import JevClient
 from storygame.runtime.knowledge_audit import build_knowledge_audit
@@ -30,6 +32,7 @@ from storygame.runtime.scripted_provider import ScriptedTurnProvider
 from storygame.runtime.state import RuntimeState, RuntimeStateError
 from storygame.runtime.validation import REJECTED_TURN_MESSAGE, ProposalValidationError, rejection_message
 from storygame.runtime.world_model import display_name, world_for
+from storygame.story_package.default_root import default_package_root as _default_package_root
 from storygame.story_package.loader import StoryPackageError, load_story_package
 
 logger = logging.getLogger(__name__)
@@ -46,6 +49,8 @@ class _Request(BaseModel):
 
 class SessionRequest(_Request):
     story_id: str = Field(min_length=1)
+    start_scene: str | None = Field(default=None, min_length=1)
+    start_state: str = Field(default="canonical", pattern="^(canonical|thorough|bare)$")
 
 
 class TurnRequest(_Request):
@@ -79,10 +84,6 @@ class BreakResolutionRequest(_Request):
 def _deployment_sha() -> str:
     """Return the immutable deploy identity supplied by Railway or CI."""
     return getenv("FREYTAG_DEPLOYMENT_SHA", "").strip() or getenv("RAILWAY_GIT_COMMIT_SHA", "").strip() or "unknown"
-
-
-def _default_package_root() -> Path:
-    return Path(__file__).resolve().parents[1] / "data" / "stories" / "continuity-initiative"
 
 
 def _state_summary(state: RuntimeState) -> dict[str, object]:
@@ -203,9 +204,11 @@ def create_demo_app(
 ) -> FastAPI:
     """Build the single hosted surface without introducing gameplay policy."""
     resolved_channel = channel or getenv("FREYTAG_DEPLOYMENT_CHANNEL", "unknown").strip() or "unknown"
-    roots = package_roots or (_default_package_root(),)
+    roots = tuple(Path(root).resolve() for root in (package_roots or (_default_package_root(),)))
     try:
-        packages = {package.story_id: package for package in (load_story_package(root) for root in roots)}
+        loaded_packages = [(root, load_story_package(root)) for root in roots]
+        packages = {package.story_id: package for _root, package in loaded_packages}
+        package_roots_by_id = {package.story_id: root for root, package in loaded_packages}
     except StoryPackageError as error:
         raise RuntimeError("configured story packages are invalid") from error
     if not packages:
@@ -313,11 +316,28 @@ def create_demo_app(
 
     @app.post("/api/v1/session")
     def create_session(body: SessionRequest, request: Request) -> dict[str, object]:
+        if body.start_scene is not None and (
+            resolved_channel == "production"
+            or not _test_clock_token_matches(request.headers.get("X-Freytag-Test-Clock-Token", ""))
+        ):
+            raise HTTPException(status_code=403, detail="start_scene requires an opted-in staging test")
         require_session_rate_limit(request)
         package = packages.get(body.story_id)
         if package is None:
             raise HTTPException(status_code=404, detail="story does not exist")
-        state = RuntimeState.bootstrap(package)
+        try:
+            if body.start_scene is None:
+                state = RuntimeState.bootstrap(package)
+            elif body.start_state == "canonical":
+                snapshot = load_entry_snapshot(package_roots_by_id[package.story_id], body.start_scene)
+                state = state_from_snapshot(package, snapshot, package_roots_by_id[package.story_id])
+            elif body.start_state == "bare":
+                state = bare_state_for_scene(package, body.start_scene)
+            else:
+                state = RuntimeState.bootstrap(package)
+                advance_state_to_scene(package, state, body.start_scene)
+        except (EntrySnapshotError, RuntimeError, ValueError) as error:
+            raise HTTPException(status_code=422, detail=str(error)) from error
         try:
             provider = provider_for(state)
             opening = engine_for(state, provider).opening()
@@ -330,7 +350,7 @@ def create_demo_app(
             raise HTTPException(status_code=409, detail=str(error), headers=headers) from error
         session_id = uuid4().hex
         store.save(session_id, state)
-        scene = package.scenes[0].metadata
+        scene = next(item.metadata for item in package.scenes if item.metadata.scene_id == state.current_scene_id)
         payload = {
             "session_id": session_id,
             "state": _state_summary(state),

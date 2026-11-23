@@ -1,0 +1,2519 @@
+{
+  "path": {
+    "persona": "canonical",
+    "storylets_delivered": [
+      "SL-1A-E",
+      "SL-1A-B",
+      "SL-1A-D",
+      "SL-1B-B",
+      "SL-1B-C",
+      "SL-1B-D",
+      "SL-1B-A",
+      "SL-1C-A",
+      "SL-1C-B",
+      "SL-1C-C",
+      "SL-2A-B",
+      "SL-2A-C",
+      "SL-2B-A",
+      "SL-2B-B",
+      "SL-2B-C",
+      "SL-2C-C",
+      "SL-2C-D",
+      "SL-3A-A",
+      "SL-3A-B",
+      "SL-3A-D",
+      "SL-3A-C",
+      "SL-3B-A",
+      "SL-3B-E",
+      "SL-3B-B",
+      "SL-3B-D",
+      "SL-3B-C"
+    ],
+    "turns": 49
+  },
+  "runtime": {
+    "active_event_ids": [
+      "SL-3C-A"
+    ],
+    "cue_stages": [],
+    "current_scene_id": "3C",
+    "delivered_cue_ids": [],
+    "fired_event_ids": [
+      "SL-1A-B",
+      "SL-1A-D",
+      "SL-1A-E",
+      "SL-1B-A",
+      "SL-1B-B",
+      "SL-1B-C",
+      "SL-1B-D",
+      "SL-1C-A",
+      "SL-1C-B",
+      "SL-1C-C",
+      "SL-2A-B",
+      "SL-2A-C",
+      "SL-2B-A",
+      "SL-2B-B",
+      "SL-2B-C",
+      "SL-2C-C",
+      "SL-2C-D",
+      "SL-3A-A",
+      "SL-3A-B",
+      "SL-3A-C",
+      "SL-3A-D",
+      "SL-3B-A",
+      "SL-3B-B",
+      "SL-3B-C",
+      "SL-3B-D",
+      "SL-3B-E",
+      "bridge_1a_actionable_lead",
+      "bridge_1b_departure",
+      "bridge_1c_infiltration_needed",
+      "bridge_2a_restricted_access",
+      "bridge_2b_archive_crisis",
+      "bridge_2c_combined_plan",
+      "bridge_3a_command_assault",
+      "bridge_3b_broadcast",
+      "destruction_3b",
+      "detention_lockdown_3a",
+      "home_search_narrows_1a",
+      "override_deadline_3a",
+      "park_lockdown_1b",
+      "patrol_arrives_1a",
+      "patrol_enters_1a",
+      "patrol_leaves_1a",
+      "patrol_returns_1a",
+      "pursuit_1b",
+      "relay_power_3b"
+    ],
+    "phase": "resolution",
+    "scene_entered_at_turn": 49,
+    "staged_cue_fact_id": "truth_no_longer_containable",
+    "staged_cue_stage": 1,
+    "staged_handoff_fact_ids": [],
+    "story_complete": false,
+    "turn_index": 49
+  },
+  "scene_id": "3C",
+  "schema": 1,
+  "source_fingerprint": "9333a6653ff41cbfdc2c0307476c081741792e1bf8ac052a227dcd928d0eea3e",
+  "story_facts": [
+    {
+      "object": null,
+      "predicate": "antagonist_split_known",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "archive_crisis_understood",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "behavioral_experiments_known",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "bench_clues_recovered",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "brandon_claimed_reform_motive",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "brandon_confession_available",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "brandon_face_known",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "brandon_identified",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "brandon_janus_role_known",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "brandon_name_erased",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "brandon_retains_system_access",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "broadcast_started",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "captives_confirmed_alive",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "charles_abandoned_rebecca",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "charles_framed_officials_known",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "combined_broadcast_rescue_plan_known",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "command_levels_assault_underway",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "committed_to_rescue",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "continuity_initiative_known",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "cover_suspected",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "detention_locations_offer_known",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "detention_locations_secured",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "detention_lockdown_spreading",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "detention_uprising_started",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "evidence_gap_development_record",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "evidence_not_transmitted",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "evidence_ready_to_transmit",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "facility_destruction_threat",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "facility_infiltration_needed",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "facility_proof",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "home_search_window_narrowing",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "human_security_control",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "inspection_console_used",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "janus_evidence",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "janus_known",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "knowledge_narrated",
+      "subject": "k_sl_1a_b_r0",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "knowledge_narrated",
+      "subject": "k_sl_1a_b_r2",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "knowledge_narrated",
+      "subject": "k_sl_1a_d_r1",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "knowledge_narrated",
+      "subject": "k_sl_1b_a_r2",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "knowledge_narrated",
+      "subject": "k_sl_1b_b_r2",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "knowledge_narrated",
+      "subject": "k_sl_1b_c_r2",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "knowledge_narrated",
+      "subject": "k_sl_1b_d_r1",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "knowledge_narrated",
+      "subject": "k_sl_1c_a_r1",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "knowledge_narrated",
+      "subject": "k_sl_1c_b_r2",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "knowledge_narrated",
+      "subject": "k_sl_1c_c_copy_numbers",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "knowledge_narrated",
+      "subject": "k_sl_2a_b_r1",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "knowledge_narrated",
+      "subject": "k_sl_2a_c_r6",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "knowledge_narrated",
+      "subject": "k_sl_2b_a_r1",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "knowledge_narrated",
+      "subject": "k_sl_2b_b_r5",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "knowledge_narrated",
+      "subject": "k_sl_2b_c_r3",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "knowledge_narrated",
+      "subject": "k_sl_2c_c_r1",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "knowledge_narrated",
+      "subject": "k_sl_2c_d_r4",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "knowledge_narrated",
+      "subject": "k_sl_3a_a_r2",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "knowledge_narrated",
+      "subject": "k_sl_3a_b_r2",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "knowledge_narrated",
+      "subject": "k_sl_3a_c_r2",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "knowledge_narrated",
+      "subject": "k_sl_3a_d_r2",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "knowledge_narrated",
+      "subject": "k_sl_3b_a_r2",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "knowledge_narrated",
+      "subject": "k_sl_3b_b_r2",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "knowledge_narrated",
+      "subject": "k_sl_3b_c_r2",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "knowledge_narrated",
+      "subject": "k_sl_3b_d_r2",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "knowledge_narrated",
+      "subject": "k_sl_3b_e_r1",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "kristin_file_read",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "kristin_was_bait",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "manifold_fault_found",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "memory_card_recovered",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "michelle_abduction_suspicion",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "michelle_lead_actionable",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "michelle_possible_sighting",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "michelle_reached",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "michelle_reply_received",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "michelle_resistance_known",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "michelle_selected_for_resistance_influence",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "michelle_warning_known",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "military_override_codes_available",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "missing_may_be_alive",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "override_codes_deadline_known",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "park_lockdown_spreading",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "park_pursuit_resolved",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "patrol_departed",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "patrol_in_house",
+      "subject": "story",
+      "value": "false"
+    },
+    {
+      "object": null,
+      "predicate": "patrol_on_scene",
+      "subject": "story",
+      "value": "false"
+    },
+    {
+      "object": null,
+      "predicate": "patrol_return_pressure",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "processing_numbers_copied",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "purge_clock_started",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "pursuit_closing_in",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "rebecca_observing_infiltrators",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "rebecca_offer_active",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "rebecca_offer_heard",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "rebecca_office_reached",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "rebecca_office_required_for_broadcast",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "relay_open",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "relay_power_failing",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "restricted_corridor_access",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "scene_1a_entry_known",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "scene_1b_entry_known",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "scene_1c_entry_known",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "scene_2a_entry_known",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "scene_2b_entry_known",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "scene_2c_entry_known",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "scene_3a_entry_known",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "scene_3b_entry_known",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "scene_3c_entry_known",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "story_elapsed_seconds",
+      "subject": "story",
+      "value": "2940"
+    },
+    {
+      "object": null,
+      "predicate": "transport_route_departure_ready",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "transport_route_identified",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": null,
+      "predicate": "uprising_prepared",
+      "subject": "story",
+      "value": "true"
+    },
+    {
+      "object": "behavioral_experiments_known",
+      "predicate": "world_effects_applied",
+      "subject": "story",
+      "value": null
+    },
+    {
+      "object": "bench_clues_recovered",
+      "predicate": "world_effects_applied",
+      "subject": "story",
+      "value": null
+    },
+    {
+      "object": "brandon_identified",
+      "predicate": "world_effects_applied",
+      "subject": "story",
+      "value": null
+    },
+    {
+      "object": "brandon_name_erased",
+      "predicate": "world_effects_applied",
+      "subject": "story",
+      "value": null
+    },
+    {
+      "object": "detention_uprising_started",
+      "predicate": "world_effects_applied",
+      "subject": "story",
+      "value": null
+    },
+    {
+      "object": "memory_card_recovered",
+      "predicate": "world_effects_applied",
+      "subject": "story",
+      "value": null
+    },
+    {
+      "object": "military_override_codes_available",
+      "predicate": "world_effects_applied",
+      "subject": "story",
+      "value": null
+    },
+    {
+      "object": "patrol_departed",
+      "predicate": "world_effects_applied",
+      "subject": "story",
+      "value": null
+    },
+    {
+      "object": "patrol_in_house",
+      "predicate": "world_effects_applied",
+      "subject": "story",
+      "value": null
+    },
+    {
+      "object": "patrol_on_scene",
+      "predicate": "world_effects_applied",
+      "subject": "story",
+      "value": null
+    },
+    {
+      "object": "processing_numbers_copied",
+      "predicate": "world_effects_applied",
+      "subject": "story",
+      "value": null
+    },
+    {
+      "object": "rebecca_office_reached",
+      "predicate": "world_effects_applied",
+      "subject": "story",
+      "value": null
+    },
+    {
+      "object": "relay_open",
+      "predicate": "world_effects_applied",
+      "subject": "story",
+      "value": null
+    }
+  ],
+  "story_id": "continuity_initiative",
+  "world": {
+    "facts": [
+      {
+        "object": "captive",
+        "predicate": "wk_axis",
+        "subject": "brandon",
+        "value": "free"
+      },
+      {
+        "object": "conscious",
+        "predicate": "wk_axis",
+        "subject": "brandon",
+        "value": "conscious"
+      },
+      {
+        "object": "captive",
+        "predicate": "wk_axis",
+        "subject": "charles",
+        "value": "free"
+      },
+      {
+        "object": "open",
+        "predicate": "wk_axis",
+        "subject": "cooling_service_archive_panel",
+        "value": "closed"
+      },
+      {
+        "object": "captive",
+        "predicate": "wk_axis",
+        "subject": "kristin",
+        "value": "free"
+      },
+      {
+        "object": "closed",
+        "predicate": "wk_axis",
+        "subject": "kristin_laptop",
+        "value": "closed"
+      },
+      {
+        "object": "captive",
+        "predicate": "wk_axis",
+        "subject": "michelle",
+        "value": "free"
+      },
+      {
+        "object": "open",
+        "predicate": "wk_axis",
+        "subject": "michelle_drawer",
+        "value": "closed"
+      },
+      {
+        "object": "captive",
+        "predicate": "wk_axis",
+        "subject": "patrol_officer",
+        "value": "free"
+      },
+      {
+        "object": "captive",
+        "predicate": "wk_axis",
+        "subject": "rebecca",
+        "value": "free"
+      },
+      {
+        "object": "captive",
+        "predicate": "wk_axis",
+        "subject": "senior_official",
+        "value": "free"
+      },
+      {
+        "object": "captive",
+        "predicate": "wk_axis",
+        "subject": "shift_supervisor",
+        "value": "free"
+      },
+      {
+        "object": "intact",
+        "predicate": "wk_axis",
+        "subject": "transit_card",
+        "value": "intact"
+      },
+      {
+        "object": "captive",
+        "predicate": "wk_axis",
+        "subject": "walt_pruitt",
+        "value": "free"
+      },
+      {
+        "object": "overturned",
+        "predicate": "wk_axis",
+        "subject": "workstation_chair",
+        "value": "overturned"
+      },
+      {
+        "object": "kristin",
+        "predicate": "wk_companion",
+        "subject": "michelle",
+        "value": null
+      },
+      {
+        "object": "true",
+        "predicate": "wk_moved",
+        "subject": "override_codes",
+        "value": null
+      },
+      {
+        "object": "true",
+        "predicate": "wk_moved",
+        "subject": "patrol_officer",
+        "value": null
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "air_vents",
+        "value": "loading_docks"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "alarm_log",
+        "value": "facility_perimeter"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "archive_terminals",
+        "value": "janus_archive"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "back_door",
+        "value": "kitchen"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "back_door_deadbolt",
+        "value": "kitchen"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "back_door_splinters",
+        "value": "kitchen"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "brandon",
+        "value": "broadcast_relay"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "broadcast_chamber",
+        "value": "executive_office"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "broadcast_relay",
+        "value": "regional_facility"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "broadcast_uplink",
+        "value": "purge_chamber"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "build_record",
+        "value": "janus_archive"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "captives",
+        "value": "maintenance_network"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "cart_tags",
+        "value": "purge_chamber"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "checkpoint_barrier",
+        "value": "los_angeles_park"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "checkpoint_reader",
+        "value": "detention_level"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "cooling_manifold",
+        "value": "facility_perimeter"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "cooling_service_archive_panel",
+        "value": "infrastructure_corridors"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "copied_janus_files",
+        "value": "kristin"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "corridor_camera",
+        "value": "purge_chamber"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "corridor_guards",
+        "value": "purge_chamber"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "detention_level",
+        "value": "regional_facility"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "detention_medical_records",
+        "value": "medical_level"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "dog_leash",
+        "value": "park_fence"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "drainage_pump_controls",
+        "value": "maintenance_network"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "emergency_speakers",
+        "value": "maintenance_network"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "emergency_surface_gates",
+        "value": "facility_escape"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "executive_office",
+        "value": "regional_facility"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "facility_escape",
+        "value": "regional_facility"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "facility_gate",
+        "value": "facility_perimeter"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "facility_perimeter",
+        "value": "regional_facility"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "freight_terminal",
+        "value": "regional_facility"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "gate_keypad",
+        "value": "los_angeles_park"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "gate_status_panel",
+        "value": "detention_level"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "hideout_servers",
+        "value": "brandon_hideout"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "holding_block",
+        "value": "detention_level"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "house_gate",
+        "value": "outside_house"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "identification_numbers",
+        "value": "processing_line"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "infrastructure_corridors",
+        "value": "regional_facility"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "inspection_console",
+        "value": "infrastructure_corridors"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "inspector_badges",
+        "value": "kristin"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "janus_archive",
+        "value": "regional_facility"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "kitchen",
+        "value": "mcgehee_home"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "kitchen_calendar",
+        "value": "kitchen"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "kristin",
+        "value": "broadcast_chamber"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "kristin_laptop",
+        "value": "truck_passenger_seat"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "kristin_truck",
+        "value": "freight_terminal"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "lake_photograph",
+        "value": "kitchen"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "loading_docks",
+        "value": "freight_terminal"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "maintenance_network",
+        "value": "purge_chamber"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "manuscript_pages",
+        "value": "michelle_workstation"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "medical_level",
+        "value": "detention_level"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "medical_terminal",
+        "value": "janus_archive"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "memory_card",
+        "value": "kristin"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "michelle",
+        "value": "broadcast_chamber"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "michelle_drawer",
+        "value": "michelle_workstation"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "michelle_drawer_binder_clips",
+        "value": "michelle_drawer"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "michelle_drawer_pens",
+        "value": "michelle_drawer"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "michelle_drawer_spare_batteries",
+        "value": "michelle_drawer"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "michelle_drawer_stapler",
+        "value": "michelle_drawer"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "michelle_phone",
+        "value": "kitchen"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "michelle_photograph",
+        "value": "kristin"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "michelle_reading_glasses",
+        "value": "michelle_workstation"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "michelle_tea_mug",
+        "value": "michelle_workstation"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "michelle_workstation",
+        "value": "kitchen"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "monitor_light",
+        "value": "purge_chamber"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "number_sequence",
+        "value": "kristin"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "observation_shaft",
+        "value": "loading_docks"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "overhead_speaker",
+        "value": "processing_line"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "override_codes",
+        "value": "kristin"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "park_bench",
+        "value": "los_angeles_park"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "park_bicycle",
+        "value": "los_angeles_park"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "park_fence",
+        "value": "los_angeles_park"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "park_loudspeaker",
+        "value": "los_angeles_park"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "patrol_officer",
+        "value": "patrol_staging"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "picnic_blanket",
+        "value": "los_angeles_park"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "picnic_cups",
+        "value": "picnic_blanket"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "picnic_thermos",
+        "value": "picnic_blanket"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "portable_archive",
+        "value": "rebecca"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "prisoner_number_record",
+        "value": "kristin"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "processing_line",
+        "value": "service_level"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "purge_chamber",
+        "value": "regional_facility"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "rebecca",
+        "value": "executive_office"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "rebecca_desk",
+        "value": "executive_office"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "return_line",
+        "value": "facility_perimeter"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "security_camera",
+        "value": "facility_perimeter"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "security_corridors",
+        "value": "regional_facility"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "senior_official",
+        "value": "captives"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "service_entrance",
+        "value": "freight_terminal"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "service_gate",
+        "value": "los_angeles_park"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "service_level",
+        "value": "freight_terminal"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "shift_supervisor",
+        "value": "janus_archive"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "stolen_radio",
+        "value": "kristin"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "storm_drain",
+        "value": "los_angeles_park"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "tire_tracks",
+        "value": "loading_docks"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "transfer_carts",
+        "value": "purge_chamber"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "transfer_queue",
+        "value": "janus_archive"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "transit_card",
+        "value": "kristin"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "truck_driver_seat",
+        "value": "kristin_truck"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "truck_passenger_seat",
+        "value": "kristin_truck"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "truck_radio",
+        "value": "kristin_truck"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "walt_pruitt",
+        "value": "outside_house"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "water_pallets",
+        "value": "loading_docks"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "watertight_barrier",
+        "value": "maintenance_network"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "workstation_chair",
+        "value": "kitchen"
+      },
+      {
+        "object": null,
+        "predicate": "wk_parent",
+        "subject": "wrist_tags",
+        "value": "detention_level"
+      },
+      {
+        "object": null,
+        "predicate": "wk_place_text",
+        "subject": "air_vents",
+        "value": "humming along the dock wall"
+      },
+      {
+        "object": null,
+        "predicate": "wk_place_text",
+        "subject": "alarm_log",
+        "value": "on the tablet the supervisor carries"
+      },
+      {
+        "object": null,
+        "predicate": "wk_place_text",
+        "subject": "back_door_deadbolt",
+        "value": "on the back door"
+      },
+      {
+        "object": null,
+        "predicate": "wk_place_text",
+        "subject": "back_door_splinters",
+        "value": "around the back door frame"
+      },
+      {
+        "object": null,
+        "predicate": "wk_place_text",
+        "subject": "broadcast_uplink",
+        "value": "at the end of the command corridor"
+      },
+      {
+        "object": null,
+        "predicate": "wk_place_text",
+        "subject": "build_record",
+        "value": "below the personnel records on the archive terminals"
+      },
+      {
+        "object": null,
+        "predicate": "wk_place_text",
+        "subject": "cart_tags",
+        "value": "on the rails of the transfer carts"
+      },
+      {
+        "object": null,
+        "predicate": "wk_place_text",
+        "subject": "checkpoint_barrier",
+        "value": "at the park entrance"
+      },
+      {
+        "object": null,
+        "predicate": "wk_place_text",
+        "subject": "checkpoint_reader",
+        "value": "beside the checkpoint door at the top of the block"
+      },
+      {
+        "object": null,
+        "predicate": "wk_place_text",
+        "subject": "cooling_manifold",
+        "value": "just inside the facility gate"
+      },
+      {
+        "object": null,
+        "predicate": "wk_place_text",
+        "subject": "corridor_camera",
+        "value": "over the guards at the near end of the command corridor, its lens held on Brandon"
+      },
+      {
+        "object": null,
+        "predicate": "wk_place_text",
+        "subject": "corridor_guards",
+        "value": "holding both ends of the command corridor"
+      },
+      {
+        "object": null,
+        "predicate": "wk_place_text",
+        "subject": "detention_medical_records",
+        "value": "in the medical level"
+      },
+      {
+        "object": null,
+        "predicate": "wk_place_text",
+        "subject": "dog_leash",
+        "value": "tied to the fence with its loop empty"
+      },
+      {
+        "object": null,
+        "predicate": "wk_place_text",
+        "subject": "facility_gate",
+        "value": "at the facility perimeter"
+      },
+      {
+        "object": null,
+        "predicate": "wk_place_text",
+        "subject": "gate_keypad",
+        "value": "beside the service gate"
+      },
+      {
+        "object": null,
+        "predicate": "wk_place_text",
+        "subject": "house_gate",
+        "value": "at the front of the house"
+      },
+      {
+        "object": null,
+        "predicate": "wk_place_text",
+        "subject": "identification_numbers",
+        "value": "inked on each forearm"
+      },
+      {
+        "object": null,
+        "predicate": "wk_place_text",
+        "subject": "inspector_badges",
+        "value": "clipped to the front of each jacket"
+      },
+      {
+        "object": null,
+        "predicate": "wk_place_text",
+        "subject": "kitchen_calendar",
+        "value": "a paper calendar hanging on the wall by the refrigerator"
+      },
+      {
+        "object": null,
+        "predicate": "wk_place_text",
+        "subject": "kristin_laptop",
+        "value": "on the passenger seat of Kristin's truck"
+      },
+      {
+        "object": null,
+        "predicate": "wk_place_text",
+        "subject": "lake_photograph",
+        "value": "held to the refrigerator by a pear-shaped magnet, showing Kristin and Michelle at a lake"
+      },
+      {
+        "object": null,
+        "predicate": "wk_place_text",
+        "subject": "manuscript_pages",
+        "value": "marked in red pen"
+      },
+      {
+        "object": null,
+        "predicate": "wk_place_text",
+        "subject": "memory_card",
+        "value": "with Kristin"
+      },
+      {
+        "object": null,
+        "predicate": "wk_place_text",
+        "subject": "michelle_drawer",
+        "value": "in Michelle's workstation"
+      },
+      {
+        "object": null,
+        "predicate": "wk_place_text",
+        "subject": "michelle_phone",
+        "value": "on the kitchen floor"
+      },
+      {
+        "object": null,
+        "predicate": "wk_place_text",
+        "subject": "michelle_photograph",
+        "value": "with Kristin"
+      },
+      {
+        "object": null,
+        "predicate": "wk_place_text",
+        "subject": "michelle_reading_glasses",
+        "value": "folded on her manuscript pages"
+      },
+      {
+        "object": null,
+        "predicate": "wk_place_text",
+        "subject": "michelle_tea_mug",
+        "value": "on Michelle's workstation"
+      },
+      {
+        "object": null,
+        "predicate": "wk_place_text",
+        "subject": "michelle_workstation",
+        "value": "across the kitchen from the back door"
+      },
+      {
+        "object": null,
+        "predicate": "wk_place_text",
+        "subject": "monitor_light",
+        "value": "burning steady amber beside the one outbound channel on the broadcast uplink"
+      },
+      {
+        "object": null,
+        "predicate": "wk_place_text",
+        "subject": "number_sequence",
+        "value": "with Kristin"
+      },
+      {
+        "object": null,
+        "predicate": "wk_place_text",
+        "subject": "overhead_speaker",
+        "value": "on a bracket above the line"
+      },
+      {
+        "object": null,
+        "predicate": "wk_place_text",
+        "subject": "park_bicycle",
+        "value": "on its kickstand beside the path"
+      },
+      {
+        "object": null,
+        "predicate": "wk_place_text",
+        "subject": "park_fence",
+        "value": "along the edge of the grass"
+      },
+      {
+        "object": null,
+        "predicate": "wk_place_text",
+        "subject": "park_loudspeaker",
+        "value": "on a pole near the service path"
+      },
+      {
+        "object": null,
+        "predicate": "wk_place_text",
+        "subject": "patrol_officer",
+        "value": "at Michelle's workstation"
+      },
+      {
+        "object": null,
+        "predicate": "wk_place_text",
+        "subject": "picnic_blanket",
+        "value": "spread on the grass"
+      },
+      {
+        "object": null,
+        "predicate": "wk_place_text",
+        "subject": "picnic_cups",
+        "value": "one tipped over and one still half full"
+      },
+      {
+        "object": null,
+        "predicate": "wk_place_text",
+        "subject": "picnic_thermos",
+        "value": "beside the cups"
+      },
+      {
+        "object": null,
+        "predicate": "wk_place_text",
+        "subject": "portable_archive",
+        "value": "with Rebecca in her hands"
+      },
+      {
+        "object": null,
+        "predicate": "wk_place_text",
+        "subject": "prisoner_number_record",
+        "value": "with Kristin"
+      },
+      {
+        "object": null,
+        "predicate": "wk_place_text",
+        "subject": "return_line",
+        "value": "carrying water back from the corridors into the cooling manifold"
+      },
+      {
+        "object": null,
+        "predicate": "wk_place_text",
+        "subject": "security_camera",
+        "value": "on a pole above the cooling manifold with its lens turned toward the gate"
+      },
+      {
+        "object": null,
+        "predicate": "wk_place_text",
+        "subject": "shift_supervisor",
+        "value": "leading the audit sweep between the archive stacks"
+      },
+      {
+        "object": null,
+        "predicate": "wk_place_text",
+        "subject": "stolen_radio",
+        "value": "with Kristin"
+      },
+      {
+        "object": null,
+        "predicate": "wk_place_text",
+        "subject": "tire_tracks",
+        "value": "crossing the loading docks"
+      },
+      {
+        "object": null,
+        "predicate": "wk_place_text",
+        "subject": "transfer_carts",
+        "value": "at the other end of the command corridor"
+      },
+      {
+        "object": null,
+        "predicate": "wk_place_text",
+        "subject": "transfer_queue",
+        "value": "in the transfer listing on the archive terminals"
+      },
+      {
+        "object": null,
+        "predicate": "wk_place_text",
+        "subject": "transit_card",
+        "value": "with Kristin"
+      },
+      {
+        "object": null,
+        "predicate": "wk_place_text",
+        "subject": "walt_pruitt",
+        "value": "the elderly neighbor from next door, at the fence between the yards"
+      },
+      {
+        "object": null,
+        "predicate": "wk_place_text",
+        "subject": "water_pallets",
+        "value": "shrink-wrapped by the loading doors"
+      },
+      {
+        "object": null,
+        "predicate": "wk_place_text",
+        "subject": "workstation_chair",
+        "value": "at Michelle's workstation"
+      },
+      {
+        "object": null,
+        "predicate": "wk_place_text",
+        "subject": "wrist_tags",
+        "value": "on the wrists of the captives, each stamped with the same transfer date, a week old"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "air_vents",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "alarm_log",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "archive_terminals",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "back_door",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "back_door_deadbolt",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "back_door_splinters",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "brandon",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "broadcast_chamber",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "broadcast_relay",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "broadcast_uplink",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "build_record",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "captives",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "cart_tags",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "checkpoint_barrier",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "checkpoint_reader",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "cooling_manifold",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "cooling_service_archive_panel",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "copied_janus_files",
+        "value": "carried_by"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "corridor_camera",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "corridor_guards",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "detention_level",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "detention_medical_records",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "dog_leash",
+        "value": "on"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "drainage_pump_controls",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "emergency_speakers",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "emergency_surface_gates",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "executive_office",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "facility_escape",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "facility_gate",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "facility_perimeter",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "freight_terminal",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "gate_keypad",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "gate_status_panel",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "hideout_servers",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "holding_block",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "house_gate",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "identification_numbers",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "infrastructure_corridors",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "inspection_console",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "inspector_badges",
+        "value": "carried_by"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "janus_archive",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "kitchen",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "kitchen_calendar",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "kristin",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "kristin_laptop",
+        "value": "on"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "kristin_truck",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "lake_photograph",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "loading_docks",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "maintenance_network",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "manuscript_pages",
+        "value": "on"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "medical_level",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "medical_terminal",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "memory_card",
+        "value": "carried_by"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "michelle",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "michelle_drawer",
+        "value": "part_of"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "michelle_drawer_binder_clips",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "michelle_drawer_pens",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "michelle_drawer_spare_batteries",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "michelle_drawer_stapler",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "michelle_phone",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "michelle_photograph",
+        "value": "carried_by"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "michelle_reading_glasses",
+        "value": "on"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "michelle_tea_mug",
+        "value": "on"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "michelle_workstation",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "monitor_light",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "number_sequence",
+        "value": "carried_by"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "observation_shaft",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "overhead_speaker",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "override_codes",
+        "value": "carried_by"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "park_bench",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "park_bicycle",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "park_fence",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "park_loudspeaker",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "patrol_officer",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "picnic_blanket",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "picnic_cups",
+        "value": "on"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "picnic_thermos",
+        "value": "on"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "portable_archive",
+        "value": "carried_by"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "prisoner_number_record",
+        "value": "carried_by"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "processing_line",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "purge_chamber",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "rebecca",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "rebecca_desk",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "return_line",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "security_camera",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "security_corridors",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "senior_official",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "service_entrance",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "service_gate",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "service_level",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "shift_supervisor",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "stolen_radio",
+        "value": "carried_by"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "storm_drain",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "tire_tracks",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "transfer_carts",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "transfer_queue",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "transit_card",
+        "value": "carried_by"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "truck_driver_seat",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "truck_passenger_seat",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "truck_radio",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "walt_pruitt",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "water_pallets",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "watertight_barrier",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "workstation_chair",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_relation",
+        "subject": "wrist_tags",
+        "value": "in"
+      },
+      {
+        "object": null,
+        "predicate": "wk_seeded",
+        "subject": "__world__",
+        "value": "true"
+      }
+    ],
+    "schema": 1
+  }
+}

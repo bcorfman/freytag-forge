@@ -20,6 +20,7 @@ from storygame.story_package.obligations import required_storylet_ids
 
 PERSONAS = {
     "thorough": "Act on the strongest available lead.",
+    "canonical": "Follow only the leads needed to reach the ending.",
     "staller": "Wait and watch the room.",
     "wrong_lead": "Follow the side thread.",
 }
@@ -153,6 +154,18 @@ def _select_thorough(package: StoryPackage, state: RuntimeState, candidates) -> 
     return max(candidates, key=rank).id if candidates else None
 
 
+def _select_canonical(package: StoryPackage, state: RuntimeState, candidates) -> str | None:
+    """Choose a surviving candidate from the storylets required by the route."""
+
+    required = required_storylet_ids(package)
+    candidates = tuple(
+        candidate
+        for candidate in candidates
+        if package.knowledge_indexes.by_id[candidate.id].source.storylet_id in required
+    )
+    return _select_thorough(package, state, candidates)
+
+
 def _select_wrong_lead(package: StoryPackage, state: RuntimeState, candidates) -> str | None:
     required = required_storylet_ids(package)
     optional = [
@@ -230,6 +243,8 @@ def _run(
         projection = engine.projector.project(state, "player", "")
         if name == "thorough":
             selected = _select_thorough(package, state, projection.candidates)
+        elif name == "canonical":
+            selected = _select_canonical(package, state, projection.candidates)
         elif name == "wrong_lead":
             selected = _select_wrong_lead(package, state, projection.candidates)
         else:

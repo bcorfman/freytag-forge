@@ -3,7 +3,7 @@ import { readdir } from "node:fs/promises";
 import { resolve } from "node:path";
 import { loadAffordanceMap, firstStepAffordances, laterAffordances, exploreInput } from "./affordances.js";
 import { askPlayer, analyseRun, aggregate, aggregateByScene, artifactReport, bundlesCategory, collectBundles, collectPrompts, formatMarkdown, gameBreakPolicy, handleGameBreak, playerModel, profileInfo, promptsCategory, sceneIdsForRun, turnLog, turnRecord } from "./blind-player.js";
-import { startSceneSession, submitTurn, resolveWarningIfPresent, writeCategoryReport } from "./helpers.js";
+import { blindEntryState, startSceneSession, submitTurn, resolveWarningIfPresent, writeCategoryReport } from "./helpers.js";
 import { loadPackagePacing } from "./package-clock.js";
 import { walkScenes } from "./scene-walk.js";
 import { replicatePlan } from "./merge-blind-player.js";
@@ -127,7 +127,9 @@ test("a player who only reads the screen can leave the scene @blind-player", asy
   const runs = [];
   for (const replicate of replicateIndices) {
     let openingText = "";
-    if (!allMode && requestedScene !== "1A") {
+    let entry = { mode: "start", state: null };
+    if (!allMode && requestedScene !== "1A" && process.env.E2E_BLIND_ENTRY === "walk") {
+      entry = { mode: "walk", state: null };
       const targetIndex = pacing.sceneOrder.indexOf(requestedScene);
       await walkScenes({
         page,
@@ -140,6 +142,11 @@ test("a player who only reads the screen can leave the scene @blind-player", asy
         resolveWarning: resolveWarningIfPresent,
         onOpening: ({ scene_id, text }) => { if (scene_id === requestedScene) openingText = text; },
       });
+    } else if (!allMode && requestedScene !== "1A") {
+      const startState = blindEntryState();
+      entry = { mode: "seeded", state: startState };
+      await startSceneSession(page, { startScene: requestedScene, startState });
+      openingText = (await page.locator(".entry-output").first().textContent())?.trim() || "";
     } else {
       await startSceneSession(page);
       openingText = (await page.locator(".entry-output").first().textContent())?.trim() || "";
@@ -150,6 +157,9 @@ test("a player who only reads the screen can leave the scene @blind-player", asy
     for (const sceneId of sceneIds) {
       const run = await playScene({ page, map, pacing, sceneId, openingText, totalCounter, profile });
       run.replicate = replicate;
+      run.entry = allMode
+        ? { mode: sceneId === "1A" ? "start" : "walk", state: null }
+        : entry;
       sceneRuns.push(run);
       if (run.stopped_on_rejections) {
         stoppedReason = `scene ${sceneId} rejected ${MAX_CONSECUTIVE_REJECTIONS} times in a row`;

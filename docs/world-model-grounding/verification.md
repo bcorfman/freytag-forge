@@ -10,3 +10,6 @@ Part of [the world-model grounding guide](../world-model-grounding.md).
 - **A prompt rule is only observable live.** A test that greps the prompt
   proves the prompt says it, not that the model obeys. Run a single-scene
   smoke first, and read its `item_facts_unplaced` and match-call resolutions.
+- **Entry states are golden files.** When a story change moves one, run the
+  `write` command, read the diff of `entry/*.json`, and commit it with the
+  story change.
