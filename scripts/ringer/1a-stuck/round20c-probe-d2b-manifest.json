@@ -1,0 +1,29 @@
+{
+  "run_name": "factory-20c-probe-d2b",
+  "workdir": "/home/bcorfman/dev/ringer-work/factory-20",
+  "max_parallel": 1,
+  "worktrees": true,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "probe-d2b",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=high"
+      ],
+      "max_attempts": 2,
+      "timeout_s": 3600,
+      "check_timeout_s": 900,
+      "ownership": [
+        "factory/stations/probe.py",
+        "tests/test_factory_probe.py"
+      ],
+      "spec": "You are a factory engineer. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge (detached at HEAD). Edit files here directly. NEVER git commit, never touch /home/bcorfman/dev/freytag-forge itself, never run `uv`, NEVER call a model (not `claude`, not `codex`), NEVER use the network, never run `python -m bench run`, never write factory/state/. FIRST run: [ -e .venv ] || ln -s /home/bcorfman/dev/freytag-forge/.venv .venv . Environment for every command: `export PYTHONPATH=$PWD:$PWD/packages/worldkeeper/src TMPDIR=/tmp`. Ruff (python files only): `.venv/bin/python -m ruff check <files>` / `.venv/bin/python -m ruff format <files>` (line length 120, Python 3.12). Never pass --cov to pytest. Run tests as `.venv/bin/python -m pytest -q -p no:cacheprovider -n 8 <files>`. Tests must be hermetic (fake runner, no network). The module must stay story-agnostic (an existing test checks this; do not add story names). If an OLD test pins behaviour this change deliberately changes, update it and say so in NOTES.txt. Write NOTES.txt (worktree root, never committed) listing every ambiguity and your choice. Read first: AGENTS.md, factory/stations/probe.py, tests/test_factory_probe.py, and the audit in /home/bcorfman/dev/ringer-work/qual-20261122/qualification/foundation.md (rows 'Failure visibility' and 'Spend: restart / quota sleep'). You may edit ONLY factory/stations/probe.py and tests/test_factory_probe.py. Other tests that import probe (tests/test_factory_probe_routing.py, tests/test_factory_line.py and any other tests/test_factory_*.py) must keep passing unchanged; if one cannot, keep your change backward compatible instead of editing it.\nPROBLEM (defect D2b, found reviewing the D2 patch). A resume of a slept or crashed run bypasses `_approval_error` entirely, including its first test `billed_run_approved is not True`. Reproduced: run the handler with a runner that raises LimitSleep, then set payload[\"billed_run_approved\"] = False and call the handler again: the runner is called a second time. Revoking the approval during a sleep must stop the run.\n\nCHANGE. A resume still needs `payload.get(\"billed_run_approved\") is True` (the owner's standing go), and still needs NO fresh approval id. Make that the only part of the approval check a resume keeps; the single-use consumed-id check stays bypassed for a resume of the same input hash and approval id. Revoked approval returns a failing StationResult with the message 'probe not approved: set billed_run_approved' and calls the runner zero times, and it must not delete the attempt sidecar or any saved arm output (a later re-approval can resume). Add one hermetic test for that (runner raising LimitSleep first, then approval False, then assert zero further runner calls and the sidecar still exists, then approval True resumes). Change nothing else.\n",
+      "check": "set -eo pipefail\nWORK=/home/bcorfman/dev/ringer-work/factory-20\nmkdir -p \"$WORK/out\"\nexport PYTHONPATH=$PWD:$PWD/packages/worldkeeper/src TMPDIR=/tmp\n[ -e .venv ] || ln -s /home/bcorfman/dev/freytag-forge/.venv .venv\ngit add -A -- factory tests\nbad=$(git diff --cached --name-only | grep -vE '^(factory/stations/probe\\.py|tests/test_factory_probe\\.py)$' || true)\n[ -z \"$bad\" ] || { echo \"files outside ownership staged: $bad\"; exit 1; }\ngit diff --cached --name-only | grep -q 'factory/stations/probe.py' || { echo \"probe.py unchanged\"; exit 1; }\ngit diff --cached --name-only | grep -q 'tests/test_factory_probe.py' || { echo \"tests unchanged\"; exit 1; }\nstart=$(date +%s)\n.venv/bin/python -m pytest -q -p no:cacheprovider -n 8 tests/test_factory_probe.py tests/test_factory_probe_routing.py tests/test_factory_line.py tests/test_factory_diagnose.py tests/test_factory_fix_plan.py tests/test_factory_planner.py tests/test_factory_live_playtest.py\ntook=$(( $(date +%s) - start ))\necho \"factory tests took $took s (budget 300 s)\"\n[ \"$took\" -le 300 ] || { echo \"over the 300 s budget\"; exit 1; }\n.venv/bin/python -m ruff check factory/stations/probe.py tests/test_factory_probe.py\n.venv/bin/python -m ruff format --check factory/stations/probe.py tests/test_factory_probe.py\ngrep -q 'probe not approved' factory/stations/probe.py || { echo 'revocation message missing'; exit 1; }\ngit diff --cached > \"$WORK/out/probe-d2b.patch\"\ntest -s \"$WORK/out/probe-d2b.patch\"\n",
+      "expect_files": [],
+      "verified": "Failed replicates are counted and force an inconclusive verdict."
+    }
+  ]
+}
