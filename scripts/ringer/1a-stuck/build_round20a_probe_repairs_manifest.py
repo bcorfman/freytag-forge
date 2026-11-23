@@ -29,6 +29,12 @@ PROBLEM (defect D2). The billed-run approval is consumed only through `payload_u
 CHANGE. Keep all of this inside factory/stations/probe.py (the line discards payload updates when the handler raises LimitSleep, so do NOT rely on payload; persist on disk). (1) Right after the budget and ceiling gates pass and BEFORE the first runner call, write an atomic sidecar `<workspace>/<ticket id>/probe-attempt.json` (use the module's existing `_atomic_json_write` and `_safe_id`) holding: `input_hash`, `approval_id` (the payload's `billed_run_approval_id`, or the string "default" when absent), `resumes` (int, starts 0), `started`. (2) At the start of an attempt, if that sidecar exists with the SAME `input_hash` and `approval_id` and no saved final result exists, this is a RESUME of an already-authorized run: it does not need a new approval (bypass the single-use `_approval_error` check for it), increments `resumes`, and is refused with a clear message once `resumes` would exceed 2 (`MAX_RESUMES = 2` module constant). A sidecar with a different input hash or approval id is a new run and goes through the normal approval check. After a run completes and the final `probe.json` is saved, delete the sidecar. (3) On a resume, do NOT delete an existing `turn-records.json` that holds a completed, parseable bench output for that arm/run (use `_turns_in_file` or json parsing): skip the runner call for that arm/run and reuse the file, so finished replays are not billed twice. An existing output that is missing or unparseable is deleted and rerun as today. On a fresh run the old unlink behaviour stays. (4) The cost projection for a resume covers only the arm/runs that will actually be run again; the ceiling and budget gates still run on a resume with that smaller projection. (5) Leave `billed_usd_ceiling` optional, but record in the verdict payload when a run finished that no ceiling was set? NO: do not add that; only items 1 to 4. (6) Tests (hermetic, in tests/test_factory_probe.py, using the module's existing helpers `configure_probe_root`, `make_runner`, `make_ticket`, `RULES`, `BUDGET`): a runner raising LimitSleep on its second call, then a resumed attempt with the unchanged payload and a runner that works: the first-run arm outputs are reused (count runner calls), the resumed run finishes with a verdict, the sidecar is gone afterwards, and the ledger sums only what was billed; a third resume beyond MAX_RESUMES is refused with a message and calls the runner zero times; a changed input (different runs list) after a sleep is NOT treated as a resume and, with the old approval consumed, is refused; the existing single-use test still passes unchanged.
 """
 
+D2B = """
+PROBLEM (defect D2b, found reviewing the D2 patch). A resume of a slept or crashed run bypasses `_approval_error` entirely, including its first test `billed_run_approved is not True`. Reproduced: run the handler with a runner that raises LimitSleep, then set payload["billed_run_approved"] = False and call the handler again: the runner is called a second time. Revoking the approval during a sleep must stop the run.
+
+CHANGE. A resume still needs `payload.get("billed_run_approved") is True` (the owner's standing go), and still needs NO fresh approval id. Make that the only part of the approval check a resume keeps; the single-use consumed-id check stays bypassed for a resume of the same input hash and approval id. Revoked approval returns a failing StationResult with the message 'probe not approved: set billed_run_approved' and calls the runner zero times, and it must not delete the attempt sidecar or any saved arm output (a later re-approval can resume). Add one hermetic test for that (runner raising LimitSleep first, then approval False, then assert zero further runner calls and the sidecar still exists, then approval True resumes). Change nothing else.
+"""
+
 CHECK = """set -eo pipefail
 WORK=@WORK@
 mkdir -p "$WORK/out"
@@ -53,6 +59,7 @@ test -s "$WORK/out/@NAME@.patch"
 
 EXTRA = {
     "d1": "grep -q failed_replicates factory/stations/probe.py || { echo 'failed_replicates missing'; exit 1; }",
+    "d2b": "grep -q 'probe not approved' factory/stations/probe.py || { echo 'revocation message missing'; exit 1; }",
     "d2": "grep -q probe-attempt factory/stations/probe.py || { echo 'probe-attempt sidecar missing'; exit 1; }\ngrep -q MAX_RESUMES factory/stations/probe.py || { echo 'MAX_RESUMES missing'; exit 1; }",
 }
 
@@ -68,9 +75,9 @@ def build(which: str) -> dict:
             .replace("@NAME@", f"probe-{which}")
         )
 
-    spec = COMMON + (D1 if which == "d1" else D2)
+    spec = COMMON + {"d1": D1, "d2": D2, "d2b": D2B}[which]
     return {
-        "run_name": f"factory-20{'a' if which == 'd1' else 'b'}-probe-{which}",
+        "run_name": f"factory-20{ {'d1':'a','d2':'b','d2b':'c'}[which] }-probe-{which}",
         "workdir": WORK,
         "max_parallel": 1,
         "worktrees": True,
@@ -98,6 +105,6 @@ def build(which: str) -> dict:
 
 if __name__ == "__main__":
     which = sys.argv[1] if len(sys.argv) > 1 else "d1"
-    out = Path(__file__).with_name(f"round20{'a' if which == 'd1' else 'b'}-probe-{which}-manifest.json")
+    out = Path(__file__).with_name(f"round20{ {'d1':'a','d2':'b','d2b':'c'}[which] }-probe-{which}-manifest.json")
     out.write_text(json.dumps(build(which), indent=2) + "\n")
     print(out)

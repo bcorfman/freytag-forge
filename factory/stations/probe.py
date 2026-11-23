@@ -458,9 +458,11 @@ def _ticket_spent_usd(ledger: SpendLedger, ticket_id: str) -> float:
     return spent
 
 
-def _approval_error(payload: dict[str, Any]) -> str | None:
+def _approval_error(payload: dict[str, Any], *, resume: bool = False) -> str | None:
     if payload.get("billed_run_approved") is not True:
         return "probe not approved: set billed_run_approved"
+    if resume:
+        return None
     consumed = payload.get("billed_runs_consumed", 0)
     if isinstance(consumed, bool) or not isinstance(consumed, int) or consumed < 0:
         return "billed_runs_consumed must be a nonnegative integer"
@@ -625,6 +627,9 @@ def probe_handler(
                         tokens=0,
                     )
                 is_resume = True
+                approval_error = _approval_error(payload, resume=True)
+                if approval_error is not None:
+                    return StationResult(False, "probe", approval_error, tokens=0)
                 attempt = {
                     "input_hash": input_hash,
                     "approval_id": approval_id,

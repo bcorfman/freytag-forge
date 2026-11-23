@@ -634,6 +634,54 @@ def test_handler_resumes_after_limit_sleep_and_reuses_completed_outputs(tmp_path
     assert sum(row["usd"] for row in ledger_rows) == pytest.approx(75 / 1_000_000)
 
 
+def test_handler_resume_requires_standing_approval_and_preserves_attempt(tmp_path: Path, monkeypatch) -> None:
+    root, tree = configure_probe_root(tmp_path)
+    monkeypatch.setattr(probe, "ticket_tree", lambda payload, ticket_id, root: tree)
+    payload = {
+        "workspace": str(tmp_path),
+        "story_package": "data/stories/base",
+        "runs": [{"run": "synthetic-r1", "scene": "synthetic", "inputs": ["Inspect the shelf."] * 2}],
+        "billed_run_approved": True,
+        "billed_run_approval_id": "approval-1",
+    }
+    calls: list[list[str]] = []
+
+    def sleeping_runner(root: Path, argv: list[str], env: dict[str, str], timeout_s: int):
+        calls.append(argv)
+        out = Path(argv[argv.index("--out") + 1])
+        out.mkdir(parents=True, exist_ok=True)
+        (out / "turn-records.json").write_text(FIXTURE.read_text(encoding="utf-8"), encoding="utf-8")
+        if len(calls) == 1:
+            raise LimitSleep("cloudflare", NOW)
+        return subprocess.CompletedProcess(argv, 0, stdout="", stderr="")
+
+    handler = probe_handler(root, runner=sleeping_runner, rules=RULES, read_budget=lambda: dict(BUDGET))
+
+    with pytest.raises(LimitSleep):
+        handler(make_ticket(payload), NOW)
+
+    attempt_path = tmp_path / "probe-ticket/probe-attempt.json"
+    arm_output = tmp_path / "probe-ticket/probe/control-synthetic-r1/turn-records.json"
+    assert attempt_path.exists()
+    assert arm_output.exists()
+
+    payload["billed_run_approved"] = False
+    refused = handler(make_ticket(payload), NOW)
+
+    assert not refused.passed
+    assert refused.output == "probe not approved: set billed_run_approved"
+    assert len(calls) == 1
+    assert attempt_path.exists()
+    assert arm_output.exists()
+
+    payload["billed_run_approved"] = True
+    resumed = handler(make_ticket(payload), NOW)
+
+    assert resumed.output.startswith("inconclusive:")
+    assert len(calls) == 2
+    assert not attempt_path.exists()
+
+
 def test_handler_refuses_a_third_resume_without_runner_call(tmp_path: Path, monkeypatch) -> None:
     root, tree = configure_probe_root(tmp_path)
     monkeypatch.setattr(probe, "ticket_tree", lambda payload, ticket_id, root: tree)
