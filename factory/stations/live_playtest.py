@@ -182,7 +182,85 @@ def _valid_turns(scene_run: dict[str, Any]) -> list[dict[str, Any]]:
     ]
 
 
-def _packet_for_turn(prefix: str, replicate: str, scene_run: dict[str, Any], turn: dict[str, Any]) -> dict[str, Any]:
+def _turn_narration(turn: dict[str, Any]) -> str | None:
+    for field in ("text", "narration"):
+        value = turn.get(field)
+        if isinstance(value, str):
+            return value
+    return None
+
+
+def _selected_ids(turn: dict[str, Any]) -> list[str]:
+    values = turn.get("selected_knowledge_ids")
+    if not isinstance(values, list):
+        return []
+    return list(dict.fromkeys(value for value in values if isinstance(value, str)))
+
+
+def _first_guard_rejection(turn: dict[str, Any]) -> dict[str, Any] | None:
+    values = turn.get("guard_rejections")
+    if isinstance(values, dict):
+        return values
+    if isinstance(values, list):
+        return next((value for value in values if isinstance(value, dict)), None)
+    return None
+
+
+def _add_provenance(
+    packet: dict[str, Any],
+    turn: dict[str, Any],
+    earlier_turns: Iterable[dict[str, Any]],
+    previous_turn: dict[str, Any] | None,
+) -> None:
+    if previous_turn is not None:
+        narration = _turn_narration(previous_turn)
+        if narration is not None:
+            packet["previous_narration"] = narration[:600]
+
+    delivered: list[str] = []
+    delivered_turns: dict[str, int] = {}
+    for earlier in earlier_turns:
+        earlier_number = earlier.get("turn")
+        for claim_id in _selected_ids(earlier):
+            if claim_id not in delivered:
+                delivered.append(claim_id)
+            if isinstance(earlier_number, int) and not isinstance(earlier_number, bool):
+                delivered_turns.setdefault(claim_id, earlier_number)
+    if delivered:
+        packet["delivered_before"] = delivered[:100]
+        if delivered_turns:
+            packet["delivered_before_turns"] = {
+                claim_id: delivered_turns[claim_id] for claim_id in delivered[:100] if claim_id in delivered_turns
+            }
+
+    rejection = _first_guard_rejection(turn)
+    code = rejection.get("code") if rejection is not None else turn.get("rejected_code", turn.get("rejection_code"))
+    message = (
+        rejection.get("message")
+        if rejection is not None
+        else turn.get("rejected_message", turn.get("rejection_reason"))
+    )
+    if isinstance(code, str) and code:
+        packet["rejected_code"] = code[:200]
+    if isinstance(message, str) and message:
+        packet["rejected_message"] = message[:600]
+
+    facts = turn.get("facts_before")
+    if not isinstance(facts, dict) and "item_facts_before" in turn:
+        facts = turn.get("item_facts_before")
+    if isinstance(facts, dict):
+        packet["facts_before"] = dict(list(facts.items())[:100])
+
+
+def _packet_for_turn(
+    prefix: str,
+    replicate: str,
+    scene_run: dict[str, Any],
+    turn: dict[str, Any],
+    *,
+    earlier_turns: Iterable[dict[str, Any]] = (),
+    previous_turn: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     scene = scene_run["scene"]
     packet = {
         "key": f"{prefix}{scene}-r{replicate}-t{turn['turn']}",
@@ -193,6 +271,7 @@ def _packet_for_turn(prefix: str, replicate: str, scene_run: dict[str, Any], tur
         packet["player_input"] = turn["raw_input"]
     if isinstance(turn.get("text"), str):
         packet["narration"] = turn["text"]
+    _add_provenance(packet, turn, earlier_turns, previous_turn)
     stuck_turns = scene_run.get("stuck_turns")
     packet["stuck"] = isinstance(stuck_turns, list) and turn["turn"] in stuck_turns
 
@@ -245,15 +324,33 @@ def report_to_packets(report: dict, *, key_prefix: str = "") -> list[dict]:
     packets: list[dict] = []
     for replicate, scene_run in _scene_runs(report):
         turns = _valid_turns(scene_run)
-        for turn in turns:
+        for index, turn in enumerate(turns):
             if _turn_fails(scene_run, turn):
-                packets.append(_packet_for_turn(key_prefix, replicate, scene_run, turn))
+                packets.append(
+                    _packet_for_turn(
+                        key_prefix,
+                        replicate,
+                        scene_run,
+                        turn,
+                        earlier_turns=turns[:index],
+                        previous_turn=turns[index - 1] if index else None,
+                    )
+                )
         if (
             not any(packet["key"].startswith(f"{key_prefix}{scene_run['scene']}-r{replicate}-") for packet in packets)
             and scene_run.get("exit_cause") in {"forced", "timer"}
             and turns
         ):
-            packets.append(_packet_for_turn(key_prefix, replicate, scene_run, turns[-1]))
+            packets.append(
+                _packet_for_turn(
+                    key_prefix,
+                    replicate,
+                    scene_run,
+                    turns[-1],
+                    earlier_turns=turns[:-1],
+                    previous_turn=turns[-2] if len(turns) > 1 else None,
+                )
+            )
     return packets
 
 

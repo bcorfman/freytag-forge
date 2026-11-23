@@ -13,7 +13,9 @@ from factory.stations.diagnose import (
     DIAGNOSE_BRIEF,
     DIAGNOSE_VERSION,
     ClassifierReply,
+    _counts,
     _known_word,
+    _summary,
     default_classifier,
     diagnose_handler,
     diagnose_turn,
@@ -146,6 +148,7 @@ def test_claim_wording_miss_requires_exactly_one_missing_group() -> None:
     assert row["signals"] == {
         "claim_ids": ["claim_wording"],
         "missing": [{"claim_id": "claim_wording", "group": 0}],
+        "hypothesis": True,
         "decided_by": "rule",
     }
     assert "claim_wording" in row["why"]
@@ -187,8 +190,119 @@ def test_claim_wording_miss_requires_exactly_one_missing_group() -> None:
     )
 
 
+def test_actor_mismatch_is_not_a_wording_miss() -> None:
+    row = diagnose_turn(
+        {
+            "key": "actor",
+            "scene": "1A",
+            "player_input": "Ask Officer Reyes about his orders",
+            "candidates_offered": [],
+        },
+        PACKAGE,
+    )
+    assert row["cause"] == "no_authored_outcome"
+    assert row["cause"] != "claim_wording_miss"
+
+
+def test_scoped_alias_does_not_make_scene_name_outside_scene() -> None:
+    row = diagnose_turn(
+        {
+            "key": "scope",
+            "scene": "1A",
+            "player_input": "Inspect Officer Reyes's badge",
+            "candidates_offered": [],
+        },
+        PACKAGE,
+    )
+    assert row["cause"] == "no_authored_outcome"
+    assert "inspector badges" not in row["signals"].get("entities", [])
+
+
+def test_prior_narration_proves_unknown_referent() -> None:
+    row = diagnose_turn(
+        {
+            "key": "prior",
+            "scene": "1A",
+            "player_input": "Open the notebook",
+            "previous_narration": "Kristin finds a small notebook belonging to Michelle.",
+            "candidates_offered": [],
+        },
+        PACKAGE,
+    )
+    assert row["cause"] == "follows_prior_narration"
+    assert row["signals"]["introduced_words"] == ["notebook"]
+    assert "notebook" in row["signals"]["previous_narration"]
+
+
+def test_delivered_claim_is_not_reported_as_newly_unoffered() -> None:
+    row = diagnose_turn(
+        {
+            "key": "delivered",
+            "scene": "1A",
+            "player_input": "Inspect the workstation",
+            "candidates_offered": [],
+            "delivered_before": ["k_sl_1a_g_r1"],
+            "delivered_before_turns": {"k_sl_1a_g_r1": 3},
+        },
+        PACKAGE,
+    )
+    assert row["cause"] == "already_delivered"
+    assert row["signals"]["delivered_at_turn"] == 3
+    assert "Claim k_sl_1a_g_r1 was delivered at turn 3." in row["why"]
+
+
+def test_unmet_requirement_is_reported_for_unoffered_claim() -> None:
+    row = diagnose_turn(
+        {
+            "key": "unmet",
+            "scene": "1A",
+            "player_input": "Read Michelle's text on her phone",
+            "candidates_offered": [],
+            "facts_before": {"patrol_in_house": True},
+        },
+        PACKAGE,
+    )
+    assert row["cause"] == "claim_not_offered"
+    assert row["signals"]["unmet"] == "patrol_in_house"
+    assert "patrol_in_house" in row["why"]
+
+
+def test_sibling_delivery_explains_unoffered_alternative() -> None:
+    row = diagnose_turn(
+        {
+            "key": "sibling",
+            "scene": "1A",
+            "player_input": "Inspect the calendar and photograph",
+            "candidates_offered": [],
+            "delivered_before": ["k_sl_1a_g_r1"],
+            "delivered_before_turns": {"k_sl_1a_g_r1": 3},
+        },
+        PACKAGE,
+    )
+    assert row["cause"] == "claim_not_offered"
+    assert row["signals"]["spent_by_sibling"] == "k_sl_1a_g_r1"
+
+
+def test_legacy_packet_keeps_unknown_object_label() -> None:
+    row = diagnose_turn(
+        {"key": "legacy", "scene": "1A", "player_input": "Open the notebook", "candidates_offered": []},
+        PACKAGE,
+    )
+    assert row["cause"] == "unknown_object"
+
+
+def test_new_causes_are_counted_and_summarized() -> None:
+    rows = [{"cause": cause} for cause in ("already_delivered", "follows_prior_narration", "claim_wording_miss")]
+    counts = _counts(rows)
+    assert counts["already_delivered"] == 1
+    assert counts["follows_prior_narration"] == 1
+    assert "already_delivered 1" in _summary(counts)
+
+
 def test_causes_and_classifier_accept_only_non_unclear_causes() -> None:
     assert "claim_wording_miss" in CAUSES
+    assert "already_delivered" in CAUSES
+    assert "follows_prior_narration" in CAUSES
     assert CAUSES[-1] == "unclear"
     assert DIAGNOSE_VERSION == "diagnose-v2"
 
@@ -244,6 +358,31 @@ def test_handler_classifies_unclear_turn_once_and_keeps_bad_answers_unclear() ->
 
         result = diagnose_handler(classifier=stub)(ticket({"failing_turns": [packet]}), NOW)
         assert result.payload_updates["diagnosis"]["rows"][0]["cause"] == "unclear"
+
+
+def test_classifier_prompt_carries_only_present_provenance() -> None:
+    packet = {
+        "key": "unclear",
+        "scene": "1A",
+        "player_input": "",
+        "narration": "narration",
+        "candidates_offered": [],
+        "previous_narration": "A small notebook appears.",
+        "delivered_before": ["k_old"],
+        "rejected_code": "known_term",
+        "rejected_message": "term was unavailable",
+        "facts_before": {"patrol_in_house": False},
+    }
+    prompts: list[str] = []
+
+    def classifier(_ticket, prompt: str, _now: datetime) -> ClassifierReply:
+        prompts.append(prompt)
+        return ClassifierReply("{}", 0)
+
+    diagnose_handler(classifier=classifier)(ticket({"failing_turns": [packet]}), NOW)
+    assert len(prompts) == 1
+    for field in ("previous_narration", "delivered_before", "rejected_code", "rejected_message", "facts_before"):
+        assert f'"{field}"' in prompts[0]
 
 
 def test_handler_reuses_record_and_recomputes_when_input_changes(tmp_path: Path) -> None:

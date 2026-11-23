@@ -551,6 +551,35 @@ def provider_for(state: RuntimeState, variation: dict[str, Any]) -> CloudflareTu
     return provider
 
 
+def _safe_git_head(repository_root: Path) -> str | None:
+    """Return the repository HEAD for provenance, or None when git is unavailable."""
+
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=repository_root,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+    except Exception:
+        return None
+    head = str(getattr(result, "stdout", "") or "").strip()
+    return head or None
+
+
+def _runtime_provider_features(provider: CloudflareTurnProvider) -> dict[str, Any]:
+    """Record the provider capabilities that affect a runtime replay."""
+
+    mode = getattr(provider, "item_facts_mode", None)
+    return {
+        "item_facts_mode": mode if isinstance(mode, str) else None,
+        "semantic_ask": getattr(provider, "semantic_ask", None) is not None,
+        "contract_shadow": os.environ.get("FREYTAG_CONTRACT_SHADOW") == "1",
+        "code_head": _safe_git_head(Path(__file__).resolve().parents[1]),
+    }
+
+
 def _provider_with_item_facts(
     state: RuntimeState, variation: dict[str, Any], item_facts: Any
 ) -> CloudflareTurnProvider:
@@ -1090,6 +1119,8 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                     runtime_store.save(runtime_session, state)
                 continue
             entered = state.current_scene_id != prior_scene
+            last_attempt = getattr(engine, "last_attempt", None) if runtime else None
+            transition_cause = getattr(last_attempt, "transition_cause", None)
             if entered:
                 prior_scene_record = next(scene for scene in package.scenes if scene.metadata.scene_id == prior_scene)
                 entered_scene_record = next(
@@ -1344,6 +1375,8 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
                 if runtime:
                     turn_record["engine_refusal"] = engine_refusal_text
                     turn_record["narrator_called"] = not bool(engine_refusal_text)
+                    if last_attempt is not None:
+                        turn_record["transition_cause"] = transition_cause
                 if item_facts_record is not None:
                     turn_record.update(item_facts_record)
                 turn_record["turn_number"] = turn_number
@@ -1351,14 +1384,15 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
             if runtime:
                 runtime_store.save(runtime_session, state)
             if entered:
-                scene_transitions.append(
-                    {
-                        "from_scene": prior_scene,
-                        "to_scene": state.current_scene_id,
-                        "after_turn": turn_number,
-                        "advanced_offline": False,
-                    }
-                )
+                transition_record = {
+                    "from_scene": prior_scene,
+                    "to_scene": state.current_scene_id,
+                    "after_turn": turn_number,
+                    "advanced_offline": False,
+                }
+                if runtime and last_attempt is not None:
+                    transition_record["cause"] = transition_cause
+                scene_transitions.append(transition_record)
                 if stop_on_exit:
                     return True
         return False
@@ -1425,6 +1459,8 @@ def run_scene(variation: dict[str, Any], scene_id: str, script: dict[str, Any], 
         )
     if scene_transitions:
         record["scene_transitions"] = scene_transitions
+    if runtime:
+        record["provider_features"] = _runtime_provider_features(provider)
     if isinstance(provider, ItemFactsProvider):
         record["item_facts_final"] = copy.deepcopy(provider.item_facts)
         record["item_facts_seed_issues"] = list(provider.item_facts_seed_issues)
@@ -1486,6 +1522,8 @@ def _failed_scene_record(
         record["fixed_turns"] = fixed_turns
         record["rejected_turns"] = rejected_turns or []
         record["rejected_turn_count"] = len(rejected_turns or [])
+    if variation.get("_runtime", variation.get("runtime", False)):
+        record["provider_features"] = _runtime_provider_features(provider)
     if isinstance(provider, ItemFactsProvider):
         record["item_facts_final"] = copy.deepcopy(provider.item_facts)
         record["item_facts_lifted"] = provider.item_facts_lifted

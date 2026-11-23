@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -17,7 +18,7 @@ from storygame.runtime.item_facts import (
     package_seed,
     validate_item_facts,
 )
-from storygame.runtime.knowledge import scoped_alias_entity_ids
+from storygame.runtime.knowledge import RevealCandidate, scoped_alias_entity_ids
 from storygame.runtime.state import RuntimeState
 from storygame.runtime.world_model import apply_scene_placements, apply_world_effects, world_for
 from storygame.story_package.loader import load_story_package
@@ -2244,6 +2245,96 @@ def test_variations_without_item_facts_keep_the_original_provider(monkeypatch):
         classmethod(lambda cls, state, **kwargs: cls(worker_url="", token="", state=state)),
     )
     assert type(core.provider_for(state, variation)) is CloudflareTurnProvider
+
+
+def test_item_facts_from_environment_preserves_semantic_reveal_selection(monkeypatch):
+    monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://worker.example/turn")
+    monkeypatch.setenv("CLOUDFLARE_WORKER_TOKEN", "test-token")
+    monkeypatch.setenv("FREYTAG_SEMANTIC_REVEAL", "1")
+    monkeypatch.delenv("FREYTAG_CONTRACT_SHADOW", raising=False)
+
+    calls = []
+
+    def asker(_state, questions):
+        calls.append(questions)
+        return {"fixture_reveal": {"noul": 1.0}}
+
+    monkeypatch.setattr(
+        "storygame.runtime.jev.JevClient.from_environment",
+        classmethod(lambda cls: SimpleNamespace(ask=asker)),
+    )
+
+    state = RuntimeState.bootstrap(PACKAGE)
+    base = CloudflareTurnProvider.from_environment(state)
+    provider = ItemFactsProvider.from_environment(state, item_facts={}, mode="single_call")
+
+    assert provider.semantic_ask is not None
+    assert provider.semantic_ask is base.semantic_ask
+
+    candidate = RevealCandidate(
+        id="fixture_reveal",
+        statement="The drawer contains the hidden card.",
+        earn_when="inspect the drawer",
+        must_convey=(),
+        action_evidence=(("inspect",),),
+        delivery_text="The hidden card is beneath the drawer.",
+    )
+    provider.last_projection = SimpleNamespace(candidates=(candidate,))
+
+    handoff = provider._semantic_authored_handoff("Reach beneath my initials drawer.")
+
+    assert handoff is not None
+    assert handoff.candidate is candidate
+    assert len(calls) == 1
+    assert list(calls[0]) == ["fixture_reveal"]
+
+
+def test_item_facts_semantic_reveal_keeps_ambiguity_and_eligibility_guards(monkeypatch):
+    monkeypatch.setenv("CLOUDFLARE_WORKER_URL", "https://worker.example/turn")
+    monkeypatch.setenv("CLOUDFLARE_WORKER_TOKEN", "test-token")
+    monkeypatch.setenv("FREYTAG_SEMANTIC_REVEAL", "1")
+    monkeypatch.delenv("FREYTAG_CONTRACT_SHADOW", raising=False)
+
+    calls = []
+
+    def ambiguous_ask(_state, questions):
+        calls.append(questions)
+        return {candidate_id: {"noul": 1.0} for candidate_id in questions}
+
+    monkeypatch.setattr(
+        "storygame.runtime.jev.JevClient.from_environment",
+        classmethod(lambda cls: SimpleNamespace(ask=ambiguous_ask)),
+    )
+    provider = ItemFactsProvider.from_environment(RuntimeState.bootstrap(PACKAGE), item_facts={}, mode="single_call")
+    eligible = RevealCandidate(
+        id="eligible_reveal",
+        statement="The drawer contains the hidden card.",
+        earn_when="inspect the drawer",
+        must_convey=(),
+        action_evidence=(("inspect",),),
+        delivery_text="The hidden card is beneath the drawer.",
+    )
+    second_eligible = eligible.model_copy(update={"id": "second_reveal"})
+    provider.last_projection = SimpleNamespace(candidates=(eligible, second_eligible))
+
+    assert provider._semantic_authored_handoff("Reach beneath my initials drawer.") is None
+    assert len(calls) == 1
+    assert provider.last_reveal_selection["outcome"] == "semantic_refusal"
+
+    calls.clear()
+    provider.last_projection = SimpleNamespace(
+        candidates=(
+            eligible,
+            eligible.model_copy(update={"id": "ineligible_reveal", "action_evidence": ()}),
+        )
+    )
+
+    handoff = provider._semantic_authored_handoff("Reach beneath my initials drawer.")
+
+    assert handoff is not None
+    assert handoff.candidate.id == "eligible_reveal"
+    assert len(calls) == 1
+    assert list(calls[0]) == ["eligible_reveal"]
 
 
 def test_package_seed_scene_1a_matches_authored_things():

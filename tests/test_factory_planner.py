@@ -32,6 +32,16 @@ def test_planner_brief_mentions_redundant_fact_rule() -> None:
     )
 
 
+def test_planner_brief_allows_reroutes_and_requires_a_measurable_test() -> None:
+    assert '"unsupported"' in PLANNER_BRIEF
+    assert "Never force an unsupported cause" in PLANNER_BRIEF
+    assert "station_code" in PLANNER_BRIEF
+    assert "story_edit" in PLANNER_BRIEF
+    assert "adaptive_probe" in PLANNER_BRIEF
+    assert '"fixed_replay"' in PLANNER_BRIEF
+    assert '"adaptive_player"' in PLANNER_BRIEF
+
+
 def test_planner_brief_asks_for_precedents_first() -> None:
     assert "precedents" in PLANNER_BRIEF
     assert "Precedent:" in PLANNER_BRIEF
@@ -86,6 +96,7 @@ def _plan(ticket_id: str = "wrong", *, at_turn: int = 10, text: str | None = Non
             "text": text or "The patrol pauses while the player checks the truck and laptop.",
             "verbatim": True,
             "trailing": True,
+            "test": "fixed_replay",
             "when": {},
             "sets": {fact_id: True},
         },
@@ -373,6 +384,30 @@ def test_make_planner_stops_after_token_budget(tmp_path: Path, monkeypatch) -> N
 
     assert outcome.plan is None and outcome.attempts == 1 and outcome.tokens == 10
     assert len(prompts) == 1
+
+
+def test_make_planner_reroutes_unsupported_without_a_replan(tmp_path: Path, monkeypatch) -> None:
+    guard, caps, ledger = _guard_and_caps(tmp_path)
+    prompts: list[str] = []
+    unsupported = {
+        "version": 1,
+        "ticket_id": "ignored-by-handler",
+        "scene": "1A",
+        "kind": "unsupported",
+        "reason": "Reroute: the hypothesis needs a responding player, not a fixed replay.",
+        "evidence_keys": ["turn-1"],
+        "reroute": "adaptive_probe",
+    }
+    _fake_claude(monkeypatch, [CallResult(json.dumps(unsupported), 8)], prompts)
+    ticket = _ticket()
+
+    outcome = make_planner(guard=guard, ledger=ledger, caps=caps)(ticket, PACKAGE, NOW)
+
+    assert outcome.plan is None
+    assert outcome.problems == []
+    assert outcome.attempts == 1
+    assert len(prompts) == 1
+    assert ticket.payload["unsupported_reroute"]["reroute"] == "adaptive_probe"
 
 
 def test_make_planner_rejects_unpinned_model_before_call(tmp_path: Path, monkeypatch) -> None:

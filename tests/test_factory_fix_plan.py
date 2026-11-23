@@ -61,6 +61,7 @@ def beat_plan() -> dict:
             "text": "Check the truck and laptop before the patrol returns to the house.",
             "verbatim": True,
             "trailing": True,
+            "test": "fixed_replay",
             "when": {"memory_card_recovered": True, "michelle_lead_actionable": False},
             "sets": {fact_id: True},
         },
@@ -143,6 +144,11 @@ def test_rejects_pacing_beat_with_redundant_effect() -> None:
         "already sets; guard when with drawer_gap_pointed_out: False or set a fact nothing else sets",
         "plan.shared_effect beat sets drawer_gap_pointed_out, which pacing event reyes_rams_drawer_1a (turn 8) "
         "also sets; set a fact no other pacing event sets",
+        "plan.skipped_preconditions beat sets drawer_gap_pointed_out, but claim k_sl_1a_f_r3 from SL-1A-F-R3 "
+        "requires drawer_opened=True; pin those predicates in when before setting the fact",
+        "plan.skipped_preconditions beat sets drawer_gap_pointed_out, but pacing event reyes_rams_drawer_1a (turn 8) "
+        "requires patrol_in_house=True, drawer_gap_pointed_out=False; pin those predicates in when before setting "
+        "the fact",
     ]
 
 
@@ -247,11 +253,104 @@ def test_opposite_value_of_existing_producer_is_allowed() -> None:
     assert not any(problem.startswith("plan.redundant_effect") for problem in fix_plan.lint_plan(plan, TICKET, PACKAGE))
 
 
+def test_unsupported_plan_requires_reroute_shape_and_prefix() -> None:
+    plan = {
+        "version": 1,
+        "ticket_id": "ticket-parent-1a-story-data",
+        "scene": "1A",
+        "kind": "unsupported",
+        "reason": "Reroute: the replay needs an adaptive player to test the next choice.",
+        "evidence_keys": ["1A-r1-t6"],
+        "reroute": "adaptive_probe",
+    }
+
+    assert fix_plan.lint_plan(plan, TICKET, PACKAGE) == []
+
+    wrong_reroute = copy.deepcopy(plan)
+    wrong_reroute["reroute"] = "wiring"
+    assert any(problem.startswith("plan.shape") for problem in fix_plan.lint_plan(wrong_reroute, TICKET, PACKAGE))
+
+    bad_prefix = copy.deepcopy(plan)
+    bad_prefix["reason"] = "Precedent: this cannot be represented by the menu."
+    assert any(problem.startswith("plan.reroute_reason") for problem in fix_plan.lint_plan(bad_prefix, TICKET, PACKAGE))
+
+
+def test_skipped_preconditions_reject_a_meaning_fact_but_accept_matching_guard() -> None:
+    plan = beat_plan()
+    plan["beat"].update(
+        {
+            "id": "card_challenged_hint_1a",
+            "sets": {"card_challenged": True},
+            "when": {},
+        }
+    )
+    problems = fix_plan.lint_plan(plan, TICKET, PACKAGE)
+    assert any(
+        problem.startswith("plan.skipped_preconditions") and "k_sl_1a_b_r0w" in problem and "patrol_in_house" in problem
+        for problem in problems
+    )
+
+    plan["beat"]["when"] = {"patrol_in_house": True, "memory_card_recovered": False}
+    assert not any(
+        problem.startswith("plan.skipped_preconditions") for problem in fix_plan.lint_plan(plan, TICKET, PACKAGE)
+    )
+
+
+def test_skipped_preconditions_ignore_a_fact_with_no_writers() -> None:
+    fact_id = next(
+        fact
+        for fact in sorted(fix_plan._declared_facts(PACKAGE))
+        if not producers(PACKAGE, fact, True) and not producers(PACKAGE, fact, False)
+    )
+    plan = beat_plan()
+    plan["beat"]["sets"] = {fact_id: True}
+    assert not any(
+        problem.startswith("plan.skipped_preconditions") for problem in fix_plan.lint_plan(plan, TICKET, PACKAGE)
+    )
+
+
+def test_contradicted_cause_uses_only_cited_diagnosis_rows() -> None:
+    ticket = copy.deepcopy(TICKET)
+    ticket["diagnosis"] = {
+        "counts": {"claim_not_offered": 1},
+        "rows": [{"key": "1A-r1-t6", "cause": "claim_not_offered", "why": "not offered"}],
+    }
+    plan = beat_plan()
+    plan["evidence_keys"] = ["1A-r1-t6"]
+    plan["reason"] = "Precedent: no_authored_outcome is the cause and the cue keeps the scene moving."
+    assert any(problem.startswith("plan.contradicted_cause") for problem in fix_plan.lint_plan(plan, ticket, PACKAGE))
+
+    plan["reason"] = "Precedent: claim_not_offered is the cause and the cue keeps the scene moving."
+    assert not any(
+        problem.startswith("plan.contradicted_cause") for problem in fix_plan.lint_plan(plan, ticket, PACKAGE)
+    )
+
+    ticket.pop("diagnosis")
+    plan["reason"] = "Precedent: no_authored_outcome is the cause and the cue keeps the scene moving."
+    assert not any(
+        problem.startswith("plan.contradicted_cause") for problem in fix_plan.lint_plan(plan, ticket, PACKAGE)
+    )
+
+
+def test_add_pacing_beat_test_field_is_linted_but_legacy_shape_is_readable() -> None:
+    missing = beat_plan()
+    del missing["beat"]["test"]
+    assert any(problem.startswith("plan.test") for problem in fix_plan.lint_plan(missing, TICKET, PACKAGE))
+
+    invalid = beat_plan()
+    invalid["beat"]["test"] = "live_model"
+    assert any(problem.startswith("plan.test") for problem in fix_plan.lint_plan(invalid, TICKET, PACKAGE))
+
+    legacy = copy.deepcopy(TICKET)
+    legacy["plan"] = missing
+    assert not any(problem.startswith("plan.test") for problem in fix_plan.lint_plan(missing, legacy, PACKAGE))
+
+
 @pytest.mark.parametrize(
     ("mutation", "rule"),
     [
         (lambda plan: plan.update({"extra": True}), "plan.shape"),
-        (lambda plan: plan.update({"kind": "unsupported"}), "plan.kind"),
+        (lambda plan: plan.update({"kind": "unsupported"}), "plan.shape"),
         (lambda plan: plan.update({"scene": "2A"}), "plan.scene"),
         (lambda plan: plan.update({"evidence_keys": ["missing"]}), "plan.evidence"),
         (lambda plan: plan.update({"reason": "  "}), "plan.reason"),
@@ -327,10 +426,19 @@ def test_evidence_ignores_lesson_rendering_errors(monkeypatch: pytest.MonkeyPatc
 
 def test_evidence_carries_the_diagnosis() -> None:
     ticket = copy.deepcopy(TICKET)
+    ticket["failing_turns"][0]["previous_narration"] = "Earlier narration" * 100
+    ticket["failing_turns"][0]["rejected_code"] = "narration_known_term_leak"
+    ticket["failing_turns"][0]["rejected_message"] = "The protected phrase was repeated."
+    ticket["failing_turns"][1]["rejected_code"] = None
     ticket["diagnosis"] = {
         "counts": {"claim_not_offered": 2},
         "rows": [
-            {"key": "1A-r1-t6", "cause": "claim_not_offered", "why": "x" * 200, "signals": ["claim"]},
+            {
+                "key": "1A-r1-t6",
+                "cause": "claim_not_offered",
+                "why": "x" * 200,
+                "signals": {"claim_ids": ["k_sl_1a_b_r0"], "fact_ids": ["memory_card_recovered"]},
+            },
             {"key": "1A-r1-t7", "cause": "claim_not_offered", "why": "short"},
         ],
     }
@@ -339,9 +447,21 @@ def test_evidence_carries_the_diagnosis() -> None:
 
     assert diagnosis["counts"] == {"claim_not_offered": 2}
     assert diagnosis["rows"] == [
-        {"key": "1A-r1-t6", "cause": "claim_not_offered", "why": "x" * 160},
+        {
+            "key": "1A-r1-t6",
+            "cause": "claim_not_offered",
+            "why": "x" * 160,
+            "signals": {"claim_ids": ["k_sl_1a_b_r0"], "fact_ids": ["memory_card_recovered"]},
+        },
         {"key": "1A-r1-t7", "cause": "claim_not_offered", "why": "short"},
     ]
+    assert "k_sl_1a_b_r0" in fix_plan.build_evidence(ticket, PACKAGE)["candidates"]
+    first_turn, second_turn = fix_plan.build_evidence(ticket, PACKAGE)["failing_turns"]
+    assert first_turn["previous_narration"] == ("Earlier narration" * 100)[:600]
+    assert first_turn["rejected_code"] == "narration_known_term_leak"
+    assert first_turn["rejected_message"] == "The protected phrase was repeated."
+    assert "rejected_code" not in second_turn
+    assert len(json.dumps(fix_plan.build_evidence(ticket, PACKAGE)["fact_readers"])) <= 2500
 
     ticket["diagnosis"]["rows"] = [
         {"key": f"turn-{index}", "cause": "claim_not_offered", "why": "y" * 160} for index in range(200)

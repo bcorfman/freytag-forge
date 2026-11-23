@@ -12,13 +12,14 @@ from typing import Any
 
 from factory.checks.gap_delta import DEFAULT_ROOT
 from factory.lessons import lessons_path, render_lessons
-from storygame.story_package.dependencies import producers
+from storygame.story_package.dependencies import consumers, producers
 from storygame.story_package.loader import load_story_package
 from storygame.story_package.models import StoryPackage
 from storygame.story_source.lookup import _source_tree, story_text
 
 PLAN_VERSION = 1
-_KINDS = frozenset({"add_pacing_beat", "set_text", "edit_claim_evidence"})
+_KINDS = frozenset({"add_pacing_beat", "set_text", "edit_claim_evidence", "unsupported"})
+_REROUTES = frozenset({"station_code", "story_edit", "adaptive_probe"})
 _BEAT_ID = re.compile(r"^[a-z][a-z0-9_]*_(?P<scene>[1-9][a-z])$")
 _TODO = re.compile(r"\bTODO\b", re.IGNORECASE)
 _ID_CHAR = r"A-Za-z0-9_"
@@ -151,11 +152,12 @@ def _text_problem(text: object, package: StoryPackage) -> bool:
     )
 
 
-def _shape_problems(plan: object) -> list[str]:
+def _shape_problems(plan: object, *, legacy: bool = False) -> list[str]:
+    del legacy
     if not isinstance(plan, dict):
         return ["plan.shape plan must be an object"]
     required = {"version", "ticket_id", "scene", "kind", "reason", "evidence_keys"}
-    if not required.issubset(plan) or set(plan) - required - {"beat", "set_text", "claim_edit"}:
+    if not required.issubset(plan) or set(plan) - required - {"beat", "set_text", "claim_edit", "reroute"}:
         return ["plan.shape required keys or extra top-level keys are invalid"]
     if (
         plan.get("version") != PLAN_VERSION
@@ -171,8 +173,20 @@ def _shape_problems(plan: object) -> list[str]:
     kind = plan.get("kind")
     if kind not in _KINDS:
         return []
+    if kind == "unsupported":
+        if set(plan) != required | {"reroute"}:
+            return ["plan.shape unsupported plans require only reroute at the top level"]
+        if plan.get("reroute") not in _REROUTES:
+            return ["plan.shape unsupported reroute must be a supported reroute value"]
+        return []
     expected = (
-        {"beat"} if kind == "add_pacing_beat" else {"claim_edit"} if kind == "edit_claim_evidence" else {"set_text"}
+        {"beat"}
+        if kind == "add_pacing_beat"
+        else {"claim_edit"}
+        if kind == "edit_claim_evidence"
+        else {"set_text"}
+        if kind == "set_text"
+        else set()
     )
     if set(plan) != required | expected:
         return ["plan.shape exactly the sub-object for kind is required"]
@@ -181,6 +195,8 @@ def _shape_problems(plan: object) -> list[str]:
         return ["plan.shape fix sub-object must be an object"]
     if kind == "add_pacing_beat":
         fields = {"id", "at_turn", "text", "verbatim", "trailing", "when", "sets"}
+        if "test" in subplan:
+            fields.add("test")
         if set(subplan) != fields:
             return ["plan.shape beat fields are invalid"]
         if (
@@ -199,6 +215,8 @@ def _shape_problems(plan: object) -> list[str]:
                 not isinstance(key, str) or not isinstance(value, bool) for key, value in mapping.items()
             ):
                 return [f"plan.shape beat {name} must map strings to booleans"]
+        if "test" in subplan and not isinstance(subplan.get("test"), str):
+            return ["plan.shape beat test must be a string"]
     elif kind == "edit_claim_evidence":
         fields = {"claim_id", "group", "phrase"}
         if (
@@ -209,7 +227,7 @@ def _shape_problems(plan: object) -> list[str]:
             return ["plan.shape claim_edit fields are invalid"]
         if not isinstance(subplan.get("group"), int) or isinstance(subplan.get("group"), bool):
             return ["plan.shape claim_edit group must be an integer"]
-    else:
+    elif kind == "set_text":
         if set(subplan) != {"address", "text"} or any(
             not isinstance(subplan.get(key), str) for key in ("address", "text")
         ):
@@ -258,6 +276,116 @@ def _shared_effect_problems(package: StoryPackage, beat: Mapping[str, Any]) -> l
         "set a fact no other pacing event sets"
         for fact_id, event_turn, event_id in sorted(matches, key=lambda match: (match[0], match[1], match[2]))
     ]
+
+
+def _writer_preconditions(package: StoryPackage, producer: object) -> list[tuple[str, object]]:
+    """Return fact predicates that must hold before a producer can write its fact."""
+
+    kind = _value(producer, "kind")
+    record_id = _value(producer, "record_id")
+    if kind == "pacing event":
+        return [
+            (_value(predicate, "fact_id"), _value(predicate, "equals"))
+            for event in _value(getattr(package, "pacing", None), "events", ()) or ()
+            if _value(event, "id") == record_id
+            for predicate in _value(event, "when", ()) or ()
+            if isinstance(_value(predicate, "fact_id"), str)
+        ]
+    if kind == "claim":
+        return [
+            (_value(predicate, "fact_id"), _value(predicate, "equals"))
+            for claim in _value(getattr(package, "knowledge", None), "knowledge", ()) or ()
+            if _value(claim, "id") == record_id
+            for predicate in _value(claim, "requires", ()) or ()
+            if isinstance(_value(predicate, "fact_id"), str)
+        ]
+    if kind == "storylet realization":
+        return [
+            (_value(predicate, "fact_id"), _value(predicate, "equals"))
+            for storylet in _value(getattr(package, "storylet_routes", None), "storylets", ()) or ()
+            if any(_value(realization, "id") == record_id for realization in _value(storylet, "realizations", ()) or ())
+            for predicate in _value(storylet, "activation_conditions", ()) or ()
+            if isinstance(_value(predicate, "fact_id"), str)
+        ]
+    if kind == "canonical route event":
+        return [
+            (fact_id, True)
+            for event in (
+                *(_value(getattr(package, "storylet_routes", None), "bridge_events", ()) or ()),
+                *(_value(getattr(package, "storylet_routes", None), "resolution_events", ()) or ()),
+            )
+            if _value(event, "id") == record_id
+            for fact_id in (
+                *(_value(_value(event, "activation"), "all_facts_true", ()) or ()),
+                *(_value(_value(event, "activation"), "any_of", ()) or ()),
+            )
+            if isinstance(fact_id, str)
+        ]
+    if kind == "connection consequence":
+        return [
+            (_value(connection, "access_fact_id"), True)
+            for connection in _value(package, "connections", ()) or ()
+            if _value(connection, "id") == record_id and isinstance(_value(connection, "access_fact_id"), str)
+        ]
+    return []
+
+
+def _skipped_precondition_problems(package: StoryPackage, beat: Mapping[str, Any]) -> list[str]:
+    problems: list[str] = []
+    for fact_id in sorted(beat["sets"]):
+        value = beat["sets"][fact_id]
+        for producer in sorted(producers(package, fact_id, value), key=lambda item: item.text):
+            missing = [
+                (predicate_fact, predicate_value)
+                for predicate_fact, predicate_value in _writer_preconditions(package, producer)
+                if beat["when"].get(predicate_fact) != predicate_value
+            ]
+            if not missing:
+                continue
+            missing_text = ", ".join(f"{name}={predicate_value!r}" for name, predicate_value in missing)
+            problems.append(
+                f"plan.skipped_preconditions beat sets {fact_id}, but {producer.text} requires {missing_text}; "
+                f"pin those predicates in when before setting the fact"
+            )
+    return problems
+
+
+def _diagnosis_causes(ticket_payload: Mapping[str, Any], evidence_keys: set[str]) -> set[str]:
+    diagnosis = ticket_payload.get("diagnosis")
+    rows = _value(diagnosis, "rows", ())
+    if not isinstance(rows, list):
+        return set()
+    return {
+        cause
+        for row in rows
+        if isinstance(row, Mapping)
+        and _value(row, "key") in evidence_keys
+        and isinstance(cause := _value(row, "cause"), str)
+    }
+
+
+def _contradicted_cause_problem(plan: Mapping[str, Any], ticket_payload: Mapping[str, Any]) -> str | None:
+    diagnosis = ticket_payload.get("diagnosis")
+    if not isinstance(diagnosis, Mapping):
+        return None
+    try:
+        from .diagnose import CAUSES
+    except ImportError:
+        return None
+    mentioned = {
+        cause for cause in CAUSES if re.search(rf"(?<![A-Za-z0-9_]){re.escape(cause)}(?![A-Za-z0-9_])", plan["reason"])
+    }
+    if not mentioned:
+        return None
+    cited_causes = _diagnosis_causes(ticket_payload, set(plan["evidence_keys"]))
+    if mentioned & cited_causes:
+        return None
+    cited_text = ", ".join(sorted(cited_causes)) or "none"
+    return (
+        "plan.contradicted_cause reason names "
+        + ", ".join(sorted(mentioned))
+        + f" but cited diagnosis rows name {cited_text}"
+    )
 
 
 def _match_source(package: StoryPackage, candidate_id: str) -> tuple[Mapping[str, Any], Mapping[str, Any]] | None:
@@ -389,7 +517,8 @@ def _claim_edit_problems(
 def lint_plan(plan: dict, ticket_payload: dict, package: StoryPackage) -> list[str]:
     """Return deterministic rule-labelled problems for one proposed fix plan."""
 
-    shape = _shape_problems(plan)
+    legacy = isinstance(ticket_payload.get("plan"), dict)
+    shape = _shape_problems(plan, legacy=legacy)
     if shape:
         return shape
     if plan["kind"] not in _KINDS:
@@ -409,14 +538,27 @@ def lint_plan(plan: dict, ticket_payload: dict, package: StoryPackage) -> list[s
 
     if not plan["reason"].strip() or len(plan["reason"]) > 400:
         problems.append("plan.reason reason must be non-blank and at most 400 characters")
-    if not plan["reason"].lstrip().startswith("Precedent:"):
+    if plan["kind"] == "unsupported":
+        if not plan["reason"].lstrip().startswith("Reroute:"):
+            problems.append("plan.reroute_reason reason for an unsupported plan must begin with Reroute:")
+    elif not plan["reason"].lstrip().startswith("Precedent:"):
         problems.append(
             "plan.precedent reason must begin with Precedent: and name the proven technique followed, "
             "or Precedent: none with what was checked"
         )
 
+    if contradicted := _contradicted_cause_problem(plan, ticket_payload):
+        problems.append(contradicted)
+
+    if plan["kind"] == "unsupported":
+        return problems
+
     if plan["kind"] == "add_pacing_beat":
         beat = plan["beat"]
+        if beat.get("test") is None and legacy:
+            pass
+        elif beat.get("test") not in {"fixed_replay", "adaptive_player"}:
+            problems.append("plan.test add_pacing_beat requires test fixed_replay or adaptive_player")
         expected_suffix = plan["scene"].lower()
         if not _BEAT_ID.fullmatch(beat["id"]) or not beat["id"].endswith(f"_{expected_suffix}"):
             problems.append("plan.beat_id beat id must use the scene suffix and safe identifier form")
@@ -446,6 +588,7 @@ def lint_plan(plan: dict, ticket_payload: dict, package: StoryPackage) -> list[s
                     f"guard when with {fact_id}: {not value} or set a fact nothing else sets"
                 )
         problems.extend(_shared_effect_problems(package, beat))
+        problems.extend(_skipped_precondition_problems(package, beat))
         if set(beat["sets"]) & _exit_fact_ids(package, plan["scene"]):
             problems.append("plan.exit_trigger beat may not set an exit trigger or dependency")
         if _text_problem(beat["text"], package):
@@ -490,6 +633,18 @@ def _source_path(package: StoryPackage, candidate_id: str) -> str | None:
     return None
 
 
+def _diagnosis_claim_ids(ticket_payload: Mapping[str, Any]) -> set[str]:
+    identifiers: set[str] = set()
+    diagnosis = ticket_payload.get("diagnosis")
+    rows = _value(diagnosis, "rows", ())
+    for row in rows if isinstance(rows, list) else ():
+        signals = _value(row, "signals")
+        claim_ids = _value(signals, "claim_ids", ())
+        if isinstance(claim_ids, (list, tuple, set, frozenset)):
+            identifiers.update(item for item in claim_ids if isinstance(item, str))
+    return identifiers
+
+
 def _candidate_ids(ticket_payload: Mapping[str, Any]) -> list[str]:
     identifiers: set[str] = set()
     turns = ticket_payload.get("failing_turns")
@@ -497,6 +652,7 @@ def _candidate_ids(ticket_payload: Mapping[str, Any]) -> list[str]:
         offered = _value(packet, "candidates_offered", ())
         if isinstance(offered, (list, tuple)):
             identifiers.update(item for item in offered if isinstance(item, str))
+    identifiers.update(_diagnosis_claim_ids(ticket_payload))
     return sorted(identifiers)
 
 
@@ -545,7 +701,9 @@ def _precedents_text(ticket_payload: Mapping[str, Any]) -> str | None:
         return None
 
 
-def _bound_evidence(packet: dict[str, object], limit: int = 12_000) -> dict[str, object]:
+def _bound_evidence(
+    packet: dict[str, object], limit: int = 12_000, protected_candidates: set[str] | None = None
+) -> dict[str, object]:
     def size() -> int:
         return len(json.dumps(packet, ensure_ascii=False, sort_keys=True, separators=(",", ":")))
 
@@ -555,7 +713,10 @@ def _bound_evidence(packet: dict[str, object], limit: int = 12_000) -> dict[str,
             values.pop()
     candidates = packet["candidates"]
     while size() > limit and isinstance(candidates, dict) and candidates:
-        candidates.pop(sorted(candidates)[-1])
+        removable = [
+            candidate_id for candidate_id in sorted(candidates) if candidate_id not in (protected_candidates or set())
+        ]
+        candidates.pop(removable[-1] if removable else sorted(candidates)[-1])
     return packet
 
 
@@ -568,13 +729,16 @@ def _diagnosis_evidence(ticket_payload: Mapping[str, Any]) -> dict[str, object] 
     if not isinstance(counts, Mapping) or not isinstance(raw_rows, list):
         return None
 
-    rows: list[dict[str, str]] = []
+    rows: list[dict[str, object]] = []
     for row in raw_rows:
         if not isinstance(row, Mapping) or any(
             not isinstance(row.get(field), str) for field in ("key", "cause", "why")
         ):
             return None
-        rows.append({"key": row["key"], "cause": row["cause"], "why": row["why"][:160]})
+        compact_row: dict[str, object] = {"key": row["key"], "cause": row["cause"], "why": row["why"][:160]}
+        if "signals" in row:
+            compact_row["signals"] = _json_safe(row["signals"])
+        rows.append(compact_row)
 
     diagnosis: dict[str, object] = {"counts": _json_safe(counts), "rows": rows}
 
@@ -593,6 +757,23 @@ def _diagnosis_evidence(ticket_payload: Mapping[str, Any]) -> dict[str, object] 
     return diagnosis
 
 
+def _fact_readers(package: StoryPackage) -> dict[str, dict[str, list[str]]]:
+    result: dict[str, dict[str, list[str]]] = {}
+    for fact_id in sorted(_declared_facts(package)):
+        readers = {consumer.record_id for consumer in consumers(package, fact_id)}
+        writers = {producer.record_id for value in (True, False) for producer in producers(package, fact_id, value)}
+        result[fact_id] = {"readers": sorted(readers), "writers": sorted(writers)}
+
+    def size() -> int:
+        return len(json.dumps(result, ensure_ascii=False, sort_keys=True, separators=(",", ":")))
+
+    while size() > 2500 and result:
+        without_readers = [fact_id for fact_id, entry in result.items() if not entry["readers"]]
+        fact_id = sorted(without_readers)[-1] if without_readers else sorted(result)[-1]
+        result.pop(fact_id)
+    return result
+
+
 def build_evidence(ticket_payload: dict, package: StoryPackage) -> dict:
     """Build the bounded, JSON-serialisable planner context for a story-data ticket."""
 
@@ -603,18 +784,21 @@ def build_evidence(ticket_payload: dict, package: StoryPackage) -> dict:
         player_input = _value(packet, "player_input", "")
         narration = _value(packet, "narration", "")
         offered = _value(packet, "candidates_offered", ())
-        turns.append(
-            {
-                "key": _value(packet, "key", ""),
-                "player_input": player_input if isinstance(player_input, str) else "",
-                "narration": narration[:500] if isinstance(narration, str) else "",
-                "candidates_offered": [item for item in offered if isinstance(item, str)]
-                if isinstance(offered, (list, tuple))
-                else [],
-                "matched_candidate": _value(packet, "matched_candidate"),
-                "outcome": _json_safe(_value(packet, "outcome")),
-            }
-        )
+        turn: dict[str, object] = {
+            "key": _value(packet, "key", ""),
+            "player_input": player_input if isinstance(player_input, str) else "",
+            "narration": narration[:500] if isinstance(narration, str) else "",
+            "candidates_offered": [item for item in offered if isinstance(item, str)]
+            if isinstance(offered, (list, tuple))
+            else [],
+            "matched_candidate": _value(packet, "matched_candidate"),
+            "outcome": _json_safe(_value(packet, "outcome")),
+        }
+        for field, limit in (("previous_narration", 600), ("rejected_code", 600), ("rejected_message", 600)):
+            value = _value(packet, field)
+            if isinstance(value, str):
+                turn[field] = value[:limit]
+        turns.append(turn)
 
     events = [
         event
@@ -657,6 +841,7 @@ def build_evidence(ticket_payload: dict, package: StoryPackage) -> dict:
         "scene_window": {"min": minimum, "nudge": nudge, "handoff": handoff},
         "beats": beats,
         "exits": exits,
+        "fact_readers": _fact_readers(package),
         "fix_menu": [
             {
                 "kind": "add_pacing_beat",
@@ -673,9 +858,17 @@ def build_evidence(ticket_payload: dict, package: StoryPackage) -> dict:
                 "kind": "edit_claim_evidence",
                 "description": "Add one player-typed phrase to one existing claim action_evidence group.",
             },
+            {
+                "kind": "unsupported",
+                "description": (
+                    "Reroute when the evidence's real cause is not expressible by the three story fixes: "
+                    "station_code for harness, diagnosis, or provider defects; story_edit for a bounded story "
+                    "restructure; adaptive_probe when the hypothesis needs a responding player."
+                ),
+            },
         ],
     }
-    evidence = _bound_evidence(evidence)
+    evidence = _bound_evidence(evidence, protected_candidates=_diagnosis_claim_ids(ticket_payload))
     evidence["precedents"] = _precedents_text(ticket_payload)
     fun_lessons_path = lessons_path(ticket_payload)
     try:

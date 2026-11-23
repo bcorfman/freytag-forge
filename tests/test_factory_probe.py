@@ -143,8 +143,11 @@ def test_summarize_arm_counts_fixture_and_rejects_malformed(tmp_path: Path) -> N
         "stuck_turns": 1,
         "rejected_turns": 0,
         "game_breaks": 0,
-        "earned_exits": 2,
+        "earned_exits": 0,
         "forced_exits": 0,
+        "unknown_exits": 2,
+        "provider_features": None,
+        "semantic_ask_missing": False,
     }
 
     extra = {
@@ -175,6 +178,9 @@ def test_summarize_arm_counts_fixture_and_rejects_malformed(tmp_path: Path) -> N
         "game_breaks": 1,
         "earned_exits": 0,
         "forced_exits": 1,
+        "unknown_exits": 0,
+        "provider_features": None,
+        "semantic_ask_missing": False,
     }
 
     malformed = tmp_path / "malformed.json"
@@ -192,6 +198,9 @@ def base_summary(**changes: int) -> dict:
         "game_breaks": 0,
         "earned_exits": 10,
         "forced_exits": 0,
+        "unknown_exits": 0,
+        "provider_features": None,
+        "semantic_ask_missing": False,
     }
     value.update(changes)
     return value
@@ -209,6 +218,67 @@ def test_judge_probe_all_branches_and_ratio_boundary() -> None:
     assert judge_probe(control, base_summary(game_breaks=1), PROBE_RULES)["verdict"] == "reject"
     assert judge_probe(control, base_summary(earned_exits=9), PROBE_RULES)["verdict"] == "reject"
     assert judge_probe(control, base_summary(stuck_turns=8), PROBE_RULES)["verdict"] == "keep"
+
+
+def test_summarize_arm_classifies_exit_causes_and_old_records(tmp_path: Path) -> None:
+    records = {
+        "runs": [
+            {
+                "status": "completed",
+                "completed": True,
+                "turns": [
+                    {
+                        "turn_number": 1,
+                        "left_scene": True,
+                        "transition_cause": cause,
+                        **({} if cause is not None else {}),
+                    }
+                ],
+            }
+            for cause in ("earned", "timer", "forced", None)
+        ]
+    }
+    for run, cause in zip(records["runs"], ("earned", "timer", "forced", None), strict=True):
+        if cause is None:
+            run["turns"][0].pop("transition_cause")
+    path = tmp_path / "causes.json"
+    path.write_text(json.dumps(records), encoding="utf-8")
+
+    summary = summarize_arm([path])
+
+    assert summary["earned_exits"] == 1
+    assert summary["forced_exits"] == 2
+    assert summary["unknown_exits"] == 1
+
+    old_path = tmp_path / "old.json"
+    old_path.write_text(
+        json.dumps(
+            {
+                "runs": [
+                    {
+                        "status": "ok",
+                        "completed": True,
+                        "turns": [{"turn_number": 1, "left_scene": True}],
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    old_summary = summarize_arm([old_path])
+    assert old_summary["earned_exits"] == 0
+    assert old_summary["unknown_exits"] == 1
+
+
+def test_probe_result_marks_incomplete_exit_and_missing_semantic_evidence() -> None:
+    control = base_summary(unknown_exits=1, semantic_ask_missing=True)
+    candidate = base_summary()
+
+    result = judge_probe(control, candidate, PROBE_RULES)
+
+    assert result["exit_evidence"] == "incomplete"
+    assert result["semantic_ask_missing"] is True
+    assert result["verdict"] == "inconclusive"
 
 
 def configure_probe_root(tmp_path: Path) -> tuple[Path, Path]:
@@ -414,8 +484,11 @@ def test_handler_full_path_reuses_hashes_and_records_spend(tmp_path: Path, monke
     handler = probe_handler(root, runner=improved_runner, rules=RULES, read_budget=lambda: next(budgets))
     original = dict(payload)
     result = handler(make_ticket(payload), NOW)
-    assert result.passed
-    assert result.payload_updates["probe"]["feedback"].startswith("verdict keep")
+    assert not result.passed
+    assert result.payload_updates["probe"]["feedback"].startswith("verdict inconclusive")
+    assert result.payload_updates["probe"]["exit_evidence"] == "incomplete"
+    assert result.payload_updates["billed_run_approved"] is False
+    assert result.payload_updates["billed_runs_consumed"] == 1
     assert "Inspect the shelf" not in result.payload_updates["probe"]["feedback"]
     assert len(calls) == 6
     assert (tmp_path / "probe-ticket/probe/control-synthetic-r1.json").is_file()
@@ -435,7 +508,7 @@ def test_handler_full_path_reuses_hashes_and_records_spend(tmp_path: Path, monke
 
     saved_handler = probe_handler(root, runner=make_runner(calls), rules=RULES, read_budget=saved_budget_reader)
     saved = saved_handler(make_ticket(payload), NOW)
-    assert saved.passed
+    assert not saved.passed
     assert len(calls) == 6
     assert budget_reads == []
     (tree / "data/stories/base/package.txt").write_bytes(b"changed")
@@ -481,6 +554,47 @@ def test_handler_unknown_spend_and_runner_errors_do_not_save(tmp_path: Path, mon
             read_budget=lambda: dict(BUDGET),
         )(make_ticket(payload), NOW)
     assert raised.value.provider == "cloudflare"
+
+
+def test_billed_approval_is_single_use_and_ceiling_blocks_runner(tmp_path: Path, monkeypatch) -> None:
+    root, tree = configure_probe_root(tmp_path)
+    monkeypatch.setattr(probe, "ticket_tree", lambda payload, ticket_id, root: tree)
+    payload = {
+        "workspace": str(tmp_path),
+        "story_package": "data/stories/base",
+        "runs": [{"run": "synthetic-r1", "scene": "synthetic", "inputs": ["Inspect the shelf."] * 2}],
+        "billed_run_approved": True,
+    }
+    calls: list[list[str]] = []
+    handler = probe_handler(root, runner=make_runner(calls), rules=RULES, read_budget=lambda: dict(BUDGET))
+
+    first = handler(make_ticket(payload), NOW)
+    assert len(calls) == 2
+    payload.update(first.payload_updates or {})
+    payload["billed_run_approved"] = True
+
+    refused = handler(make_ticket(payload), NOW)
+    assert not refused.passed
+    assert "approval already consumed" in refused.output
+    assert len(calls) == 2
+
+    ceiling_payload = {
+        **payload,
+        "workspace": str(tmp_path / "ceiling"),
+        "billed_run_approved": True,
+        "billed_runs_consumed": 0,
+        "billed_usd_ceiling": 0.001,
+    }
+    ceiling_calls: list[list[str]] = []
+    ceiling_result = probe_handler(
+        root,
+        runner=make_runner(ceiling_calls),
+        rules=RULES,
+        read_budget=lambda: dict(BUDGET),
+    )(make_ticket(ceiling_payload), NOW)
+    assert not ceiling_result.passed
+    assert "billed_usd_ceiling" in ceiling_result.output
+    assert ceiling_calls == []
 
 
 def test_probe_module_is_story_agnostic_and_rules_have_exact_keys() -> None:

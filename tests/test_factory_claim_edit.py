@@ -121,6 +121,7 @@ def test_evidence_menu_and_candidate_matcher_context_are_bounded() -> None:
         "add_pacing_beat",
         "set_text",
         "edit_claim_evidence",
+        "unsupported",
     }
     candidate = evidence["candidates"][TARGET]
     assert candidate["action_evidence"] == [

@@ -24,6 +24,8 @@ from .wiring import _story_root
 
 MATCH_MISS_ON_OFFERED_CANDIDATE = "match_miss_on_offered_candidate"
 CLAIM_NOT_OFFERED = "claim_not_offered"
+ALREADY_DELIVERED = "already_delivered"
+FOLLOWS_PRIOR_NARRATION = "follows_prior_narration"
 CLAIM_WORDING_MISS = "claim_wording_miss"
 LEAD_OUTSIDE_SCENE = "lead_outside_scene"
 UNKNOWN_OBJECT = "unknown_object"
@@ -33,6 +35,8 @@ UNCLEAR = "unclear"
 CAUSES = (
     MATCH_MISS_ON_OFFERED_CANDIDATE,
     CLAIM_NOT_OFFERED,
+    ALREADY_DELIVERED,
+    FOLLOWS_PRIOR_NARRATION,
     CLAIM_WORDING_MISS,
     LEAD_OUTSIDE_SCENE,
     UNKNOWN_OBJECT,
@@ -43,6 +47,8 @@ CLASSIFIABLE_CAUSES = frozenset(
     {
         MATCH_MISS_ON_OFFERED_CANDIDATE,
         CLAIM_NOT_OFFERED,
+        ALREADY_DELIVERED,
+        FOLLOWS_PRIOR_NARRATION,
         CLAIM_WORDING_MISS,
         LEAD_OUTSIDE_SCENE,
         UNKNOWN_OBJECT,
@@ -179,6 +185,8 @@ DIAGNOSE_BRIEF = """Diagnose each failing turn using one cause.
 
 match_miss_on_offered_candidate: a listed candidate matched, but nothing was committed.
 claim_not_offered: the command satisfies an authored claim that was not offered.
+already_delivered: the command revisits a claim delivered earlier in this run.
+follows_prior_narration: the command refers to an object introduced by the prior narration.
 claim_wording_miss: an authored claim matches all but one evidence group, so one wording is missing.
 lead_outside_scene: the command names a story entity that belongs to another scene.
 unknown_object: a meaningful command word is absent from the story vocabulary.
@@ -249,11 +257,14 @@ def _world_entities(package: Any) -> dict[str, Any]:
     return entities
 
 
-def _entity_surfaces(package: Any) -> dict[str, tuple[str, ...]]:
+def _entity_surfaces(package: Any, scene_id: str | None = None) -> dict[str, tuple[str, ...]]:
     entities = _world_entities(package)
+    scene_ids = _scene_entity_ids(package, scene_id) if scene_id is not None else None
     surfaces: dict[str, set[str]] = {entity_id: set() for entity_id in entities}
     for entity_id, entity in entities.items():
         for field in ("name", "aliases", "scoped_aliases"):
+            if field == "scoped_aliases" and scene_ids is not None and entity_id not in scene_ids:
+                continue
             value = getattr(entity, field, ())
             if isinstance(value, str):
                 value = (value,)
@@ -263,7 +274,14 @@ def _entity_surfaces(package: Any) -> dict[str, tuple[str, ...]]:
     indexes = getattr(package, "knowledge_indexes", None)
     for alias, entity_ids in (getattr(indexes, "entity_alias_to_entities", {}) or {}).items():
         for entity_id in entity_ids:
-            if entity_id in surfaces and isinstance(alias, str):
+            entity = entities.get(entity_id)
+            scoped_aliases = getattr(entity, "scoped_aliases", ()) if entity is not None else ()
+            is_scoped = alias in scoped_aliases if not isinstance(scoped_aliases, str) else alias == scoped_aliases
+            if (
+                entity_id in surfaces
+                and isinstance(alias, str)
+                and (not is_scoped or scene_ids is None or entity_id in scene_ids)
+            ):
                 surfaces[entity_id].add(alias)
     return {
         entity_id: tuple(sorted(values, key=lambda value: (-len(value), value.casefold())))
@@ -297,10 +315,10 @@ def _scene_entity_ids(package: Any, scene_id: str) -> set[str]:
     return result
 
 
-def _named_entity_ids(text: str, package: Any) -> set[str]:
+def _named_entity_ids(text: str, package: Any, scene_id: str | None = None) -> set[str]:
     return {
         entity_id
-        for entity_id, surfaces in _entity_surfaces(package).items()
+        for entity_id, surfaces in _entity_surfaces(package, scene_id).items()
         if any(_contains(text, surface) for surface in surfaces)
     }
 
@@ -350,6 +368,100 @@ def _claim_wording_misses(player_input: str, package: Any, scene_id: str) -> lis
         if len(matches) >= 2 and len(missing) == 1:
             misses.append((str(claim.id), missing[0]))
     return sorted(misses)
+
+
+def _evidence_entity_ids(group: object, package: Any, scene_id: str) -> set[str]:
+    """Return scene-valid entities named by one evidence group."""
+
+    terms = group if isinstance(group, (tuple, list)) else ()
+    return {
+        entity_id
+        for entity_id, surfaces in _entity_surfaces(package, scene_id).items()
+        if any(
+            isinstance(term, str) and any(_contains(term, surface) or _contains(surface, term) for surface in surfaces)
+            for term in terms
+        )
+    }
+
+
+def _wording_miss_is_relevant(
+    player_input: str, package: Any, scene_id: str, claim_id: str, missing_group: int
+) -> bool:
+    indexes = getattr(package, "knowledge_indexes", None)
+    claim = (getattr(indexes, "by_id", {}) or {}).get(claim_id)
+    evidence = getattr(claim, "action_evidence", ()) if claim is not None else ()
+    groups = evidence if isinstance(evidence, (tuple, list)) else ()
+    if missing_group >= len(groups):
+        return False
+    claim_entities = _evidence_entity_ids(groups[missing_group], package, scene_id)
+    if not claim_entities:
+        return True
+    command_entities = _named_entity_ids(player_input, package, scene_id)
+    return bool(claim_entities & command_entities)
+
+
+def _delivered_ids(packet: Mapping[str, Any]) -> list[str]:
+    values = packet.get("delivered_before")
+    if not isinstance(values, list):
+        return []
+    return list(dict.fromkeys(value for value in values if isinstance(value, str)))
+
+
+def _delivered_turns(packet: Mapping[str, Any]) -> dict[str, int]:
+    values = packet.get("delivered_before_turns")
+    if not isinstance(values, Mapping):
+        return {}
+    return {
+        claim_id: turn
+        for claim_id, turn in values.items()
+        if isinstance(claim_id, str) and isinstance(turn, int) and not isinstance(turn, bool)
+    }
+
+
+def _claim_for_id(package: Any, claim_id: str) -> Any | None:
+    indexes = getattr(package, "knowledge_indexes", None)
+    return (getattr(indexes, "by_id", {}) or {}).get(claim_id)
+
+
+def _spent_by_sibling(claim_id: str, delivered: Iterable[str], package: Any) -> str | None:
+    claim = _claim_for_id(package, claim_id)
+    source = getattr(claim, "source", None)
+    storylet_id = getattr(source, "storylet_id", None)
+    if not storylet_id:
+        return None
+    for delivered_id in delivered:
+        if delivered_id == claim_id:
+            continue
+        sibling = _claim_for_id(package, delivered_id)
+        sibling_source = getattr(sibling, "source", None)
+        if getattr(sibling_source, "storylet_id", None) == storylet_id:
+            return delivered_id
+    return None
+
+
+def _unmet_requirement(claim: Any, packet: Mapping[str, Any]) -> tuple[str, str] | None:
+    """Return ``(fact id, readable condition)`` when packet facts disprove a requirement."""
+
+    facts = packet.get("facts_before")
+    if not isinstance(facts, Mapping):
+        return None
+    for predicate in getattr(claim, "requires", ()) or ():
+        fact_id = getattr(predicate, "fact_id", None)
+        if not isinstance(fact_id, str):
+            continue
+        expected = getattr(predicate, "equals", None)
+        expected_value = str(expected).lower() if isinstance(expected, bool) else expected
+        raw = facts.get(fact_id)
+        present = raw is not None
+        if isinstance(raw, Mapping):
+            if "value" in raw:
+                raw = raw["value"]
+            elif "object" in raw:
+                raw = raw["object"]
+        matches = expected is False if not present else expected is None or raw in (expected_value, expected)
+        if not matches:
+            return fact_id, f"{fact_id} must equal {expected_value!r}"
+    return None
 
 
 def _story_vocabulary(package: Any) -> set[str]:
@@ -429,6 +541,79 @@ def diagnose_turn(packet: dict, package: Any) -> dict:
         if claim.id not in offered and _matches_evidence(player_input, claim.action_evidence)
     )
     if missing_claims:
+        delivered = _delivered_ids(packet)
+        delivered_claims = [claim_id for claim_id in missing_claims if claim_id in delivered]
+        if delivered_claims:
+            delivered_turns = _delivered_turns(packet)
+            evidence = []
+            for claim_id in delivered_claims:
+                turn_number = delivered_turns.get(claim_id)
+                if turn_number is None:
+                    evidence.append(f"Claim {claim_id} was delivered earlier in this run.")
+                else:
+                    evidence.append(f"Claim {claim_id} was delivered at turn {turn_number}.")
+            # ``delivered_before`` and ``delivered_at_turn`` expose the prior
+            # delivery evidence; the plural form preserves all turn numbers.
+            signals = {
+                "claim_ids": delivered_claims,
+                "delivered_before": delivered_claims,
+                "decided_by": "rule",
+            }
+            if len(delivered_claims) == 1 and delivered_claims[0] in delivered_turns:
+                signals["delivered_at_turn"] = delivered_turns[delivered_claims[0]]
+            if delivered_turns:
+                signals["delivered_at_turns"] = {
+                    claim_id: delivered_turns[claim_id] for claim_id in delivered_claims if claim_id in delivered_turns
+                }
+            return {
+                "key": key,
+                "cause": ALREADY_DELIVERED,
+                "why": " ".join(evidence),
+                "signals": signals,
+            }
+        sibling_claims = [
+            (claim_id, sibling)
+            for claim_id in missing_claims
+            if (sibling := _spent_by_sibling(claim_id, delivered, package)) is not None
+        ]
+        if sibling_claims:
+            claim_id, sibling = sibling_claims[0]
+            # ``spent_by_sibling`` names the delivered alternative that made
+            # this non-follow-up claim unavailable.
+            return {
+                "key": key,
+                "cause": CLAIM_NOT_OFFERED,
+                "why": f"Claim {claim_id} was not offered because sibling claim {sibling} was delivered earlier.",
+                "signals": {
+                    "claim_ids": missing_claims,
+                    "spent_by_sibling": sibling,
+                    "decided_by": "rule",
+                },
+            }
+        unmet = next(
+            (
+                (claim_id, requirement)
+                for claim_id in missing_claims
+                if (requirement := _unmet_requirement(_claim_for_id(package, claim_id), packet)) is not None
+            ),
+            None,
+        )
+        if unmet is not None:
+            claim_id, (fact_id, condition) = unmet
+            # ``unmet`` is the runtime-style fact identifier; the condition
+            # keeps the deterministic explanation readable to the operator.
+            signals = {
+                "claim_ids": missing_claims,
+                "unmet": fact_id,
+                "unmet_condition": condition,
+                "decided_by": "rule",
+            }
+            return {
+                "key": key,
+                "cause": CLAIM_NOT_OFFERED,
+                "why": f"Claim {claim_id} was not offered because {condition}.",
+                "signals": signals,
+            }
         return {
             "key": key,
             "cause": CLAIM_NOT_OFFERED,
@@ -436,15 +621,23 @@ def diagnose_turn(packet: dict, package: Any) -> dict:
             "signals": {"claim_ids": missing_claims, "decided_by": "rule"},
         }
 
-    named_ids = _named_entity_ids(player_input, package)
     scene_ids = _scene_entity_ids(package, scene_id)
+    named_ids = _named_entity_ids(player_input, package, scene_id)
     scene_named_ids = named_ids & scene_ids
     vocabulary = _story_vocabulary(package)
     modifiers = _modifier_words(player_input, package, scene_named_ids)
     unknown_words = _unknown_words(player_input, vocabulary, modifiers)
     outside_names = _entity_names(package, named_ids - scene_ids)
 
-    wording_misses = [] if unknown_words or outside_names else _claim_wording_misses(player_input, package, scene_id)
+    wording_misses = (
+        []
+        if unknown_words or outside_names
+        else [
+            (claim_id, group)
+            for claim_id, group in _claim_wording_misses(player_input, package, scene_id)
+            if _wording_miss_is_relevant(player_input, package, scene_id, claim_id, group)
+        ]
+    )
     if wording_misses:
         claim_ids = sorted({claim_id for claim_id, _ in wording_misses})
         return {
@@ -454,6 +647,8 @@ def diagnose_turn(packet: dict, package: Any) -> dict:
             "signals": {
                 "claim_ids": claim_ids,
                 "missing": [{"claim_id": claim_id, "group": group} for claim_id, group in wording_misses],
+                # ``hypothesis`` keeps this lexical near-match from looking proven.
+                "hypothesis": True,
                 "decided_by": "rule",
             },
         }
@@ -464,6 +659,27 @@ def diagnose_turn(packet: dict, package: Any) -> dict:
             "cause": LEAD_OUTSIDE_SCENE,
             "why": f"The command names {', '.join(outside_names)}, which belong to another scene.",
             "signals": {"entities": outside_names, "decided_by": "rule"},
+        }
+
+    prior_narration = packet.get("previous_narration")
+    prior_terms = (
+        sorted(word for word in unknown_words if isinstance(prior_narration, str) and _contains(prior_narration, word))
+        if isinstance(prior_narration, str)
+        else []
+    )
+    if prior_terms:
+        # ``introduced_words`` and ``previous_narration`` record the referents
+        # that the narration, rather than the player, supplied.
+        return {
+            "key": key,
+            "cause": FOLLOWS_PRIOR_NARRATION,
+            "why": f"The previous narration introduced {', '.join(prior_terms)}, which the command refers to.",
+            "signals": {
+                "unknown_words": unknown_words,
+                "introduced_words": prior_terms,
+                "previous_narration": prior_narration[:600],
+                "decided_by": "rule",
+            },
         }
 
     if unknown_words:
@@ -515,6 +731,24 @@ def _prompt(packets: list[dict], rows: list[dict], package: Any) -> str:
                 "claims": claims,
             }
         )
+        for field in (
+            "previous_narration",
+            "delivered_before",
+            "delivered_before_turns",
+            "rejected_code",
+            "rejected_message",
+            "facts_before",
+        ):
+            if field not in packet:
+                continue
+            value = packet[field]
+            if isinstance(value, str):
+                value = value[:600]
+            elif isinstance(value, list):
+                value = value[:100]
+            elif isinstance(value, Mapping):
+                value = dict(list(value.items())[:40])
+            details[-1][field] = value
     return f"{DIAGNOSE_BRIEF}\n\nTurns to classify:\n{json.dumps(details, ensure_ascii=False, sort_keys=True)}"
 
 
