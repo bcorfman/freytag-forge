@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 import shutil
+import subprocess
+import sys
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -38,12 +40,36 @@ def _snapshots(root: Path) -> dict[str, dict[str, object]]:
     return {scene_id: load_entry_snapshot(root, scene_id) for scene_id in SCENE_IDS}
 
 
-def test_committed_snapshots_only_report_recorded_carry_in_gates() -> None:
-    problems = check_entry_snapshots(STORY_ROOT)
+def test_committed_snapshots_are_clean_and_list_optional_chains(capsys) -> None:
+    assert check_entry_snapshots(STORY_ROOT) == []
 
-    assert problems
-    assert all(problem.startswith("carry-in gate problem:") for problem in problems)
-    assert len(problems) == 6
+    report = carry_in_report(PACKAGE, _snapshots(STORY_ROOT).values())
+    optional_chains = [
+        row for row in report if row["consumer_kind"] == "gate" and not row["consumer_required"] and not row["supplied"]
+    ]
+    assert len(optional_chains) == 6
+    assert all(row["consumer_required"] is False for row in optional_chains)
+    assert all(row["supplied"] is False for row in optional_chains)
+
+    assert main(["check", "--story-root", str(STORY_ROOT)]) == 0
+    assert "optional chains not reachable from canonical entry" in capsys.readouterr().out
+
+
+def test_entry_snapshot_runtime_does_not_import_http_layer() -> None:
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "import sys; import storygame.runtime.entry_snapshots; print('storygame.web_demo' in sys.modules)",
+        ],
+        cwd=ROOT,
+        env={"PYTHONPATH": f"{ROOT}:{ROOT / 'packages' / 'worldkeeper' / 'src'}"},
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+
+    assert result.stdout.strip() == "False"
 
 
 def test_regenerating_snapshots_twice_is_byte_identical(tmp_path: Path) -> None:
@@ -135,9 +161,15 @@ def test_hidden_held_item_in_snapshot_is_refused(tmp_path: Path) -> None:
 def test_carry_in_report_has_shape_and_synthetic_fixture_detects_missing_supply() -> None:
     fixture = load_story_package(ROOT / "tests" / "fixtures" / "stories" / "lighthouse-keeper")
     scenes = {scene.metadata.scene_id for scene in fixture.scenes}
-    fake_package = SimpleNamespace(world=fixture.world, knowledge=fixture.knowledge, scenes=fixture.scenes)
+    fake_package = SimpleNamespace(
+        world=fixture.world,
+        knowledge=fixture.knowledge,
+        scenes=fixture.scenes,
+        storylet_routes=SimpleNamespace(storylets=()),
+    )
     original_producers = snapshots_module.producers
     original_consumers = snapshots_module.consumers
+    original_required_storylet_ids = snapshots_module.required_storylet_ids
     fact_id = fixture.world.facts[0]
     snapshots_module.producers = lambda _package, candidate: (
         [SimpleNamespace(kind="storylet realization", scene_id="1A")] if candidate == fact_id else []
@@ -145,6 +177,7 @@ def test_carry_in_report_has_shape_and_synthetic_fixture_detects_missing_supply(
     snapshots_module.consumers = lambda _package, candidate: (
         [SimpleNamespace(kind="gate", record_id="next_gate", scene_id="1B")] if candidate == fact_id else []
     )
+    snapshots_module.required_storylet_ids = lambda _package: frozenset()
     try:
         report = carry_in_report(
             fake_package,
@@ -153,6 +186,7 @@ def test_carry_in_report_has_shape_and_synthetic_fixture_detects_missing_supply(
     finally:
         snapshots_module.producers = original_producers
         snapshots_module.consumers = original_consumers
+        snapshots_module.required_storylet_ids = original_required_storylet_ids
 
     assert report == [
         {
@@ -160,14 +194,39 @@ def test_carry_in_report_has_shape_and_synthetic_fixture_detects_missing_supply(
             "fact_id": fact_id,
             "consumer_kind": "gate",
             "consumer_id": "next_gate",
+            "consumer_required": False,
             "supplied": False,
             "producer_scenes": ["1A"],
         }
     ]
 
 
-def test_cli_check_returns_failure_for_real_gate_rows_and_write_succeeds(tmp_path: Path) -> None:
+def test_required_synthetic_gate_still_fails_snapshot_check(tmp_path: Path, monkeypatch) -> None:
+    root = _copy_story(tmp_path)
+
+    monkeypatch.setattr(
+        snapshots_module,
+        "carry_in_report",
+        lambda _package, _snapshots: [
+            {
+                "scene_id": "1B",
+                "fact_id": "synthetic_fact",
+                "consumer_kind": "gate",
+                "consumer_id": "required_gate",
+                "consumer_required": True,
+                "supplied": False,
+                "producer_scenes": ["1A"],
+            }
+        ],
+    )
+
+    problems = check_entry_snapshots(root)
+
+    assert problems == ["carry-in gate problem: scene 1B fact synthetic_fact consumer required_gate is not supplied"]
+
+
+def test_cli_write_succeeds_and_check_is_clean(tmp_path: Path) -> None:
     root = _copy_story(tmp_path)
 
     assert main(["write", "--story-root", str(root)]) == 0
-    assert main(["check", "--story-root", str(root)]) == 1
+    assert main(["check", "--story-root", str(root)]) == 0

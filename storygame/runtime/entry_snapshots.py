@@ -16,10 +16,11 @@ from storygame.runtime.entry_seed import _advance_state_to_scene
 from storygame.runtime.facts import Fact, FactStore
 from storygame.runtime.state import CueStage, RuntimeState, TurnDelivery
 from storygame.runtime.world_model import world_for
+from storygame.story_package.default_root import default_package_root
 from storygame.story_package.dependencies import consumers, producers
 from storygame.story_package.loader import load_story_package
 from storygame.story_package.models import StoryPackage
-from storygame.web_demo import _default_package_root
+from storygame.story_package.obligations import required_storylet_ids
 
 
 class EntrySnapshotError(ValueError):
@@ -343,6 +344,13 @@ def carry_in_report(package: StoryPackage, snapshots: object) -> list[dict[str, 
     snapshot_by_scene = _snapshot_map(snapshots)
     scene_order = {scene.metadata.scene_id: index for index, scene in enumerate(package.scenes)}
     fact_ids = sorted({fact.id for fact in package.knowledge.facts} | set(package.world.facts))
+    required_ids = required_storylet_ids(package)
+    storylet_ids = {storylet.id for storylet in package.storylet_routes.storylets}
+    claim_source_storylets = {
+        claim.id: claim.source.storylet_id
+        for claim in package.knowledge.knowledge
+        if claim.source.storylet_id is not None
+    }
     rows: list[dict[str, object]] = []
     for fact_id in fact_ids:
         fact_producers = producers(package, fact_id)
@@ -357,12 +365,18 @@ def carry_in_report(package: StoryPackage, snapshots: object) -> list[dict[str, 
                 for producer in fact_producers
             ):
                 continue
+            consumer_storylet_id = (
+                consumer.record_id
+                if consumer.record_id in storylet_ids
+                else claim_source_storylets.get(consumer.record_id)
+            )
             rows.append(
                 {
                     "scene_id": scene_id,
                     "fact_id": fact_id,
                     "consumer_kind": consumer.kind,
                     "consumer_id": consumer.record_id,
+                    "consumer_required": consumer_storylet_id in required_ids,
                     "supplied": _snapshot_supplies(snapshot_by_scene.get(scene_id, {}), fact_id),
                     "producer_scenes": sorted(
                         {producer.scene_id for producer in fact_producers if producer.scene_id is not None},
@@ -451,7 +465,7 @@ def check_entry_snapshots(story_root: Path) -> list[str]:
                 problems.append(f"entry invariant problem in scene {scene_id}: {error}")
 
     for row in carry_in_report(package, loaded.values()):
-        if row["consumer_kind"] == "gate" and not row["supplied"]:
+        if row["consumer_kind"] == "gate" and row["consumer_required"] and not row["supplied"]:
             problems.append(
                 "carry-in gate problem: "
                 f"scene {row['scene_id']} fact {row['fact_id']} consumer {row['consumer_id']} is not supplied"
@@ -464,7 +478,7 @@ def main(argv: list[str] | None = None) -> int:
     subparsers = parser.add_subparsers(dest="command", required=True)
     for command in ("check", "write"):
         subparser = subparsers.add_parser(command)
-        subparser.add_argument("--story-root", type=Path, default=_default_package_root())
+        subparser.add_argument("--story-root", type=Path, default=default_package_root())
     args = parser.parse_args(argv)
     if args.command == "write":
         for path in write_entry_snapshots(args.story_root):
@@ -473,6 +487,25 @@ def main(argv: list[str] | None = None) -> int:
     problems = check_entry_snapshots(args.story_root)
     for problem in problems:
         print(problem)
+    package = load_story_package(args.story_root)
+    loaded = []
+    for scene in package.scenes:
+        try:
+            loaded.append(load_entry_snapshot(args.story_root, scene.metadata.scene_id))
+        except EntrySnapshotError:
+            continue
+    optional_chains = [
+        row
+        for row in carry_in_report(package, loaded)
+        if row["consumer_kind"] == "gate" and not row["consumer_required"] and not row["supplied"]
+    ]
+    if optional_chains:
+        print("optional chains not reachable from canonical entry")
+        for row in optional_chains:
+            print(
+                "carry-in gate: "
+                f"scene {row['scene_id']} fact {row['fact_id']} consumer {row['consumer_id']} is not supplied"
+            )
     return 1 if problems else 0
 
 

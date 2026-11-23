@@ -3,7 +3,7 @@ import { readdir } from "node:fs/promises";
 import { resolve } from "node:path";
 import { loadAffordanceMap, firstStepAffordances, laterAffordances, exploreInput } from "./affordances.js";
 import { askPlayer, analyseRun, aggregate, aggregateByScene, artifactReport, bundlesCategory, collectBundles, collectPrompts, formatMarkdown, gameBreakPolicy, handleGameBreak, playerModel, profileInfo, promptsCategory, sceneIdsForRun, turnLog, turnRecord } from "./blind-player.js";
-import { startSceneSession, submitTurn, resolveWarningIfPresent, writeCategoryReport } from "./helpers.js";
+import { blindEntryState, startSceneSession, submitTurn, resolveWarningIfPresent, writeCategoryReport } from "./helpers.js";
 import { loadPackagePacing } from "./package-clock.js";
 import { walkScenes } from "./scene-walk.js";
 import { replicatePlan } from "./merge-blind-player.js";
@@ -143,7 +143,7 @@ test("a player who only reads the screen can leave the scene @blind-player", asy
         onOpening: ({ scene_id, text }) => { if (scene_id === requestedScene) openingText = text; },
       });
     } else if (!allMode && requestedScene !== "1A") {
-      const startState = process.env.E2E_BLIND_ENTRY_STATE || "thorough";
+      const startState = blindEntryState();
       entry = { mode: "seeded", state: startState };
       await startSceneSession(page, { startScene: requestedScene, startState });
       openingText = (await page.locator(".entry-output").first().textContent())?.trim() || "";

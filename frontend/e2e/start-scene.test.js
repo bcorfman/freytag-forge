@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { installStartSceneRoute, sessionBodyWithStart, startSceneSession } from "./helpers.js";
+import { blindEntryState, installStartSceneRoute, sessionBodyWithStart, startSceneSession } from "./helpers.js";
 
 function fakePage() {
   const registrations = [];
@@ -36,16 +36,45 @@ test("rewrites a session body while preserving its existing fields", async () =>
   assert.deepEqual(JSON.parse(route.fallbacks[0][0].postData), {
     story_id: "story",
     start_scene: "2B",
-    start_state: "thorough",
+    start_state: "canonical",
   });
 });
 
-test("supports the bare seeded state", () => {
-  assert.deepEqual(JSON.parse(sessionBodyWithStart('{"story_id":"story"}', "3A", "bare")), {
-    story_id: "story",
-    start_scene: "3A",
-    start_state: "bare",
-  });
+test("supports the requested seeded states", () => {
+  for (const startState of ["canonical", "thorough", "bare"]) {
+    assert.deepEqual(JSON.parse(sessionBodyWithStart('{"story_id":"story"}', "3A", startState)), {
+      story_id: "story",
+      start_scene: "3A",
+      start_state: startState,
+    });
+  }
+});
+
+test("rejects an unknown seeded state before registering a route", async () => {
+  const page = fakePage();
+  await assert.rejects(
+    () => installStartSceneRoute(page, { startScene: "2B", startState: "mystery" }),
+    /Unknown startState "mystery"; expected canonical, thorough, or bare\./,
+  );
+  assert.deepEqual(page.registrations, []);
+});
+
+test("defaults the blind-player entry state to canonical and validates overrides", () => {
+  const previousState = process.env.E2E_BLIND_ENTRY_STATE;
+  try {
+    delete process.env.E2E_BLIND_ENTRY_STATE;
+    assert.equal(blindEntryState(), "canonical");
+    process.env.E2E_BLIND_ENTRY_STATE = "bare";
+    assert.equal(blindEntryState(), "bare");
+    process.env.E2E_BLIND_ENTRY_STATE = "mystery";
+    assert.throws(
+      () => blindEntryState(),
+      /Unknown startState "mystery"; expected canonical, thorough, or bare\./,
+    );
+  } finally {
+    if (previousState === undefined) delete process.env.E2E_BLIND_ENTRY_STATE;
+    else process.env.E2E_BLIND_ENTRY_STATE = previousState;
+  }
 });
 
 test("passes non-POST and non-session requests through untouched", async () => {

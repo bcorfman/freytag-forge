@@ -8,7 +8,19 @@ import { installApiToken } from "./api-token.js";
 import { handleGameBreak } from "./blind-player.js";
 
 const TURN_TIMEOUT_MS = Number.parseInt(process.env.E2E_TURN_TIMEOUT_MS || "30000", 10);
+const VALID_START_STATES = new Set(["canonical", "thorough", "bare"]);
 const packageClockControllers = new WeakMap();
+
+export function validateStartState(startState) {
+  if (!VALID_START_STATES.has(startState)) {
+    throw new Error(`Unknown startState ${JSON.stringify(startState)}; expected canonical, thorough, or bare.`);
+  }
+  return startState;
+}
+
+export function blindEntryState(value = process.env.E2E_BLIND_ENTRY_STATE) {
+  return validateStartState(value || "canonical");
+}
 
 function waitForTurnOutcome(page) {
   return new Promise((resolve, reject) => {
@@ -88,13 +100,15 @@ export async function installPackageClock(page, { controller } = {}) {
   return packageClockController;
 }
 
-export function sessionBodyWithStart(body, startScene, startState = "thorough") {
+export function sessionBodyWithStart(body, startScene, startState = "canonical") {
+  validateStartState(startState);
   const parsedBody = typeof body === "string" ? JSON.parse(body) : body;
   return JSON.stringify({ ...parsedBody, start_scene: startScene, start_state: startState });
 }
 
-export async function installStartSceneRoute(page, { startScene, startState = "thorough" } = {}) {
+export async function installStartSceneRoute(page, { startScene, startState = "canonical" } = {}) {
   if (startScene === undefined) return false;
+  validateStartState(startState);
 
   await page.route("**/api/v1/session", async (route) => {
     const request = route.request();
