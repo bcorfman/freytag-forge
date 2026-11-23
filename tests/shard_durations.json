@@ -146,6 +146,7 @@
     "tests/test_candidate_ranking.py": 0.09,
     "tests/test_candidate_selection_report.py": 0.0,
     "tests/test_canon_journey.py": 12.37,
+    "tests/test_canonical_entry_path.py": 13.31,
     "tests/test_canonical_event_delivery.py": 0.31,
     "tests/test_character_short_name.py": 0.02,
     "tests/test_cloudflare_transport.py": 6.18,
