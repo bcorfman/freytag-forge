@@ -26,3 +26,5 @@ Phase 1 step 2 adds declarations and validation only; the engine does not act on
 
 Story-critical reveals use priority 0 or higher. Optional ambient reveals use -1 so they never push a story-critical reveal out of the four offered candidates. A reveal whose action evidence matches the player's command is offered first, so an ambient reveal still surfaces when the player asks for it. Give a reveal exactly the evidence groups its plain command needs.
 When several reveals match a command, deliver the one with the most evidence groups; equal matches deliver none.
+
+A beat may declare `delivers` as a list of knowledge claim ids when its facts make those pressure claims deliverable. The validator checks each declared claim against the facts the beat sets.

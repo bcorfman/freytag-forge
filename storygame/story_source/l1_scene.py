@@ -503,6 +503,7 @@ def _check_beats(value: object, address: str, issue: Issue) -> None:
         "when": _rule("any"),
         "sets": _rule("mapping", True),
         "trailing": _rule("bool"),
+        "delivers": _rule("list"),
         "verbatim": _rule("bool"),
         "say": _rule("any"),
         "exit": _rule("str"),
@@ -519,6 +520,17 @@ def _check_beats(value: object, address: str, issue: Issue) -> None:
             _condition(record["when"], event_address, "when", issue)
         if "sets" in record:
             _effects(record["sets"], event_address, "sets", issue, pacing=True)
+        if "delivers" in record:
+            _strings(record["delivers"], event_address, "delivers", issue)
+            if isinstance(record["delivers"], list):
+                for index, delivery_id in enumerate(record["delivers"]):
+                    if isinstance(delivery_id, str) and not delivery_id:
+                        issue(
+                            "L1.type",
+                            f"{event_address}.delivers[{index}]",
+                            "delivers",
+                            "items of 'delivers' must be non-empty strings",
+                        )
         if "say" in record:
             if isinstance(record["say"], list):
                 _passage_entries(record["say"], f"{event_address}.say", "say", issue)

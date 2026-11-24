@@ -738,11 +738,22 @@ class PacingEvent(_Model):
     effects: tuple[FactPredicate, ...] = Field(min_length=1)
     transition_id: str | None = Field(default=None, pattern=_ID)
     realizations: tuple[PacingRealization, ...] = ()
+    delivers: tuple[str, ...] = Field(default=(), exclude_if=lambda value: not value)
     trailing: StrictBool = Field(
         default=False,
         exclude_if=lambda value: value is False,
         description="Apply the event after the player's action is narrated.",
     )
+
+    @field_validator("delivers")
+    @classmethod
+    def distinct_deliveries(cls, value: tuple[str, ...]) -> tuple[str, ...]:
+        invalid = next((item for item in value if re.fullmatch(_ID, item) is None), None)
+        if invalid is not None:
+            raise ValueError(f"delivers contains malformed knowledge id '{invalid}'")
+        if len(value) != len(set(value)):
+            raise ValueError("delivers must not contain duplicate knowledge ids")
+        return value
 
 
 class PacingSource(_Model):

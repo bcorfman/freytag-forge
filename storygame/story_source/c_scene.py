@@ -212,6 +212,7 @@ def build_events(scene: Mapping[str, Any]) -> tuple[PacingEvent, ...]:
                 effects=predicates(record["sets"]),
                 transition_id=record.get("exit"),
                 realizations=realizations,
+                delivers=tuple(record.get("delivers", ())),
                 trailing=record.get("trailing", False),
             )
         )
