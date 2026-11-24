@@ -1,0 +1,2510 @@
+[
+ {
+  "id": "world_action_without_reveal",
+  "tier": "core",
+  "description": "A committed world change with no reveal is a successful action.",
+  "reason": "A world change the command caused is progress even when nothing is revealed; flagging it was defect M3.",
+  "scene": {
+   "id": "S",
+   "pacing_window": 3,
+   "terminal": false,
+   "reveal_ids": [
+    "k_c1",
+    "k_c2",
+    "k_pressure"
+   ],
+   "delivered_before": [],
+   "ending_requires": [],
+   "non_voiceable_says": [],
+   "unlearned_terms": [],
+   "epilogue_candidates": []
+  },
+  "run": {
+   "replicate": 1,
+   "entry_facts": [],
+   "turns": [
+    {
+     "turn": 1,
+     "input": "Open the door.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [
+      "door_open"
+     ],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    },
+    {
+     "turn": 2,
+     "input": "Go through the door.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [
+      "in_hall"
+     ],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "earned",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    }
+   ]
+  },
+  "expected": {
+   "turns": {
+    "1": {
+     "action_outcome": "world_changed",
+     "knowledge_progress": false
+    }
+   },
+   "confirmed_stuck": [],
+   "unresolved": [],
+   "exit": "earned",
+   "status": "healthy"
+  }
+ },
+ {
+  "id": "exploration_new_description",
+  "tier": "core",
+  "description": "Looking at new things is legitimate exploration even with no reveal.",
+  "reason": "Each turn adds a description the player had not seen; exploring is not stuck.",
+  "scene": {
+   "id": "S",
+   "pacing_window": 2,
+   "terminal": false,
+   "reveal_ids": [
+    "k_c1",
+    "k_c2",
+    "k_pressure"
+   ],
+   "delivered_before": [],
+   "ending_requires": [],
+   "non_voiceable_says": [],
+   "unlearned_terms": [],
+   "epilogue_candidates": []
+  },
+  "run": {
+   "replicate": 1,
+   "entry_facts": [],
+   "turns": [
+    {
+     "turn": 1,
+     "input": "Look at the shelf.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [
+      "g_shelf"
+     ],
+     "null_grounding_ids": [],
+     "committed_facts": [],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    },
+    {
+     "turn": 2,
+     "input": "Look at the window.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [
+      "g_window"
+     ],
+     "null_grounding_ids": [],
+     "committed_facts": [],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    },
+    {
+     "turn": 3,
+     "input": "Look at the rug.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [
+      "g_rug"
+     ],
+     "null_grounding_ids": [],
+     "committed_facts": [],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    }
+   ]
+  },
+  "expected": {
+   "turns": {
+    "1": {
+     "action_outcome": "explored",
+     "knowledge_progress": false
+    },
+    "3": {
+     "action_outcome": "explored"
+    }
+   },
+   "confirmed_stuck": [],
+   "status": "healthy"
+  }
+ },
+ {
+  "id": "futile_named_object_repeated",
+  "tier": "core",
+  "description": "The same named-object command repeated with nothing new is stuck.",
+  "reason": "Turn 1 shows the console. Turns 2 to 4 repeat it and add nothing the player had not already seen, and a continuation is on offer: defect M2.",
+  "scene": {
+   "id": "S",
+   "pacing_window": 3,
+   "terminal": false,
+   "reveal_ids": [
+    "k_c1",
+    "k_c2",
+    "k_pressure"
+   ],
+   "delivered_before": [],
+   "ending_requires": [],
+   "non_voiceable_says": [],
+   "unlearned_terms": [],
+   "epilogue_candidates": []
+  },
+  "run": {
+   "replicate": 1,
+   "entry_facts": [],
+   "turns": [
+    {
+     "turn": 1,
+     "input": "Examine the console.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [
+      "g_console"
+     ],
+     "null_grounding_ids": [],
+     "committed_facts": [],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    },
+    {
+     "turn": 2,
+     "input": "Examine the console.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [
+      "g_console"
+     ],
+     "null_grounding_ids": [],
+     "committed_facts": [],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    },
+    {
+     "turn": 3,
+     "input": "Examine the console.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [
+      "g_console"
+     ],
+     "null_grounding_ids": [],
+     "committed_facts": [],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    },
+    {
+     "turn": 4,
+     "input": "Examine the console.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [
+      "g_console"
+     ],
+     "null_grounding_ids": [],
+     "committed_facts": [],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    }
+   ]
+  },
+  "expected": {
+   "turns": {
+    "1": {
+     "action_outcome": "explored"
+    },
+    "2": {
+     "action_outcome": "no_effect"
+    }
+   },
+   "confirmed_stuck": [
+    2,
+    3,
+    4
+   ],
+   "status": "stuck"
+  }
+ },
+ {
+  "id": "futile_below_window",
+  "tier": "core",
+  "description": "Two futile turns followed by a world change are not stuck when the window is three.",
+  "reason": "A short dead end that the player leaves by acting is not a stall.",
+  "scene": {
+   "id": "S",
+   "pacing_window": 3,
+   "terminal": false,
+   "reveal_ids": [
+    "k_c1",
+    "k_c2",
+    "k_pressure"
+   ],
+   "delivered_before": [],
+   "ending_requires": [],
+   "non_voiceable_says": [],
+   "unlearned_terms": [],
+   "epilogue_candidates": []
+  },
+  "run": {
+   "replicate": 1,
+   "entry_facts": [],
+   "turns": [
+    {
+     "turn": 1,
+     "input": "Knock.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    },
+    {
+     "turn": 2,
+     "input": "Knock again.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    },
+    {
+     "turn": 3,
+     "input": "Open the door.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [
+      "door_open"
+     ],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    }
+   ]
+  },
+  "expected": {
+   "confirmed_stuck": [],
+   "status": "healthy"
+  }
+ },
+ {
+  "id": "timed_reveal_masks_futile_action",
+  "tier": "core",
+  "description": "A pressure reveal that would occur anyway does not count as the player's progress.",
+  "reason": "Turn 2 grounds k_pressure, but the same id appears under the null action (wait) on that state, so the clock caused it. All three commands did nothing: defect M4.",
+  "scene": {
+   "id": "S",
+   "pacing_window": 3,
+   "terminal": false,
+   "reveal_ids": [
+    "k_c1",
+    "k_c2",
+    "k_pressure"
+   ],
+   "delivered_before": [],
+   "ending_requires": [],
+   "non_voiceable_says": [],
+   "unlearned_terms": [],
+   "epilogue_candidates": []
+  },
+  "run": {
+   "replicate": 1,
+   "entry_facts": [],
+   "turns": [
+    {
+     "turn": 1,
+     "input": "Wait by the door.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    },
+    {
+     "turn": 2,
+     "input": "Wait by the door.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [
+      "k_pressure"
+     ],
+     "null_grounding_ids": [
+      "k_pressure"
+     ],
+     "committed_facts": [],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": true,
+     "npc_move": false,
+     "ending_latched": false
+    },
+    {
+     "turn": 3,
+     "input": "Wait by the door.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    }
+   ]
+  },
+  "expected": {
+   "turns": {
+    "2": {
+     "action_outcome": "no_effect",
+     "knowledge_progress": false
+    }
+   },
+   "confirmed_stuck": [
+    1,
+    2,
+    3
+   ],
+   "status": "stuck"
+  }
+ },
+ {
+  "id": "prior_delivered_knowledge",
+  "tier": "core",
+  "description": "Re-delivering knowledge the player already has is not progress.",
+  "reason": "k_c1 was delivered before the run began; a command that surfaces it again earned nothing new.",
+  "scene": {
+   "id": "S",
+   "pacing_window": 1,
+   "terminal": false,
+   "reveal_ids": [
+    "k_c1",
+    "k_c2",
+    "k_pressure"
+   ],
+   "delivered_before": [
+    "k_c1"
+   ],
+   "ending_requires": [],
+   "non_voiceable_says": [],
+   "unlearned_terms": [],
+   "epilogue_candidates": []
+  },
+  "run": {
+   "replicate": 1,
+   "entry_facts": [],
+   "turns": [
+    {
+     "turn": 1,
+     "input": "Ask about the card.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [
+      "k_c1"
+     ],
+     "null_grounding_ids": [],
+     "committed_facts": [],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    }
+   ]
+  },
+  "expected": {
+   "turns": {
+    "1": {
+     "action_outcome": "no_effect",
+     "knowledge_progress": false
+    }
+   },
+   "confirmed_stuck": [
+    1
+   ],
+   "status": "stuck"
+  }
+ },
+ {
+  "id": "earned_reveal",
+  "tier": "core",
+  "description": "A command that causes a new reveal is knowledge progress.",
+  "reason": "k_c1 is a reveal id, not in the null-action grounding, not delivered before.",
+  "scene": {
+   "id": "S",
+   "pacing_window": 3,
+   "terminal": false,
+   "reveal_ids": [
+    "k_c1",
+    "k_c2",
+    "k_pressure"
+   ],
+   "delivered_before": [],
+   "ending_requires": [],
+   "non_voiceable_says": [],
+   "unlearned_terms": [],
+   "epilogue_candidates": []
+  },
+  "run": {
+   "replicate": 1,
+   "entry_facts": [],
+   "turns": [
+    {
+     "turn": 1,
+     "input": "Look under the desk.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [
+      "k_c1"
+     ],
+     "null_grounding_ids": [],
+     "committed_facts": [],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": "k_c1",
+     "transition_cause": "earned",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    }
+   ]
+  },
+  "expected": {
+   "turns": {
+    "1": {
+     "action_outcome": "explored",
+     "knowledge_progress": true
+    }
+   },
+   "exit": "earned",
+   "status": "healthy"
+  }
+ },
+ {
+  "id": "healthy_no_failures",
+  "tier": "core",
+  "description": "A run with no failing turns is healthy, not an error.",
+  "reason": "Healthy input must produce a no-change result; an empty failure list is a valid outcome (defect M6).",
+  "scene": {
+   "id": "S",
+   "pacing_window": 3,
+   "terminal": false,
+   "reveal_ids": [
+    "k_c1",
+    "k_c2",
+    "k_pressure"
+   ],
+   "delivered_before": [],
+   "ending_requires": [],
+   "non_voiceable_says": [],
+   "unlearned_terms": [],
+   "epilogue_candidates": []
+  },
+  "run": {
+   "replicate": 1,
+   "entry_facts": [],
+   "turns": [
+    {
+     "turn": 1,
+     "input": "Open the drawer.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [
+      "drawer_open"
+     ],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    },
+    {
+     "turn": 2,
+     "input": "Take the card.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [
+      "k_c1"
+     ],
+     "null_grounding_ids": [],
+     "committed_facts": [
+      "has_card"
+     ],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "earned",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    }
+   ]
+  },
+  "expected": {
+   "confirmed_stuck": [],
+   "unresolved": [],
+   "provenance_flags": [],
+   "exit": "earned",
+   "status": "healthy"
+  }
+ },
+ {
+  "id": "missing_telemetry",
+  "tier": "core",
+  "description": "A committed turn with no fact list or null-action grounding cannot be classified.",
+  "reason": "Missing telemetry must read as unknown, never as success (defect M10).",
+  "scene": {
+   "id": "S",
+   "pacing_window": 3,
+   "terminal": false,
+   "reveal_ids": [
+    "k_c1",
+    "k_c2",
+    "k_pressure"
+   ],
+   "delivered_before": [],
+   "ending_requires": [],
+   "non_voiceable_says": [],
+   "unlearned_terms": [],
+   "epilogue_candidates": []
+  },
+  "run": {
+   "replicate": 1,
+   "entry_facts": [],
+   "turns": [
+    {
+     "turn": 1,
+     "input": "Open the drawer.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [],
+     "null_grounding_ids": null,
+     "committed_facts": null,
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    }
+   ]
+  },
+  "expected": {
+   "turns": {
+    "1": {
+     "action_outcome": "unknown_telemetry"
+    }
+   },
+   "unresolved": [
+    1
+   ],
+   "confirmed_stuck": [],
+   "status": "unresolved"
+  }
+ },
+ {
+  "id": "normal_terminal_ending",
+  "tier": "core",
+  "description": "A terminal scene whose authored prerequisites were earned ends validly.",
+  "reason": "story_complete in the final scene with ending_requires facts committed is a real ending (defect M7).",
+  "scene": {
+   "id": "S",
+   "pacing_window": 3,
+   "terminal": true,
+   "reveal_ids": [
+    "k_c1",
+    "k_c2",
+    "k_pressure"
+   ],
+   "delivered_before": [],
+   "ending_requires": [
+    "evac_done"
+   ],
+   "non_voiceable_says": [],
+   "unlearned_terms": [],
+   "epilogue_candidates": []
+  },
+  "run": {
+   "replicate": 1,
+   "entry_facts": [],
+   "turns": [
+    {
+     "turn": 1,
+     "input": "Lead them out.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": true,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [
+      "evac_done"
+     ],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    }
+   ]
+  },
+  "expected": {
+   "exit": "ending",
+   "status": "healthy"
+  }
+ },
+ {
+  "id": "ending_without_prerequisite",
+  "tier": "core",
+  "description": "story_complete without the authored prerequisite is not a valid ending.",
+  "reason": "The exit is unknown, which blocks certification.",
+  "scene": {
+   "id": "S",
+   "pacing_window": 3,
+   "terminal": true,
+   "reveal_ids": [
+    "k_c1",
+    "k_c2",
+    "k_pressure"
+   ],
+   "delivered_before": [],
+   "ending_requires": [
+    "evac_done"
+   ],
+   "non_voiceable_says": [],
+   "unlearned_terms": [],
+   "epilogue_candidates": []
+  },
+  "run": {
+   "replicate": 1,
+   "entry_facts": [],
+   "turns": [
+    {
+     "turn": 1,
+     "input": "Wait.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": true,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [
+      "door_open"
+     ],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    }
+   ]
+  },
+  "expected": {
+   "exit": "unknown"
+  }
+ },
+ {
+  "id": "forced_handoff_after_futile_turns",
+  "tier": "core",
+  "description": "Futile turns then a forced handoff: stuck turns and a forced exit.",
+  "reason": "The 3B shape: the player keeps naming one goal, nothing happens, and the harness hands the scene on at the cap.",
+  "scene": {
+   "id": "S",
+   "pacing_window": 3,
+   "terminal": false,
+   "reveal_ids": [
+    "k_c1",
+    "k_c2",
+    "k_pressure"
+   ],
+   "delivered_before": [],
+   "ending_requires": [],
+   "non_voiceable_says": [],
+   "unlearned_terms": [],
+   "epilogue_candidates": []
+  },
+  "run": {
+   "replicate": 1,
+   "entry_facts": [],
+   "turns": [
+    {
+     "turn": 1,
+     "input": "Trigger the alarms.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [
+      "alarms_on"
+     ],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    },
+    {
+     "turn": 2,
+     "input": "Reach the broadcast controls.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    },
+    {
+     "turn": 3,
+     "input": "Reach the broadcast controls.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    },
+    {
+     "turn": 4,
+     "input": "Reach the broadcast controls.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    },
+    {
+     "turn": 5,
+     "input": "Reach the broadcast controls.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "forced",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    }
+   ]
+  },
+  "expected": {
+   "confirmed_stuck": [
+    2,
+    3,
+    4,
+    5
+   ],
+   "exit": "forced",
+   "status": "stuck"
+  }
+ },
+ {
+  "id": "player_ignores_authored_order",
+  "tier": "core",
+  "description": "Taking a different authored branch first is healthy.",
+  "reason": "Two candidates are offered; the player matches the second one first and still earns the exit (the 1C replicate 2 case).",
+  "scene": {
+   "id": "S",
+   "pacing_window": 3,
+   "terminal": false,
+   "reveal_ids": [
+    "k_c1",
+    "k_c2",
+    "k_pressure"
+   ],
+   "delivered_before": [],
+   "ending_requires": [],
+   "non_voiceable_says": [],
+   "unlearned_terms": [],
+   "epilogue_candidates": []
+  },
+  "run": {
+   "replicate": 1,
+   "entry_facts": [],
+   "turns": [
+    {
+     "turn": 1,
+     "input": "Take the side stairs.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [
+      "on_stairs"
+     ],
+     "candidates_offered": [
+      "k_c1",
+      "k_c2"
+     ],
+     "matched_candidate": "k_c2",
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    },
+    {
+     "turn": 2,
+     "input": "Open the vault.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [
+      "vault_open"
+     ],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": "k_c1",
+     "transition_cause": "earned",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    }
+   ]
+  },
+  "expected": {
+   "confirmed_stuck": [],
+   "exit": "earned",
+   "status": "healthy"
+  }
+ },
+ {
+  "id": "costed_recovery_ends_the_stall",
+  "tier": "core",
+  "description": "A recovery whose cost was committed and shown breaks a stall run.",
+  "reason": "Two futile turns, then an authored recovery with its cost shown; the run is short of the window and the recovery counts.",
+  "scene": {
+   "id": "S",
+   "pacing_window": 3,
+   "terminal": false,
+   "reveal_ids": [
+    "k_c1",
+    "k_c2",
+    "k_pressure"
+   ],
+   "delivered_before": [],
+   "ending_requires": [],
+   "non_voiceable_says": [],
+   "unlearned_terms": [],
+   "epilogue_candidates": []
+  },
+  "run": {
+   "replicate": 1,
+   "entry_facts": [],
+   "turns": [
+    {
+     "turn": 1,
+     "input": "Push.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    },
+    {
+     "turn": 2,
+     "input": "Push.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    },
+    {
+     "turn": 3,
+     "input": "Push.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [
+      "door_forced"
+     ],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false,
+     "recovery": {
+      "cost_committed": true,
+      "cost_shown": true
+     }
+    }
+   ]
+  },
+  "expected": {
+   "turns": {
+    "3": {
+     "authored_recovery": true
+    }
+   },
+   "confirmed_stuck": [],
+   "status": "healthy"
+  }
+ },
+ {
+  "id": "recovery_without_shown_cost_does_not_count",
+  "tier": "core",
+  "description": "A recovery whose cost was not shown does not count.",
+  "reason": "Three futile turns; turn 3 has a recovery that committed its cost but never showed it, so it is not a recovery.",
+  "scene": {
+   "id": "S",
+   "pacing_window": 3,
+   "terminal": false,
+   "reveal_ids": [
+    "k_c1",
+    "k_c2",
+    "k_pressure"
+   ],
+   "delivered_before": [],
+   "ending_requires": [],
+   "non_voiceable_says": [],
+   "unlearned_terms": [],
+   "epilogue_candidates": []
+  },
+  "run": {
+   "replicate": 1,
+   "entry_facts": [],
+   "turns": [
+    {
+     "turn": 1,
+     "input": "Push.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    },
+    {
+     "turn": 2,
+     "input": "Push.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    },
+    {
+     "turn": 3,
+     "input": "Push.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false,
+     "recovery": {
+      "cost_committed": true,
+      "cost_shown": false
+     }
+    }
+   ]
+  },
+  "expected": {
+   "turns": {
+    "3": {
+     "authored_recovery": false
+    }
+   },
+   "confirmed_stuck": [
+    1,
+    2,
+    3
+   ],
+   "status": "stuck"
+  }
+ },
+ {
+  "id": "rejected_turn_is_neutral",
+  "tier": "core",
+  "description": "A rejected turn neither extends nor resets a stall run.",
+  "reason": "Rejections are counted separately; they sit between futile turns without hiding them.",
+  "scene": {
+   "id": "S",
+   "pacing_window": 3,
+   "terminal": false,
+   "reveal_ids": [
+    "k_c1",
+    "k_c2",
+    "k_pressure"
+   ],
+   "delivered_before": [],
+   "ending_requires": [],
+   "non_voiceable_says": [],
+   "unlearned_terms": [],
+   "epilogue_candidates": []
+  },
+  "run": {
+   "replicate": 1,
+   "entry_facts": [],
+   "turns": [
+    {
+     "turn": 1,
+     "input": "Push.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    },
+    {
+     "turn": 2,
+     "input": "Xyzzy.",
+     "text": "",
+     "outcome": "rejected",
+     "rejected": true,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    },
+    {
+     "turn": 3,
+     "input": "Push.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    },
+    {
+     "turn": 4,
+     "input": "Push.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    }
+   ]
+  },
+  "expected": {
+   "turns": {
+    "2": {
+     "action_outcome": "rejected"
+    }
+   },
+   "confirmed_stuck": [
+    1,
+    3,
+    4
+   ],
+   "status": "stuck"
+  }
+ },
+ {
+  "id": "noncommitted_turn_is_neutral",
+  "tier": "core",
+  "description": "A clarification question is neutral, like a rejection.",
+  "reason": "The player was asked 'Do you mean X or Y?'; that turn is neither progress nor a stall.",
+  "scene": {
+   "id": "S",
+   "pacing_window": 2,
+   "terminal": false,
+   "reveal_ids": [
+    "k_c1",
+    "k_c2",
+    "k_pressure"
+   ],
+   "delivered_before": [],
+   "ending_requires": [],
+   "non_voiceable_says": [],
+   "unlearned_terms": [],
+   "epilogue_candidates": []
+  },
+  "run": {
+   "replicate": 1,
+   "entry_facts": [],
+   "turns": [
+    {
+     "turn": 1,
+     "input": "Open it.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    },
+    {
+     "turn": 2,
+     "input": "Open it.",
+     "text": "",
+     "outcome": "question",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    },
+    {
+     "turn": 3,
+     "input": "Open the drawer.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [
+      "drawer_open"
+     ],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    }
+   ]
+  },
+  "expected": {
+   "turns": {
+    "2": {
+     "action_outcome": "noncommitted"
+    }
+   },
+   "confirmed_stuck": [],
+   "status": "healthy"
+  }
+ },
+ {
+  "id": "no_continuation_offered",
+  "tier": "core",
+  "description": "Futile turns with nothing offered cannot be called stuck; they are unresolved.",
+  "reason": "Stuck means a continuation was on offer. With none offered the cause is not the player's play, so it must be adjudicated, not certified.",
+  "scene": {
+   "id": "S",
+   "pacing_window": 3,
+   "terminal": false,
+   "reveal_ids": [
+    "k_c1",
+    "k_c2",
+    "k_pressure"
+   ],
+   "delivered_before": [],
+   "ending_requires": [],
+   "non_voiceable_says": [],
+   "unlearned_terms": [],
+   "epilogue_candidates": []
+  },
+  "run": {
+   "replicate": 1,
+   "entry_facts": [],
+   "turns": [
+    {
+     "turn": 1,
+     "input": "Wait.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [],
+     "candidates_offered": [],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    },
+    {
+     "turn": 2,
+     "input": "Wait.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [],
+     "candidates_offered": [],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    },
+    {
+     "turn": 3,
+     "input": "Wait.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [],
+     "candidates_offered": [],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    }
+   ]
+  },
+  "expected": {
+   "confirmed_stuck": [],
+   "unresolved": [
+    1,
+    2,
+    3
+   ],
+   "status": "unresolved"
+  }
+ },
+ {
+  "id": "pacing_window_missing",
+  "tier": "core",
+  "description": "Without a pacing window nothing can be certified.",
+  "reason": "An absent scene.pacing_window means every no_effect turn is unresolved; it must not default to a convenient number.",
+  "scene": {
+   "id": "S",
+   "pacing_window": null,
+   "terminal": false,
+   "reveal_ids": [
+    "k_c1",
+    "k_c2",
+    "k_pressure"
+   ],
+   "delivered_before": [],
+   "ending_requires": [],
+   "non_voiceable_says": [],
+   "unlearned_terms": [],
+   "epilogue_candidates": []
+  },
+  "run": {
+   "replicate": 1,
+   "entry_facts": [],
+   "turns": [
+    {
+     "turn": 1,
+     "input": "Wait.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    },
+    {
+     "turn": 2,
+     "input": "Wait.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    },
+    {
+     "turn": 3,
+     "input": "Wait.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    }
+   ]
+  },
+  "expected": {
+   "confirmed_stuck": [],
+   "unresolved": [
+    1,
+    2,
+    3
+   ],
+   "status": "unresolved"
+  }
+ },
+ {
+  "id": "quiet_stretch_after_pressure",
+  "tier": "extension",
+  "description": "Quiet stretch is counted after the first pressure event.",
+  "reason": "Turns 2 to 6 have no reveal, pressure event or NPC move; turn 7 has an NPC move. Longest quiet stretch is 5.",
+  "scene": {
+   "id": "S",
+   "pacing_window": 3,
+   "terminal": false,
+   "reveal_ids": [
+    "k_c1",
+    "k_c2",
+    "k_pressure"
+   ],
+   "delivered_before": [],
+   "ending_requires": [],
+   "non_voiceable_says": [],
+   "unlearned_terms": [],
+   "epilogue_candidates": []
+  },
+  "run": {
+   "replicate": 1,
+   "entry_facts": [],
+   "turns": [
+    {
+     "turn": 1,
+     "input": "Open the door.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [
+      "a"
+     ],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": true,
+     "npc_move": false,
+     "ending_latched": false
+    },
+    {
+     "turn": 2,
+     "input": "Walk.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [
+      "f2"
+     ],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    },
+    {
+     "turn": 3,
+     "input": "Walk.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [
+      "f3"
+     ],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    },
+    {
+     "turn": 4,
+     "input": "Walk.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [
+      "f4"
+     ],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    },
+    {
+     "turn": 5,
+     "input": "Walk.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [
+      "f5"
+     ],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    },
+    {
+     "turn": 6,
+     "input": "Walk.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [
+      "f6"
+     ],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    },
+    {
+     "turn": 7,
+     "input": "Walk.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [
+      "f7"
+     ],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": true,
+     "ending_latched": false
+    }
+   ]
+  },
+  "expected": {
+   "pacing": {
+    "scene_length": 7,
+    "turns_to_first_pressure": 1,
+    "quiet_stretch": 5,
+    "exploration_share": 0.0,
+    "earned_reveals": 0
+   }
+  }
+ },
+ {
+  "id": "pacing_numbers_mixed",
+  "tier": "extension",
+  "description": "Scene length, exploration share and earned reveals for a mixed run.",
+  "reason": "4 turns: one explored, one reveal, one world change, one futile; pressure first lands on turn 3.",
+  "scene": {
+   "id": "S",
+   "pacing_window": 3,
+   "terminal": false,
+   "reveal_ids": [
+    "k_c1",
+    "k_c2",
+    "k_pressure"
+   ],
+   "delivered_before": [],
+   "ending_requires": [],
+   "non_voiceable_says": [],
+   "unlearned_terms": [],
+   "epilogue_candidates": []
+  },
+  "run": {
+   "replicate": 1,
+   "entry_facts": [],
+   "turns": [
+    {
+     "turn": 1,
+     "input": "Look at the shelf.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [
+      "g_shelf"
+     ],
+     "null_grounding_ids": [],
+     "committed_facts": [],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    },
+    {
+     "turn": 2,
+     "input": "Look under the desk.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [
+      "k_c1"
+     ],
+     "null_grounding_ids": [],
+     "committed_facts": [],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    },
+    {
+     "turn": 3,
+     "input": "Open the door.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [
+      "door_open"
+     ],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": true,
+     "npc_move": false,
+     "ending_latched": false
+    },
+    {
+     "turn": 4,
+     "input": "Wait.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    }
+   ]
+  },
+  "expected": {
+   "pacing": {
+    "scene_length": 4,
+    "turns_to_first_pressure": 3,
+    "quiet_stretch": 1,
+    "exploration_share": 0.5,
+    "earned_reveals": 1
+   }
+  }
+ },
+ {
+  "id": "bookkeeping_voiced_with_earned_exit",
+  "tier": "extension",
+  "description": "The narrator speaks a bookkeeping line as dialogue while progression is healthy.",
+  "reason": "Progression is fine (earned exit, nothing stuck), yet turn 2 has a character say the authored non-voiceable summary: defect M5.",
+  "scene": {
+   "id": "S",
+   "pacing_window": 3,
+   "terminal": false,
+   "reveal_ids": [
+    "k_c1",
+    "k_c2",
+    "k_pressure"
+   ],
+   "delivered_before": [],
+   "ending_requires": [],
+   "non_voiceable_says": [
+    "Kristin feeds JANUS false alarms until operators take control."
+   ],
+   "unlearned_terms": [],
+   "epilogue_candidates": []
+  },
+  "run": {
+   "replicate": 1,
+   "entry_facts": [],
+   "turns": [
+    {
+     "turn": 1,
+     "input": "Open the console.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [
+      "console_open"
+     ],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    },
+    {
+     "turn": 2,
+     "input": "Send the alarms.",
+     "text": "Brandon says, \"Kristin feeds JANUS false alarms until operators take control.\"",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [
+      "alarms_on"
+     ],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "earned",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    }
+   ]
+  },
+  "expected": {
+   "confirmed_stuck": [],
+   "provenance_flags": [
+    {
+     "turn": 2,
+     "kind": "bookkeeping_voiced"
+    }
+   ],
+   "exit": "earned",
+   "status": "flagged"
+  }
+ },
+ {
+  "id": "character_cites_unlearned_event",
+  "tier": "extension",
+  "description": "A character speaks of an event the player has not learned.",
+  "reason": "'Phase Two' requires k_phase1 to be delivered first; it was not, and the term is in dialogue on turn 2.",
+  "scene": {
+   "id": "S",
+   "pacing_window": 3,
+   "terminal": false,
+   "reveal_ids": [
+    "k_c1",
+    "k_c2",
+    "k_pressure"
+   ],
+   "delivered_before": [],
+   "ending_requires": [],
+   "non_voiceable_says": [],
+   "unlearned_terms": [
+    {
+     "term": "Phase Two",
+     "requires": "k_phase1"
+    }
+   ],
+   "epilogue_candidates": []
+  },
+  "run": {
+   "replicate": 1,
+   "entry_facts": [],
+   "turns": [
+    {
+     "turn": 1,
+     "input": "Look around.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [
+      "g_room"
+     ],
+     "null_grounding_ids": [],
+     "committed_facts": [],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    },
+    {
+     "turn": 2,
+     "input": "Ask Michelle.",
+     "text": "Michelle says, \"Then Phase Two begins.\"",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [
+      "asked"
+     ],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    }
+   ]
+  },
+  "expected": {
+   "provenance_flags": [
+    {
+     "turn": 2,
+     "kind": "character_knowledge"
+    }
+   ],
+   "status": "flagged"
+  }
+ },
+ {
+  "id": "character_cites_learned_event",
+  "tier": "extension",
+  "description": "The same line after the prerequisite was delivered is fine.",
+  "reason": "k_phase1 was delivered on turn 1, so a character may mention Phase Two on turn 2.",
+  "scene": {
+   "id": "S",
+   "pacing_window": 3,
+   "terminal": false,
+   "reveal_ids": [
+    "k_c1",
+    "k_c2",
+    "k_pressure"
+   ],
+   "delivered_before": [],
+   "ending_requires": [],
+   "non_voiceable_says": [],
+   "unlearned_terms": [
+    {
+     "term": "Phase Two",
+     "requires": "k_phase1"
+    }
+   ],
+   "epilogue_candidates": []
+  },
+  "run": {
+   "replicate": 1,
+   "entry_facts": [],
+   "turns": [
+    {
+     "turn": 1,
+     "input": "Read the file.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [
+      "k_phase1"
+     ],
+     "null_grounding_ids": [],
+     "committed_facts": [
+      "read"
+     ],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    },
+    {
+     "turn": 2,
+     "input": "Ask Michelle.",
+     "text": "Michelle says, \"Then Phase Two begins.\"",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [
+      "asked"
+     ],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    }
+   ]
+  },
+  "expected": {
+   "provenance_flags": [],
+   "status": "healthy"
+  }
+ },
+ {
+  "id": "epilogue_offered_and_taken",
+  "tier": "extension",
+  "description": "The 3C epilogue is offered after the ending latch and the player takes it.",
+  "reason": "Offered and taken are recorded separately.",
+  "scene": {
+   "id": "S",
+   "pacing_window": 3,
+   "terminal": true,
+   "reveal_ids": [
+    "k_c1",
+    "k_c2",
+    "k_pressure"
+   ],
+   "delivered_before": [],
+   "ending_requires": [
+    "evac_done"
+   ],
+   "non_voiceable_says": [],
+   "unlearned_terms": [],
+   "epilogue_candidates": [
+    "k_epi_d"
+   ]
+  },
+  "run": {
+   "replicate": 1,
+   "entry_facts": [],
+   "turns": [
+    {
+     "turn": 1,
+     "input": "Lead them out.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": true,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [
+      "evac_done"
+     ],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": true
+    },
+    {
+     "turn": 2,
+     "input": "Read the aftermath.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [
+      "read"
+     ],
+     "candidates_offered": [
+      "k_epi_d"
+     ],
+     "matched_candidate": "k_epi_d",
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    }
+   ]
+  },
+  "expected": {
+   "exit": "ending",
+   "epilogue": {
+    "offered": true,
+    "taken": true
+   },
+   "status": "healthy"
+  }
+ },
+ {
+  "id": "epilogue_offered_not_taken",
+  "tier": "extension",
+  "description": "Offered and declined is a valid ending.",
+  "reason": "Owner decision 2026-11-23: Phase Two is offered, not required.",
+  "scene": {
+   "id": "S",
+   "pacing_window": 3,
+   "terminal": true,
+   "reveal_ids": [
+    "k_c1",
+    "k_c2",
+    "k_pressure"
+   ],
+   "delivered_before": [],
+   "ending_requires": [
+    "evac_done"
+   ],
+   "non_voiceable_says": [],
+   "unlearned_terms": [],
+   "epilogue_candidates": [
+    "k_epi_d"
+   ]
+  },
+  "run": {
+   "replicate": 1,
+   "entry_facts": [],
+   "turns": [
+    {
+     "turn": 1,
+     "input": "Lead them out.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": true,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [
+      "evac_done"
+     ],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": true
+    },
+    {
+     "turn": 2,
+     "input": "Leave.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [
+      "left"
+     ],
+     "candidates_offered": [
+      "k_epi_d"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    }
+   ]
+  },
+  "expected": {
+   "exit": "ending",
+   "epilogue": {
+    "offered": true,
+    "taken": false
+   },
+   "status": "healthy"
+  }
+ },
+ {
+  "id": "epilogue_never_offered",
+  "tier": "extension",
+  "description": "An ending where the epilogue was never offered carries a flag.",
+  "reason": "The delivery report must fail such a run: the owner requires the offer on every canonical ending route.",
+  "scene": {
+   "id": "S",
+   "pacing_window": 3,
+   "terminal": true,
+   "reveal_ids": [
+    "k_c1",
+    "k_c2",
+    "k_pressure"
+   ],
+   "delivered_before": [],
+   "ending_requires": [
+    "evac_done"
+   ],
+   "non_voiceable_says": [],
+   "unlearned_terms": [],
+   "epilogue_candidates": [
+    "k_epi_d"
+   ]
+  },
+  "run": {
+   "replicate": 1,
+   "entry_facts": [],
+   "turns": [
+    {
+     "turn": 1,
+     "input": "Lead them out.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": true,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [
+      "evac_done"
+     ],
+     "candidates_offered": [],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": true
+    }
+   ]
+  },
+  "expected": {
+   "exit": "ending",
+   "epilogue": {
+    "offered": false,
+    "taken": false
+   },
+   "provenance_flags": [
+    {
+     "turn": null,
+     "kind": "epilogue_not_offered"
+    }
+   ],
+   "status": "flagged"
+  }
+ }
+]
