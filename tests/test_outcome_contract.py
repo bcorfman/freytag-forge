@@ -9,8 +9,6 @@ import pytest
 from factory.outcome_contract import classify_run
 
 CASES = json.loads((Path(__file__).parent / "fixtures/outcome_contract/cases.json").read_text())
-CORE_CASES = [case for case in CASES if case["tier"] == "core"]
-EXTENSION_CASES = [case["id"] for case in CASES if case["tier"] != "core"]
 
 
 def _assert_subset(actual: dict, expected: dict, case_id: str) -> None:
@@ -24,14 +22,9 @@ def _assert_subset(actual: dict, expected: dict, case_id: str) -> None:
             assert actual[field] == expected_value, f"{case_id}: {field}"
 
 
-@pytest.mark.parametrize("case", CORE_CASES, ids=lambda case: case["id"])
-def test_frozen_core_cases(case: dict) -> None:
+@pytest.mark.parametrize("case", CASES, ids=lambda case: case["id"])
+def test_frozen_cases(case: dict) -> None:
     _assert_subset(classify_run(case["run"], case["scene"]), case["expected"], case["id"])
-
-
-@pytest.mark.parametrize("case_id", EXTENSION_CASES, ids=lambda case_id: f"skipped-extension-{case_id}")
-def test_extension_cases_are_deferred(case_id: str) -> None:
-    pytest.skip(f"extension-tier case {case_id} is deferred; core contract only")
 
 
 def _scene(window: int | None = 3) -> dict:
@@ -42,6 +35,55 @@ def _scene(window: int | None = 3) -> dict:
         "delivered_before": [],
         "ending_requires": [],
     }
+
+
+def test_provenance_only_checks_independent_quoted_segments_and_curly_quotes() -> None:
+    scene = {
+        **_scene(),
+        "non_voiceable_says": ["internal summary"],
+        "unlearned_terms": [{"term": "Phase Two", "requires": "phase_one"}],
+    }
+    turns = [
+        _turn(1, text='Narration says internal summary, but "ordinary" is fine.'),
+        _turn(2, text='“Phase Two begins.” Then "internal summary".'),
+        _turn(3, text="The narrator says “Phase Two is here."),
+        _turn(4),
+    ]
+    flags = classify_run({"turns": turns}, scene)["provenance_flags"]
+    assert flags == [
+        {"turn": 2, "kind": "bookkeeping_voiced"},
+        {"turn": 2, "kind": "character_knowledge"},
+        {"turn": 3, "kind": "character_knowledge"},
+    ]
+
+
+@pytest.mark.parametrize("reset", ["pressure_event", "npc_move", "knowledge_progress"])
+def test_quiet_stretch_resets_on_activity(reset: str) -> None:
+    turns = [_turn(1, pressure_event=True)]
+    for number in range(2, 5):
+        changes = {"grounding_ids": [], "committed_facts": []}
+        if number == 3:
+            if reset == "knowledge_progress":
+                changes["grounding_ids"] = ["reveal"]
+            else:
+                changes[reset] = True
+        turns.append(_turn(number, **changes))
+    turns.append(_turn(5))
+    assert classify_run({"turns": turns}, _scene())["pacing"]["quiet_stretch"] == 2
+
+
+def test_zero_turn_pacing_and_epilogue_taken_requires_offer() -> None:
+    result = classify_run({"turns": []}, {"epilogue_candidates": ["epi"]})
+    assert result["pacing"]["exploration_share"] == 0.0
+    run = {
+        "turns": [
+            _turn(1, story_complete=True, ending_latched=True, committed_facts=["done"]),
+            _turn(2, matched_candidate="epi"),
+        ]
+    }
+    scene = {**_scene(), "terminal": True, "epilogue_candidates": ["epi"]}
+    result = classify_run(run, scene)
+    assert result["epilogue"] == {"offered": False, "taken": False}
 
 
 def _turn(number: int, *, outcome: str = "committed", **changes: object) -> dict:

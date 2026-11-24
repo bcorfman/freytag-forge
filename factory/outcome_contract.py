@@ -85,6 +85,129 @@ def _safe_union(values: Iterable[list[str]]) -> set[str]:
     return result
 
 
+def _normalise_text(value: str) -> str:
+    return " ".join(value.split())
+
+
+def _quoted_segments(text: str) -> list[str]:
+    segments: list[str] = []
+    start: int | None = None
+    closing: str | None = None
+    for index, character in enumerate(text):
+        if start is None:
+            if character == '"':
+                start, closing = index + 1, '"'
+            elif character == "“":
+                start, closing = index + 1, "”"
+        elif character == closing:
+            segments.append(text[start:index])
+            start, closing = None, None
+    if start is not None:
+        segments.append(text[start:])
+    return segments
+
+
+def _provenance_flags(turns: list[Any], scene: dict[str, Any], delivered_before: set[str]) -> list[dict[str, Any]]:
+    non_voiceable = [_normalise_text(value) for value in _scene_strings(scene, "non_voiceable_says")]
+    unlearned: list[tuple[str, str]] = []
+    raw_terms = scene.get("unlearned_terms")
+    if isinstance(raw_terms, list):
+        for entry in raw_terms:
+            if (
+                isinstance(entry, dict)
+                and isinstance(entry.get("term"), str)
+                and isinstance(entry.get("requires"), str)
+            ):
+                unlearned.append((_normalise_text(entry["term"]), entry["requires"]))
+
+    prior_grounding = set(delivered_before)
+    found: set[tuple[int | None, str, str]] = set()
+    flags: list[tuple[int | None, str, str]] = []
+    for index, raw_turn in enumerate(turns, start=1):
+        turn = raw_turn if isinstance(raw_turn, dict) else {}
+        number = _turn_number(turn.get("turn"), index) if isinstance(raw_turn, dict) else index
+        text = turn.get("text")
+        if isinstance(text, str):
+            for segment in _quoted_segments(text):
+                normalized_segment = _normalise_text(segment)
+                for matched in non_voiceable:
+                    if matched and matched in normalized_segment:
+                        key = (number, "bookkeeping_voiced", matched)
+                        if key not in found:
+                            found.add(key)
+                            flags.append(key)
+                for term, requires in unlearned:
+                    if term and term in normalized_segment and requires not in prior_grounding:
+                        key = (number, "character_knowledge", term)
+                        if key not in found:
+                            found.add(key)
+                            flags.append(key)
+        grounding_ids = _strings(turn.get("grounding_ids"))
+        if grounding_ids is not None:
+            prior_grounding.update(grounding_ids)
+    flags.sort(key=lambda item: (item[0] is None, item[0] if item[0] is not None else 0, item[1], item[2]))
+    return [{"turn": turn, "kind": kind} for turn, kind, _ in flags]
+
+
+def _epilogue(turns: list[Any], scene: dict[str, Any], exit_value: str) -> tuple[dict[str, bool], bool]:
+    candidates = set(_scene_strings(scene, "epilogue_candidates"))
+    if not candidates:
+        return {"offered": False, "taken": False}, False
+    latch_index = next(
+        (
+            index
+            for index, raw_turn in enumerate(turns)
+            if isinstance(raw_turn, dict) and raw_turn.get("ending_latched") is True
+        ),
+        None,
+    )
+    if latch_index is None:
+        return {"offered": False, "taken": False}, False
+    offered = False
+    taken = False
+    for raw_turn in turns[latch_index:]:
+        if not isinstance(raw_turn, dict):
+            continue
+        offered_values = _strings(raw_turn.get("candidates_offered")) or []
+        if candidates.intersection(offered_values):
+            offered = True
+        if isinstance(raw_turn.get("matched_candidate"), str) and raw_turn["matched_candidate"] in candidates:
+            taken = True
+    return {"offered": offered, "taken": taken and offered}, exit_value == "ending" and not offered
+
+
+def _pacing(classified: list[dict[str, Any]], turns: list[Any]) -> dict[str, Any]:
+    first_pressure: int | None = None
+    first_pressure_index: int | None = None
+    for index, raw_turn in enumerate(turns):
+        if isinstance(raw_turn, dict) and raw_turn.get("pressure_event") is True:
+            first_pressure = classified[index]["turn"]
+            first_pressure_index = index
+            break
+    quiet_stretch = 0
+    if first_pressure_index is not None:
+        current = 0
+        for item, raw_turn in zip(
+            classified[first_pressure_index + 1 :], turns[first_pressure_index + 1 :], strict=True
+        ):
+            turn = raw_turn if isinstance(raw_turn, dict) else {}
+            if item["knowledge_progress"] is True or turn.get("pressure_event") is True or turn.get("npc_move") is True:
+                current = 0
+            else:
+                current += 1
+                quiet_stretch = max(quiet_stretch, current)
+    scene_length = len(turns)
+    explored = sum(item["action_outcome"] == "explored" for item in classified)
+    earned_reveals = sum(item["knowledge_progress"] is True for item in classified)
+    return {
+        "scene_length": scene_length,
+        "turns_to_first_pressure": first_pressure,
+        "quiet_stretch": quiet_stretch,
+        "exploration_share": round(explored / scene_length, 4) if scene_length else 0.0,
+        "earned_reveals": earned_reveals,
+    }
+
+
 def classify_run(run: dict, scene: dict) -> dict:
     """Classify one run without mutating input or raising on malformed data."""
     run_data = run if isinstance(run, dict) else {}
@@ -174,13 +297,15 @@ def classify_run(run: dict, scene: dict) -> dict:
                 )
                 break
 
-    # Extension-tier provenance flags are intentionally deferred.
-    provenance_flags: list[dict[str, Any]] = []
-    # Extension-tier pacing metrics are intentionally deferred.
-    pacing: dict[str, Any] = {}
-    # Extension-tier epilogue analysis is intentionally deferred.
-    epilogue = {"offered": False, "taken": False}
-    status = "unresolved" if unresolved else "stuck" if confirmed else "healthy"
+    provenance_flags = _provenance_flags(turns, scene_data, delivered_before)
+    epilogue, epilogue_not_offered = _epilogue(turns, scene_data, exit_value)
+    if epilogue_not_offered:
+        provenance_flags.append({"turn": None, "kind": "epilogue_not_offered"})
+        provenance_flags.sort(
+            key=lambda item: (item["turn"] is None, item["turn"] if item["turn"] is not None else 0, item["kind"])
+        )
+    pacing = _pacing(classified, turns)
+    status = "unresolved" if unresolved else "stuck" if confirmed else "flagged" if provenance_flags else "healthy"
     return {
         "turns": classified,
         "confirmed_stuck": sorted(confirmed),
@@ -190,5 +315,5 @@ def classify_run(run: dict, scene: dict) -> dict:
         "status": status,
         "pacing": pacing,
         "epilogue": epilogue,
-        "contract_version": "v1-core",
+        "contract_version": "v1",
     }
