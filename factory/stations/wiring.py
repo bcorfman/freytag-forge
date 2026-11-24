@@ -195,7 +195,8 @@ plan.json: `.venv/bin/python -m storygame.story_cli set <address> <text>`.
 Copy the text character for character; never re-word it. If the CLI refuses, make the
 smallest hand edit necessary. The authoritative story root is {story_root_relative}."""
     hand_edit_log = """If any CLI command refuses and you make a hand edit, record it. Before finishing, write
-hand_edits.json in the same directory as plan.json as a JSON list; write [] when there were no hand edits. Each entry
+hand_edits.json in the root of your working directory (the worktree) as a JSON list; write [] when there were no
+hand edits. Each entry
 must be {\"file\": <source-relative path>, \"record\": <address or id>,
 \"refused_command\": <the exact CLI command that refused>, \"error\": <its error text>}.
 Keep every other record and file unchanged."""
@@ -224,6 +225,7 @@ def _check_extra(plan_path: Path, story_root_relative: str, ownership: list[str]
 # Confirm the worker did not change or create an unowned path.
 .venv/bin/python - {_quote(plan_path)} {_quote(story_root_relative)} {quoted_ownership} <<'PY'
 import json
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -250,13 +252,13 @@ for line in status.stdout.splitlines():
     if " -> " in path:
         path = path.split(" -> ", 1)[1]
     changed.add(path)
-unexpected = sorted(changed - owned)
+unexpected = sorted(changed - owned - {{"hand_edits.json"}})
 if unexpected:
     raise SystemExit("files outside task ownership: " + ", ".join(unexpected))
 
 plan = json.loads(plan_path.read_text(encoding="utf-8"))
 hand_edit_keys = ("file", "record", "refused_command", "error")
-hand_edits_path = plan_path.parent / "hand_edits.json"
+hand_edits_path = Path.cwd() / "hand_edits.json"
 try:
     hand_edits = json.loads(hand_edits_path.read_text(encoding="utf-8"))
 except FileNotFoundError:
@@ -274,6 +276,7 @@ if missing_keys:
     raise SystemExit(
         f"hand_edits.json entries missing keys at indexes {{missing_keys}}; entries found: {{hand_edits!r}}"
     )
+shutil.copyfile(hand_edits_path, plan_path.parent / "hand_edits.json")
 print(f"hand edits: {{len(hand_edits)}}")
 for entry in hand_edits:
     print(f"hand edit: {{entry['file']}}, {{entry['record']}}, {{entry['refused_command']}}")
@@ -626,7 +629,7 @@ def wiring_handler(
                 venv_link.symlink_to(repository_root / ".venv")
         except OSError as error:
             return StationResult(False, "wiring", str(error), tokens=planner_tokens)
-        applied = _run_git(run, ["git", "apply", str(patch_path)], tree)
+        applied = _run_git(run, ["git", "apply", "--exclude=hand_edits.json", str(patch_path)], tree)
         if applied is None or applied.returncode != 0:
             return StationResult(
                 False,

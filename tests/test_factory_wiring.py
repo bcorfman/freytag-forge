@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import difflib
 import json
+import os
 import shutil
 import subprocess
 from datetime import UTC, datetime
@@ -24,6 +25,7 @@ from factory.stations.wiring import (
 )
 from factory.tickets import Station, Ticket
 from storygame.story_package.loader import load_story_package
+from storygame.story_source.lookup import story_text
 
 ROOT = Path(__file__).resolve().parents[1]
 NOW = datetime(2026, 1, 1, tzinfo=UTC)
@@ -239,12 +241,14 @@ def test_wiring_spec_and_manifest_are_complete_for_both_kinds(tmp_path: Path) ->
         assert lint_check(task["check"]) == []
 
 
-def _run_extra_check(repository: Path, ticket_dir: Path, hand_edits: object = None) -> subprocess.CompletedProcess:
+def _run_extra_check(
+    repository: Path, ticket_dir: Path, hand_edits: object = None, plan: dict | None = None
+) -> subprocess.CompletedProcess:
     ticket_dir.mkdir(parents=True)
     plan_path = ticket_dir / "plan.json"
-    plan_path.write_text(json.dumps(text_plan()) + "\n", encoding="utf-8")
+    plan_path.write_text(json.dumps(plan or text_plan()) + "\n", encoding="utf-8")
     if hand_edits is not None:
-        (ticket_dir / "hand_edits.json").write_text(json.dumps(hand_edits) + "\n", encoding="utf-8")
+        (repository / "hand_edits.json").write_text(json.dumps(hand_edits) + "\n", encoding="utf-8")
     fake_test = repository / "tests" / "test_game_path_completion.py"
     fake_test.parent.mkdir(parents=True, exist_ok=True)
     fake_test.write_text("def test_game_path_completion_check_fixture():\n    pass\n", encoding="utf-8")
@@ -255,12 +259,15 @@ def _run_extra_check(repository: Path, ticket_dir: Path, hand_edits: object = No
         "tests/test_game_path_completion.py",
         ".venv",
     ]
+    env = os.environ.copy()
+    env["PYTHONPATH"] = os.pathsep.join((str(ROOT), str(ROOT / "packages/worldkeeper/src")))
     return subprocess.run(
         ["bash", "-c", _check_extra(plan_path, f"data/stories/{DEFAULT_ROOT.name}", ownership)],
         cwd=repository,
         capture_output=True,
         text=True,
         check=False,
+        env=env,
     )
 
 
@@ -280,6 +287,58 @@ def test_check_extra_rejects_malformed_hand_edit_log(tmp_path: Path) -> None:
 
     assert result.returncode != 0
     assert "entries missing keys" in result.stderr
+
+
+def test_check_extra_copies_valid_worktree_hand_edit_log(tmp_path: Path) -> None:
+    repository = init_repo(tmp_path)
+    plan = text_plan()
+    plan["set_text"]["text"] = story_text("claim:k_sl_1a_b_r1.text", package=load_story_package(DEFAULT_ROOT))
+    hand_edits = [
+        {
+            "file": "scene.yaml",
+            "record": "claim:test",
+            "refused_command": "story_cli set claim:test.text replacement",
+            "error": "command refused",
+        }
+    ]
+
+    result = _run_extra_check(repository, tmp_path / "ticket", hand_edits, plan)
+
+    assert result.returncode == 0, result.stderr
+    assert json.loads((tmp_path / "ticket" / "hand_edits.json").read_text(encoding="utf-8")) == hand_edits
+
+
+def test_wiring_patch_excludes_hand_edit_log(tmp_path: Path) -> None:
+    repository = init_repo(tmp_path)
+    workspace = tmp_path / "workspace"
+
+    def ringer(manifest_path: Path, _ringer_path: Path) -> subprocess.CompletedProcess:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        relative_scene = Path("data") / "stories" / DEFAULT_ROOT.name / "source" / "scenes" / "1A.yaml"
+        scene_path = repository / relative_scene
+        original = scene_path.read_text(encoding="utf-8")
+        updated = original + ("\n" if not original.endswith("\n") else "") + "# source patch\n"
+        source_patch = "".join(
+            difflib.unified_diff(
+                original.splitlines(keepends=True),
+                updated.splitlines(keepends=True),
+                fromfile=f"a/{relative_scene}",
+                tofile=f"b/{relative_scene}",
+            )
+        )
+        hand_edit_patch = "".join(difflib.unified_diff([], ["[]\n"], fromfile="/dev/null", tofile="b/hand_edits.json"))
+        worker_dir = Path(manifest["workdir"])
+        (worker_dir / "hand_edits.json").write_text("[]\n", encoding="utf-8")
+        (manifest_path.parent / "hand_edits.json").write_text("[]\n", encoding="utf-8")
+        (worker_dir / "wire.patch").write_text(source_patch + hand_edit_patch, encoding="utf-8")
+        return subprocess.CompletedProcess([], 0, stdout="stub ringer ok", stderr="")
+
+    result = wiring_handler(repository, run_ringer=ringer)(make_ticket(beat_plan(), workspace), NOW)
+
+    assert result.passed, result.output
+    tree = workspace / "wire-ticket" / "tree"
+    assert (tree / "data/stories/continuity-initiative/source/scenes/1A.yaml").is_file()
+    assert not (tree / "hand_edits.json").exists()
 
 
 def test_wiring_reports_hand_edits_in_passing_result(tmp_path: Path) -> None:
