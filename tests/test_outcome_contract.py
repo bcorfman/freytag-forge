@@ -27,6 +27,18 @@ def test_frozen_cases(case: dict) -> None:
     _assert_subset(classify_run(case["run"], case["scene"]), case["expected"], case["id"])
 
 
+def test_m4_cases_cover_futile_named_command_and_grounding_rules() -> None:
+    cases_by_id = {case["id"]: case for case in CASES}
+    m4_ids = {
+        "timed_reveal_masks_futile_action",
+        "pressure_beside_earned_reveal",
+        "pacing_event_caused_by_command_fact",
+    }
+    assert m4_ids <= cases_by_id.keys()
+    timed_turns = cases_by_id["timed_reveal_masks_futile_action"]["run"]["turns"]
+    assert all(not turn["input"].startswith("Wait") for turn in timed_turns)
+
+
 def _scene(window: int | None = 3) -> dict:
     return {
         "pacing_window": window,
