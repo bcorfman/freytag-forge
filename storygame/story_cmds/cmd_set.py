@@ -24,9 +24,12 @@ class _Location:
     document: Any
     parent: Any
     key: str | int
+    missing: bool = False
 
     @property
     def value(self) -> Any:
+        if self.missing:
+            raise _AddressError(str(self.key))
         return self.parent[self.key]
 
     @value.setter
@@ -75,8 +78,10 @@ def _walk(document: Any, path: list[tuple[str, int | None]], address: str) -> _L
     current = document
     parent: Any = None
     key: str | int = ""
-    for name, selector in path:
+    for index, (name, selector) in enumerate(path):
         if not isinstance(current, dict) or name not in current:
+            if index == len(path) - 1 and selector is None and isinstance(current, dict):
+                return _Location(Path(), document, current, name, missing=True)
             raise _AddressError(address)
         parent, key = current, name
         current = current[name]
@@ -302,10 +307,12 @@ def run(args: Any, root: Path) -> int:
     try:
         location = _locate(root, args.address)
         _refusal(args.address, location)
+        if location.missing and args.yaml_value is None:
+            raise _AddressError(args.address)
         original = location.path.read_bytes()
         old_text = original.decode("utf-8")
-        value = location.value
         if args.add is not None or args.drop is not None:
+            value = location.value
             if not isinstance(value, list):
                 raise _Refused("--add and --drop require a list field")
             item_text = args.add if args.add is not None else args.drop
