@@ -2,12 +2,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from storygame.runtime.candidate_matcher import uniquely_matched_authored_handoff
 from storygame.runtime.engine import RuntimeEngine
-from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeState
-from storygame.runtime.world_model import apply_scene_placements
 from storygame.story_package.loader import load_story_package
+from tests.scene_harness import authored_handoff, scene_engine
 
 ROOT = Path("data/stories/continuity-initiative")
 
@@ -33,22 +31,11 @@ def _routes() -> dict:
 
 
 def _engine(*, true_facts: tuple[str, ...] = (), turn_index: int = 0) -> tuple[RuntimeState, RuntimeEngine]:
-    state = RuntimeState.bootstrap(PACKAGE)
-    state.current_scene_id = "2C"
-    state.phase = _scene().freytag_phase
-    state._assert_scene_entry_fact("2C")
-    state.turn_index = turn_index
-    apply_scene_placements(PACKAGE, state.facts, "2C")
-    for fact_id in true_facts:
-        state.facts.assert_fact(Fact(predicate=fact_id, subject="story", value="true"))
-    engine = RuntimeEngine(state, lambda _command: {"segments": [{"kind": "narration", "text": "Kristin looks."}]})
-    return state, engine
+    return scene_engine(PACKAGE, "2C", true_facts=true_facts, turn_index=turn_index)
 
 
 def _handoff(engine: RuntimeEngine, state: RuntimeState, command: str):
-    engine._activate_pacing()
-    candidates = engine.projector.project(state, "player", command).candidates
-    return uniquely_matched_authored_handoff(command, candidates)
+    return authored_handoff(engine, state, command)
 
 
 def test_the_camera_the_monitor_light_and_the_cart_tags_are_declared_plainly_and_placed_in_2c():
@@ -210,15 +197,3 @@ def test_michelles_second_message_travels_as_a_maintenance_ticket():
     pacing = {event.id: event for event in PACKAGE.pacing.events}
     first = pacing["purge_window_2c"].realizations[0].text.casefold()
     assert "maintenance ticket" in first and "sensor fault" not in first
-
-
-def test_existing_2c_commands_still_reach_their_reveals():
-    checks = (
-        ((), "Tell Rebecca nothing.", "k_sl_2c_c_r1", 0),
-        (("rebecca_offer_heard",), "Head to the uplink and start sending the copied files.", "k_sl_2c_d_r3", 1),
-        (("rebecca_offer_heard",), "Head to the transfer carts and free a cart of captives.", "k_sl_2c_d_r4", 1),
-    )
-    for facts, command, entry_id, turn_index in checks:
-        state, engine = _engine(true_facts=facts, turn_index=turn_index)
-        handoff = _handoff(engine, state, command)
-        assert handoff is not None and handoff.candidate.id == entry_id, command

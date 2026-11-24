@@ -2,12 +2,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from storygame.runtime.candidate_matcher import uniquely_matched_authored_handoff
 from storygame.runtime.engine import RuntimeEngine
-from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeState
-from storygame.runtime.world_model import apply_scene_placements
 from storygame.story_package.loader import load_story_package
+from tests.scene_harness import authored_handoff, scene_engine
 
 ROOT = Path("data/stories/continuity-initiative")
 PACKAGE = load_story_package(ROOT)
@@ -33,21 +31,11 @@ def _routes() -> dict:
 
 
 def _engine(*, true_facts: tuple[str, ...] = ()) -> tuple[RuntimeState, RuntimeEngine]:
-    state = RuntimeState.bootstrap(PACKAGE)
-    state.current_scene_id = "1C"
-    state.phase = _scene().freytag_phase
-    state._assert_scene_entry_fact("1C")
-    apply_scene_placements(PACKAGE, state.facts, "1C")
-    for fact_id in true_facts:
-        state.facts.assert_fact(Fact(predicate=fact_id, subject="story", value="true"))
-    engine = RuntimeEngine(state, lambda _command: {"segments": [{"kind": "narration", "text": "Kristin looks."}]})
-    return state, engine
+    return scene_engine(PACKAGE, "1C", true_facts=true_facts)
 
 
 def _handoff(engine: RuntimeEngine, state: RuntimeState, command: str):
-    engine._activate_pacing()
-    candidates = engine.projector.project(state, "player", command).candidates
-    return uniquely_matched_authored_handoff(command, candidates)
+    return authored_handoff(engine, state, command)
 
 
 def test_the_dock_and_line_things_are_declared_plainly_and_placed_in_1c():
@@ -205,20 +193,3 @@ def test_watching_brandon_and_listening_to_the_vents_reach_their_reveals():
     state, engine = _engine()
     handoff = _handoff(engine, state, "Listen to the air vents.")
     assert handoff is not None and handoff.candidate.id == "k_sl_1c_g_r1"
-
-
-def test_existing_1c_commands_still_reach_their_reveals():
-    checks = (
-        ((), "Inspect the loading docks.", "k_sl_1c_a_r1"),
-        (("facility_proof",), "Study the prisoners.", "k_sl_1c_b_r1"),
-        (
-            ("facility_proof", "captives_confirmed_alive"),
-            "Ask Brandon about the transfer route.",
-            "k_sl_1c_c_secure_route",
-        ),
-        (("facility_proof", "captives_confirmed_alive"), "Copy the prisoner numbers.", "k_sl_1c_c_copy_numbers"),
-    )
-    for facts, command, entry_id in checks:
-        state, engine = _engine(true_facts=facts)
-        handoff = _handoff(engine, state, command)
-        assert handoff is not None and handoff.candidate.id == entry_id, command

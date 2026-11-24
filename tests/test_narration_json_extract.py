@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 from storygame.runtime.narration_json import extract_json_object
 
 EXPECTED_ITEM_MATCH = {"refers": [], "same_as": {}, "kind": {}}
@@ -49,16 +51,16 @@ def test_repairs_stray_quotes_inside_object_between_prose() -> None:
     assert extract_json_object(reply) == {"text": 'She says, "hello" and leaves'}
 
 
-def test_two_objects_are_ambiguous() -> None:
-    assert extract_json_object('Before {"answer": 1} and {"answer": 2}') is None
-
-
-def test_no_object_is_not_extracted() -> None:
-    assert extract_json_object("plain text") is None
-
-
-def test_empty_text_is_not_extracted() -> None:
-    assert extract_json_object("") is None
+@pytest.mark.parametrize(
+    ("reply",),
+    [
+        pytest.param('Before {"answer": 1} and {"answer": 2}', id="two_objects_are_ambiguous"),
+        pytest.param("plain text", id="no_object_is_not_extracted"),
+        pytest.param("", id="empty_text_is_not_extracted"),
+    ],
+)
+def test_non_extractable_replies_are_not_extracted(reply: str) -> None:
+    assert extract_json_object(reply) is None
 
 
 def test_unusual_incomplete_inputs_do_not_raise() -> None:

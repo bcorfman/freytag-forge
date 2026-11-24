@@ -79,19 +79,17 @@ def test_denied_model_is_refused_at_every_station_even_when_injected(tmp_path: P
             guard.check(station, "claude-fable-5-2", "high")
 
 
-def test_wrong_effort_is_refused() -> None:
+@pytest.mark.parametrize(
+    "station",
+    [
+        pytest.param("prose", id="wrong_effort_is_refused"),
+        pytest.param("missing_station", id="unknown_station_is_refused"),
+        pytest.param("free_gates", id="script_only_station_refuses_every_model"),
+    ],
+)
+def test_invalid_station_or_effort_is_refused(station: str) -> None:
     with pytest.raises(ModelNotAllowed):
-        _guard(Path("unused")).check("prose", "claude-opus-5-5", "medium")
-
-
-def test_unknown_station_is_refused() -> None:
-    with pytest.raises(ModelNotAllowed):
-        _guard(Path("unused")).check("missing_station", "claude-opus-5-5", "medium")
-
-
-def test_script_only_station_refuses_every_model() -> None:
-    with pytest.raises(ModelNotAllowed):
-        _guard(Path("unused")).check("free_gates", "claude-opus-5-5", "medium")
+        _guard(Path("unused")).check(station, "claude-opus-5-5", "medium")
 
 
 def test_total_budget_exhaustion(tmp_path: Path) -> None:

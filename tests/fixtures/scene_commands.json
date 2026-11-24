@@ -1,0 +1,20 @@
+[
+  {"scene": "1C", "true_facts": [], "command": "Inspect the loading docks.", "expected": "k_sl_1c_a_r1", "turn_index": 0},
+  {"scene": "1C", "true_facts": ["facility_proof"], "command": "Study the prisoners.", "expected": "k_sl_1c_b_r1", "turn_index": 0},
+  {"scene": "1C", "true_facts": ["facility_proof", "captives_confirmed_alive"], "command": "Ask Brandon about the transfer route.", "expected": "k_sl_1c_c_secure_route", "turn_index": 0},
+  {"scene": "1C", "true_facts": ["facility_proof", "captives_confirmed_alive"], "command": "Copy the prisoner numbers.", "expected": "k_sl_1c_c_copy_numbers", "turn_index": 0},
+  {"scene": "2A", "true_facts": [], "command": "Feel the cooling lines at the manifold.", "expected": "k_sl_2a_b_r1", "turn_index": 0},
+  {"scene": "2A", "true_facts": ["manifold_fault_found"], "command": "Diagnose the genuine cooling-water pressure fault and the real ventilation fault to the shift supervisor.", "expected": "k_sl_2a_c_r5", "turn_index": 0},
+  {"scene": "2A", "true_facts": ["badge_craft_noted", "alarm_log_read", "return_line_traced", "camera_on_brandon_seen"], "command": "Feel the cooling lines at the manifold.", "expected": "k_sl_2a_b_r1", "turn_index": 0},
+  {"scene": "2A", "true_facts": ["manifold_fault_found", "badge_craft_noted", "alarm_log_read", "return_line_traced", "camera_on_brandon_seen"], "command": "Diagnose the genuine cooling-water pressure fault and the real ventilation fault to the shift supervisor.", "expected": "k_sl_2a_c_r5", "turn_index": 0},
+  {"scene": "2B", "true_facts": [], "command": "Pull up my file.", "expected": "k_sl_2b_a_r1", "turn_index": 0},
+  {"scene": "2B", "true_facts": ["kristin_file_read"], "command": "Keep Brandon's name in the build record.", "expected": "k_sl_2b_b_r4", "turn_index": 5},
+  {"scene": "2B", "true_facts": ["kristin_file_read"], "command": "Let Brandon erase his name from the build record.", "expected": "k_sl_2b_b_r5", "turn_index": 5},
+  {"scene": "2B", "true_facts": ["janus_evidence", "archive_crisis_understood"], "command": "Type one reply to the maintenance line on the medical terminal.", "expected": "k_sl_2b_c_r3", "turn_index": 5},
+  {"scene": "2C", "true_facts": [], "command": "Tell Rebecca nothing.", "expected": "k_sl_2c_c_r1", "turn_index": 0},
+  {"scene": "2C", "true_facts": ["rebecca_offer_heard"], "command": "Head to the uplink and start sending the copied files.", "expected": "k_sl_2c_d_r3", "turn_index": 1},
+  {"scene": "2C", "true_facts": ["rebecca_offer_heard"], "command": "Head to the transfer carts and free a cart of captives.", "expected": "k_sl_2c_d_r4", "turn_index": 1},
+  {"scene": "3A", "true_facts": [], "command": "Free the captives.", "expected": "k_sl_3a_a_r1", "turn_index": 0},
+  {"scene": "3A", "true_facts": ["michelle_reached", "uprising_prepared"], "command": "Enter the medical level.", "expected": "k_sl_3a_b_r2", "turn_index": 0},
+  {"scene": "3A", "true_facts": ["michelle_reached", "uprising_prepared", "behavioral_experiments_known"], "command": "Ask the senior official about the gate codes.", "expected": "k_sl_3a_d_r1", "turn_index": 0}
+]

@@ -2,12 +2,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from storygame.runtime.candidate_matcher import uniquely_matched_authored_handoff
 from storygame.runtime.engine import RuntimeEngine
-from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeState
-from storygame.runtime.world_model import apply_scene_placements
 from storygame.story_package.loader import load_story_package
+from tests.scene_harness import authored_handoff, scene_engine
 
 ROOT = Path("data/stories/continuity-initiative")
 PACKAGE = load_story_package(ROOT)
@@ -32,21 +30,11 @@ def _routes() -> dict:
 
 
 def _engine(*, true_facts: tuple[str, ...] = ()) -> tuple[RuntimeState, RuntimeEngine]:
-    state = RuntimeState.bootstrap(PACKAGE)
-    state.current_scene_id = "2A"
-    state.phase = _scene().freytag_phase
-    state._assert_scene_entry_fact("2A")
-    apply_scene_placements(PACKAGE, state.facts, "2A")
-    for fact_id in true_facts:
-        state.facts.assert_fact(Fact(predicate=fact_id, subject="story", value="true"))
-    engine = RuntimeEngine(state, lambda _command: {"segments": [{"kind": "narration", "text": "Kristin looks."}]})
-    return state, engine
+    return scene_engine(PACKAGE, "2A", true_facts=true_facts)
 
 
 def _handoff(engine: RuntimeEngine, state: RuntimeState, command: str):
-    engine._activate_pacing()
-    candidates = engine.projector.project(state, "player", command).candidates
-    return uniquely_matched_authored_handoff(command, candidates)
+    return authored_handoff(engine, state, command)
 
 
 def test_the_badge_log_line_and_camera_things_are_declared_plainly_and_placed_in_2a():
@@ -160,28 +148,6 @@ def test_the_return_line_and_the_camera_wait_for_the_manifold_fault():
             state, engine = _engine(true_facts=facts)
             handoff = _handoff(engine, state, command)
             assert handoff is None or handoff.candidate.id != entry_id, command
-
-
-def test_existing_2a_commands_still_reach_their_reveals():
-    new_reveals = ("badge_craft_noted", "alarm_log_read", "return_line_traced", "camera_on_brandon_seen")
-    checks = (
-        ((), "Feel the cooling lines at the manifold.", "k_sl_2a_b_r1"),
-        (
-            ("manifold_fault_found",),
-            "Diagnose the genuine cooling-water pressure fault and the real ventilation fault to the shift supervisor.",
-            "k_sl_2a_c_r5",
-        ),
-        (new_reveals, "Feel the cooling lines at the manifold.", "k_sl_2a_b_r1"),
-        (
-            ("manifold_fault_found", *new_reveals),
-            "Diagnose the genuine cooling-water pressure fault and the real ventilation fault to the shift supervisor.",
-            "k_sl_2a_c_r5",
-        ),
-    )
-    for facts, command, entry_id in checks:
-        state, engine = _engine(true_facts=facts)
-        handoff = _handoff(engine, state, command)
-        assert handoff is not None and handoff.candidate.id == entry_id, command
 
 
 def test_the_return_line_carries_water_into_the_manifold_and_the_camera_faces_the_gate():
