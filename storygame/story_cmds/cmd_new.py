@@ -33,6 +33,7 @@ def add_parser(commands: Any, add_global_options: Any) -> None:
     beat.add_argument("scene")
     beat.add_argument("event_id")
     beat.add_argument("--say", required=True)
+    beat.add_argument("--at-turn", type=_nonnegative_int)
 
     claim = kinds.add_parser("claim", help="add a claim to a reveal variant")
     claim.add_argument("scene")
@@ -93,6 +94,13 @@ def _validate_id(value: str, label: str) -> int | None:
     return None
 
 
+def _nonnegative_int(value: str) -> int:
+    parsed = int(value)
+    if parsed < 0:
+        raise ValueError("must be non-negative")
+    return parsed
+
+
 def _append_record(document: dict[str, Any], key: str, record: dict[str, Any]) -> None:
     values = document.setdefault(key, [])
     if not isinstance(values, list):
@@ -112,16 +120,24 @@ def _make_beat(args: Any, scene: dict[str, Any]) -> None:
     default_fact = next(iter(facts)) if isinstance(facts, dict) and facts else None
     if default_fact is None:
         raise ValueError("scene has no declared fact for the beat effect")
-    _append_record(
-        scene,
-        "beats",
-        {
-            "id": args.event_id,
-            "at_turn": 0,
-            "sets": {default_fact: False},
-            "say": args.say,
-        },
+    at_turn = 0 if args.at_turn is None else args.at_turn
+    record = {
+        "id": args.event_id,
+        "at_turn": at_turn,
+        "sets": {default_fact: False},
+        "say": args.say,
+    }
+    if args.at_turn is None:
+        _append_record(scene, "beats", record)
+        return
+    beats = scene.setdefault("beats", [])
+    if not isinstance(beats, list):
+        raise ValueError("beats is not a list")
+    insert_at = next(
+        (index for index, beat in enumerate(beats) if beat.get("at_turn", 0) > at_turn),
+        len(beats),
     )
+    beats.insert(insert_at, record)
 
 
 def _make_claim(args: Any, scene: dict[str, Any], match: dict[str, Any]) -> None:

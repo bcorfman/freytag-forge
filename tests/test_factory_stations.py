@@ -1,7 +1,10 @@
 import json
+import shutil
 import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
+
+import pytest
 
 from factory.checks.carry_matrix import CarryReport, StuckCell
 from factory.checks.gap_delta import DEFAULT_ROOT, all_anchors, save_baseline, snapshot
@@ -41,6 +44,46 @@ def gap_baseline(tmp_path: Path) -> tuple[Path, str]:
             save_baseline(current, path)
             return path, anchor
     raise AssertionError("expected a gap result in the committed story")
+
+
+def stale_story_copy(tmp_path: Path) -> tuple[Path, Path, dict[Path, bytes]]:
+    tree = tmp_path / "tree"
+    tree.mkdir()
+    story_root = tree / DEFAULT_ROOT.relative_to(ROOT)
+    shutil.copytree(DEFAULT_ROOT, story_root)
+    source_file = next(story_root.rglob("*.yaml"))
+    source_file.write_bytes(source_file.read_bytes() + b"#")
+    before = {path.relative_to(tree): path.read_bytes() for path in tree.rglob("*") if path.is_file()}
+    return tree, story_root, before
+
+
+def noncanonical_story_copy(tmp_path: Path) -> tuple[Path, Path, Path, dict[Path, bytes]]:
+    tree = tmp_path / "tree"
+    tree.mkdir()
+    story_root = tree / DEFAULT_ROOT.relative_to(ROOT)
+    shutil.copytree(DEFAULT_ROOT, story_root)
+    source_file = story_root / "source" / "scenes" / "1A.yaml"
+    text = source_file.read_text(encoding="utf-8")
+    lines = text.replace("schema: 1\n", "schema: 1\n# inserted comment\n", 1).splitlines(keepends=True)
+    in_participants = False
+    for index, line in enumerate(lines):
+        if line == "participants:\n":
+            in_participants = True
+        elif in_participants and line.startswith("- "):
+            lines[index] = f"  {line}"
+        elif in_participants:
+            in_participants = False
+    source_file.write_text("".join(lines), encoding="utf-8")
+    before = {path.relative_to(tree): path.read_bytes() for path in tree.rglob("*") if path.is_file()}
+    return tree, story_root, source_file, before
+
+
+def stub_gap_delta(monkeypatch, baseline: Path) -> dict[str, object]:
+    baseline.write_text("{}", encoding="utf-8")
+    monkeypatch.setattr(free_gates_module, "snapshot", lambda root, anchors=None: {})
+    monkeypatch.setattr(free_gates_module, "load_baseline", lambda path: {})
+    monkeypatch.setattr(free_gates_module, "new_results", lambda baseline, current: {})
+    return {"gap_baseline": str(baseline), "carry_matrix": False}
 
 
 class Runner:
@@ -103,6 +146,8 @@ def test_free_gates_run_in_order_and_all_pass(tmp_path: Path) -> None:
         "gap_baseline": str(baseline),
         "anchors": [anchor],
         "carry_matrix": False,
+        "entry_snapshots": False,
+        "story_format": False,
         "paths": ["factory/line.py", "README.md"],
         "tests": ["tests/test_factory_line.py"],
     }
@@ -124,6 +169,8 @@ def test_free_gates_stop_at_ruff_failure_and_keep_tail(tmp_path: Path) -> None:
         "gap_baseline": str(baseline),
         "anchors": [anchor],
         "carry_matrix": False,
+        "entry_snapshots": False,
+        "story_format": False,
         "paths": ["changed.py", "notes.md"],
         "tests": ["tests/test_factory_line.py"],
     }
@@ -144,6 +191,8 @@ def test_free_gates_filter_non_python_paths_and_timeout_is_failure(tmp_path: Pat
         "gap_baseline": str(baseline),
         "anchors": [anchor],
         "carry_matrix": False,
+        "entry_snapshots": False,
+        "story_format": False,
         "paths": ["notes.md", "changed.py"],
     }
 
@@ -172,6 +221,8 @@ def test_free_gates_uses_ticket_tree_for_paths_and_commands(tmp_path: Path, monk
                 "gap_baseline": str(baseline),
                 "story_root": "data/stories/continuity-initiative",
                 "carry_matrix": False,
+                "entry_snapshots": False,
+                "story_format": False,
                 "paths": [str(ROOT / "factory/line.py")],
                 "tests": [str(ROOT / "tests/test_factory_line.py")],
             },
@@ -195,7 +246,13 @@ def test_free_gates_gap_delta_reports_new_result_and_missing_key(tmp_path: Path)
 
     result = free_gates_handler(ROOT, runner)(
         make_ticket(
-            {"gap_baseline": str(baseline), "anchors": [anchor], "carry_matrix": False},
+            {
+                "gap_baseline": str(baseline),
+                "anchors": [anchor],
+                "carry_matrix": False,
+                "entry_snapshots": False,
+                "story_format": False,
+            },
             station=Station.FREE_GATES,
         ),
         NOW,
@@ -229,7 +286,16 @@ def test_free_gates_carry_matrix_failure_is_station_check(tmp_path: Path, monkey
     monkeypatch.setattr("factory.stations.free_gates.carry_matrix", lambda *args, **kwargs: report)
 
     result = free_gates_handler(ROOT, Runner([]))(
-        make_ticket({"gap_baseline": str(baseline), "anchors": [anchor]}, station=Station.FREE_GATES), NOW
+        make_ticket(
+            {
+                "gap_baseline": str(baseline),
+                "anchors": [anchor],
+                "entry_snapshots": False,
+                "story_format": False,
+            },
+            station=Station.FREE_GATES,
+        ),
+        NOW,
     )
 
     assert not result.passed
@@ -259,11 +325,155 @@ def test_free_gates_carry_matrix_tail_keeps_first_stuck_and_every_unreachable(tm
     monkeypatch.setattr("factory.stations.free_gates.carry_matrix", lambda *args, **kwargs: report)
 
     result = free_gates_handler(ROOT, Runner([]))(
-        make_ticket({"gap_baseline": str(baseline), "anchors": [anchor]}, station=Station.FREE_GATES), NOW
+        make_ticket(
+            {
+                "gap_baseline": str(baseline),
+                "anchors": [anchor],
+                "entry_snapshots": False,
+                "story_format": False,
+            },
+            station=Station.FREE_GATES,
+        ),
+        NOW,
     )
 
     assert not result.passed
     assert result.output == "\n".join([report.lines()[0], report.lines()[-2], report.lines()[-1]])
+
+
+def test_free_gates_refreshes_entry_snapshots_only_in_ticket_tree(tmp_path: Path, monkeypatch) -> None:
+    tree, story_root, _ = stale_story_copy(tmp_path)
+    original_entry = {
+        path.relative_to(DEFAULT_ROOT): path.read_bytes() for path in (DEFAULT_ROOT / "entry").glob("*.json")
+    }
+    payload = stub_gap_delta(monkeypatch, tmp_path / "gaps.json")
+    payload["story_root"] = str(DEFAULT_ROOT)
+    payload["story_format"] = False
+    monkeypatch.setattr(free_gates_module, "ticket_tree", lambda *_args: tree)
+
+    result = free_gates_handler(ROOT, Runner([]))(make_ticket(payload, station=Station.FREE_GATES), NOW)
+
+    assert result == result.__class__(True, "free_gates", "all free gates passed")
+    fingerprints = {
+        json.loads(path.read_text(encoding="utf-8"))["source_fingerprint"]
+        for path in (story_root / "entry").glob("*.json")
+    }
+    assert len(fingerprints) == 1
+    assert fingerprints != {json.loads(data.decode("utf-8"))["source_fingerprint"] for data in original_entry.values()}
+    assert free_gates_module.check_entry_snapshots(story_root) == []
+    assert {
+        path.relative_to(DEFAULT_ROOT): path.read_bytes() for path in (DEFAULT_ROOT / "entry").glob("*.json")
+    } == original_entry
+
+
+def test_free_gates_checks_but_does_not_write_without_ticket_tree(tmp_path: Path, monkeypatch) -> None:
+    tree, story_root, before = stale_story_copy(tmp_path)
+    payload = stub_gap_delta(monkeypatch, tmp_path / "gaps.json")
+    payload["story_root"] = str(story_root.relative_to(tree))
+    payload["story_format"] = False
+    monkeypatch.setattr(free_gates_module, "ticket_tree", lambda *_args: None)
+
+    result = free_gates_handler(tree, Runner([]))(make_ticket(payload, station=Station.FREE_GATES), NOW)
+
+    assert not result.passed
+    assert result.check == "entry_snapshots"
+    assert "stale fingerprint for scene" in result.output
+    assert {path.relative_to(tree): path.read_bytes() for path in tree.rglob("*") if path.is_file()} == before
+
+
+def test_free_gates_reports_entry_snapshot_check_problems(tmp_path: Path, monkeypatch) -> None:
+    tree, story_root, _ = stale_story_copy(tmp_path)
+    payload = stub_gap_delta(monkeypatch, tmp_path / "gaps.json")
+    payload["story_root"] = str(story_root.relative_to(tree))
+    payload["story_format"] = False
+    monkeypatch.setattr(free_gates_module, "ticket_tree", lambda *_args: None)
+    problem = "carry-in gate problem: scene 2C fact clue consumer gate is not supplied"
+    monkeypatch.setattr(free_gates_module, "check_entry_snapshots", lambda root: [problem])
+
+    result = free_gates_handler(tree, Runner([]))(make_ticket(payload, station=Station.FREE_GATES), NOW)
+
+    assert not result.passed
+    assert result.check == "entry_snapshots"
+    assert result.output == problem
+
+
+def test_free_gates_can_skip_entry_snapshot_check(tmp_path: Path, monkeypatch) -> None:
+    tree, story_root, _ = stale_story_copy(tmp_path)
+    payload = stub_gap_delta(monkeypatch, tmp_path / "gaps.json")
+    payload.update({"story_root": str(story_root.relative_to(tree)), "entry_snapshots": False, "story_format": False})
+    monkeypatch.setattr(free_gates_module, "ticket_tree", lambda *_args: None)
+    calls: list[Path] = []
+    monkeypatch.setattr(free_gates_module, "check_entry_snapshots", lambda root: calls.append(root) or [])
+
+    result = free_gates_handler(tree, Runner([]))(make_ticket(payload, station=Station.FREE_GATES), NOW)
+
+    assert result == result.__class__(True, "free_gates", "all free gates passed")
+    assert calls == []
+
+
+def test_free_gates_formats_ticket_tree_before_refreshing_snapshots(tmp_path: Path, monkeypatch) -> None:
+    tree, story_root, source_file, _ = noncanonical_story_copy(tmp_path)
+    original_default = {path.relative_to(ROOT): path.read_bytes() for path in DEFAULT_ROOT.rglob("*") if path.is_file()}
+    payload = stub_gap_delta(monkeypatch, tmp_path / "gaps.json")
+    payload["story_root"] = str(DEFAULT_ROOT)
+    monkeypatch.setattr(free_gates_module, "ticket_tree", lambda *_args: tree)
+
+    result = free_gates_handler(ROOT, Runner([]))(make_ticket(payload, station=Station.FREE_GATES), NOW)
+
+    assert result == result.__class__(True, "free_gates", "all free gates passed")
+    assert "\nparticipants:\n- kristin\n" in source_file.read_text(encoding="utf-8")
+    assert free_gates_module.check_entry_snapshots(story_root) == []
+    assert {
+        path.relative_to(ROOT): path.read_bytes() for path in DEFAULT_ROOT.rglob("*") if path.is_file()
+    } == original_default
+
+
+def test_free_gates_checks_format_without_ticket_tree(tmp_path: Path, monkeypatch) -> None:
+    tree, story_root, source_file, before = noncanonical_story_copy(tmp_path)
+    payload = stub_gap_delta(monkeypatch, tmp_path / "gaps.json")
+    payload.update({"story_root": str(story_root.relative_to(tree)), "entry_snapshots": False})
+    monkeypatch.setattr(free_gates_module, "ticket_tree", lambda *_args: None)
+
+    result = free_gates_handler(tree, Runner([]))(make_ticket(payload, station=Station.FREE_GATES), NOW)
+
+    assert not result.passed
+    assert result.check == "story_format"
+    assert "scenes/1A.yaml" in result.output
+    assert "story_cli fmt" in result.output
+    assert {path.relative_to(tree): path.read_bytes() for path in tree.rglob("*") if path.is_file()} == before
+    assert "# inserted comment" in source_file.read_text(encoding="utf-8")
+
+
+def test_free_gates_reports_format_refusals(tmp_path: Path, monkeypatch) -> None:
+    tree, story_root, _, _ = noncanonical_story_copy(tmp_path)
+    payload = stub_gap_delta(monkeypatch, tmp_path / "gaps.json")
+    payload.update({"story_root": str(story_root.relative_to(tree)), "entry_snapshots": False})
+    monkeypatch.setattr(free_gates_module, "ticket_tree", lambda *_args: tree)
+    monkeypatch.setattr(
+        free_gates_module,
+        "format_source_tree",
+        lambda root, *, check: ([], ["scenes/1A.yaml"]),
+    )
+
+    result = free_gates_handler(tree, Runner([]))(make_ticket(payload, station=Station.FREE_GATES), NOW)
+
+    assert not result.passed
+    assert result.check == "story_format"
+    assert "scenes/1A.yaml" in result.output
+    assert "reformatting would change a value" in result.output
+
+
+def test_free_gates_can_skip_story_format(tmp_path: Path, monkeypatch) -> None:
+    tree, story_root, source_file, before = noncanonical_story_copy(tmp_path)
+    payload = stub_gap_delta(monkeypatch, tmp_path / "gaps.json")
+    payload.update({"story_root": str(story_root.relative_to(tree)), "entry_snapshots": False, "story_format": False})
+    monkeypatch.setattr(free_gates_module, "ticket_tree", lambda *_args: None)
+    monkeypatch.setattr(free_gates_module, "format_source_tree", lambda *args, **kwargs: pytest.fail("called"))
+
+    result = free_gates_handler(tree, Runner([]))(make_ticket(payload, station=Station.FREE_GATES), NOW)
+
+    assert result == result.__class__(True, "free_gates", "all free gates passed")
+    assert source_file.read_text(encoding="utf-8") == before[source_file.relative_to(tree)].decode("utf-8")
 
 
 def test_build_handlers_and_factory_line_advance(tmp_path: Path) -> None:

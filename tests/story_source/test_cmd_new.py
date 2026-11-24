@@ -5,8 +5,10 @@ from __future__ import annotations
 import shutil
 from pathlib import Path
 
+from factory.stations.wiring import beat_position_error
 from storygame.story_cli import main
 from storygame.story_source import check_source_tree
+from storygame.story_source.compiler import compile_source_tree
 from storygame.story_source.yamlio import load_document
 
 SOURCE = Path(__file__).resolve().parents[2] / "data" / "stories" / "continuity-initiative" / "source"
@@ -50,6 +52,78 @@ def test_new_beat_writes_unguarded_default_say(tmp_path: Path, monkeypatch) -> N
         "say": "A new pacing line.",
     }
     assert_fmt_clean(root, monkeypatch)
+
+
+def test_new_beat_at_turn_inserts_in_the_middle(tmp_path: Path, monkeypatch) -> None:
+    root = copy_source(tmp_path)
+    monkeypatch.chdir(root)
+
+    assert main(["new", "beat", "1A", "inserted_middle", "--say", "A middle pacing line.", "--at-turn", "9"]) == 0
+
+    beats = load_document(root / "scenes" / "1A.yaml")["beats"]
+    ids = [beat["id"] for beat in beats]
+    assert ids.index("inserted_middle") + 1 == ids.index("patrol_leaves_1a")
+    assert beats[ids.index("inserted_middle")]["at_turn"] == 9
+    assert ids[ids.index("inserted_middle") - 1] == "reyes_rams_drawer_1a"
+    assert_fmt_clean(root, monkeypatch)
+
+
+def test_new_beat_at_turn_inserts_at_the_end(tmp_path: Path, monkeypatch) -> None:
+    root = copy_source(tmp_path)
+    monkeypatch.chdir(root)
+
+    assert main(["new", "beat", "1A", "inserted_end", "--say", "A final pacing line.", "--at-turn", "13"]) == 0
+
+    beats = load_document(root / "scenes" / "1A.yaml")["beats"]
+    assert beats[-1]["id"] == "inserted_end"
+    assert beats[-1]["at_turn"] == 13
+    assert_fmt_clean(root, monkeypatch)
+
+
+def test_new_beat_at_turn_goes_after_equal_turns(tmp_path: Path, monkeypatch) -> None:
+    root = copy_source(tmp_path)
+    monkeypatch.chdir(root)
+
+    assert main(["new", "beat", "1A", "inserted_tie", "--say", "A tied pacing line.", "--at-turn", "7"]) == 0
+
+    beats = load_document(root / "scenes" / "1A.yaml")["beats"]
+    ids = [beat["id"] for beat in beats]
+    assert ids[ids.index("inserted_tie") - 1] == "officer_presses_1a"
+    assert ids[ids.index("inserted_tie") + 1] == "reyes_rams_drawer_1a"
+    assert_fmt_clean(root, monkeypatch)
+
+
+def test_new_beat_at_turn_passes_compiled_position_for_every_story_scene(tmp_path: Path, monkeypatch) -> None:
+    story = load_document(SOURCE / "story.yaml")
+    scene_ids = story["scenes"]
+    for scene_id in scene_ids:
+        root = tmp_path / str(scene_id)
+        shutil.copytree(SOURCE, root)
+        original = load_document(root / "scenes" / f"{scene_id}.yaml")
+        turns = sorted({beat["at_turn"] for beat in original["beats"]})
+        monkeypatch.chdir(root)
+        beat_ids = []
+        for index, at_turn in enumerate(turns):
+            beat_id = f"position_probe_{str(scene_id).lower()}_{index}"
+            assert (
+                main(
+                    [
+                        "new",
+                        "beat",
+                        str(scene_id),
+                        beat_id,
+                        "--say",
+                        "A position probe.",
+                        "--at-turn",
+                        str(at_turn),
+                    ]
+                )
+                == 0
+            )
+            beat_ids.append(beat_id)
+        package = compile_source_tree(root)
+        for beat_id in beat_ids:
+            assert beat_position_error(package.pacing.events, beat_id, str(scene_id)) is None
 
 
 def test_new_claim_adds_claim_and_match_entry_for_realization_only_variant(tmp_path: Path, monkeypatch) -> None:

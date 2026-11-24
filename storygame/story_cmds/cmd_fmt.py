@@ -36,6 +36,30 @@ def _format_path(path: Path, root: Path) -> str:
     return path.relative_to(root).as_posix()
 
 
+def _format_paths(paths: list[Path], root: Path, *, check: bool) -> tuple[list[str], list[str]]:
+    changed: list[str] = []
+    refused: list[str] = []
+    for path in paths:
+        old_text = path.read_text(encoding="utf-8")
+        new_text = dumps_document(load_document(path))
+        if old_text == new_text:
+            continue
+        relative = _format_path(path, root)
+        if not _values_equal(old_text, new_text):
+            refused.append(relative)
+            continue
+        changed.append(relative)
+        if not check:
+            path.write_text(new_text, encoding="utf-8")
+    return changed, refused
+
+
+def format_source_tree(root: Path, *, check: bool) -> tuple[list[str], list[str]]:
+    """Format every YAML file below ``root`` and report changed and refused paths."""
+
+    return _format_paths(_paths(root, None), root, check=check)
+
+
 def run(args: Any, root: Path) -> int:
     """Format selected source files, or report files that need formatting."""
 
@@ -44,21 +68,10 @@ def run(args: Any, root: Path) -> int:
         print(f"unknown scene id: {args.scene}", file=sys.stderr)
         return 2
 
-    changed: list[str] = []
-    safety_failed = False
-    for path in paths:
-        old_text = path.read_text(encoding="utf-8")
-        new_text = dumps_document(load_document(path))
-        if old_text == new_text:
-            continue
-        relative = _format_path(path, root)
-        if not _values_equal(old_text, new_text):
-            print(f"{relative}: value changed, not written", file=sys.stderr)
-            safety_failed = True
-            continue
-        changed.append(relative)
-        if not args.check:
-            path.write_text(new_text, encoding="utf-8")
+    changed, refused = _format_paths(paths, root, check=args.check)
+    for path in refused:
+        print(f"{path}: value changed, not written", file=sys.stderr)
+    safety_failed = bool(refused)
 
     if args.json:
         print(json.dumps({"checked": len(paths), "changed": changed}, ensure_ascii=False))

@@ -1,4 +1,4 @@
-"""Run the free deterministic gates, including the station-5 carry matrix."""
+"""Run the free deterministic gates, including snapshots and the station-5 carry matrix."""
 
 from __future__ import annotations
 
@@ -14,6 +14,8 @@ from typing import Any
 from factory.checks.carry_matrix import CarryMatrixTooLarge, carry_matrix
 from factory.checks.gap_delta import DEFAULT_ROOT, load_baseline, new_results, snapshot
 from factory.line import StationHandler, StationResult
+from storygame.runtime.entry_snapshots import check_entry_snapshots, write_entry_snapshots
+from storygame.story_cmds.cmd_fmt import format_source_tree
 from storygame.story_package.loader import load_story_package
 from storygame.story_source import check_source_tree, compile_source_tree
 
@@ -48,6 +50,14 @@ def _command_path(value: str, root: Path, original_root: Path | None) -> str:
 
 def _tail(output: str) -> str:
     return output[-4000:]
+
+
+def _inside(path: Path, parent: Path) -> bool:
+    try:
+        path.resolve().relative_to(parent.resolve())
+    except (OSError, RuntimeError, ValueError):
+        return False
+    return True
 
 
 def _carry_failure_output(report) -> str:
@@ -119,7 +129,7 @@ def free_gates_handler(
     root: Path | None = None,
     run: Callable[..., subprocess.CompletedProcess] = subprocess.run,
 ) -> StationHandler:
-    """Return a fail-fast handler for the source, gap, Ruff, and test gates."""
+    """Return a fail-fast handler for source, formatting, snapshot, gap, Ruff, and test gates."""
 
     base_root = Path(root) if root is not None else _repository_root()
 
@@ -149,8 +159,52 @@ def free_gates_handler(
                 return StationResult(False, "source_tree", _tail(str(error) or error.__class__.__name__))
 
         try:
-            story_value = payload.get("story_root", DEFAULT_ROOT)
-            story_root = _resolve(repository_root, story_value, original_root if tree is not None else None)
+            story_root = _resolve(
+                repository_root,
+                payload.get("story_root", DEFAULT_ROOT),
+                original_root if tree is not None else None,
+            )
+        except (OSError, TypeError, ValueError) as error:
+            return StationResult(False, "gap_delta", _tail(_reason("gap delta check failed", error)))
+
+        if payload.get("story_format", True) is not False:
+            format_root = source_root if source_value is not None else story_root / "source"
+            if source_value is None and not format_root.is_dir():
+                format_root = None
+            if format_root is not None:
+                check = not (tree is not None and _inside(format_root, tree))
+                try:
+                    changed, refused = format_source_tree(format_root, check=check)
+                except Exception as error:
+                    return StationResult(False, "story_format", _tail(_reason("story format check failed", error)))
+                if refused:
+                    detail = "\n".join(f"{path}: reformatting would change a value" for path in refused)
+                    return StationResult(False, "story_format", _tail(detail))
+                if check and changed:
+                    detail = "\n".join(f"{path}: run story_cli fmt" for path in changed)
+                    return StationResult(False, "story_format", _tail(detail))
+
+        if payload.get("entry_snapshots", True) is not False:
+            write_error: str | None = None
+            if tree is not None and _inside(story_root, tree):
+                try:
+                    write_entry_snapshots(story_root)
+                except Exception as error:
+                    write_error = str(error) or error.__class__.__name__
+            try:
+                snapshot_problems = check_entry_snapshots(story_root)
+            except Exception as error:
+                check_error = str(error) or error.__class__.__name__
+            else:
+                check_error = None
+            if write_error is not None:
+                return StationResult(False, "entry_snapshots", _tail(write_error))
+            if check_error is not None:
+                return StationResult(False, "entry_snapshots", _tail(check_error))
+            if snapshot_problems:
+                return StationResult(False, "entry_snapshots", _tail("\n".join(snapshot_problems)))
+
+        try:
             anchors = payload.get("anchors")
             current = snapshot(story_root, anchors if isinstance(anchors, list) else None)
             baseline = load_baseline(
