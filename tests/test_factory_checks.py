@@ -8,6 +8,7 @@ from factory.checks.canary import canary_check
 from factory.checks.library import (
     compose,
     gap_delta_check,
+    journey_reachability_check,
     json_check,
     node_syntax_check,
     ownership_check,
@@ -56,3 +57,29 @@ def test_compose_stops_at_first_failure(tmp_path: Path) -> None:
 def test_probe_unsatisfiable_distinguishes_failure_and_success(tmp_path: Path) -> None:
     assert probe_unsatisfiable("set -e\nfalse", tmp_path)
     assert not probe_unsatisfiable("set -e\ntrue", tmp_path)
+
+
+def test_journey_reachability_check_is_bounded_and_linted() -> None:
+    script = journey_reachability_check(budget_s=17)
+
+    assert "--run-nightly" in script
+    assert "date +%s" in script
+    assert "SECONDS" not in script
+    assert "17" in script
+    assert lint_check(script) == []
+
+
+def test_journey_reachability_check_reports_fake_pytest_failure(tmp_path: Path) -> None:
+    python = tmp_path / ".venv" / "bin" / "python"
+    python.parent.mkdir(parents=True)
+    python.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+    python.chmod(0o755)
+    script = journey_reachability_check(budget_s=17)
+
+    passed = subprocess.run(["/bin/sh", "-c", script], cwd=tmp_path, capture_output=True, text=True, check=False)
+    assert passed.returncode == 0
+
+    python.write_text("#!/bin/sh\nexit 1\n", encoding="utf-8")
+    failed = subprocess.run(["/bin/sh", "-c", script], cwd=tmp_path, capture_output=True, text=True, check=False)
+    assert failed.returncode != 0
+    assert "a story realization is unreachable or the ratchet was broken" in failed.stderr

@@ -48,6 +48,31 @@ def pytest_check(tests: list[str], *, timeout_note: str = "") -> str:
     return _finish(lines)
 
 
+def journey_reachability_check(*, budget_s: int = 240) -> str:
+    """Build a bounded nightly check for every player-visible storylet journey."""
+
+    command = (
+        "PYTHONPATH=$PWD:$PWD/packages/worldkeeper/src TMPDIR=/tmp "
+        ".venv/bin/python -m pytest -q -p no:cacheprovider --run-nightly -n 8 "
+        + " ".join(
+            _quote(test) for test in ("tests/test_game_path_journeys.py", "tests/test_known_unreachable_ratchet.py")
+        )
+    )
+    lines = [
+        "set -e",
+        "start=$(date +%s)",
+        "set +e",
+        command,
+        "status=$?",
+        "set -e",
+        "elapsed=$(( $(date +%s) - start ))",
+        f'echo "journey reachability took $elapsed s (budget {budget_s} s)"',
+    ]
+    lines.extend(_checked('[ "$status" -eq 0 ]', "a story realization is unreachable or the ratchet was broken"))
+    lines.extend(_checked(f'[ "$elapsed" -le {budget_s} ]', f"journey reachability exceeded {budget_s} s"))
+    return _finish(lines)
+
+
 def ruff_check(paths: list[str]) -> str:
     """Build a check for Python lint and format compliance."""
 
