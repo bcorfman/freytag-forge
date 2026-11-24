@@ -9,6 +9,7 @@ from pathlib import Path
 import yaml
 
 from storygame.story_cli import main
+from storygame.story_cmds.cmd_fmt import format_source_tree
 
 SOURCE_ROOT = Path(__file__).resolve().parents[2] / "data" / "stories" / "continuity-initiative" / "source"
 
@@ -108,3 +109,22 @@ def test_json_reports_checked_and_changed_paths(tmp_path: Path, monkeypatch, cap
 
     assert result["checked"] == len(list(root.rglob("*.yaml")))
     assert result["changed"] == ["scenes/1A.yaml"]
+
+
+def test_format_source_tree_reports_and_rewrites_value_identical_files(tmp_path: Path) -> None:
+    root = _copy_source(tmp_path)
+    path = root / "scenes" / "1A.yaml"
+    _make_noncanonical(path)
+    before = path.read_text(encoding="utf-8")
+
+    changed, refused = format_source_tree(root, check=True)
+
+    assert changed == ["scenes/1A.yaml"]
+    assert refused == []
+    assert path.read_text(encoding="utf-8") == before
+
+    changed, refused = format_source_tree(root, check=False)
+
+    assert changed == ["scenes/1A.yaml"]
+    assert refused == []
+    assert path.read_text(encoding="utf-8") != before

@@ -15,6 +15,7 @@ from factory.checks.carry_matrix import CarryMatrixTooLarge, carry_matrix
 from factory.checks.gap_delta import DEFAULT_ROOT, load_baseline, new_results, snapshot
 from factory.line import StationHandler, StationResult
 from storygame.runtime.entry_snapshots import check_entry_snapshots, write_entry_snapshots
+from storygame.story_cmds.cmd_fmt import format_source_tree
 from storygame.story_package.loader import load_story_package
 from storygame.story_source import check_source_tree, compile_source_tree
 
@@ -128,7 +129,7 @@ def free_gates_handler(
     root: Path | None = None,
     run: Callable[..., subprocess.CompletedProcess] = subprocess.run,
 ) -> StationHandler:
-    """Return a fail-fast handler for source, entry-snapshot, gap, Ruff, and test gates."""
+    """Return a fail-fast handler for source, formatting, snapshot, gap, Ruff, and test gates."""
 
     base_root = Path(root) if root is not None else _repository_root()
 
@@ -165,6 +166,23 @@ def free_gates_handler(
             )
         except (OSError, TypeError, ValueError) as error:
             return StationResult(False, "gap_delta", _tail(_reason("gap delta check failed", error)))
+
+        if payload.get("story_format", True) is not False:
+            format_root = source_root if source_value is not None else story_root / "source"
+            if source_value is None and not format_root.is_dir():
+                format_root = None
+            if format_root is not None:
+                check = not (tree is not None and _inside(format_root, tree))
+                try:
+                    changed, refused = format_source_tree(format_root, check=check)
+                except Exception as error:
+                    return StationResult(False, "story_format", _tail(_reason("story format check failed", error)))
+                if refused:
+                    detail = "\n".join(f"{path}: reformatting would change a value" for path in refused)
+                    return StationResult(False, "story_format", _tail(detail))
+                if check and changed:
+                    detail = "\n".join(f"{path}: run story_cli fmt" for path in changed)
+                    return StationResult(False, "story_format", _tail(detail))
 
         if payload.get("entry_snapshots", True) is not False:
             write_error: str | None = None

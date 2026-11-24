@@ -27,6 +27,7 @@ FUN_CHECK_LABEL = (
     "Fun review feedback (this plan was applied and the story editor blocked it; its failed checks, reasons and "
     "fun_advice follow):"
 )
+_HAND_EDIT_KEYS = ("file", "record", "refused_command", "error")
 
 
 def _repository_root() -> Path:
@@ -61,6 +62,21 @@ def _output(completed: object) -> str:
     return "".join(
         str(value) for value in (getattr(completed, "stdout", None), getattr(completed, "stderr", None)) if value
     )
+
+
+def _read_hand_edits(path: Path) -> list[dict[str, Any]]:
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError as error:
+        raise ValueError("hand_edits.json is missing") from error
+    except json.JSONDecodeError as error:
+        raise ValueError(f"hand_edits.json is not valid JSON: {error}") from error
+    if not isinstance(value, list):
+        raise ValueError(f"hand_edits.json must be a list; entries found: {value!r}")
+    for index, entry in enumerate(value):
+        if not isinstance(entry, dict) or any(key not in entry for key in _HAND_EDIT_KEYS):
+            raise ValueError(f"hand_edits.json entry {index} is missing a required key; entries found: {value!r}")
+    return value
 
 
 def _quote(value: str | Path) -> str:
@@ -155,34 +171,34 @@ def wiring_spec(plan: dict, story_root_relative: str | Path) -> str:
     if plan.get("kind") == "add_pacing_beat":
         how = f"""HOW:
 Use the story CLI from the repository root and read every value from plan.json. First run
-`.venv/bin/python -m storygame.story_cli new beat {scene} <id> --say '<text>'`, then use
-`.venv/bin/python -m storygame.story_cli set beat:<id>.at_turn <at_turn>`,
+`.venv/bin/python -m storygame.story_cli new beat {scene} <id> --say '<text>' --at-turn <at_turn>`, then use
 `.venv/bin/python -m storygame.story_cli set beat:<id>.when '<when mapping>'`,
 `.venv/bin/python -m storygame.story_cli set beat:<id>.sets '<sets mapping>'`,
 `.venv/bin/python -m storygame.story_cli set beat:<id>.trailing <trailing>`, and
 `.venv/bin/python -m storygame.story_cli set beat:<id>.say[0].verbatim <verbatim>`.
-The new beat must sit directly before the first other event in this scene whose at_turn is greater than the new beat's
-at_turn; if there is no such event, it goes at the end. The CLI appends a new beat at the end, so after the `new beat`
-and `set` commands, move only the beat record in the scene file's beats list to the right position by hand; do not
-change the record or any other record, keep the file's formatting, and ensure `story_cli fmt --check` still passes.
+The new beat is inserted directly before the first other event in this scene whose at_turn is greater than the new
+beat's at_turn, or at the end when there is no such event. Keep the file's formatting and ensure `story_cli fmt --check`
+still passes.
 The exact address forms come from storygame/story_cmds/cmd_new.py and cmd_set.py. If the
-CLI refuses a field, make the smallest hand edit necessary. Preserve every other record and
-file. The authoritative story root is {story_root_relative}."""
+CLI refuses a field, make the smallest hand edit necessary. The authoritative story root is {story_root_relative}."""
     elif plan.get("kind") == "edit_claim_evidence":
         claim_command = ".venv/bin/python -m storygame.story_cli set claim:<id>.action_evidence[<group>] --add "
         claim_command += "'<yaml string of the phrase>'"
         how = f"""HOW:
 Use the story CLI from the repository root, reading every value from plan.json: `{claim_command}`.
 Use claim_edit.claim_id, claim_edit.group, and claim_edit.phrase exactly as written. If the CLI refuses,
-make the smallest hand edit in the owned match file. Preserve every other record and file. The authoritative
-story root is {story_root_relative}."""
+make the smallest hand edit in the owned match file. The authoritative story root is {story_root_relative}."""
     else:
         how = f"""HOW:
 Use the story CLI from the repository root, reading the address and replacement text from
 plan.json: `.venv/bin/python -m storygame.story_cli set <address> <text>`.
 Copy the text character for character; never re-word it. If the CLI refuses, make the
-smallest hand edit necessary. Preserve every other record and file. The authoritative story
-root is {story_root_relative}."""
+smallest hand edit necessary. The authoritative story root is {story_root_relative}."""
+    hand_edit_log = """If any CLI command refuses and you make a hand edit, record it. Before finishing, write
+hand_edits.json in the same directory as plan.json as a JSON list; write [] when there were no hand edits. Each entry
+must be {\"file\": <source-relative path>, \"record\": <address or id>,
+\"refused_command\": <the exact CLI command that refused>, \"error\": <its error text>}.
+Keep every other record and file unchanged."""
     return f"""ROLE AND BOUNDARY:
 You are the wiring worker. Apply exactly one already-approved story fix to the two owned
 source files for one scene. Never edit tests, Python code, generated files, another scene,
@@ -197,12 +213,15 @@ REASON AND EXACT FIELDS:
 ```
 
 {how}
+
+{hand_edit_log}
 """
 
 
 def _check_extra(plan_path: Path, story_root_relative: str, ownership: list[str]) -> str:
     quoted_ownership = " ".join(_quote(path) for path in ownership)
-    return f"""# Confirm the worker did not change or create an unowned path.
+    return f"""set -e
+# Confirm the worker did not change or create an unowned path.
 .venv/bin/python - {_quote(plan_path)} {_quote(story_root_relative)} {quoted_ownership} <<'PY'
 import json
 import subprocess
@@ -236,6 +255,28 @@ if unexpected:
     raise SystemExit("files outside task ownership: " + ", ".join(unexpected))
 
 plan = json.loads(plan_path.read_text(encoding="utf-8"))
+hand_edit_keys = ("file", "record", "refused_command", "error")
+hand_edits_path = plan_path.parent / "hand_edits.json"
+try:
+    hand_edits = json.loads(hand_edits_path.read_text(encoding="utf-8"))
+except FileNotFoundError:
+    raise SystemExit("hand_edits.json is missing; entries found: []")
+except json.JSONDecodeError as error:
+    raise SystemExit(f"hand_edits.json is not valid JSON: {{error}}; entries found: []")
+if not isinstance(hand_edits, list):
+    raise SystemExit(f"hand_edits.json must be a list; entries found: {{hand_edits!r}}")
+missing_keys = [
+    index
+    for index, entry in enumerate(hand_edits)
+    if not isinstance(entry, dict) or any(key not in entry for key in hand_edit_keys)
+]
+if missing_keys:
+    raise SystemExit(
+        f"hand_edits.json entries missing keys at indexes {{missing_keys}}; entries found: {{hand_edits!r}}"
+    )
+print(f"hand edits: {{len(hand_edits)}}")
+for entry in hand_edits:
+    print(f"hand edit: {{entry['file']}}, {{entry['record']}}, {{entry['refused_command']}}")
 package = load_story_package(story_root)
 diagnostics = check_source_tree(story_root / "source")
 if diagnostics:
@@ -326,7 +367,13 @@ def _clear_previous(
         completed = _run_git(run, ["git", "worktree", "remove", "--force", str(tree)], repository_root)
         if completed is None or completed.returncode != 0:
             return _tail(_output(completed)) or f"could not remove prior tree: {tree}"
-    for path in (ticket_dir / "manifest.json", ticket_dir / "plan.json", ticket_dir / "out", ticket_dir / "ringer"):
+    for path in (
+        ticket_dir / "manifest.json",
+        ticket_dir / "plan.json",
+        ticket_dir / "hand_edits.json",
+        ticket_dir / "out",
+        ticket_dir / "ringer",
+    ):
         try:
             if path.is_dir() and not path.is_symlink():
                 shutil.rmtree(path)
@@ -587,6 +634,14 @@ def wiring_handler(
                 _tail(_output(applied)) or "patch did not apply",
                 tokens=planner_tokens,
             )
-        return StationResult(True, "wiring", f"tree={tree} patch={patch_path}", tokens=planner_tokens)
+        try:
+            hand_edits = _read_hand_edits(ticket_dir / "hand_edits.json")
+        except (OSError, ValueError) as error:
+            return StationResult(False, "wiring", str(error), tokens=planner_tokens)
+        result_lines = [f"tree={tree} patch={patch_path}", f"hand edits: {len(hand_edits)}"]
+        result_lines.extend(
+            f"hand edit: {entry['file']}, {entry['record']}, {entry['refused_command']}" for entry in hand_edits
+        )
+        return StationResult(True, "wiring", "\n".join(result_lines), tokens=planner_tokens)
 
     return handle

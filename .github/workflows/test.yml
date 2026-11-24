@@ -31,6 +31,10 @@ jobs:
         run: uv sync --locked
       - name: Lint
         run: uv run ruff check --select E9,F63,F7,F82 .
+      - name: Story source is in the story CLI's format (fix with `story_cli fmt`)
+        run: uv run python -m storygame.story_cli fmt --check
+      - name: Scene-entry snapshots match the story source (fix with `entry_snapshots write`)
+        run: uv run python -m storygame.runtime.entry_snapshots check
 
   test-shard:
     name: Test shard ${{ matrix.shard }}

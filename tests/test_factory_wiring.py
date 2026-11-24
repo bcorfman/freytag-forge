@@ -16,6 +16,7 @@ from factory.stations.wiring import (
     FUN_CHECK_LABEL,
     MAX_REPLANS,
     PROBE_CHECK_LABEL,
+    _check_extra,
     _clear_previous,
     beat_position_error,
     wiring_handler,
@@ -134,9 +135,11 @@ def test_beat_position_error_reports_a_missing_beat() -> None:
 
 def test_wiring_spec_add_beat_includes_position_rule_and_other_specs_are_unchanged() -> None:
     beat_text = wiring_spec(beat_plan(), "data/stories/continuity-initiative")
-    assert "first other event in this scene whose at_turn is greater than the new beat's" in beat_text
-    assert "The CLI appends a new beat at the end" in beat_text
-    assert "move only the beat record" in beat_text
+    assert "first other event in this scene whose at_turn is greater" in beat_text
+    assert "--at-turn <at_turn>" in beat_text
+    assert "move only the beat record" not in beat_text
+    assert "reorder" not in beat_text
+    assert "hand_edits.json" in beat_text
 
     claim_plan = {
         "version": 1,
@@ -148,25 +151,14 @@ def test_wiring_spec_add_beat_includes_position_rule_and_other_specs_are_unchang
         "claim_edit": {"claim_id": "claim-1", "group": 0, "phrase": "the phrase"},
     }
     claim_text = wiring_spec(claim_plan, "data/stories/continuity-initiative")
-    assert claim_text.endswith(
-        "HOW:\n"
-        "Use the story CLI from the repository root, reading every value from plan.json: `"
-        ".venv/bin/python -m storygame.story_cli set claim:<id>.action_evidence[<group>] --add "
-        "'<yaml string of the phrase>'`.\n"
-        "Use claim_edit.claim_id, claim_edit.group, and claim_edit.phrase exactly as written. If the CLI refuses,\n"
-        "make the smallest hand edit in the owned match file. Preserve every other record and file. The authoritative\n"
-        "story root is data/stories/continuity-initiative.\n"
-    )
+    assert "hand_edits.json" in claim_text
+    assert ".venv/bin/python -m storygame.story_cli set claim:<id>.action_evidence[<group>] --add" in claim_text
+    assert "make the smallest hand edit in the owned match file" in claim_text
 
     text_spec = wiring_spec(text_plan(), "data/stories/continuity-initiative")
-    assert text_spec.endswith(
-        """HOW:
-Use the story CLI from the repository root, reading the address and replacement text from
-plan.json: `.venv/bin/python -m storygame.story_cli set <address> <text>`.
-Copy the text character for character; never re-word it. If the CLI refuses, make the
-smallest hand edit necessary. Preserve every other record and file. The authoritative story
-root is data/stories/continuity-initiative.\n"""
-    )
+    assert "hand_edits.json" in text_spec
+    assert "story_cli set <address> <text>" in text_spec
+    assert "smallest hand edit necessary" in text_spec
 
 
 def test_beat_position_error_matches_the_real_compiled_scene_order() -> None:
@@ -217,6 +209,7 @@ def stub_ringer(repository: Path, scratch_parent: Path):
         ).encode()
         patch_path = Path(manifest["workdir"]) / "wire.patch"
         patch_path.write_bytes(patch)
+        (patch_path.parent.parent / "hand_edits.json").write_text("[]\n", encoding="utf-8")
         return subprocess.CompletedProcess([], 0, stdout="stub ringer ok", stderr="")
 
     return run
@@ -244,6 +237,79 @@ def test_wiring_spec_and_manifest_are_complete_for_both_kinds(tmp_path: Path) ->
         if plan["kind"] == "set_text":
             assert plan["set_text"]["text"] not in task["check"]
         assert lint_check(task["check"]) == []
+
+
+def _run_extra_check(repository: Path, ticket_dir: Path, hand_edits: object = None) -> subprocess.CompletedProcess:
+    ticket_dir.mkdir(parents=True)
+    plan_path = ticket_dir / "plan.json"
+    plan_path.write_text(json.dumps(text_plan()) + "\n", encoding="utf-8")
+    if hand_edits is not None:
+        (ticket_dir / "hand_edits.json").write_text(json.dumps(hand_edits) + "\n", encoding="utf-8")
+    fake_test = repository / "tests" / "test_game_path_completion.py"
+    fake_test.parent.mkdir(parents=True, exist_ok=True)
+    fake_test.write_text("def test_game_path_completion_check_fixture():\n    pass\n", encoding="utf-8")
+    (repository / ".venv").symlink_to(ROOT / ".venv")
+    ownership = [
+        f"data/stories/{DEFAULT_ROOT.name}/source/scenes/1A.yaml",
+        f"data/stories/{DEFAULT_ROOT.name}/source/scenes/1A.match.yaml",
+        "tests/test_game_path_completion.py",
+        ".venv",
+    ]
+    return subprocess.run(
+        ["bash", "-c", _check_extra(plan_path, f"data/stories/{DEFAULT_ROOT.name}", ownership)],
+        cwd=repository,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+
+def test_check_extra_rejects_missing_hand_edit_log(tmp_path: Path) -> None:
+    repository = init_repo(tmp_path)
+
+    result = _run_extra_check(repository, tmp_path / "ticket")
+
+    assert result.returncode != 0
+    assert "hand_edits.json is missing" in result.stderr
+
+
+def test_check_extra_rejects_malformed_hand_edit_log(tmp_path: Path) -> None:
+    repository = init_repo(tmp_path)
+
+    result = _run_extra_check(repository, tmp_path / "ticket", [{"file": "scene.yaml"}])
+
+    assert result.returncode != 0
+    assert "entries missing keys" in result.stderr
+
+
+def test_wiring_reports_hand_edits_in_passing_result(tmp_path: Path) -> None:
+    repository = init_repo(tmp_path)
+    workspace = tmp_path / "workspace"
+    base_runner = stub_ringer(repository, tmp_path / "scratch-hand-edit")
+
+    def ringer(manifest_path: Path, ringer_path: Path) -> subprocess.CompletedProcess:
+        result = base_runner(manifest_path, ringer_path)
+        hand_edit_log = [
+            {
+                "file": "data/stories/continuity-initiative/source/scenes/1A.yaml",
+                "record": "beat:truck_laptop_wire_1a",
+                "refused_command": ".venv/bin/python -m storygame.story_cli set beat:truck_laptop_wire_1a.when '{}'",
+                "error": "command refused",
+            }
+        ]
+        (Path(json.loads(manifest_path.read_text(encoding="utf-8"))["workdir"]).parent / "hand_edits.json").write_text(
+            json.dumps(hand_edit_log) + "\n", encoding="utf-8"
+        )
+        return result
+
+    result = wiring_handler(repository, run_ringer=ringer)(make_ticket(beat_plan(), workspace), NOW)
+
+    assert result.passed
+    assert result.output.splitlines()[-2:] == [
+        "hand edits: 1",
+        "hand edit: data/stories/continuity-initiative/source/scenes/1A.yaml, beat:truck_laptop_wire_1a, "
+        ".venv/bin/python -m storygame.story_cli set beat:truck_laptop_wire_1a.when '{}'",
+    ]
 
 
 def test_lint_failure_creates_nothing(tmp_path: Path) -> None:
@@ -421,6 +487,7 @@ def test_wiring_replans_after_check_failure_and_sums_tokens(tmp_path: Path) -> N
         if len(manifests) == 1:
             return subprocess.CompletedProcess([], 3, "CHECK FAILED: first plan was rejected", "")
         (workdir / "wire.patch").write_text("not applied by this stub\n", encoding="utf-8")
+        (workdir.parent / "hand_edits.json").write_text("[]\n", encoding="utf-8")
         return subprocess.CompletedProcess([], 0, "check passed", "")
 
     def fake_git(command: list[str], **_kwargs) -> subprocess.CompletedProcess:
@@ -573,13 +640,20 @@ def test_wiring_rerun_removes_the_previous_tree(tmp_path: Path) -> None:
         patch_path = Path(json.loads(manifest.read_text(encoding="utf-8"))["workdir"]) / "wire.patch"
         patch_path.parent.mkdir(parents=True, exist_ok=True)
         patch_path.write_bytes(patch.stdout)
+        (patch_path.parent.parent / "hand_edits.json").write_text("[]\n", encoding="utf-8")
         return subprocess.CompletedProcess([], 0, "", "")
 
     handler = wiring_handler(repository, run_ringer=rerun_runner)
     ticket = make_ticket(plan, workspace, "rerun")
     assert handler(ticket, NOW).passed
     assert handler(ticket, NOW).passed
-    assert {path.name for path in (workspace / "rerun").iterdir()} == {"tree", "manifest.json", "plan.json", "ringer"}
+    assert {path.name for path in (workspace / "rerun").iterdir()} == {
+        "tree",
+        "manifest.json",
+        "plan.json",
+        "hand_edits.json",
+        "ringer",
+    }
     assert (workspace / "rerun" / "tree").is_dir()
     assert (workspace / "rerun" / "ringer" / "wire.patch").is_file()
     assert len(list(workspace.glob("rerun/tree"))) == 1

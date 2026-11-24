@@ -12,6 +12,14 @@ Part of [the contributor guide](../contributor-guide.md).
 - Put opening setup, public presentation, protected knowledge, relationships,
   location, custody, pacing, and scene purpose in validated package declarations.
   Correct authoring sources, never generated projections.
+- Edit story source (`data/stories/<story>/source/*.yaml`) only with the story
+  CLI (`python -m storygame.story_cli new|set|rename|fmt`). Committed source
+  must be exactly what the CLI writes: CI runs `story_cli fmt --check`, and the
+  factory's station 5 applies the format in a repair's tree. When the CLI
+  cannot make an edit, add the missing command rather than editing by hand.
+- After a source change, regenerate the scene-entry snapshots with
+  `python -m storygame.runtime.entry_snapshots write`; they record a
+  fingerprint of the source. Station 5 does this for factory repairs.
 - Do not add story- or genre-specific runtime branches, fixed action tables,
   hand-edit generated artifacts, accept unvalidated provider output, leak
   protected knowledge, or change facts after rendering.
