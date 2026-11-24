@@ -285,6 +285,7 @@
     "tests/test_knowledge_narrated_gate.py": 0.11,
     "tests/test_knowledge_projection.py": 0.52,
     "tests/test_knowledge_timeline_script.py": 0.28,
+    "tests/test_known_unreachable_ratchet.py": 0.01,
     "tests/test_kristin_bio.py": 3.97,
     "tests/test_late_scene_repro.py": 0.84,
     "tests/test_leak_terms.py": 0.57,
