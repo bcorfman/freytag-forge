@@ -36,9 +36,8 @@ Run Steps 1 to 5 in order before claiming autonomous repair. Step 6 can be prepa
 
 ## Waiting on the owner
 
-- Answers to the three questions in [controls-proposal.md](qualification/controls-proposal.md) (merge PR #831 first; the $0.50 cap and scene order; add `turns_since_entry` to exported records). The owner chose option 2 for the nine inconclusive sign-offs (rebuild from new evidence) and wants to see the controls before anything is built. Also: figures for each Opus design session (fun items 3 to 7, the exploration-without-grounding design in Step 2, and the ladder's R1d fun-review calibration).
+- Answers to the three questions in [controls-proposal.md](qualification/controls-proposal.md) (PR #831 is merged; the $0.50 cap and scene order; add `turns_since_entry` to exported records). The owner chose option 2 for the nine inconclusive sign-offs (rebuild from new evidence) and wants to see the controls before anything is built. Also: figures for each Opus design session (fun items 3 to 7, the exploration-without-grounding design in Step 2, and the ladder's R1d fun-review calibration).
 - The word to push the station and harness work in tasks 2.2 to 2.6.
-- A per-PR word to merge PRs #830 (plan records) and #831 (guard change); an earlier merge instruction does not cover them.
 - The `coverage nightly` gate: 88.4% against 90%. Either a test-hardening round on the story tooling or a lower gate.
 - Whether the untracked round-18/19 manifests in `scripts/ringer/1a-stuck/` get committed as records.
 
@@ -53,7 +52,12 @@ Run Steps 1 to 5 in order before claiming autonomous repair. Step 6 can be prepa
 
 Workspace root: `/home/bcorfman/dev/ringer-work/qual-20261122/`.
 
-## Resume here (2026-11-24, night: sign-offs done, canary fixed, guard change in review)
+## Resume here (2026-11-24, late night: #830 and #831 merged)
+
+- **State.** `main` is at `a71b28a2` (#830 plan records and #831 guard change merged; staging deploys from the merge). Round 34b (Codex, 98k tokens, first attempt) narrowed #831 on the owner's choice: only the unavailable-knowledge check skips terms the player typed; the unavailable-entity check stays strict, because the entity skip let a typed name conjure unearned people and places (1A "Search for Rebecca."). Small gap: no test row for a typed knowledge term in plural form.
+- **Next, in order:** (1) owner answers [controls-proposal.md](qualification/controls-proposal.md) (its "merge #831 first" is now done); (2) Ringer round: add `turns_since_entry` to exported records; (3) onward as listed below.
+
+## Earlier: 2026-11-24, night: sign-offs done, canary fixed, guard change in review
 
 - **State.** `main` is at `fa2fa0e8` (#828 and #829 merged). Open PRs: **#830** (plan records, steps 1.4 and 1.5 results), **#831** (guard change, round 34a). Neither is merged; merging needs the owner's per-PR word.
 - **Done this session (all free of API spend):** station-5 `journey_reachability` gate merged; Step 1.7 healthy dev cases; Step 6 coverage ledger (`.plans/qualification/coverage-ledger.md`, generator `scripts/qualification/coverage_ledger.py`); R1b-2 adjudication (43 of 68 term-leak rejections are candidate false, all recovered by retry; [results](qualification/gate-r1-results.md)); round 33a to 33c (sign-off and canary runners, then confinement); 1.4 sign-offs (11 sessions, 393k tokens) and 1.5 canary (failed first, fixed, passes).
