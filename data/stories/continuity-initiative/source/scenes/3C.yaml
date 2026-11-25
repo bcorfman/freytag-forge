@@ -384,6 +384,8 @@ beats:
   say:
   - text: The surge is on them.
     verbatim: false
+  delivers:
+  - k_sl_3c_h_route_effects
 - id: evacuation_recovery_3c
   at_turn: 10
   sets:
@@ -393,6 +395,8 @@ beats:
     evacuation_window_missed: true
     evacuation_surge_building: true
     evacuation_recovery_ready: true
+  delivers:
+  - k_sl_3c_h_route_effects
 - id: evacuation_nudge_3c
   at_turn: 10
   sets:
@@ -405,6 +409,8 @@ beats:
     evacuation_window_missed: true
     barrier_held: false
     captives_out_costly: false
+  delivers:
+  - k_evacuation_recovery_ready
 - id: routes_collapse_3c
   at_turn: 10
   sets:

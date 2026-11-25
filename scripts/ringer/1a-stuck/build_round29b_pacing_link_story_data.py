@@ -35,11 +35,11 @@ export PYTHONPATH=$PWD:$PWD/packages/worldkeeper/src TMPDIR=/tmp
 git reset -q
 """
 
-OWNED_RE = r"^(data/stories/continuity-initiative/source/scenes/(1C|2A|2B|2C|3C)\.yaml|tests/test_pacing_links_story\.py|tests/shard_durations\.json|data/stories/continuity-initiative/entry/.*)$"
+OWNED_RE = r"^(data/stories/continuity-initiative/source/scenes/(1C|2A|2B|2C|3C)\.yaml|tests/test_pacing_links_story\.py|tests/test_pacing_links\.py|tests/shard_durations\.json|data/stories/continuity-initiative/entry/.*)$"
 
 SPEC = b.COMMON + (
     "You may edit ONLY: the scene source files data/stories/continuity-initiative/source/scenes/{1C,2A,2B,2C,3C}.yaml (and ONLY through the story CLI, never by hand), "
-    "the scene-entry snapshot files under data/stories/continuity-initiative/entry/ that `python -m storygame.runtime.entry_snapshots write` regenerates, tests/test_pacing_links_story.py (new) and tests/shard_durations.json (one entry for the new test file, value 2.0). Nothing else.\n\n"
+    "the scene-entry snapshot files under data/stories/continuity-initiative/entry/ that `python -m storygame.runtime.entry_snapshots write` regenerates, tests/test_pacing_links_story.py (new), tests/test_pacing_links.py (ONLY the one test named below) and tests/shard_durations.json (one entry for the new test file, value 2.0). Nothing else.\n\n"
     "BACKGROUND. Round 29a added an optional pacing-beat key `delivers` (a list of knowledge claim ids) and the validator storygame/story_package/pacing_links.py::pacing_link_problems(package). "
     "On the real story it reports 11 pressure items that no beat declares. Declare them now. The twelve (event id -> knowledge item) declarations, each beat's `delivers` list getting the items shown "
     "(the beat `evacuation_window_3c` and `evacuation_recovery_3c` both get k_sl_3c_h_route_effects):\n"
@@ -52,6 +52,7 @@ SPEC = b.COMMON + (
     "(2) the declarations are exactly these (event id, item id) pairs, no others, as a set equality over `[(e.id, item) for e in package.pacing.events for item in e.delivers]`: "
     + pairs_py
     + "; (3) every declared item is a knowledge item whose `earn_when` is None and which has no `action_evidence`. Run it before the edits to see it fail, then make the edits.\n"
+    "OLD TEST THAT THIS CHANGE DELIBERATELY BREAKS: tests/test_pacing_links.py::test_real_package_has_exactly_eleven_unlinked_pressure_items asserts the real package has 11 undeclared pressure items. After your edits the real package declares them all, so update that one test to keep its purpose (the validator finds the 11 when the links are missing): derive a package copy whose pacing events have their `delivers` emptied (pydantic `model_copy(update={\"delivers\": ()})` on each event, rebuilding `package.pacing` the same way the other tests in that file derive copies) and run the same assertions against it. Do not change any other test in that file. "
     "Then run the neighbouring tests that load the real package or snapshots: tests/test_pacing_links.py, tests/test_contract_scene.py, tests/test_trailing_pacing_events.py, and `grep -l entry_snapshots tests/*.py` files; if one fails because of this deliberate data change, report it in NOTES.txt and do not edit it (it is outside your ownership)."
 )
 
@@ -102,6 +103,7 @@ manifest = {
                 "data/stories/continuity-initiative/source/scenes/3C.yaml",
                 "data/stories/continuity-initiative/entry/",
                 "tests/test_pacing_links_story.py",
+                "tests/test_pacing_links.py",
                 "tests/shard_durations.json",
             ],
             "spec": SPEC,

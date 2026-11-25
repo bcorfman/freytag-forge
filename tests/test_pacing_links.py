@@ -108,7 +108,9 @@ def test_converter_round_trips_delivers() -> None:
 
 
 def test_real_package_has_exactly_eleven_unlinked_pressure_items() -> None:
-    problems = pacing_link_problems(PACKAGE)
+    events = tuple(event.model_copy(update={"delivers": ()}) for event in PACKAGE.pacing.events)
+    package = _with_events(PACKAGE, events)
+    problems = pacing_link_problems(package)
     assert problems
     assert all("unlinked pacing-linked item" in problem for problem in problems)
     expected = {"k_supervisor_escorting", "k_inspection_window_missed", "k_purge_window_missed"}

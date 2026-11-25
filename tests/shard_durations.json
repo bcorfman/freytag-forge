@@ -3,6 +3,7 @@
   "files": {
     "tests/test_turn_telemetry.py": 2.0,
     "tests/test_pacing_links.py": 2.0,
+    "tests/test_pacing_links_story.py": 2.0,
     "tests/test_pacing_replay.py": 2.0,
     "tests/story_source/test_cli_core.py": 0.5,
     "tests/story_source/test_cli_rename.py": 13.27,

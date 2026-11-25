@@ -248,6 +248,8 @@ beats:
   when:
     transfer_window_missed: true
     facility_infiltration_needed: false
+  delivers:
+  - k_bridge_1c_infiltration
 reveals:
 - id: sl_1c_a
   storylet_id: SL-1C-A
