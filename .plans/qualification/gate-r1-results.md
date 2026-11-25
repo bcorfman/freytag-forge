@@ -190,3 +190,17 @@ No flaky and no environment failures. The labels now follow the rerun results, a
 ## Still to do in R1
 
 See the task list in the [ladder](gate-proving-ladder.md#tasks): runtime rejections (gate 16) on saved good narration, the count of story-naming tests that pin behaviour (gate 11), the fun review's calibration (gate 21; Opus designs it, figures first), and the remaining deterministic gates on the good set, seeded faults and meaning-preserving variants.
+
+## R1b-2: adjudicating the recorded term-leak rejections (2026-11-24)
+
+**How.** A deterministic labelling rule, no model and no human (Ringer run `qual-step6-ledger-r1b2`, task `r1b2-term-leak-adjudication`, Codex, 71,525 tokens over two attempts; the second attempt failed only my check, which demanded a literal phrase in the report; I verified the worker's tree by hand). Tool, tests, labels and report: `qual-20261122/gates/r1b2/`. For each of the 68 term-leak rejections: `player_echo` (the leaked term is in the player's own command), `previously_visible` (in earlier player-visible text of the run), `unearned_new` (neither), `undecidable`. My independent recount of `player_echo` against the player input agreed on all 68.
+
+| Label | Count | Share | Recovered by the retry |
+|---|---:|---:|---:|
+| `player_echo` | 43 | 63.2% | 100% |
+| `previously_visible` | 0 | 0% | n/a |
+| `unearned_new` | 25 | 36.8% | 100% |
+| `undecidable` | 0 | 0% | n/a |
+
+**What it shows.** Most term-leak rejections (43 of 68) are candidate false rejections: narration repeating a word the player typed ("memory card", "maintenance access route", "Michelle"). Every one was recovered by the in-turn retry, so they cost a retry, not a player-visible failure. Only 1 of the 19 player-visible bench rejections is a candidate false one (19 of 428 would become 18 of 428, 4.4% to 4.2%), so the visible-rejection rate is driven by genuine `unearned_new` leaks (for example "printed list" in 1A officer questioning, 15 of the 25). **What it does not show:** `player_echo` being false is a policy judgment about what the guard is for, not a proof; changing the guard to ignore the player's own words needs the guard owner's decision and a test that a player cannot launder an unearned term through their own command. The hosted 1 of 162 rejection was not adjudicated (its record has no rejected narration). `previously_visible` is 0 probably because most saved bench turns lack the earlier-turn text, so treat that count as a floor.
+
