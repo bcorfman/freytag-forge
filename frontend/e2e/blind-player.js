@@ -293,6 +293,8 @@ export function turnLog(turns = []) {
       story_complete: Boolean(story_complete),
       rejection: rejection ?? null,
       scene_id: state?.scene_id ?? null,
+      turn_index: state?.turn_index ?? null,
+      turns_since_entry: state?.turns_since_scene_entry ?? null,
       semantic_match: semantic_match ?? null,
       grounding_ids: grounding_ids || [],
       candidates_offered: candidatesOffered,

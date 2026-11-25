@@ -86,6 +86,17 @@ test("turnRecord defaults and records story completion", () => {
   assert.equal(turnRecord({ turn: 3, input: "Open the door.", payload: { state: { story_complete: true } }, text: "The door opens." }).story_complete, true);
 });
 
+test("turnLog records the scene clock from state", () => {
+  const result = turnLog([
+    { turn: 1, input: "Search the desk.", text: "The desk is here.", state: { scene_id: "A", turn_index: 9, turns_since_scene_entry: 8 } },
+    { turn: 2, input: "Search the room.", text: "Nothing changes.", state: { scene_id: "A" } },
+  ]);
+  assert.equal(result[0].turn_index, 9);
+  assert.equal(result[0].turns_since_entry, 8);
+  assert.equal(result[1].turn_index, null);
+  assert.equal(result[1].turns_since_entry, null);
+});
+
 test("raw profile accepts natural player commands and rejects only its boundaries", () => {
   for (const command of ["Please open my laptop", "I check the drive", "Listen to the recording", "Open it, but don't send anything yet"]) {
     assert.equal(validateCommand(command, "raw").ok, true);
@@ -151,11 +162,11 @@ test("turnLog emits the contract without prompt, delivery, or state", () => {
   const withoutMatch = { turn: 3, input: "Open the door.", text: "The door opens.", state: { scene_id: "B" }, grounding_ids: ["door"], semantic_match: undefined };
   const result = turnLog([normal, rejectedTurn, withoutMatch]);
   assert.deepEqual(result, [
-    { turn: 1, input: "Search the desk.", raw_input: "Search the desk.", profile: "canonical", text: "The desk is here.", rejected: false, story_complete: false, rejection: null, scene_id: "A", semantic_match: { ran: true, matched: "desk" }, grounding_ids: ["desk"], candidates_offered: [], matched_candidate: null, transition_cause: "earned", outcome: "committed", game_break: null },
-    { turn: 2, input: "Search the room.", raw_input: "Search the room.", profile: "canonical", text: "", rejected: true, story_complete: false, rejection: "bad response", scene_id: null, semantic_match: null, grounding_ids: [], candidates_offered: [], matched_candidate: null, transition_cause: "none", outcome: "rejected", game_break: null },
-    { turn: 3, input: "Open the door.", raw_input: "Open the door.", profile: "canonical", text: "The door opens.", rejected: false, story_complete: false, rejection: null, scene_id: "B", semantic_match: null, grounding_ids: ["door"], candidates_offered: [], matched_candidate: null, transition_cause: null, outcome: null, game_break: null },
+    { turn: 1, input: "Search the desk.", raw_input: "Search the desk.", profile: "canonical", text: "The desk is here.", rejected: false, story_complete: false, rejection: null, scene_id: "A", turn_index: null, turns_since_entry: null, semantic_match: { ran: true, matched: "desk" }, grounding_ids: ["desk"], candidates_offered: [], matched_candidate: null, transition_cause: "earned", outcome: "committed", game_break: null },
+    { turn: 2, input: "Search the room.", raw_input: "Search the room.", profile: "canonical", text: "", rejected: true, story_complete: false, rejection: "bad response", scene_id: null, turn_index: null, turns_since_entry: null, semantic_match: null, grounding_ids: [], candidates_offered: [], matched_candidate: null, transition_cause: "none", outcome: "rejected", game_break: null },
+    { turn: 3, input: "Open the door.", raw_input: "Open the door.", profile: "canonical", text: "The door opens.", rejected: false, story_complete: false, rejection: null, scene_id: "B", turn_index: null, turns_since_entry: null, semantic_match: null, grounding_ids: ["door"], candidates_offered: [], matched_candidate: null, transition_cause: null, outcome: null, game_break: null },
   ]);
-  for (const entry of result) assert.deepEqual(Object.keys(entry).sort(), ["candidates_offered", "game_break", "grounding_ids", "input", "matched_candidate", "outcome", "profile", "raw_input", "rejected", "rejection", "scene_id", "semantic_match", "story_complete", "text", "transition_cause", "turn"]);
+  for (const entry of result) assert.deepEqual(Object.keys(entry).sort(), ["candidates_offered", "game_break", "grounding_ids", "input", "matched_candidate", "outcome", "profile", "raw_input", "rejected", "rejection", "scene_id", "semantic_match", "story_complete", "text", "transition_cause", "turn", "turn_index", "turns_since_entry"]);
   assert.equal(JSON.stringify(result).includes("prompt"), false);
 });
 

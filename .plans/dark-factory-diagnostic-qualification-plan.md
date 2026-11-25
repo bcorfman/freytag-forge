@@ -36,7 +36,7 @@ Run Steps 1 to 5 in order before claiming autonomous repair. Step 6 can be prepa
 
 ## Waiting on the owner
 
-- Answers to the three questions in [controls-proposal.md](qualification/controls-proposal.md) (PR #831 is merged; the $0.50 cap and scene order; add `turns_since_entry` to exported records). The owner chose option 2 for the nine inconclusive sign-offs (rebuild from new evidence) and wants to see the controls before anything is built. Also: figures for each Opus design session (fun items 3 to 7, the exploration-without-grounding design in Step 2, and the ladder's R1d fun-review calibration).
+- Answers to the three questions in [controls-proposal.md](qualification/controls-proposal.md) (PR #831 is merged; item 6 is built; only the $0.50 cap and scene order remain). The owner chose option 2 for the nine inconclusive sign-offs (rebuild from new evidence) and wants to see the controls before anything is built. Also: figures for each Opus design session (fun items 3 to 7, the exploration-without-grounding design in Step 2, and the ladder's R1d fun-review calibration).
 - The word to push the station and harness work in tasks 2.2 to 2.6.
 - The `coverage nightly` gate: 88.4% against 90%. Either a test-hardening round on the story tooling or a lower gate.
 - Whether the untracked round-18/19 manifests in `scripts/ringer/1a-stuck/` get committed as records.
@@ -55,7 +55,8 @@ Workspace root: `/home/bcorfman/dev/ringer-work/qual-20261122/`.
 ## Resume here (2026-11-24, late night: #830 and #831 merged)
 
 - **State.** `main` is at `a71b28a2` (#830 plan records and #831 guard change merged; staging deploys from the merge). Round 34b (Codex, 98k tokens, first attempt) narrowed #831 on the owner's choice: only the unavailable-knowledge check skips terms the player typed; the unavailable-entity check stays strict, because the entity skip let a typed name conjure unearned people and places (1A "Search for Rebecca."). Small gap: no test row for a typed knowledge term in plural form.
-- **Next, in order:** (1) owner answers [controls-proposal.md](qualification/controls-proposal.md) (its "merge #831 first" is now done); (2) Ringer round: add `turns_since_entry` to exported records; (3) onward as listed below.
+- **Controls proposal item 6 done (owner said do it, 2026-11-24).** Round 34c tried working the scene clock out from saved records; on the saved hosted 1B report it gives 7 at the exit while the engine floor is 8 (8 at the report's commit too), so records alone cannot recover the hosted clock and the patch was not applied. Round 34d instead records the engine's own clock: `frontend/e2e/blind-player.js` turn records now carry `turn_index` and `turns_since_entry` from the server state summary (branch `scene-clock-34d`), and `make_case.py` labels a recorded clock and never derives one (tools commit `2265781`). Old hosted reports carry no clock. Why hosted 1B left at record turn 7 is still unexplained; the first fresh hosted run will show the real clock.
+- **Next, in order:** (1) merge `scene-clock-34d` (owner's per-PR word) so staging runs record the clock; (2) owner answers question 2 of [controls-proposal.md](qualification/controls-proposal.md) ($0.50 cap, scene order 1B, 2B, 3A, 3C; or swap 2B for 1C to keep defect scenes out); (3) onward as listed below.
 
 ## Earlier: 2026-11-24, night: sign-offs done, canary fixed, guard change in review
 
