@@ -83,4 +83,6 @@ manifest = {
         }
     ],
 }
-Path(__file__).with_name("round29b1-story-set-create-field-manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
+Path(__file__).with_name("round29b1-story-set-create-field-manifest.json").write_text(
+    json.dumps(manifest, indent=2) + "\n"
+)

@@ -81,17 +81,17 @@ def test_set_missing_beat_delivers_preserves_comment_and_formats(tmp_path: Path,
     text = scene.read_text(encoding="utf-8")
     scene.write_text(
         text.replace(
-            "- id: inspection_window_2a\n  at_turn:",
-            "- id: inspection_window_2a\n  # keep this comment\n  at_turn:",
+            "- id: supervisor_impatience_2a\n  at_turn:",
+            "- id: supervisor_impatience_2a\n  # keep this comment\n  at_turn:",
             1,
         ),
         encoding="utf-8",
     )
     monkeypatch.chdir(root)
 
-    assert main(["set", "beat:inspection_window_2a.delivers", "[k_inspection_window_missed]"]) == 0
+    assert main(["set", "beat:supervisor_impatience_2a.delivers", "[k_inspection_window_missed]"]) == 0
     beats = load_document(scene)["beats"]
-    beat = next(beat for beat in beats if beat["id"] == "inspection_window_2a")
+    beat = next(beat for beat in beats if beat["id"] == "supervisor_impatience_2a")
     assert beat["delivers"] == ["k_inspection_window_missed"]
     assert "# keep this comment" in scene.read_text(encoding="utf-8")
     assert main(["fmt", "--check"]) == 0
@@ -103,7 +103,7 @@ def test_set_missing_beat_delivers_rejects_misspelled_key_and_restores_bytes(tmp
     original = scene.read_bytes()
     monkeypatch.chdir(root)
 
-    assert main(["set", "beat:inspection_window_2a.delivrs", "[k_x]"]) == 1
+    assert main(["set", "beat:supervisor_impatience_2a.delivrs", "[k_x]"]) == 1
     assert scene.read_bytes() == original
 
 
@@ -113,7 +113,7 @@ def test_set_add_missing_beat_delivers_returns_two_and_restores_bytes(tmp_path: 
     original = scene.read_bytes()
     monkeypatch.chdir(root)
 
-    assert main(["set", "beat:inspection_window_2a.delivers", "--add", "k_x"]) == 2
+    assert main(["set", "beat:supervisor_impatience_2a.delivers", "--add", "k_x"]) == 2
     assert scene.read_bytes() == original
     assert "unknown address" in capsys.readouterr().err
 

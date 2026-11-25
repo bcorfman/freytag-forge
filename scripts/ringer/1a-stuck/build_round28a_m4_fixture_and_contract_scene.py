@@ -35,7 +35,11 @@ echo "ruff files: $PYFILES"
 """
 
 # ---------------------------------------------------------------- task A
-OWNED_A = ["tests/fixtures/outcome_contract/cases.json", "tests/test_outcome_contract.py", "factory/outcome_contract.py"]
+OWNED_A = [
+    "tests/fixtures/outcome_contract/cases.json",
+    "tests/test_outcome_contract.py",
+    "factory/outcome_contract.py",
+]
 SPEC_A = b.COMMON + (
     "You may edit ONLY: tests/fixtures/outcome_contract/cases.json, tests/test_outcome_contract.py and (only if a new case proves a real classifier bug) factory/outcome_contract.py. "
     "Nothing else.\n\n"
@@ -191,4 +195,6 @@ manifest = {
         },
     ],
 }
-Path(__file__).with_name("round28a-m4-fixture-and-contract-scene-manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
+Path(__file__).with_name("round28a-m4-fixture-and-contract-scene-manifest.json").write_text(
+    json.dumps(manifest, indent=2) + "\n"
+)

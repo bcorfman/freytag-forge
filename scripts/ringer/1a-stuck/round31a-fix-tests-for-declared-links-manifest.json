@@ -1,0 +1,29 @@
+{
+  "run_name": "factory-31a-fix-tests-for-declared-links",
+  "workdir": "/home/bcorfman/dev/ringer-work/factory-31",
+  "max_parallel": 1,
+  "worktrees": true,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "fix-tests",
+      "task_type": "code-fix",
+      "engine": "codex",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=medium"
+      ],
+      "max_attempts": 2,
+      "timeout_s": 1800,
+      "check_timeout_s": 500,
+      "ownership": [
+        "tests/story_source/test_cli_set.py",
+        "tests/test_pacing_replay.py"
+      ],
+      "spec": "You are a factory engineer. Your current working directory IS a git worktree of /home/bcorfman/dev/freytag-forge (detached at HEAD). Edit files here directly. NEVER git commit, never touch /home/bcorfman/dev/freytag-forge itself, never run `uv`, NEVER call a model (not `claude`, not `codex`), NEVER use the network, never run `python -m bench run`, never write factory/state/. FIRST run: [ -e .venv ] || ln -s /home/bcorfman/dev/freytag-forge/.venv .venv . Environment for every command: `export PYTHONPATH=$PWD:$PWD/packages/worldkeeper/src TMPDIR=/tmp`. Ruff (python files only): `.venv/bin/python -m ruff check <files>` / `.venv/bin/python -m ruff format <files>` (line length 120, Python 3.12). Never pass --cov to pytest. Run tests as `.venv/bin/python -m pytest -q -p no:cacheprovider -n 8 <files>`. Tests must be hermetic (fake runner, no network, no real `claude`). Shared code must stay story-agnostic (no story, scene or character names in production code). If an OLD test pins behaviour this change deliberately changes, update it and say so in NOTES.txt. Write NOTES.txt (worktree root, never committed) listing every ambiguity and your choice. Read first: AGENTS.md and docs/contributor-guide.md. You may edit ONLY: tests/story_source/test_cli_set.py and tests/test_pacing_replay.py. No production code, nothing else.\n\nBACKGROUND. Round 29b declared `delivers` links on 12 real pacing beats through the story CLI, among them `inspection_window_2a` (scene 2A) which now delivers `k_inspection_window_missed`. Three tests were written when no real beat had `delivers` and now fail:\n1. tests/story_source/test_cli_set.py::test_set_add_missing_beat_delivers_returns_two_and_restores_bytes: it expects `set beat:inspection_window_2a.delivers --add k_x` to exit 2 because the field is missing; the field now exists. The other tests this file gained in round 29b1 (create a missing `delivers`, replace it afterwards, misspelled key, unknown beat, frozen id) also use `inspection_window_2a`; several of them now pass for the wrong reason (the field already exists, so nothing is created). Change every one of them that depends on the field being absent to use a real beat that has NO `delivers` (find one in the 2A scene source, for example `supervisor_impatience_2a`; confirm by loading the source), so each test again exercises creation of a missing field. Keep their assertions.\n2. tests/test_pacing_replay.py::test_replay_without_deliveries_has_no_null_grounding and ::test_clock_opened_storylets_are_not_null_grounding: they expect empty `null_grounding_ids` on the real package, but the real event now delivers `k_inspection_window_missed`. Keep each test's purpose: the first must still prove 'an event with no `delivers` fires but yields no null grounding' (derive a package copy whose events have `delivers` emptied, with pydantic `model_copy(update=...)`, the way the sibling test in that file derives copies, or use another real event with no `delivers`); the second must still prove that clock-opened STORYLETS never appear in `fired_event_ids` or `null_grounding_ids` (assert storylet ids and storylet knowledge ids are absent; the real declared pacing delivery may be present and should be asserted exactly as `('k_inspection_window_missed',)` if the pacing event fires at that state, otherwise adjust to what the state does).\nRun both files and tests/test_pacing_links.py, tests/test_pacing_links_story.py. Never weaken an assertion; say what you changed in NOTES.txt.",
+      "check": "set -eo pipefail\nWORK=/home/bcorfman/dev/ringer-work/factory-31\nmkdir -p \"$WORK/out\"\nexport PYTHONPATH=$PWD:$PWD/packages/worldkeeper/src TMPDIR=/tmp\n[ -e .venv ] || ln -s /home/bcorfman/dev/freytag-forge/.venv .venv\ngit reset -q\ngit add -A -- tests\nbad=$(git diff --cached --name-only --diff-filter=d | grep -vE '^(tests/story_source/test_cli_set\\.py|tests/test_pacing_replay\\.py)$' || true)\n[ -z \"$bad\" ] || { echo \"files outside ownership staged: $bad\"; exit 1; }\nstart=$(date +%s)\nout=$(.venv/bin/python -m pytest -q -p no:cacheprovider -rs -n 4 tests/story_source tests/test_pacing_replay.py tests/test_pacing_links.py tests/test_pacing_links_story.py tests/test_turn_telemetry.py 2>&1) || { echo \"$out\"; exit 1; }\necho \"$out\" | tail -4\ncase \"$out\" in *skipped*) echo \"tests were skipped\"; exit 1;; esac\ntook=$(( $(date +%s) - start ))\necho \"took $took s (budget 300 s)\"\n[ \"$took\" -le 300 ] || { echo \"over the 300 s budget\"; exit 1; }\nPYFILES=$(git diff --cached --name-only --diff-filter=d | grep '\\.py$' || true)\n[ -z \"$PYFILES\" ] || .venv/bin/python -m ruff check $PYFILES\n[ -z \"$PYFILES\" ] || .venv/bin/python -m ruff format --check $PYFILES\ngit diff --cached > \"$WORK/out/fix-tests.patch\"\ntest -s \"$WORK/out/fix-tests.patch\"\n",
+      "expect_files": [],
+      "verified": "The three tests keep their purpose on a story whose beats now declare links; the creation tests really create a missing field."
+    }
+  ]
+}

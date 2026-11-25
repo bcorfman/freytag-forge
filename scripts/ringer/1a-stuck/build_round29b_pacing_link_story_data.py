@@ -52,7 +52,7 @@ SPEC = b.COMMON + (
     "(2) the declarations are exactly these (event id, item id) pairs, no others, as a set equality over `[(e.id, item) for e in package.pacing.events for item in e.delivers]`: "
     + pairs_py
     + "; (3) every declared item is a knowledge item whose `earn_when` is None and which has no `action_evidence`. Run it before the edits to see it fail, then make the edits.\n"
-    "OLD TEST THAT THIS CHANGE DELIBERATELY BREAKS: tests/test_pacing_links.py::test_real_package_has_exactly_eleven_unlinked_pressure_items asserts the real package has 11 undeclared pressure items. After your edits the real package declares them all, so update that one test to keep its purpose (the validator finds the 11 when the links are missing): derive a package copy whose pacing events have their `delivers` emptied (pydantic `model_copy(update={\"delivers\": ()})` on each event, rebuilding `package.pacing` the same way the other tests in that file derive copies) and run the same assertions against it. Do not change any other test in that file. "
+    'OLD TEST THAT THIS CHANGE DELIBERATELY BREAKS: tests/test_pacing_links.py::test_real_package_has_exactly_eleven_unlinked_pressure_items asserts the real package has 11 undeclared pressure items. After your edits the real package declares them all, so update that one test to keep its purpose (the validator finds the 11 when the links are missing): derive a package copy whose pacing events have their `delivers` emptied (pydantic `model_copy(update={"delivers": ()})` on each event, rebuilding `package.pacing` the same way the other tests in that file derive copies) and run the same assertions against it. Do not change any other test in that file. '
     "Then run the neighbouring tests that load the real package or snapshots: tests/test_pacing_links.py, tests/test_contract_scene.py, tests/test_trailing_pacing_events.py, and `grep -l entry_snapshots tests/*.py` files; if one fails because of this deliberate data change, report it in NOTES.txt and do not edit it (it is outside your ownership)."
 )
 
@@ -113,4 +113,6 @@ manifest = {
         }
     ],
 }
-Path(__file__).with_name("round29b-pacing-link-story-data-manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
+Path(__file__).with_name("round29b-pacing-link-story-data-manifest.json").write_text(
+    json.dumps(manifest, indent=2) + "\n"
+)

@@ -99,15 +99,21 @@ def test_replay_reports_deliveries_and_deduplicates_in_package_order() -> None:
 
 
 def test_replay_without_deliveries_has_no_null_grounding() -> None:
-    result = replay_pacing(_engine(turns_since_entry=4))
+    package = load_story_package(PACKAGE_ROOT)
+    events = tuple(event.model_copy(update={"delivers": ()}) for event in package.pacing.events)
+    package = package.model_copy(update={"pacing": package.pacing.model_copy(update={"events": events})})
+    result = replay_pacing(_engine(package=package, turns_since_entry=4))
     assert result.fired_event_ids == ("inspection_window_2a",)
     assert result.null_grounding_ids == ()
 
 
 def test_clock_opened_storylets_are_not_null_grounding() -> None:
     result = replay_pacing(_engine(turns_since_entry=4))
-    assert all(storylet_id not in result.fired_event_ids for storylet_id in ("SL-2A-A", "SL-2A-B"))
-    assert result.null_grounding_ids == ()
+    storylet_ids = ("SL-2A-A", "SL-2A-B")
+    storylet_knowledge_ids = ("k_sl_2a_b_r1",)
+    assert all(identifier not in result.fired_event_ids for identifier in storylet_ids + storylet_knowledge_ids)
+    assert all(identifier not in result.null_grounding_ids for identifier in storylet_ids + storylet_knowledge_ids)
+    assert result.null_grounding_ids == ("k_inspection_window_missed",)
 
 
 def test_command_fact_is_not_replayed_until_it_exists(tmp_path: Path) -> None:

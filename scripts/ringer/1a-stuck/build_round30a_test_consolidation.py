@@ -34,17 +34,31 @@ echo "ruff files: $PYFILES"
 [ -z "$PYFILES" ] || {PY} -m ruff format --check $PYFILES
 """
 
-RICHER = ["tests/test_richer_1c.py", "tests/test_richer_2a.py", "tests/test_richer_2b.py", "tests/test_richer_2c.py", "tests/test_richer_3a.py"]
-OWNED_A = [*RICHER, "tests/scene_harness.py", "tests/fixtures/scene_commands.json", "tests/test_scene_commands_reach_reveals.py", "tests/shard_durations.json"]
+RICHER = [
+    "tests/test_richer_1c.py",
+    "tests/test_richer_2a.py",
+    "tests/test_richer_2b.py",
+    "tests/test_richer_2c.py",
+    "tests/test_richer_3a.py",
+]
+OWNED_A = [
+    *RICHER,
+    "tests/scene_harness.py",
+    "tests/fixtures/scene_commands.json",
+    "tests/test_scene_commands_reach_reveals.py",
+    "tests/shard_durations.json",
+]
 SPEC_A = b.COMMON + (
-    "You may edit ONLY these files: " + ", ".join(RICHER) + ", tests/scene_harness.py (new), tests/fixtures/scene_commands.json (new), tests/test_scene_commands_reach_reveals.py (new) and tests/shard_durations.json (one entry for the new test file, same format as its neighbours, value 3.0). "
+    "You may edit ONLY these files: "
+    + ", ".join(RICHER)
+    + ", tests/scene_harness.py (new), tests/fixtures/scene_commands.json (new), tests/test_scene_commands_reach_reveals.py (new) and tests/shard_durations.json (one entry for the new test file, same format as its neighbours, value 3.0). "
     "No production code. Nothing else.\n\n"
     "PROBLEM. The owner finds that editing near-identical test functions takes too long. Each of the five files tests/test_richer_{1c,2a,2b,2c,3a}.py has a function named `test_existing_<scene>_commands_still_reach_their_reveals` that loops over `(true_facts, command, expected_reveal_id[, turn_index])` tuples, builds an engine with a file-local `_engine(...)` helper and asserts `_handoff(...)` finds the expected candidate. "
     "The `_engine` and `_handoff` helpers are copied in each file (1c and 2a are identical to each other; 2b, 2c and 3a are identical to each other and add `turn_index`).\n\n"
     "CHANGE, TEST FIRST.\n"
     "1. tests/scene_harness.py: `scene_engine(package, scene_id, *, true_facts=(), turn_index=0) -> tuple[RuntimeState, RuntimeEngine]` and `authored_handoff(engine, state, command)`, exactly the behaviour of the file-local helpers (copy their bodies; read all five files and confirm they match; if a file differs in a way that matters, keep that difference as a parameter and say so in NOTES.txt). "
     "Make the five files use it: replace each file's local `_engine` and `_handoff` bodies by thin wrappers (for example `def _engine(**kwargs): return scene_engine(PACKAGE, \"2B\", **kwargs)`) so no other test in those files has to change. Keep each file's other tests byte for byte.\n"
-    "2. tests/fixtures/scene_commands.json: a JSON list of cases `{\"scene\": \"1C\", \"true_facts\": [...], \"command\": \"...\", \"expected\": \"k_...\", \"turn_index\": 0}` holding EXACTLY the tuples of the five old functions (1C 4, 2A 4, 2B 4, 2C 3, 3A 3 = 18 cases; for 2A and 3A build the fact lists the way the old functions did, e.g. expand `new_reveals` and `ARRIVED` into the literal fact ids; keep the case order of each old function).\n"
+    '2. tests/fixtures/scene_commands.json: a JSON list of cases `{"scene": "1C", "true_facts": [...], "command": "...", "expected": "k_...", "turn_index": 0}` holding EXACTLY the tuples of the five old functions (1C 4, 2A 4, 2B 4, 2C 3, 3A 3 = 18 cases; for 2A and 3A build the fact lists the way the old functions did, e.g. expand `new_reveals` and `ARRIVED` into the literal fact ids; keep the case order of each old function).\n'
     "3. tests/test_scene_commands_reach_reveals.py: ONE parametrized test over that table (`pytest.param(..., id=\"<scene>-<expected>-<n>\")`), loading the real package once (module scope, `load_story_package(Path('data/stories/continuity-initiative'))` like the old files) and asserting what the old functions asserted, with the command in the failure message.\n"
     "4. Delete the five old `test_existing_*_commands_still_reach_their_reveals` functions and any import that becomes unused. Do not delete or change any other test.\n"
     "Run the five files and the new test. The five files must collect exactly 47 tests together (52 before minus the five removed) and the new file at least 18."
@@ -53,13 +67,13 @@ CHECK_A = (
     SETUP
     + ownership_guard(OWNED_A)
     + f"""start=$(date +%s)
-before=$({PY} -m pytest --collect-only -q -p no:cacheprovider {' '.join(RICHER)} 2>/dev/null | grep -c '::')
+before=$({PY} -m pytest --collect-only -q -p no:cacheprovider {" ".join(RICHER)} 2>/dev/null | grep -c '::')
 echo "collected in the five richer files: $before"
 [ "$before" -eq 47 ] || {{ echo "expected exactly 47 tests in the five files (52 minus the five old functions), got $before"; exit 1; }}
 new=$({PY} -m pytest --collect-only -q -p no:cacheprovider tests/test_scene_commands_reach_reveals.py 2>/dev/null | grep -c '::')
 [ "$new" -ge 18 ] || {{ echo "new test collects $new cases, need >= 18"; exit 1; }}
-if grep -n "def test_existing_.*still_reach" {' '.join(RICHER)}; then echo "an old test_existing_* function is still present"; exit 1; fi
-out=$({PY} -m pytest -q -p no:cacheprovider -rs -n 4 tests/test_scene_commands_reach_reveals.py {' '.join(RICHER)} 2>&1) || {{ echo "$out"; exit 1; }}
+if grep -n "def test_existing_.*still_reach" {" ".join(RICHER)}; then echo "an old test_existing_* function is still present"; exit 1; fi
+out=$({PY} -m pytest -q -p no:cacheprovider -rs -n 4 tests/test_scene_commands_reach_reveals.py {" ".join(RICHER)} 2>&1) || {{ echo "$out"; exit 1; }}
 echo "$out" | tail -4
 case "$out" in *skipped*) echo "tests were skipped"; exit 1;; esac
 {PY} - <<'PYV'
@@ -104,7 +118,7 @@ OWNED_B = list(FILES_B)
 SPEC_B = b.COMMON + (
     "You may edit ONLY: " + ", ".join(OWNED_B) + ". Nothing else (no new files, no production code).\n\n"
     "PROBLEM. The owner finds that editing near-identical test functions takes too long. An AST scan (same body after normalising constants, three or more functions, none already parametrized) found these groups; "
-    "collapse each into ONE `@pytest.mark.parametrize` test whose cases keep the ORIGINAL inputs and expected values and whose `ids` keep the old test's meaning (use `pytest.param(..., id=\"<old name without the test_ prefix>\")`):\n"
+    'collapse each into ONE `@pytest.mark.parametrize` test whose cases keep the ORIGINAL inputs and expected values and whose `ids` keep the old test\'s meaning (use `pytest.param(..., id="<old name without the test_ prefix>")`):\n'
     "- tests/test_narration_json_extract.py: test_two_objects_are_ambiguous, test_no_object_is_not_extracted, test_empty_text_is_not_extracted (and any other function with the same skeleton you find in that file)\n"
     "- tests/story_source/test_l1_scene.py: test_unknown_scene_key, test_wrong_scene_value_type, test_wrong_scene_enum (and test_scene_id_pattern, test_missing_scene_key if their skeleton matches: patch one address, expect one L1 code)\n"
     "- tests/test_speaker_presence.py: test_plain_present_sentence_is_present, test_evidence_for_someone_else_does_not_inherit, test_non_evidence_predecessor_does_not_inherit\n"
@@ -128,11 +142,11 @@ echo "{f}: $n collected (before {v[0]})"
 """
         for f, v in FILES_B.items()
     )
-    + f"""defs=$(cat {' '.join(OWNED_B)} | grep -c '^def test_\\|^    def test_')
+    + f"""defs=$(cat {" ".join(OWNED_B)} | grep -c '^def test_\\|^    def test_')
 echo "def test_ functions now: $defs (before {sum(v[1] for v in FILES_B.values())})"
 [ "$defs" -le {sum(v[1] for v in FILES_B.values()) - 8} ] || {{ echo "need at least 8 fewer test functions"; exit 1; }}
 start=$(date +%s)
-out=$({PY} -m pytest -q -p no:cacheprovider -rs -n 4 {' '.join(OWNED_B)} 2>&1) || {{ echo "$out"; exit 1; }}
+out=$({PY} -m pytest -q -p no:cacheprovider -rs -n 4 {" ".join(OWNED_B)} 2>&1) || {{ echo "$out"; exit 1; }}
 echo "$out" | tail -4
 case "$out" in *skipped*) echo "tests were skipped"; exit 1;; esac
 took=$(( $(date +%s) - start ))
