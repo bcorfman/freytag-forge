@@ -216,8 +216,6 @@ class NarrationSafetyValidator:
                     not entity_set & nameable_entity_ids
                     and not statement_covers_entity
                     and not self._contains(handoff_text, form)
-                    and not self._contains(normalized_player_input, form)
-                    and not self._contains_optional_plural(normalized_player_input, form)
                 ):
                     raise ProposalValidationError(
                         f"narration mentions an unavailable entity '{form}'",

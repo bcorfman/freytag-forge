@@ -1,0 +1,87 @@
+# ruff: noqa: E501
+"""Round 34b: narrow round 34a so only the unavailable-knowledge check skips terms the player typed; the unavailable-entity check stays strict (owner decision 2026-11-24, after PR #831 CI)."""
+
+import json
+from pathlib import Path
+
+WORK = "/home/bcorfman/dev/ringer-work/factory-34b"
+REPO = "/home/bcorfman/dev/freytag-forge"
+PY = f"{REPO}/.venv/bin/python"
+TESTS = (
+    "tests/test_narration_safety.py tests/test_recovery_budget.py tests/test_narration_holding_block.py "
+    "tests/test_refusal_lines.py tests/test_surface_gates_scope.py tests/test_leak_terms.py tests/test_leak_terms_enforced.py "
+    "tests/test_narration_retry.py tests/test_narration_fixed_thing_terms.py tests/test_scene_2a_grounding.py "
+    "tests/test_early_1a_photo_sentences.py tests/test_engine_error_line.py tests/test_copied_files_pilot.py"
+)
+
+SPEC = (
+    "You are an engineer on freytag-forge. Your current working directory IS a git worktree of the repo (detached at HEAD of branch guard-ignore-player-words). Edit files here directly. "
+    "NEVER git commit, NEVER call a model, NEVER use the network, never run `uv`. "
+    f"Use the interpreter {PY} only (if `.venv` is missing here, run `ln -s {REPO}/.venv .venv` first). Never pass --cov. Write NOTES.txt (never committed) with each ambiguity and your choice. "
+    "Read AGENTS.md first, then docs/contributor-guide.md only as needed.\n\n"
+    "You may edit ONLY: storygame/runtime/narration_safety.py, tests/test_narration_safety.py, tests/test_recovery_budget.py, docs/markdown-story-authoring/knowledge-and-disclosure.md. "
+    "Do NOT edit tests/test_narration_holding_block.py, tests/test_refusal_lines.py or tests/test_surface_gates_scope.py: they must pass unchanged. Touch nothing else, and do not change any story data.\n\n"
+    "BACKGROUND. The previous commit on this branch made `NarrationSafetyValidator._validate_segments` (storygame/runtime/narration_safety.py) skip a form the player typed in this turn's command at BOTH `narration_known_term_leak` raise sites: the unavailable-entity check ('narration mentions an unavailable entity') and the unavailable-knowledge check ('narration mentions unavailable knowledge'). It computes `normalized_player_input = self._normalize(player_input)` before the segment loop and adds `self._contains(normalized_player_input, form)` / `self._contains_optional_plural(normalized_player_input, form)` tests at both sites. "
+    "CI then showed that the entity-site skip lets a player conjure unearned people and places by typing their names: in scene 1A, 'Search for Rebecca.' now lets the narrator say 'Rebecca is in the room.' (the web demo used to answer with the item-not-visible line, tests/test_refusal_lines.py::test_typed_protected_term_returns_item_line_and_restores_state), and a command naming Michelle's holding block or the emergency surface gates lets 1A narration name those later-scene places (tests/test_narration_holding_block.py, tests/test_surface_gates_scope.py::test_surface_gates_are_rejected_in_scene_1a).\n\n"
+    "DECISION (owner, 2026-11-24): narrow the change. Keep the skip ONLY at the unavailable-knowledge check. Remove it from the unavailable-entity check so that check behaves exactly as before the previous commit (an unearned entity form is rejected even when the player typed it). Keep the computed normalised command if the knowledge check still uses it; leave no dead code.\n\n"
+    "TESTS. (1) In tests/test_narration_safety.py the previous commit added a table-driven test for player-typed terms. Update it to the new rule: a typed unearned ENTITY form is now rejected with code narration_known_term_leak and the right `term`; a typed unearned KNOWLEDGE term is accepted (keep its plural/possessive case if it was a knowledge case, otherwise add one); a typed knowledge term A with an untyped unearned knowledge term B in the same narration is rejected for B; protected-term and empty-command rows keep their expectations. Write the changed rows first, see them fail, then change the code. Keep it parametrized; net growth at most about 15 lines. "
+    "(2) tests/test_recovery_budget.py has three failing tests (test_budget_guard_typed_term_feedback_names_player_phrase, test_budget_guard_typed_term_feedback_is_case_insensitive, test_budget_guard_sanitized_typed_note_is_cleared_after_retry_prompt) plus test_budget_guard_typed_term_inside_longer_word_stays_sanitized. They cover the retry note in storygame/runtime/cloudflare.py `note_rejection` ('The player wrote \"<term>\". Do not use that exact phrase...'). Their example uses the knowledge term 'broadcast the evidence', which the guard now accepts when typed, so the note never fires. Keep the note covered: change only the module constants TYPED_TERM, TYPED_LEAK and TYPED_COMMAND (and the literal command strings in those four tests) to a typed unearned ENTITY form that the same engine state rejects at the entity check (for example a form of 'Rebecca's secured office', which LEAK already uses; verify which form the guard reports as `term`), so each test keeps its original assertions and purpose. Do not weaken any assertion. "
+    "(3) Fix the sentence the previous commit added to docs/markdown-story-authoring/knowledge-and-disclosure.md so it says the skip applies to guarded knowledge forms only, and that an unearned person, place or thing is still refused even when the player names it. One or two sentences.\n\n"
+    "Then run the check's focused suites. If any test fails for a reason other than the behaviour described here, stop and describe it in NOTES.txt instead of changing it."
+)
+
+CHECK = f"""set -e
+WORK={WORK}
+mkdir -p "$WORK/out"
+[ -e .venv ] || ln -s {REPO}/.venv .venv
+git reset -q
+git add -A -- . ':(exclude)NOTES.txt'
+bad=$(git diff --cached --name-only --diff-filter=d | grep -vE '^(storygame/runtime/narration_safety\\.py|tests/test_narration_safety\\.py|tests/test_recovery_budget\\.py|docs/markdown-story-authoring/knowledge-and-disclosure\\.md)$' || true)
+[ -z "$bad" ] || {{ echo "files outside ownership staged: $bad"; exit 1; }}
+for f in storygame/runtime/narration_safety.py tests/test_narration_safety.py tests/test_recovery_budget.py docs/markdown-story-authoring/knowledge-and-disclosure.md; do
+  git diff --cached --name-only | grep -qx "$f" || {{ echo "$f was not changed"; exit 1; }}
+done
+n=$(grep -c 'normalized_player_input' storygame/runtime/narration_safety.py || true)
+echo "normalized_player_input occurrences: $n"
+start=$(date +%s)
+{PY} -m pytest -q -p no:cacheprovider -n 4 {TESTS} > "$WORK/out/pytest.txt" 2>&1 || {{ tail -60 "$WORK/out/pytest.txt"; exit 1; }}
+tail -3 "$WORK/out/pytest.txt"
+took=$(( $(date +%s) - start ))
+echo "focused tests took $took s (budget 300 s)"
+[ "$took" -le 300 ] || {{ echo "over the 300 s budget"; exit 1; }}
+PYFILES=$(git diff --cached --name-only --diff-filter=d | grep '\\.py$' || true)
+{PY} -m ruff check $PYFILES
+{PY} -m ruff format --check $PYFILES
+git diff --cached > "$WORK/out/r1b2-narrow-to-knowledge.patch"
+test -s "$WORK/out/r1b2-narrow-to-knowledge.patch"
+"""
+
+manifest = {
+    "run_name": "qual-r1b2-ignore-player-words",
+    "workdir": WORK,
+    "max_parallel": 1,
+    "worktrees": True,
+    "repo": REPO,
+    "tasks": [
+        {
+            "key": "narrow-to-knowledge",
+            "task_type": "code-fix",
+            "engine": "codex",
+            "engine_args": ["-c", "model_reasoning_effort=high"],
+            "max_attempts": 2,
+            "timeout_s": 2400,
+            "check_timeout_s": 900,
+            "ownership": [
+                "storygame/runtime/narration_safety.py",
+                "tests/test_narration_safety.py",
+                "tests/test_recovery_budget.py",
+                "docs/markdown-story-authoring/knowledge-and-disclosure.md",
+            ],
+            "spec": SPEC,
+            "check": CHECK,
+            "expect_files": [],
+            "verified": "Only the knowledge-term check skips words the player typed; typed names of unearned people and places are still refused; the typed-term retry note stays covered.",
+        }
+    ],
+}
+Path(__file__).with_name("round34b-narrow-to-knowledge-manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")

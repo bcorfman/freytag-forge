@@ -637,6 +637,7 @@ Not a defect: examining props after `SL-1A-G` has fired is flagged "stuck" by th
 | 32 qualification round 33b (Codex, subscription): Step 6 coverage ledger plus R1b-2 term-leak adjudication, two tasks, no model call inside | written 2026-11-24 before the run: about 200k Codex tokens in all | actual 128,000 (ledger) plus 71,525 (R1b-2) = 199,525 tokens, 2 attempts each; both failed my checks (git add excluded ignored paths; a literal phrase demanded), verified by hand and shipped |
 | 33 qualification round 33c (Codex, subscription): confine sessions, one task, with one live canary call in its check | written 2026-11-24 before the run: about 150k Codex tokens plus up to 8 live canaries at about 3k | actual 205,185 Codex tokens, 2 attempts, passed; the live canary used 2,447 Opus tokens |
 | 34 qualification round 34a (Codex, subscription): narration guard ignores terms the player typed (R1b-2), one task, no model call | written 2026-11-24 before the run: about 120k Codex tokens | actual 115,423 tokens, first attempt, passed; PR #831 |
+| 35 qualification round 34b (Codex, subscription): narrow 34a so only the knowledge-term check skips typed words, one task, no model call | written 2026-11-24 before the run: about 80k Codex tokens (34a was 115k for a larger change) | actual 97,988 Codex tokens, first attempt, passed (417 s); PR #831 |
 
 **Resume here (2026-11-22).** Read this block first; the round entries above are the evidence.
 

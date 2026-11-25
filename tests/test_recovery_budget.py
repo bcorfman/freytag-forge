@@ -20,9 +20,9 @@ PACKAGE = load_story_package(Path("data/stories/continuity-initiative"))
 LEAK = "Rebecca's secured office can broadcast the evidence."
 CLEAN = "Kristin waits for Rebecca's next move."
 COMMAND = "Assess the cost of transmitting our evidence."
-TYPED_TERM = "broadcast the evidence"
-TYPED_LEAK = "Rebecca can broadcast the evidence."
-TYPED_COMMAND = "Look for a way to broadcast the evidence."
+TYPED_TERM = "holding block"
+TYPED_LEAK = "The holding block can broadcast the evidence."
+TYPED_COMMAND = "Look for the holding block and broadcast the evidence."
 
 
 class _Response:
@@ -312,7 +312,7 @@ def test_budget_guard_typed_term_feedback_names_player_phrase(monkeypatch: pytes
 def test_budget_guard_typed_term_feedback_is_case_insensitive(monkeypatch: pytest.MonkeyPatch) -> None:
     engine, _state, prompts = _engine_with_transport(monkeypatch, TYPED_LEAK, CLEAN)
 
-    engine.turn("LOOK FOR A WAY TO BROADCAST THE EVIDENCE.")
+    engine.turn("LOOK FOR THE HOLDING BLOCK AND BROADCAST THE EVIDENCE.")
 
     assert f'The player wrote "{TYPED_TERM}".' in prompts[1]
 
@@ -322,7 +322,7 @@ def test_budget_guard_typed_term_inside_longer_word_stays_sanitized(
 ) -> None:
     engine, _state, prompts = _engine_with_transport(monkeypatch, TYPED_LEAK, CLEAN)
 
-    engine.turn("Look for a way to broadcast the evidencekeeper.")
+    engine.turn("Look for the holding blockhouse and broadcast the evidencekeeper.")
 
     assert TYPED_TERM not in prompts[1]
 

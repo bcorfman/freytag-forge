@@ -64,9 +64,19 @@ def _run_accepted(text: str, *, beats: tuple[str, ...] = (), package=PACKAGE):
 @pytest.mark.parametrize(
     ("command", "text", "expected_code", "expected_term"),
     [
-        ("Look for Brandon.", "Brandon waits beside the door.", None, None),
+        (
+            "Look for Brandon.",
+            "Brandon waits beside the door.",
+            "narration_known_term_leak",
+            "brandon",
+        ),
         ("Listen to the damaged recording.", "Kristin hears the damaged recording.", None, None),
-        ("Look for Brandon's office.", "Brandon waits beside the door.", None, None),
+        (
+            "Look for Brandon's office.",
+            "Brandon waits beside the door.",
+            "narration_known_term_leak",
+            "brandon",
+        ),
         ("Search the desk drawer.", "Brandon waits beside the door.", "narration_known_term_leak", "brandon"),
         (
             "Listen to the damaged recording.",
