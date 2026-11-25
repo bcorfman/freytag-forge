@@ -15,7 +15,7 @@ The full definitions and the evidence behind every finding are in the [audit](qu
 
 Run Steps 1 to 5 in order before claiming autonomous repair. Step 6 can be prepared alongside. Steps 7 and 8 depend on both. Step estimates are planning ranges of active time and token allowances, not promises; see [how to read them](qualification/audit-2026-11-23.md#how-to-read-the-step-estimates).
 
-- [ ] [Step 1: make the evidence set trustworthy](qualification/step-1-evidence.md) — 4 of 9 tasks done (1.1 to 1.3 and 1.7)
+- [ ] [Step 1: make the evidence set trustworthy](qualification/step-1-evidence.md) — 6 of 9 tasks done (1.1 to 1.5 and 1.7); the 1.4 sign-offs passed only 2 of 11 cases, so nothing can be sealed
 - [ ] [Step 2: repair measurement before optimizing against it](qualification/step-2-measurement.md) — contract, examples, pacing numbers, the null-grounding design, `build_contract_scene`, the typed pacing-event link (`delivers`, validator, 12 declared links), the pacing-only replay (`replay_pacing`) and the engine-side telemetry builder (`build_turn_telemetry`) are done and committed on `qualification-step2-contract-scene`; the adapters that call them (2.2 to 2.4), the spend reservation (2.5) and the delivery validator (2.6) remain
 - [ ] [Gate-proving ladder](qualification/gate-proving-ladder.md) — approved 2026-11-23; R0 inventory done ([gate-inventory.md](qualification/gate-inventory.md)); R1 3 of 6 sub-rounds done (R1a stuck measures, R1b runtime rejections, R1c test pinning; [results](qualification/gate-r1-results.md)); proves the gate stack on test sets labelled by how they are built (good, seeded faults, meaning-preserving rewrites, per-scene subtracted twins), rung by rung from one gate to the whole game; Steps 4, 5, 7 and 8 wait on its rungs
 - [ ] [Step 3: investigate causes before selecting a repair](qualification/step-3-investigation.md)
@@ -36,7 +36,7 @@ Run Steps 1 to 5 in order before claiming autonomous repair. Step 6 can be prepa
 
 ## Waiting on the owner
 
-- Figures for the 1.4 sign-offs and the 1.5 canary, and for each Opus design session (fun items 3 to 7, the exploration-without-grounding design in Step 2, and the ladder's R1d fun-review calibration).
+- A decision on the nine inconclusive sign-offs (see [step 1](qualification/step-1-evidence.md#sign-off-results-2026-11-24)), and figures for each Opus design session (fun items 3 to 7, the exploration-without-grounding design in Step 2, and the ladder's R1d fun-review calibration).
 - The word to push the station and harness work in tasks 2.2 to 2.6.
 - The `coverage nightly` gate: 88.4% against 90%. Either a test-hardening round on the story tooling or a lower gate.
 - Whether the untracked round-18/19 manifests in `scripts/ringer/1a-stuck/` get committed as records.
