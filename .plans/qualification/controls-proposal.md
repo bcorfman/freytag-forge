@@ -1,4 +1,4 @@
-# Held-out controls: proposal (2026-11-24, awaiting the owner's answers)
+# Held-out controls: proposal (2026-11-24; all three answered, two controls signed off 2026-11-25)
 
 Part of the [qualification plan](../dark-factory-diagnostic-qualification-plan.md). The owner chose option 2 for the nine inconclusive sign-offs (rebuild controls and defects from new evidence) and asked to see the proposed controls before anything is implemented. **Nothing below has been run or built.**
 
@@ -23,5 +23,5 @@ Sketch only. A defect candidate counts only when two blind readers agree on the 
 
 ## Decisions needed from the owner
 1. ~~Merge PR #831 first?~~ Done 2026-11-24.
-2. Approve the $0.50 cap and the fixed scene order 1B, 2B, 3A, 3C?
+2. ~~Approve the $0.50 cap and the fixed scene order?~~ Approved 2026-11-24 with 2B swapped for 1C (order 1B, 1C, 3A, 3C). Result 2026-11-25: controls `heldout-ctrl-1C-r1` and `heldout-ctrl-3C-r1` signed off healthy by two blind readers; about $0.17 spent.
 3. ~~Add `turns_since_entry` to the exported records now (item 6)?~~ Done 2026-11-24 (owner said yes): the hosted harness records the engine clock (round 34d); a clock worked out from records was wrong on hosted 1B and was dropped (round 34c).

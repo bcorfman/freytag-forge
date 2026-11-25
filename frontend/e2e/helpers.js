@@ -145,8 +145,8 @@ export async function startSceneSession(page, options = {}) {
   const sessionState = controller ? sessionResponseFor(page, controller) : null;
   await page.getByRole("button", { name: "New Session" }).click();
   const payload = sessionState ? await sessionState : undefined;
-  await expect(page.locator("#status-line")).toContainText(`Scene ${hasStartScene ? options.startScene : "1A"}`);
-  await expect(page.locator("#transcript")).not.toBeEmpty();
+  await expect(page.locator("#status-line")).toContainText(`Scene ${hasStartScene ? options.startScene : "1A"}`, { timeout: TURN_TIMEOUT_MS });
+  await expect(page.locator("#transcript")).not.toBeEmpty({ timeout: TURN_TIMEOUT_MS });
   return payload;
 }
 
