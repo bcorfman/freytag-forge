@@ -22,7 +22,7 @@ Part of the [qualification plan](../dark-factory-diagnostic-qualification-plan.m
 - [ ] **1.4 Derivability sign-off**, one fresh Opus session per case (about 35k to 55k tokens each; spec estimate 440k to 520k in all). Needs the owner's figures first.
 - [ ] **1.5 Model-based isolation canary**, one short subscription session (10k to 20k). Needs the owner's figures first.
 - [ ] **1.6 The structural case.** Recommended: a labelled synthetic case first (free), then a seeded billed screen on an unexamined scene only after Step 2 lands. 3B stays `wording_or_matching`; N-3 and 15d are known and cannot fill the slot.
-- [ ] **1.7 Healthy development case**: single-replicate exports of 1C replicates 1 and 3, labelled development.
+- [x] **1.7 Healthy development case** (2026-11-24, free): `cases/dev-1C-healthy-r1` and `cases/dev-1C-healthy-r3` in the workspace, single-replicate exports of `r4-1C.json` at `83dac802`, labelled `development`, verdict `healthy` (correct answer: no change). Answer records `private/answer.v2.json` validate with zero citation problems; the isolation scan passes with tokens derived by `derive_forbidden_tokens` (the case manifests carry them). Derivability sign-off for these two is part of 1.4.
 - [ ] **Scoring spec v2** with a new sha256. Step 2 changes the stuck definition, so under the frozen `scoring-spec.md` every affected candidate moves to development and needs a replacement before sealing.
 - [ ] **Seal the held-out set**: four defects (at least three mechanisms, two scenes, one story_structure) and two controls.
 

@@ -1,0 +1,27 @@
+{
+  "run_name": "precedents-scout",
+  "workdir": "/home/bcorfman/dev/ringer-work/precedents-scout",
+  "max_parallel": 1,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "precedents",
+      "task_type": "research",
+      "engine": "codex",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=high"
+      ],
+      "max_attempts": 2,
+      "timeout_s": 3000,
+      "check_timeout_s": 120,
+      "ownership": [],
+      "spec": "You are a read-only research scout. NEVER edit, create or delete anything inside /home/bcorfman/dev/freytag-forge; never run git commands that change anything; never call a model or the network. You may only read files and write ONE output file: /home/bcorfman/dev/ringer-work/precedents-scout/out/precedents.md (create the directory if needed).\n\nTASK. This project (an interactive-fiction engine and its Continuity Initiative story) has fixed 'stuck turns' (player commands that match nothing) and 'players leave the scene early or chase a lead the scene cannot deliver' in several scenes. An automated planner is about to propose story-data changes for scene 1A and must not repeat failed ideas or damage the engine. Read these files IN FULL (each path is relative to /home/bcorfman/dev/freytag-forge): .plans/1a-transcript-continuity-plan.md, .plans/1a-opening-and-truck-feedback-plan.md, .plans/astra-1a-plan.md, .plans/1a-password-and-officer-plan.md, .plans/astra-3c-stuck-turns-prereg.md, .plans/world-model.md, .plans/game-reimagination/whole-story-pacing.md, docs/scene-fixing-guide.md, docs/story-gap-guide.md, docs/world-model-grounding.md, docs/contributor-guide.md. They are long; read them all, do not sample.\n\nOUTPUT. /home/bcorfman/dev/ringer-work/precedents-scout/out/precedents.md with exactly these five second-level headings, in this order, each followed by bullets:\n## Winners (techniques that were adopted because evidence showed they worked)\n## Lost or rejected (tried and dropped, with the reason)\n## Never do (rules about what must not be done to the engine, story facts, pacing events, transitions, exits or world state, including anything that corrupts state or creates stuck states)\n## Pacing events and effect facts (rules about how a pacing event and the fact it sets must be designed)\n## Transitions and exits (rules about when and how a transition, exit trigger or exit dependency may be changed)\nEvery bullet has this shape, on ONE line: `- <what it is, which scene, the evidence in numbers or the test or probe name> \"<a verbatim quote of at least six words from the source>\" [source: <path relative to /home/bcorfman/dev/freytag-forge>:<line number where the quote starts>]`. Use only quotes that really appear in the cited file on the cited line (whitespace differences are tolerated; any invented or altered quote fails the check). Report only what the sources say; mark a point `(unresolved)` when the sources leave the outcome open; if a section has nothing in the sources, write one bullet `- none found [source: none]`. Aim for completeness: every distinct technique, rule and outcome you find, up to 60 bullets in total. Do not add a conclusions or advice section.",
+      "check": "set -eo pipefail\nWORK=/home/bcorfman/dev/ringer-work/precedents-scout\nOUT=\"$WORK/out/precedents.md\"\ntest -s \"$OUT\" || { echo \"missing $OUT\"; exit 1; }\npython3 - \"$OUT\" /home/bcorfman/dev/freytag-forge <<'PY'\nimport re, sys\nfrom pathlib import Path\nout, repo = Path(sys.argv[1]), Path(sys.argv[2])\ntext = out.read_text(encoding=\"utf-8\")\nheads = [h.strip() for h in re.findall(r\"^## (.+)$\", text, re.M)]\nwant = [\"Winners\", \"Lost or rejected\", \"Never do\", \"Pacing events and effect facts\", \"Transitions and exits\"]\nfor w in want:\n    if not any(h.startswith(w) for h in heads):\n        print(\"missing section:\", w); sys.exit(1)\nbullets = [l for l in text.splitlines() if l.startswith(\"- \")]\nif len(bullets) < 12:\n    print(\"too few bullets:\", len(bullets)); sys.exit(1)\ndef norm(s): return re.sub(r\"\\s+\", \" \", s).strip()\nbad, checked = [], 0\nfor b in bullets:\n    if \"[source: none]\" in b: continue\n    m = re.search(r'\"([^\"]{20,})\"\\s*\\[source: ([^:\\]]+):(\\d+)\\]', b)\n    if not m:\n        bad.append(\"no quote/source shape: \" + b[:110]); continue\n    quote, path, line = norm(m.group(1)), m.group(2), int(m.group(3))\n    f = repo / path\n    if not f.is_file():\n        bad.append(\"no such file: \" + path); continue\n    body = norm(f.read_text(encoding=\"utf-8\", errors=\"replace\"))\n    if quote not in body:\n        bad.append(\"quote not found in \" + path + \": \" + quote[:80]); continue\n    checked += 1\nprint(\"bullets:\", len(bullets), \"verified quotes:\", checked)\nif bad:\n    print(\"PROBLEMS:\"); [print(\" \", x) for x in bad[:25]]; sys.exit(1)\nPY\n",
+      "expect_files": [
+        "/home/bcorfman/dev/ringer-work/precedents-scout/out/precedents.md"
+      ],
+      "verified": "Every bullet carries a quote of six or more words that exists verbatim in the cited project file, under the five required sections."
+    }
+  ]
+}

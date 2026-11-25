@@ -18,7 +18,7 @@ Part of the [qualification plan](../dark-factory-diagnostic-qualification-plan.m
 
 - [x] **Unreachable-content ratchet**: `tests/test_known_unreachable_ratchet.py` and `tests/fixtures/known_unreachable_approved.json` (the four N-3 IDs; the set may only shrink) (PR #825, `97fdde35`).
 - [x] **Fast journey reachability check** `factory.checks.library.journey_reachability_check()` (92 journeys, `--run-nightly -n 8`, 240 s budget) (PR #825).
-- [ ] Wire the reachability check into station 5's free gates.
+- [x] Wire the reachability check into station 5's free gates: `journey_reachability` gate in `factory/stations/free_gates.py`, after the carry matrix and before ruff, runs only for story-data tickets (a `source_root` key or a path under the story root); payload `journey_reachability` true or false overrides; 240 s timeout (rounds 32a and 32b, local, not pushed).
 - [ ] Nine-scene coverage ledger: entry-state classes, action classes, pressure responses, earned exits, terminal ending; every storylet listed reachable or retired.
 - [ ] Counterexamples for interacting deviations, custody and location changes, and missing aftermath.
 - [ ] Show that state merging preserves future eligibility, world behavior, timing and endings, or list the unexamined classes.
