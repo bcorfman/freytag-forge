@@ -86,6 +86,9 @@ jobs:
         run: uv run coverage combine coverage-data
       - name: Enforce coverage gate
         run: |
-          report="$(uv run coverage report)"
+          # `coverage report` exits 2 under fail_under; capture its status so a red gate still prints the table.
+          status=0
+          report="$(uv run coverage report)" || status=$?
           printf '%s\n' "$report"
-          printf '%s\n' "$report" | grep 'TOTAL' >> "$GITHUB_STEP_SUMMARY"
+          printf '%s\n' "$report" | grep 'TOTAL' >> "$GITHUB_STEP_SUMMARY" || true
+          exit "$status"

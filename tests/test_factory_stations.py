@@ -83,7 +83,7 @@ def stub_gap_delta(monkeypatch, baseline: Path) -> dict[str, object]:
     monkeypatch.setattr(free_gates_module, "snapshot", lambda root, anchors=None: {})
     monkeypatch.setattr(free_gates_module, "load_baseline", lambda path: {})
     monkeypatch.setattr(free_gates_module, "new_results", lambda baseline, current: {})
-    return {"gap_baseline": str(baseline), "carry_matrix": False}
+    return {"gap_baseline": str(baseline), "carry_matrix": False, "journey_reachability": False}
 
 
 class Runner:
@@ -146,6 +146,7 @@ def test_free_gates_run_in_order_and_all_pass(tmp_path: Path) -> None:
         "gap_baseline": str(baseline),
         "anchors": [anchor],
         "carry_matrix": False,
+        "journey_reachability": False,
         "entry_snapshots": False,
         "story_format": False,
         "paths": ["factory/line.py", "README.md"],
@@ -162,6 +163,392 @@ def test_free_gates_run_in_order_and_all_pass(tmp_path: Path) -> None:
     assert runner.calls[2][1]["timeout"] == 1200
 
 
+def test_free_gates_runs_journey_reachability_after_carry_and_before_ruff(tmp_path: Path, monkeypatch) -> None:
+    baseline, anchor = gap_baseline(tmp_path)
+    order: list[str] = []
+    report = CarryReport(
+        mode="one_branch",
+        entry_states={},
+        branches={},
+        searches=0,
+        turns=0,
+        memo_hits=0,
+        cache_hits=0,
+        stuck=[],
+        seconds=0.0,
+        seconds_by_scene={},
+        unreachable={},
+    )
+    monkeypatch.setattr(free_gates_module, "load_story_package", lambda _root: object())
+    monkeypatch.setattr(
+        free_gates_module,
+        "carry_matrix",
+        lambda *args, **kwargs: order.append("carry_matrix") or report,
+    )
+    runner = Runner([0, 0, 0, 0])
+    payload = {
+        "gap_baseline": str(baseline),
+        "anchors": [anchor],
+        "entry_snapshots": False,
+        "story_format": False,
+        "journey_reachability": True,
+        "paths": ["changed.py"],
+        "tests": ["tests/test_factory_line.py"],
+    }
+
+    result = free_gates_handler(ROOT, runner)(make_ticket(payload, station=Station.FREE_GATES), NOW)
+
+    assert result.passed
+    assert runner.calls[0][0][2] == "pytest"
+    assert runner.calls[1][0][2:4] == ["ruff", "check"]
+    assert runner.calls[2][0][2:4] == ["ruff", "format"]
+    assert runner.calls[3][0][2] == "pytest"
+    journey_command, journey_kwargs = runner.calls[0]
+    assert journey_command == [
+        ".venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "--run-nightly",
+        "-n",
+        "8",
+        "tests/test_game_path_journeys.py",
+        "tests/test_known_unreachable_ratchet.py",
+    ]
+    assert journey_kwargs["cwd"] == ROOT
+    assert journey_kwargs["timeout"] == 240
+    assert journey_kwargs["env"]["PYTHONPATH"].split(":")[:2] == [
+        str(ROOT),
+        str(ROOT / "packages/worldkeeper/src"),
+    ]
+    assert order == ["carry_matrix"]
+
+
+def test_free_gates_can_skip_journey_reachability(tmp_path: Path) -> None:
+    baseline, anchor = gap_baseline(tmp_path)
+    runner = Runner([0, 0, 0])
+    payload = {
+        "gap_baseline": str(baseline),
+        "anchors": [anchor],
+        "entry_snapshots": False,
+        "story_format": False,
+        "journey_reachability": False,
+        "paths": ["changed.py"],
+        "tests": ["tests/test_factory_line.py"],
+    }
+
+    result = free_gates_handler(ROOT, runner)(make_ticket(payload, station=Station.FREE_GATES), NOW)
+
+    assert result.passed
+    assert all(
+        call[0]
+        != [
+            ".venv/bin/python",
+            "-m",
+            "pytest",
+            "-q",
+            "-p",
+            "no:cacheprovider",
+            "--run-nightly",
+            "-n",
+            "8",
+            "tests/test_game_path_journeys.py",
+            "tests/test_known_unreachable_ratchet.py",
+        ]
+        for call in runner.calls
+    )
+
+
+def test_free_gates_journey_failure_stops_before_ruff_and_tests(tmp_path: Path) -> None:
+    baseline, anchor = gap_baseline(tmp_path)
+    runner = Runner([1], output="storylet output")
+    payload = {
+        "gap_baseline": str(baseline),
+        "anchors": [anchor],
+        "entry_snapshots": False,
+        "story_format": False,
+        "journey_reachability": True,
+        "paths": ["changed.py"],
+        "tests": ["tests/test_factory_line.py"],
+    }
+
+    result = free_gates_handler(ROOT, runner)(make_ticket(payload, station=Station.FREE_GATES), NOW)
+
+    assert not result.passed
+    assert result.check == "journey_reachability"
+    assert result.output == "a story realization is unreachable or the ratchet was broken: storylet output"
+    assert len(runner.calls) == 1
+
+
+def test_free_gates_journey_timeout_is_failure(tmp_path: Path) -> None:
+    baseline, anchor = gap_baseline(tmp_path)
+    runner = Runner([subprocess.TimeoutExpired("pytest", 240)])
+    payload = {
+        "gap_baseline": str(baseline),
+        "anchors": [anchor],
+        "entry_snapshots": False,
+        "story_format": False,
+        "journey_reachability": True,
+    }
+
+    result = free_gates_handler(ROOT, runner)(make_ticket(payload, station=Station.FREE_GATES), NOW)
+
+    assert not result.passed
+    assert result.check == "journey_reachability"
+    assert result.output == "command timed out"
+
+
+def test_free_gates_journey_reachability_uses_ticket_tree(tmp_path: Path, monkeypatch) -> None:
+    tree = tmp_path / "tree"
+    tree.mkdir()
+    baseline = tmp_path / "gaps.json"
+    baseline.write_text("{}", encoding="utf-8")
+    runner = Runner([0])
+    monkeypatch.setattr(free_gates_module, "ticket_tree", lambda *_args: tree)
+    monkeypatch.setattr(free_gates_module, "snapshot", lambda root, anchors=None: {})
+    monkeypatch.setattr(free_gates_module, "load_baseline", lambda path: {})
+    payload = {
+        "gap_baseline": str(baseline),
+        "carry_matrix": False,
+        "journey_reachability": True,
+        "entry_snapshots": False,
+        "story_format": False,
+    }
+
+    result = free_gates_handler(ROOT, runner)(make_ticket(payload, station=Station.FREE_GATES), NOW)
+
+    assert result.passed
+    assert runner.calls[0][1]["cwd"] == tree
+    assert runner.calls[0][1]["env"]["PYTHONPATH"].split(":")[:2] == [str(tree), str(tree / "packages/worldkeeper/src")]
+
+
+def test_free_gates_journey_runs_for_source_root_without_key(tmp_path: Path, monkeypatch) -> None:
+    baseline = tmp_path / "gaps.json"
+    baseline.write_text("{}", encoding="utf-8")
+    monkeypatch.setattr(free_gates_module, "snapshot", lambda root, anchors=None: {})
+    monkeypatch.setattr(free_gates_module, "load_baseline", lambda path: {})
+    runner = Runner([0])
+
+    result = free_gates_handler(ROOT, runner)(
+        make_ticket(
+            {
+                "gap_baseline": str(baseline),
+                "source_root": str(DEFAULT_ROOT / "source"),
+                "carry_matrix": False,
+                "entry_snapshots": False,
+                "story_format": False,
+            },
+            station=Station.FREE_GATES,
+        ),
+        NOW,
+    )
+
+    assert result.passed
+    assert runner.calls[0][0][6] == "--run-nightly"
+
+
+def test_free_gates_journey_runs_for_path_under_payload_story_root(tmp_path: Path, monkeypatch) -> None:
+    story_root = tmp_path / "story"
+    story_root.mkdir()
+    baseline = tmp_path / "gaps.json"
+    baseline.write_text("{}", encoding="utf-8")
+    monkeypatch.setattr(free_gates_module, "snapshot", lambda root, anchors=None: {})
+    monkeypatch.setattr(free_gates_module, "load_baseline", lambda path: {})
+    runner = Runner([0])
+
+    result = free_gates_handler(ROOT, runner)(
+        make_ticket(
+            {
+                "gap_baseline": str(baseline),
+                "story_root": str(story_root),
+                "carry_matrix": False,
+                "entry_snapshots": False,
+                "story_format": False,
+                "paths": [str(story_root / "scenes/1A.yaml")],
+            },
+            station=Station.FREE_GATES,
+        ),
+        NOW,
+    )
+
+    assert result.passed
+    assert runner.calls[0][0][6] == "--run-nightly"
+
+
+@pytest.mark.parametrize("paths", [["factory/foo.py", "tests/test_x.py"], None])
+def test_free_gates_journey_skips_without_story_data(tmp_path: Path, monkeypatch, paths) -> None:
+    baseline = tmp_path / "gaps.json"
+    baseline.write_text("{}", encoding="utf-8")
+    monkeypatch.setattr(free_gates_module, "snapshot", lambda root, anchors=None: {})
+    monkeypatch.setattr(free_gates_module, "load_baseline", lambda path: {})
+    runner = Runner([0, 0])
+    payload = {
+        "gap_baseline": str(baseline),
+        "story_root": str(tmp_path / "story"),
+        "carry_matrix": False,
+        "entry_snapshots": False,
+        "story_format": False,
+    }
+    if paths is not None:
+        payload["paths"] = paths
+
+    result = free_gates_handler(ROOT, runner)(make_ticket(payload, station=Station.FREE_GATES), NOW)
+
+    assert result.passed
+    assert all("--run-nightly" not in call[0] for call in runner.calls)
+
+
+def test_free_gates_journey_true_overrides_pure_factory_ticket(tmp_path: Path, monkeypatch) -> None:
+    baseline = tmp_path / "gaps.json"
+    baseline.write_text("{}", encoding="utf-8")
+    monkeypatch.setattr(free_gates_module, "snapshot", lambda root, anchors=None: {})
+    monkeypatch.setattr(free_gates_module, "load_baseline", lambda path: {})
+    runner = Runner([0])
+
+    result = free_gates_handler(ROOT, runner)(
+        make_ticket(
+            {
+                "gap_baseline": str(baseline),
+                "carry_matrix": False,
+                "entry_snapshots": False,
+                "story_format": False,
+                "journey_reachability": True,
+            },
+            station=Station.FREE_GATES,
+        ),
+        NOW,
+    )
+
+    assert result.passed
+    assert runner.calls[0][0][6] == "--run-nightly"
+
+
+def test_free_gates_journey_false_overrides_story_data_ticket(tmp_path: Path, monkeypatch) -> None:
+    baseline = tmp_path / "gaps.json"
+    baseline.write_text("{}", encoding="utf-8")
+    monkeypatch.setattr(free_gates_module, "snapshot", lambda root, anchors=None: {})
+    monkeypatch.setattr(free_gates_module, "load_baseline", lambda path: {})
+    runner = Runner([])
+
+    result = free_gates_handler(ROOT, runner)(
+        make_ticket(
+            {
+                "gap_baseline": str(baseline),
+                "source_root": str(DEFAULT_ROOT / "source"),
+                "carry_matrix": False,
+                "entry_snapshots": False,
+                "story_format": False,
+                "journey_reachability": False,
+            },
+            station=Station.FREE_GATES,
+        ),
+        NOW,
+    )
+
+    assert result.passed
+    assert runner.calls == []
+
+
+def test_free_gates_journey_uses_ticket_tree_story_root_for_path(tmp_path: Path, monkeypatch) -> None:
+    tree = tmp_path / "tree"
+    story_root = tree / "story"
+    story_root.mkdir(parents=True)
+    baseline = tmp_path / "gaps.json"
+    baseline.write_text("{}", encoding="utf-8")
+    monkeypatch.setattr(free_gates_module, "ticket_tree", lambda *_args: tree)
+    monkeypatch.setattr(free_gates_module, "snapshot", lambda root, anchors=None: {})
+    monkeypatch.setattr(free_gates_module, "load_baseline", lambda path: {})
+    runner = Runner([0])
+
+    result = free_gates_handler(ROOT, runner)(
+        make_ticket(
+            {
+                "gap_baseline": str(baseline),
+                "story_root": "story",
+                "carry_matrix": False,
+                "entry_snapshots": False,
+                "story_format": False,
+                "paths": [str(story_root / "scenes/1A.yaml")],
+            },
+            station=Station.FREE_GATES,
+        ),
+        NOW,
+    )
+
+    assert result.passed
+    assert runner.calls[0][1]["cwd"] == tree
+
+
+def test_free_gates_journey_ignores_malformed_paths(tmp_path: Path, monkeypatch) -> None:
+    baseline = tmp_path / "gaps.json"
+    baseline.write_text("{}", encoding="utf-8")
+    monkeypatch.setattr(free_gates_module, "snapshot", lambda root, anchors=None: {})
+    monkeypatch.setattr(free_gates_module, "load_baseline", lambda path: {})
+    runner = Runner([])
+
+    result = free_gates_handler(ROOT, runner)(
+        make_ticket(
+            {
+                "gap_baseline": str(baseline),
+                "story_root": str(tmp_path / "story"),
+                "carry_matrix": False,
+                "entry_snapshots": False,
+                "story_format": False,
+                "paths": [123],
+            },
+            station=Station.FREE_GATES,
+        ),
+        NOW,
+    )
+    malformed = free_gates_handler(ROOT, runner)(
+        make_ticket(
+            {
+                "gap_baseline": str(baseline),
+                "story_root": str(tmp_path / "story"),
+                "carry_matrix": False,
+                "entry_snapshots": False,
+                "story_format": False,
+                "paths": 123,
+            },
+            station=Station.FREE_GATES,
+        ),
+        NOW,
+    )
+
+    assert result.passed
+    assert malformed.passed
+    assert runner.calls == []
+
+
+def test_free_gates_carry_matrix_failure_stops_before_journey(tmp_path: Path, monkeypatch) -> None:
+    baseline, anchor = gap_baseline(tmp_path)
+    report = CarryReport(
+        mode="one_branch",
+        entry_states={"1A": 1},
+        branches={"1A": 1},
+        searches=1,
+        turns=1,
+        memo_hits=0,
+        cache_hits=0,
+        stuck=[],
+        seconds=0.01,
+        seconds_by_scene={"1A": 0.01},
+        unreachable={"2C": "1A"},
+    )
+    monkeypatch.setattr(free_gates_module, "load_story_package", lambda _root: object())
+    monkeypatch.setattr(free_gates_module, "carry_matrix", lambda *args, **kwargs: report)
+    runner = Runner([])
+    payload = {"gap_baseline": str(baseline), "anchors": [anchor], "entry_snapshots": False, "story_format": False}
+
+    result = free_gates_handler(ROOT, runner)(make_ticket(payload, station=Station.FREE_GATES), NOW)
+
+    assert not result.passed
+    assert result.check == "carry_matrix"
+    assert runner.calls == []
+
+
 def test_free_gates_stop_at_ruff_failure_and_keep_tail(tmp_path: Path) -> None:
     baseline, anchor = gap_baseline(tmp_path)
     runner = Runner([1], output="x" * 5000)
@@ -169,6 +556,7 @@ def test_free_gates_stop_at_ruff_failure_and_keep_tail(tmp_path: Path) -> None:
         "gap_baseline": str(baseline),
         "anchors": [anchor],
         "carry_matrix": False,
+        "journey_reachability": False,
         "entry_snapshots": False,
         "story_format": False,
         "paths": ["changed.py", "notes.md"],
@@ -191,6 +579,7 @@ def test_free_gates_filter_non_python_paths_and_timeout_is_failure(tmp_path: Pat
         "gap_baseline": str(baseline),
         "anchors": [anchor],
         "carry_matrix": False,
+        "journey_reachability": False,
         "entry_snapshots": False,
         "story_format": False,
         "paths": ["notes.md", "changed.py"],
@@ -221,6 +610,7 @@ def test_free_gates_uses_ticket_tree_for_paths_and_commands(tmp_path: Path, monk
                 "gap_baseline": str(baseline),
                 "story_root": "data/stories/continuity-initiative",
                 "carry_matrix": False,
+                "journey_reachability": False,
                 "entry_snapshots": False,
                 "story_format": False,
                 "paths": [str(ROOT / "factory/line.py")],
@@ -250,6 +640,7 @@ def test_free_gates_gap_delta_reports_new_result_and_missing_key(tmp_path: Path)
                 "gap_baseline": str(baseline),
                 "anchors": [anchor],
                 "carry_matrix": False,
+                "journey_reachability": False,
                 "entry_snapshots": False,
                 "story_format": False,
             },
