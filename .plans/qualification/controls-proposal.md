@@ -22,6 +22,6 @@ They were whole three-replicate scene runs labelled healthy as a unit, and each 
 Sketch only. A defect candidate counts only when two blind readers agree on the verdict and on one repair-level criterion ("an acceptable fix must change X"), not on a class label, because the class labels did not reproduce between readers (2B, 3A, 3B).
 
 ## Decisions needed from the owner
-1. Merge PR #831 first (the guard change), so the controls reflect the shipped guard?
+1. ~~Merge PR #831 first?~~ Done 2026-11-24.
 2. Approve the $0.50 cap and the fixed scene order 1B, 2B, 3A, 3C?
-3. Add `turns_since_entry` to the exported records now (item 6)?
+3. ~~Add `turns_since_entry` to the exported records now (item 6)?~~ Done 2026-11-24 (owner said yes): the hosted harness records the engine clock (round 34d); a clock worked out from records was wrong on hosted 1B and was dropped (round 34c).

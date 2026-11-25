@@ -1,0 +1,29 @@
+{
+  "run_name": "qual-turns-since-entry",
+  "workdir": "/home/bcorfman/dev/ringer-work/factory-34d-harness",
+  "max_parallel": 1,
+  "worktrees": true,
+  "repo": "/home/bcorfman/dev/freytag-forge",
+  "tasks": [
+    {
+      "key": "record-scene-clock",
+      "task_type": "code-feature",
+      "engine": "codex",
+      "engine_args": [
+        "-c",
+        "model_reasoning_effort=medium"
+      ],
+      "max_attempts": 2,
+      "timeout_s": 1800,
+      "check_timeout_s": 600,
+      "ownership": [
+        "frontend/e2e/blind-player.js",
+        "frontend/e2e/blind-player.test.js"
+      ],
+      "spec": "You are an engineer on freytag-forge. Your current working directory IS a git worktree of the repo (detached at HEAD). Edit files here directly. NEVER git commit, NEVER call a model, NEVER use the network, never run `uv`, never run Playwright or any browser test. Write NOTES.txt (never committed) with each ambiguity and your choice. Read AGENTS.md first.\n\nYou may edit ONLY: frontend/e2e/blind-player.js and frontend/e2e/blind-player.test.js. Touch nothing else.\n\nPROBLEM. The hosted blind-player harness writes one record per turn (the object returned near the end of the turn-record mapping in frontend/e2e/blind-player.js, with fields turn, input, raw_input, profile, text, rejected, story_complete, rejection, scene_id, semantic_match, grounding_ids, candidates_offered, matched_candidate, transition_cause, outcome, game_break). Its `scene_id` comes from the turn response's `state`, which is the server's state summary (storygame/web_demo.py `_state_summary`). That summary also carries `turn_index` and `turns_since_scene_entry` (the engine's own scene clock, `state.turn_index - state.scene_entered_at_turn`), but the record drops them. Blind readers then guess the clock from the record's `turn` number and misread a scene's `min_turns` floor. Records alone cannot recover the clock (a saved hosted 1B report exits at record turn 7 while the engine floor is 8).\n\nWHAT TO BUILD. In the per-turn record add two fields right after `scene_id`: `turn_index: state?.turn_index ?? null` and `turns_since_entry: state?.turns_since_scene_entry ?? null`, read from the same `state` object `scene_id` comes from. Do not change any other field, the order of existing fields, or the stateEvidence helper. If the same record builder is used for question (clarification) turns, they get the fields too. TEST FIRST in frontend/e2e/blind-player.test.js, in the style of the existing record test there (the one that builds a payload with `state: { scene_id: \"A\" }` and checks the mapped record): (1) a state with turn_index 9 and turns_since_scene_entry 8 gives a record with turn_index 9 and turns_since_entry 8; (2) a state without them gives null for both; (3) update any existing deep-equality assertion on the record shape that now legitimately gains the two fields (say which in NOTES.txt). The existing test `turnLog emits the contract without prompt, delivery, or state` is one: the record still must not carry the prompt, the delivery or the rest of the state object; these two counters are a deliberate, owner-approved exception, so add them to its expected records and keep every other exclusion it checks. Run the tests with `cd frontend && node --test e2e/blind-player.test.js` and then the whole node suite `cd frontend && npm test`.",
+      "check": "set -e\nWORK=/home/bcorfman/dev/ringer-work/factory-34d-harness\nmkdir -p \"$WORK/out\"\n[ -e frontend/node_modules ] || ln -s /home/bcorfman/dev/freytag-forge/frontend/node_modules frontend/node_modules\ngit reset -q\ngit add -A -- . ':(exclude)NOTES.txt'\ngit reset -q -- frontend/node_modules 2>/dev/null || true\nbad=$(git diff --cached --name-only --diff-filter=d | grep -vE '^frontend/e2e/blind-player(\\.test)?\\.js$' || true)\n[ -z \"$bad\" ] || { echo \"files outside ownership staged: $bad\"; exit 1; }\ngit diff --cached --name-only | grep -qx frontend/e2e/blind-player.js || { echo \"blind-player.js was not changed\"; exit 1; }\ngit diff --cached --name-only | grep -qx frontend/e2e/blind-player.test.js || { echo \"blind-player.test.js was not changed\"; exit 1; }\ngrep -q 'turns_since_entry: state?.turns_since_scene_entry' frontend/e2e/blind-player.js || { echo \"record does not read turns_since_scene_entry from state\"; exit 1; }\ngrep -q 'turns_since_entry' frontend/e2e/blind-player.test.js || { echo \"no test mentions turns_since_entry\"; exit 1; }\nstart=$(date +%s)\n(cd frontend && PATH=/home/bcorfman/dev/freytag-forge/.venv/bin:$PATH node --test src/*.test.js e2e/*.test.js) > \"$WORK/out/node-test.txt\" 2>&1 || { grep -nE \"\u2716|\u2139 fail\" \"$WORK/out/node-test.txt\" | head -20; tail -40 \"$WORK/out/node-test.txt\"; exit 1; }\ngrep -E \"\u2139 (pass|fail)\" \"$WORK/out/node-test.txt\"\ntook=$(( $(date +%s) - start ))\necho \"node tests took $took s (budget 180 s)\"\n[ \"$took\" -le 180 ] || { echo \"over the 180 s budget\"; exit 1; }\ngit diff --cached > \"$WORK/out/record-scene-clock.patch\"\ntest -s \"$WORK/out/record-scene-clock.patch\"\n",
+      "expect_files": [],
+      "verified": "Each hosted blind-player turn record carries the engine's turn_index and scene clock from the server state."
+    }
+  ]
+}
