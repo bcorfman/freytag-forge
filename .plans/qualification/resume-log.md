@@ -171,3 +171,6 @@ Owner said "start the free work". No model call, no billed run, no push, no merg
 - 11 Opus sessions, 393,213 tokens, five-hour window 56%, seven-day 27%. Results and table in [step-1-evidence.md](step-1-evidence.md#sign-off-results-2026-11-24). Nothing is sealed; the held-out controls all fail sign-off.
 - The 1B disagreement (exit on turn 7 with `min_turns` 8) is probably a turn-numbering mismatch in the records, but this was not settled.
 - Not done: the 2.2 to 2.4 adapters (hosted, probe, qualification paths), 2.5 spend reservation, 2.6 delivery validator, the Opus design session for exploration-without-grounding, the coverage test-hardening (cannot be measured without `--cov`, which is nightly-only by the owner's rule). Next free step: decide what to do with the nine inconclusive cases.
+
+### Resume here (2026-11-24, night: R1b-2 guard change and controls proposal)
+- Round 34a (115,423 tokens, first attempt) built the guard change; PR #831 open, not merged. Controls proposal written to [controls-proposal.md](controls-proposal.md); awaiting the owner's three answers. See the hub's 'Resume here (2026-11-24, night)' block for the ordered next steps.

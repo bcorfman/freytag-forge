@@ -36,8 +36,9 @@ Run Steps 1 to 5 in order before claiming autonomous repair. Step 6 can be prepa
 
 ## Waiting on the owner
 
-- A decision on the nine inconclusive sign-offs (see [step 1](qualification/step-1-evidence.md#sign-off-results-2026-11-24)), and figures for each Opus design session (fun items 3 to 7, the exploration-without-grounding design in Step 2, and the ladder's R1d fun-review calibration).
+- Answers to the three questions in [controls-proposal.md](qualification/controls-proposal.md) (merge PR #831 first; the $0.50 cap and scene order; add `turns_since_entry` to exported records). The owner chose option 2 for the nine inconclusive sign-offs (rebuild from new evidence) and wants to see the controls before anything is built. Also: figures for each Opus design session (fun items 3 to 7, the exploration-without-grounding design in Step 2, and the ladder's R1d fun-review calibration).
 - The word to push the station and harness work in tasks 2.2 to 2.6.
+- A per-PR word to merge PRs #830 (plan records) and #831 (guard change); an earlier merge instruction does not cover them.
 - The `coverage nightly` gate: 88.4% against 90%. Either a test-hardening round on the story tooling or a lower gate.
 - Whether the untracked round-18/19 manifests in `scripts/ringer/1a-stuck/` get committed as records.
 
@@ -52,7 +53,17 @@ Run Steps 1 to 5 in order before claiming autonomous repair. Step 6 can be prepa
 
 Workspace root: `/home/bcorfman/dev/ringer-work/qual-20261122/`.
 
-## Resume here (2026-11-24, late: 2.2b engine side done, test consolidation done)
+## Resume here (2026-11-24, night: sign-offs done, canary fixed, guard change in review)
+
+- **State.** `main` is at `fa2fa0e8` (#828 and #829 merged). Open PRs: **#830** (plan records, steps 1.4 and 1.5 results), **#831** (guard change, round 34a). Neither is merged; merging needs the owner's per-PR word.
+- **Done this session (all free of API spend):** station-5 `journey_reachability` gate merged; Step 1.7 healthy dev cases; Step 6 coverage ledger (`.plans/qualification/coverage-ledger.md`, generator `scripts/qualification/coverage_ledger.py`); R1b-2 adjudication (43 of 68 term-leak rejections are candidate false, all recovered by retry; [results](qualification/gate-r1-results.md)); round 33a to 33c (sign-off and canary runners, then confinement); 1.4 sign-offs (11 sessions, 393k tokens) and 1.5 canary (failed first, fixed, passes).
+- **Findings that change the plan.** (1) Evaluator sessions were not confined until round 33c: bare `Read` read any path (private answers, siblings). Earlier evaluator transcripts have not been searched for stray reads. (2) Only 2 of 11 cases signed off; all three controls fail; mechanism classes do not reproduce between readers. Nothing is sealed. (3) 1B's turn-7 exit is a record-counting difference, not an engine fault (the default journey exits at 8); the hosted records' turn numbering still needs explaining.
+- **Owner decisions made:** ignore the player's own words in the term-leak guard (built, PR #831); rebuild controls and defects from new evidence (option 2), proposal first.
+- **Next, in order:** (1) owner answers [controls-proposal.md](qualification/controls-proposal.md); (2) merge #831 and let staging deploy; (3) Ringer round: add `turns_since_entry` to exported records; (4) fresh seeded control runs (estimate first) then evaluator plus sign-off per candidate; (5) rebuild defect candidates with the two-reader, repair-criterion rule; (6) scoring spec v2 and sealing. Still open and unstarted: adapters 2.2 to 2.4, spend reservation 2.5, delivery validator 2.6, the Opus design session on exploration that reveals nothing, coverage test-hardening (cannot be measured without `--cov`, which is nightly-only).
+- **Tools state (workspace `qual-20261122/tools`, local git repo):** `run_signoff.py`, `run_canary.py`, `session_runner.py`, `confinement.py` (commit after `640f9a0`), `run_signoff_series.sh`; sign-off results in `qualification/signoffs/`, canary in `qualification/canary-result.json`.
+- **Lesson recorded.** Wait for the `tests` workflow run itself (`gh run watch`), not `gh pr checks`, before any merge.
+
+## Earlier: 2026-11-24, late: 2.2b engine side done, test consolidation done
 
 - Earlier findings (gate-proving ladder R0 to R1e-2, the story CLI as the only edit path, the 2.2b free checks, round 28a) are in [gate-r1-results.md](qualification/gate-r1-results.md), [null-grounding-decision.md](qualification/null-grounding-decision.md) and git history.
 - **2.2b engine side done (rounds 29a to 29d, all free, Codex only):** the owner chose to declare the typed link in story source. A pacing beat may list `delivers` (knowledge ids); `pacing_link_problems(package)` checks the declarations against the facts and the real story is clean with 12 declared links (11 items). `story set` can now create a missing optional field (round 29b1); unknown keys still roll back. `replay_pacing(engine)` reports what a do-nothing turn would fire without touching the engine. `build_turn_telemetry` builds the contract's turn record from engine observations; a run built from real engine turns round-trips through `classify_run` with no `unknown_telemetry`. `npc_move` is always false and `recovery` is omitted because the engine records no signal for either (open question).
