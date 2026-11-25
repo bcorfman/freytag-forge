@@ -288,6 +288,8 @@ beats:
   say:
   - text: The audit reaches the archive stacks.
     verbatim: false
+  delivers:
+  - k_audit_window_missed
 - id: audit_nudge_2b
   at_turn: 6
   sets:
@@ -308,6 +310,8 @@ beats:
     audit_reaches_stacks: true
     brandon_name_kept: false
     brandon_name_erased: false
+  delivers:
+  - k_audit_recovery_ready
 reveals:
 - id: sl_2b_a
   storylet_id: SL-2B-A

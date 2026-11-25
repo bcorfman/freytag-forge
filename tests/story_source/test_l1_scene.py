@@ -6,6 +6,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from tests.story_source.helpers import DELETE, copy_fixture, patch_source, require_story_source
 
 
@@ -23,39 +25,33 @@ def _only_layer_one(root: Path, name: str) -> None:
     assert require_story_source().check_source_tree(copy_fixture("mini_ok", root.parent / "clean")) == []
 
 
-def test_unknown_scene_key(tmp_path: Path) -> None:
+@pytest.mark.parametrize(
+    ("address", "replacement", "expected_name"),
+    [
+        pytest.param(
+            "reveals[find_card].done_when",
+            "the card is found",
+            "L1.unknown_key",
+            id="unknown_scene_key",
+        ),
+        pytest.param("pressure", DELETE, "L1.missing_key", id="missing_scene_key"),
+        pytest.param("turns.min", "soon", "L1.type", id="wrong_scene_value_type"),
+        pytest.param("freytag_phase", "sideways", "L1.enum", id="wrong_scene_enum"),
+        pytest.param(
+            "reveals[find_card].storylet_id",
+            "storylet-one",
+            "L1.id_pattern",
+            id="scene_id_pattern",
+        ),
+    ],
+)
+def test_scene_address_mutations_produce_one_layer_one_diagnostic(
+    tmp_path: Path, address: str, replacement: object, expected_name: str
+) -> None:
     root = copy_fixture("mini_ok", tmp_path)
-    patch_source(root, "scenes/1A.yaml", "reveals[find_card].done_when", "the card is found")
+    patch_source(root, "scenes/1A.yaml", address, replacement)
 
-    _only_layer_one(root, "L1.unknown_key")
-
-
-def test_missing_scene_key(tmp_path: Path) -> None:
-    root = copy_fixture("mini_ok", tmp_path)
-    patch_source(root, "scenes/1A.yaml", "pressure", DELETE)
-
-    _only_layer_one(root, "L1.missing_key")
-
-
-def test_wrong_scene_value_type(tmp_path: Path) -> None:
-    root = copy_fixture("mini_ok", tmp_path)
-    patch_source(root, "scenes/1A.yaml", "turns.min", "soon")
-
-    _only_layer_one(root, "L1.type")
-
-
-def test_wrong_scene_enum(tmp_path: Path) -> None:
-    root = copy_fixture("mini_ok", tmp_path)
-    patch_source(root, "scenes/1A.yaml", "freytag_phase", "sideways")
-
-    _only_layer_one(root, "L1.enum")
-
-
-def test_scene_id_pattern(tmp_path: Path) -> None:
-    root = copy_fixture("mini_ok", tmp_path)
-    patch_source(root, "scenes/1A.yaml", "reveals[find_card].storylet_id", "storylet-one")
-
-    _only_layer_one(root, "L1.id_pattern")
+    _only_layer_one(root, expected_name)
 
 
 def test_all_true_condition_rejects_false(tmp_path: Path) -> None:

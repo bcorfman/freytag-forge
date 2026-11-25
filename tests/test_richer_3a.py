@@ -4,14 +4,14 @@ import json
 import re
 from pathlib import Path
 
-from storygame.runtime.candidate_matcher import uniquely_matched_authored_handoff
 from storygame.runtime.cloudflare import CloudflareTurnProvider
 from storygame.runtime.engine import RuntimeEngine
 from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeSnapshot, RuntimeState
-from storygame.runtime.world_model import apply_scene_placements, apply_world_effects, world_for
+from storygame.runtime.world_model import apply_world_effects, world_for
 from storygame.story_package.loader import load_story_package
 from storygame.story_source.lookup import story_text
+from tests.scene_harness import authored_handoff, scene_engine
 
 ROOT = Path("data/stories/continuity-initiative")
 
@@ -62,22 +62,11 @@ def _routes() -> dict:
 
 
 def _engine(*, true_facts: tuple[str, ...] = (), turn_index: int = 0) -> tuple[RuntimeState, RuntimeEngine]:
-    state = RuntimeState.bootstrap(PACKAGE)
-    state.current_scene_id = "3A"
-    state.phase = _scene().freytag_phase
-    state._assert_scene_entry_fact("3A")
-    state.turn_index = turn_index
-    apply_scene_placements(PACKAGE, state.facts, "3A")
-    for fact_id in true_facts:
-        state.facts.assert_fact(Fact(predicate=fact_id, subject="story", value="true"))
-    engine = RuntimeEngine(state, lambda _command: {"segments": [{"kind": "narration", "text": "Kristin looks."}]})
-    return state, engine
+    return scene_engine(PACKAGE, "3A", true_facts=true_facts, turn_index=turn_index)
 
 
 def _handoff(engine: RuntimeEngine, state: RuntimeState, command: str):
-    engine._activate_pacing()
-    candidates = engine.projector.project(state, "player", command).candidates
-    return uniquely_matched_authored_handoff(command, candidates)
+    return authored_handoff(engine, state, command)
 
 
 def _opening_prompt(monkeypatch):
@@ -632,19 +621,3 @@ def test_the_checkpoint_reader_can_be_watched_after_arriving():
     state, engine = _engine()
     handoff = _handoff(engine, state, command)
     assert handoff is None or handoff.candidate.id != "k_sl_3a_i_r1"
-
-
-def test_existing_3a_commands_still_reach_their_reveals():
-    checks = (
-        ((), "Free the captives.", "k_sl_3a_a_r1"),
-        (ARRIVED, "Enter the medical level.", "k_sl_3a_b_r2"),
-        (
-            (*ARRIVED, "behavioral_experiments_known"),
-            "Ask the senior official about the gate codes.",
-            "k_sl_3a_d_r1",
-        ),
-    )
-    for facts, command, entry_id in checks:
-        state, engine = _engine(true_facts=facts)
-        handoff = _handoff(engine, state, command)
-        assert handoff is not None and handoff.candidate.id == entry_id, command

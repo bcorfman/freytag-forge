@@ -1,6 +1,10 @@
 {
   "version": 1,
   "files": {
+    "tests/test_turn_telemetry.py": 2.0,
+    "tests/test_pacing_links.py": 2.0,
+    "tests/test_pacing_links_story.py": 2.0,
+    "tests/test_pacing_replay.py": 2.0,
     "tests/story_source/test_cli_core.py": 0.5,
     "tests/story_source/test_cli_rename.py": 13.27,
     "tests/story_source/test_cli_set.py": 13.57,
@@ -394,6 +398,7 @@
     "tests/test_richer_2b.py": 1.11,
     "tests/test_richer_2c.py": 1.23,
     "tests/test_richer_3a.py": 1.26,
+    "tests/test_scene_commands_reach_reveals.py": 3.0,
     "tests/test_richer_overprojection.py": 5.94,
     "tests/test_runtime_capture.py": 4.26,
     "tests/test_runtime_jev.py": 0.01,
@@ -437,6 +442,7 @@
     "tests/test_story_review_scripts.py": 0.01,
     "tests/test_storylet_expiry.py": 0.04,
     "tests/test_storylet_followups.py": 1.59,
+    "tests/test_contract_scene.py": 1.0,
     "tests/test_surface_gates_scope.py": 0.15,
     "tests/test_t9c_run_manifests.py": 0.03,
     "tests/test_t9d_run_manifests.py": 0.03,

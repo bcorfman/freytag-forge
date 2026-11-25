@@ -282,6 +282,8 @@ beats:
   say:
   - text: The purge alarm forces Kristin and Brandon out. A maintenance ticket scrolls across the nearest wall panel and opens a way forward.
     verbatim: false
+  delivers:
+  - k_purge_window_missed
 - id: purge_nudge_2c
   at_turn: 6
   sets:
@@ -293,6 +295,8 @@ beats:
     purge_window_missed: true
     committed_to_transmit: false
     committed_to_rescue: false
+  delivers:
+  - k_sl_2c_e_route_effects
 - id: purge_recovery_2c
   at_turn: 6
   sets:
@@ -300,6 +304,8 @@ beats:
   when:
     purge_window_missed: true
     purge_alarm_active: true
+  delivers:
+  - k_purge_recovery_ready
 reveals:
 - id: sl_2c_c
   storylet_id: SL-2C-C

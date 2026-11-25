@@ -269,6 +269,8 @@ beats:
   say:
   - text: The shift supervisor's patience ends. He escorts Kristin and Brandon in to watch the inspection.
     verbatim: false
+  delivers:
+  - k_inspection_window_missed
 - id: inspection_nudge_2a
   at_turn: 6
   sets:
@@ -279,6 +281,8 @@ beats:
   when:
     inspection_window_missed: true
     restricted_corridor_access: false
+  delivers:
+  - k_supervisor_escorting
 - id: inspection_recovery_2a
   at_turn: 7
   sets:
@@ -287,6 +291,8 @@ beats:
     inspection_window_missed: true
     supervisor_escorting: true
     restricted_corridor_access: false
+  delivers:
+  - k_inspection_recovery_ready
 reveals:
 - id: sl_2a_b
   storylet_id: SL-2A-B

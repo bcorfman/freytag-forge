@@ -2,12 +2,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from storygame.runtime.candidate_matcher import uniquely_matched_authored_handoff
 from storygame.runtime.engine import RuntimeEngine
-from storygame.runtime.facts import Fact
 from storygame.runtime.state import RuntimeState
-from storygame.runtime.world_model import apply_scene_placements
 from storygame.story_package.loader import load_story_package
+from tests.scene_harness import authored_handoff, scene_engine
 
 ROOT = Path("data/stories/continuity-initiative")
 
@@ -32,22 +30,11 @@ def _routes() -> dict:
 
 
 def _engine(*, true_facts: tuple[str, ...] = (), turn_index: int = 0) -> tuple[RuntimeState, RuntimeEngine]:
-    state = RuntimeState.bootstrap(PACKAGE)
-    state.current_scene_id = "2B"
-    state.phase = _scene().freytag_phase
-    state._assert_scene_entry_fact("2B")
-    state.turn_index = turn_index
-    apply_scene_placements(PACKAGE, state.facts, "2B")
-    for fact_id in true_facts:
-        state.facts.assert_fact(Fact(predicate=fact_id, subject="story", value="true"))
-    engine = RuntimeEngine(state, lambda _command: {"segments": [{"kind": "narration", "text": "Kristin looks."}]})
-    return state, engine
+    return scene_engine(PACKAGE, "2B", true_facts=true_facts, turn_index=turn_index)
 
 
 def _handoff(engine: RuntimeEngine, state: RuntimeState, command: str):
-    engine._activate_pacing()
-    candidates = engine.projector.project(state, "player", command).candidates
-    return uniquely_matched_authored_handoff(command, candidates)
+    return authored_handoff(engine, state, command)
 
 
 def test_the_build_record_and_transfer_queue_things_are_declared_plainly_and_placed_in_2b():
@@ -180,21 +167,3 @@ def test_the_maintenance_line_check_waits_for_the_transfers_and_the_printout():
         state, engine = _engine(true_facts=facts)
         handoff = _handoff(engine, state, command)
         assert handoff is None or handoff.candidate.id != "k_sl_2b_g_r1", facts
-
-
-def test_existing_2b_commands_still_reach_their_reveals():
-    checks = (
-        ((), "Pull up my file.", "k_sl_2b_a_r1", 0),
-        (("kristin_file_read",), "Keep Brandon's name in the build record.", "k_sl_2b_b_r4", 5),
-        (("kristin_file_read",), "Let Brandon erase his name from the build record.", "k_sl_2b_b_r5", 5),
-        (
-            ("janus_evidence", "archive_crisis_understood"),
-            "Type one reply to the maintenance line on the medical terminal.",
-            "k_sl_2b_c_r3",
-            5,
-        ),
-    )
-    for facts, command, entry_id, turn_index in checks:
-        state, engine = _engine(true_facts=facts, turn_index=turn_index)
-        handoff = _handoff(engine, state, command)
-        assert handoff is not None and handoff.candidate.id == entry_id, command

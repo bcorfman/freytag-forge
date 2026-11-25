@@ -981,11 +981,37 @@ def test_held_by_flag_shows_held_by_in_things():
     assert "Place:" in kristin
 
 
-def test_held_by_pocket_place_keeps_holder():
+@pytest.mark.parametrize(
+    ("item_name", "facts", "entity_id", "expected_parent"),
+    [
+        pytest.param(
+            "Michelle's phone",
+            {"held_by": "Kristin", "place": "Kristin's pocket"},
+            "michelle_phone",
+            "kristin",
+            id="held_by_pocket_place_keeps_holder",
+        ),
+        pytest.param(
+            "stapler",
+            {"held_by": "Kristin", "place": "in drawer"},
+            "michelle_drawer_stapler",
+            "michelle_drawer",
+            id="held_by_place_with_prefix_resolves",
+        ),
+        pytest.param(
+            "Kristin's laptop",
+            {"held_by": "Kristin", "place": "kitchen"},
+            "kristin_laptop",
+            "kristin",
+            id="held_by_holders_area_keeps_holder",
+        ),
+    ],
+)
+def test_held_by_place_resolution_keeps_expected_parent(item_name, facts, entity_id, expected_parent):
     provider = _scene_provider("1A")
     provider.held_by = True
-    provider.apply_item_facts({"Michelle's phone": {"held_by": "Kristin", "place": "Kristin's pocket"}})
-    assert provider._world().parent("michelle_phone") == "kristin"
+    provider.apply_item_facts({item_name: facts})
+    assert provider._world().parent(entity_id) == expected_parent
 
 
 def test_held_by_naming_itself_keeps_place():
@@ -1002,13 +1028,6 @@ def test_held_by_naming_itself_alone_is_ignored():
     _facts, issues = provider.apply_item_facts({"Kristin": {"held_by": "Kristin"}})
     assert provider._world().parent("kristin") == old_parent
     assert not any("to a character" in issue for issue in issues)
-
-
-def test_held_by_place_with_prefix_resolves():
-    provider = _scene_provider("1A")
-    provider.held_by = True
-    provider.apply_item_facts({"stapler": {"held_by": "Kristin", "place": "in drawer"}})
-    assert provider._world().parent("michelle_drawer_stapler") == "michelle_drawer"
 
 
 def test_held_by_place_is_holders_own_place_keeps_holder():
@@ -1041,13 +1060,6 @@ def test_held_by_place_elsewhere_wins():
     provider.apply_item_facts({"Kristin's laptop": {"place": "Kristin"}})
     provider.apply_item_facts({"Kristin's laptop": {"held_by": "Kristin", "place": "workstation"}})
     assert provider._world().parent("kristin_laptop") == "michelle_workstation"
-
-
-def test_held_by_holders_area_keeps_holder():
-    provider = _scene_provider("1A")
-    provider.held_by = True
-    provider.apply_item_facts({"Kristin's laptop": {"held_by": "Kristin", "place": "kitchen"}})
-    assert provider._world().parent("kristin_laptop") == "kristin"
 
 
 def test_held_by_alone_places_with_holder():

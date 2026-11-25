@@ -31,16 +31,26 @@ def test_evidence_sentence_inherits_to_following_sentence(prose, aliases, expect
     assert _speaker_present_in_prose(prose, aliases) is expected
 
 
-def test_plain_present_sentence_is_present() -> None:
-    assert _speaker_present_in_prose("Aster says hello to Bram.", ("Aster",)) is True
-
-
-def test_evidence_for_someone_else_does_not_inherit() -> None:
-    assert _speaker_present_in_prose("Bram finds a card. Aster says hello.", ("Aster",)) is True
-
-
-def test_non_evidence_predecessor_does_not_inherit() -> None:
-    assert _speaker_present_in_prose("Aster walks in. In it, Aster says hello.", ("Aster",)) is True
+@pytest.mark.parametrize(
+    ("prose", "aliases", "expected"),
+    [
+        pytest.param("Aster says hello to Bram.", ("Aster",), True, id="plain_present_sentence_is_present"),
+        pytest.param(
+            "Bram finds a card. Aster says hello.",
+            ("Aster",),
+            True,
+            id="evidence_for_someone_else_does_not_inherit",
+        ),
+        pytest.param(
+            "Aster walks in. In it, Aster says hello.",
+            ("Aster",),
+            True,
+            id="non_evidence_predecessor_does_not_inherit",
+        ),
+    ],
+)
+def test_non_inherited_speaker_presence_cases(prose, aliases, expected) -> None:
+    assert _speaker_present_in_prose(prose, aliases) is expected
 
 
 def test_inherited_skip_is_not_transitive() -> None:

@@ -438,7 +438,7 @@
    "turns": [
     {
      "turn": 1,
-     "input": "Wait by the door.",
+     "input": "Search the filing cabinet.",
      "text": "",
      "outcome": "committed",
      "rejected": false,
@@ -458,7 +458,7 @@
     },
     {
      "turn": 2,
-     "input": "Wait by the door.",
+     "input": "Search the filing cabinet.",
      "text": "",
      "outcome": "committed",
      "rejected": false,
@@ -482,7 +482,7 @@
     },
     {
      "turn": 3,
-     "input": "Wait by the door.",
+     "input": "Search the filing cabinet.",
      "text": "",
      "outcome": "committed",
      "rejected": false,
@@ -2505,6 +2505,222 @@
     }
    ],
    "status": "flagged"
+  }
+ },
+ {
+  "id": "pressure_beside_earned_reveal",
+  "tier": "core",
+  "description": "A pressure reveal alongside a matched candidate does not hide the player's earned reveal.",
+  "reason": "Turn 2 grounds k_c1 as new progress while k_pressure is null-grounded pressure, pinning the M4 null-grounding rule.",
+  "scene": {
+   "id": "S",
+   "pacing_window": 3,
+   "terminal": false,
+   "reveal_ids": [
+    "k_c1",
+    "k_pressure"
+   ],
+   "delivered_before": [],
+   "ending_requires": [],
+   "non_voiceable_says": [],
+   "unlearned_terms": [],
+   "epilogue_candidates": []
+  },
+  "run": {
+   "replicate": 1,
+   "entry_facts": [],
+   "turns": [
+    {
+     "turn": 1,
+     "input": "Search the filing cabinet.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    },
+    {
+     "turn": 2,
+     "input": "Search the filing cabinet.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [
+      "k_c1",
+      "k_pressure"
+     ],
+     "null_grounding_ids": [
+      "k_pressure"
+     ],
+     "committed_facts": [],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": "k_c1",
+     "transition_cause": "none",
+     "pressure_event": true,
+     "npc_move": false,
+     "ending_latched": false
+    },
+    {
+     "turn": 3,
+     "input": "Search the filing cabinet.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    }
+   ]
+  },
+  "expected": {
+   "turns": {
+    "1": {
+     "action_outcome": "no_effect",
+     "knowledge_progress": false
+    },
+    "2": {
+     "action_outcome": "explored",
+     "knowledge_progress": true
+    },
+    "3": {
+     "action_outcome": "no_effect",
+     "knowledge_progress": false
+    }
+   },
+   "confirmed_stuck": [],
+   "status": "healthy"
+  }
+ },
+ {
+  "id": "pacing_event_caused_by_command_fact",
+  "tier": "core",
+  "description": "A pacing event caused by a command fact counts as the player's progress.",
+  "reason": "Turn 2 commits a fact and grounds k_world_answer outside null grounding, pinning that a command-caused pacing event is progress.",
+  "scene": {
+   "id": "S",
+   "pacing_window": 3,
+   "terminal": false,
+   "reveal_ids": [
+    "k_world_answer"
+   ],
+   "delivered_before": [],
+   "ending_requires": [],
+   "non_voiceable_says": [],
+   "unlearned_terms": [],
+   "epilogue_candidates": []
+  },
+  "run": {
+   "replicate": 1,
+   "entry_facts": [],
+   "turns": [
+    {
+     "turn": 1,
+     "input": "Search the filing cabinet.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    },
+    {
+     "turn": 2,
+     "input": "Search the filing cabinet.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [
+      "k_world_answer"
+     ],
+     "null_grounding_ids": [],
+     "committed_facts": [
+      "world_answer_found"
+     ],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": true,
+     "npc_move": false,
+     "ending_latched": false
+    },
+    {
+     "turn": 3,
+     "input": "Search the filing cabinet.",
+     "text": "",
+     "outcome": "committed",
+     "rejected": false,
+     "game_break": null,
+     "story_complete": false,
+     "grounding_ids": [],
+     "null_grounding_ids": [],
+     "committed_facts": [],
+     "candidates_offered": [
+      "k_c1"
+     ],
+     "matched_candidate": null,
+     "transition_cause": "none",
+     "pressure_event": false,
+     "npc_move": false,
+     "ending_latched": false
+    }
+   ]
+  },
+  "expected": {
+   "turns": {
+    "1": {
+     "action_outcome": "no_effect",
+     "knowledge_progress": false
+    },
+    "2": {
+     "action_outcome": "world_changed",
+     "knowledge_progress": true
+    },
+    "3": {
+     "action_outcome": "no_effect",
+     "knowledge_progress": false
+    }
+   },
+   "confirmed_stuck": [],
+   "status": "healthy"
   }
  }
 ]

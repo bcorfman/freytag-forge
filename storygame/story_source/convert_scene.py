@@ -84,6 +84,8 @@ def _pacing_beat(event: Any) -> dict[str, Any]:
         record["when"] = _predicates(event.when)
     if event.trailing:
         record["trailing"] = True
+    if event.delivers:
+        record["delivers"] = list(event.delivers)
     if event.transition_id is not None:
         record["exit"] = event.transition_id
     if not event.realizations:
