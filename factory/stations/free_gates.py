@@ -1,4 +1,4 @@
-"""Run the free deterministic gates, including snapshots and the station-5 carry matrix."""
+"""Run free deterministic gates, including story-data reachability and the station-5 carry matrix."""
 
 from __future__ import annotations
 
@@ -58,6 +58,24 @@ def _inside(path: Path, parent: Path) -> bool:
     except (OSError, RuntimeError, ValueError):
         return False
     return True
+
+
+def _touches_story_data(
+    payload: dict[str, Any],
+    repository_root: Path,
+    original_root: Path,
+    tree: Path | None,
+    story_root: Path,
+) -> bool:
+    if "source_root" in payload:
+        return True
+    paths = payload.get("paths")
+    if not isinstance(paths, list):
+        return False
+    original = original_root if tree is not None else None
+    return any(
+        _inside(_resolve(repository_root, path, original), story_root) for path in paths if isinstance(path, str)
+    )
 
 
 def _carry_failure_output(report) -> str:
@@ -129,7 +147,7 @@ def free_gates_handler(
     root: Path | None = None,
     run: Callable[..., subprocess.CompletedProcess] = subprocess.run,
 ) -> StationHandler:
-    """Return a fail-fast handler for source, formatting, snapshot, gap, Ruff, and test gates."""
+    """Return a fail-fast handler for source, formatting, snapshot, gap, carry, reachability, Ruff, and test gates."""
 
     base_root = Path(root) if root is not None else _repository_root()
 
@@ -232,9 +250,46 @@ def free_gates_handler(
             if report.stuck or report.unreachable:
                 return StationResult(False, "carry_matrix", _carry_failure_output(report))
 
+        journey_reachability = payload.get("journey_reachability")
+        run_journey = journey_reachability is True or (
+            journey_reachability is not False
+            and _touches_story_data(payload, repository_root, original_root, tree, story_root)
+        )
+        if run_journey:
+            journey_command = [
+                ".venv/bin/python",
+                "-m",
+                "pytest",
+                "-q",
+                "-p",
+                "no:cacheprovider",
+                "--run-nightly",
+                "-n",
+                "8",
+                "tests/test_game_path_journeys.py",
+                "tests/test_known_unreachable_ratchet.py",
+            ]
+            passed, output = _run_command(
+                run,
+                journey_command,
+                repository_root,
+                timeout=240,
+                env=_pytest_environment(repository_root),
+            )
+            if not passed:
+                if output == "command timed out":
+                    return StationResult(False, "journey_reachability", output)
+                detail = output or "journey reachability failed"
+                return StationResult(
+                    False,
+                    "journey_reachability",
+                    _tail("a story realization is unreachable or the ratchet was broken: " + detail),
+                )
+
+        paths = payload.get("paths") if isinstance(payload.get("paths"), list) else []
         python_paths = [
             _command_path(path, repository_root, original_root if tree is not None else None)
-            for path in payload.get("paths", [])
+            for path in paths
             if isinstance(path, str) and path.endswith(".py")
         ]
         if python_paths:
