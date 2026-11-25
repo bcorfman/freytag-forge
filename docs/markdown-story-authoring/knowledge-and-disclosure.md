@@ -70,6 +70,7 @@ the knowledge is earned. Every multi-word phrase in the list is blocked;
 single-word entries are not enforced. If the field is absent, the old behavior
 remains: aliases and multi-word `must_convey` phrases are guarded. An empty list
 means the item has no guarded vocabulary.
+If the player already types a guarded form in the current command, repeating that form in narration is not a new leak; other guards still apply.
 
 A knowledge statement may set `voiceable: false` when it records what the player character did, so a present non-player character does not repeat it as speech.
 The default is true.

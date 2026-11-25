@@ -168,6 +168,7 @@ class NarrationSafetyValidator:
             if state.last_turn_delivery.complication_verbatim and state.last_turn_delivery.complication_text
             else None
         )
+        normalized_player_input = self._normalize(player_input)
         for segment in segments:
             if authored_complication and self._normalize(segment.text) == authored_complication:
                 continue
@@ -215,6 +216,8 @@ class NarrationSafetyValidator:
                     not entity_set & nameable_entity_ids
                     and not statement_covers_entity
                     and not self._contains(handoff_text, form)
+                    and not self._contains(normalized_player_input, form)
+                    and not self._contains_optional_plural(normalized_player_input, form)
                 ):
                     raise ProposalValidationError(
                         f"narration mentions an unavailable entity '{form}'",
@@ -250,6 +253,10 @@ class NarrationSafetyValidator:
                     if statement_covers_term:
                         continue
                     if self._contains(projected_beat_text, form):
+                        continue
+                    if self._contains(normalized_player_input, form) or self._contains_optional_plural(
+                        normalized_player_input, form
+                    ):
                         continue
                     raise ProposalValidationError(
                         f"narration mentions unavailable knowledge '{form}'",

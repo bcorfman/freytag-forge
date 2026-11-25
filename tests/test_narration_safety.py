@@ -62,6 +62,46 @@ def _run_accepted(text: str, *, beats: tuple[str, ...] = (), package=PACKAGE):
 
 
 @pytest.mark.parametrize(
+    ("command", "text", "expected_code", "expected_term"),
+    [
+        ("Look for Brandon.", "Brandon waits beside the door.", None, None),
+        ("Listen to the damaged recording.", "Kristin hears the damaged recording.", None, None),
+        ("Look for Brandon's office.", "Brandon waits beside the door.", None, None),
+        ("Search the desk drawer.", "Brandon waits beside the door.", "narration_known_term_leak", "brandon"),
+        (
+            "Listen to the damaged recording.",
+            "Kristin hears the damaged recording beside the emergency broadcasts.",
+            "narration_known_term_leak",
+            "emergency broadcasts",
+        ),
+        (
+            "Inspect the selection system.",
+            "The selection system is already ranking people.",
+            "protected_narration_leak",
+            None,
+        ),
+        ("  ", "Brandon waits beside the door.", "narration_known_term_leak", "brandon"),
+    ],
+)
+def test_player_input_does_not_justify_other_narration_guards(
+    command: str, text: str, expected_code: str | None, expected_term: str | None
+) -> None:
+    state = RuntimeState.bootstrap(PACKAGE)
+    state.active_event_ids.add("SL-1A-B")
+    payload = {"segments": [{"kind": "narration", "text": text}], "selected_knowledge_ids": []}
+
+    if expected_code is None:
+        result = RuntimeEngine(state, lambda _: payload).turn(command)
+        assert result.segments[0].text == text
+        return
+
+    with pytest.raises(ProposalValidationError) as caught:
+        RuntimeEngine(state, lambda _: payload).turn(command)
+    assert caught.value.code == expected_code
+    assert caught.value.term == expected_term
+
+
+@pytest.mark.parametrize(
     ("text", "expected_code"),
     [
         pytest.param(
