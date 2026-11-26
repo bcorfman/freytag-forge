@@ -14,6 +14,7 @@ from factory.stations.live_playtest import (
     _DEFAULTS,
     EARNED_EXIT_CAUSES,
     collect_player_usage,
+    contract_gate,
     live_playtest_handler,
     load_prices,
     main,
@@ -27,6 +28,7 @@ from factory.tickets import Station, TicketClass
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURE = ROOT / "tests/fixtures/factory/blind_player_report_small.json"
+OUTCOME_CASES = ROOT / "tests/fixtures/outcome_contract/cases.json"
 NOW = datetime(2026, 1, 1, 12, tzinfo=UTC)
 
 
@@ -50,12 +52,119 @@ def clean_report() -> dict:
     return value
 
 
+def outcome_case(case_id: str) -> dict:
+    return next(case for case in json.loads(OUTCOME_CASES.read_text(encoding="utf-8")) if case["id"] == case_id)
+
+
+def outcome_report(case_id: str, *, replicate: int = 1, raw_stuck_turns: list | None = None) -> tuple[dict, dict]:
+    case = outcome_case(case_id)
+    run = json.loads(json.dumps(case["run"]))
+    run["replicate"] = replicate
+    run["scene"] = case["scene"]["id"]
+    if raw_stuck_turns is not None:
+        run["stuck_turns"] = raw_stuck_turns
+    return {"replicates": [{"replicate": replicate, "scenes": [run]}]}, {run["scene"]: case["scene"]}
+
+
 def write_artifact(root: Path, value: dict) -> Path:
     path = root / "artifacts" / "e2e-blind-player.json"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(value), encoding="utf-8")
     os.utime(path, (NOW.timestamp() + 1, NOW.timestamp() + 1))
     return path
+
+
+@pytest.mark.parametrize(
+    "case_id",
+    ["healthy_no_failures", "normal_terminal_ending", "earned_reveal", "world_action_without_reveal"],
+)
+def test_contract_gate_accepts_fixture_outcomes(case_id: str) -> None:
+    report_value, scenes = outcome_report(
+        case_id, raw_stuck_turns=[1] if case_id == "world_action_without_reveal" else None
+    )
+    result = contract_gate(report_value, scenes, expected_replicates=1, expected_scenes=[next(iter(scenes))])
+
+    assert result["passes"] is True
+    assert result["reasons"] == []
+    assert result["runs"][0]["raw_stuck_turns"] == (1 if case_id == "world_action_without_reveal" else 0)
+
+
+@pytest.mark.parametrize(
+    "case_id",
+    [
+        "futile_named_object_repeated",
+        "missing_telemetry",
+        "ending_without_prerequisite",
+        "forced_handoff_after_futile_turns",
+        "bookkeeping_voiced_with_earned_exit",
+        "epilogue_never_offered",
+    ],
+)
+def test_contract_gate_rejects_fixture_outcomes_with_adjudication(case_id: str) -> None:
+    report_value, scenes = outcome_report(case_id)
+    result = contract_gate(report_value, scenes, expected_replicates=1, expected_scenes=[next(iter(scenes))])
+
+    assert result["passes"] is False
+    assert result["reasons"]
+    run = result["runs"][0]
+    reason = result["reasons"][-1]
+    assert f"scene {run['scene']} replicate 1" in reason
+    assert f"status={run['status']}" in reason
+    assert f"exit={run['exit']}" in reason
+    assert f"confirmed={len(run['confirmed_stuck'])}" in reason
+    assert f"unresolved={len(run['unresolved'])}" in reason
+    assert f"provenance={len(run['provenance_flags'])}" in reason
+
+
+def test_contract_gate_keeps_replicates_and_expected_scenes_independent() -> None:
+    good_report, scenes = outcome_report("normal_terminal_ending", replicate=1)
+    bad_report, _ = outcome_report("ending_without_prerequisite", replicate=2)
+    report_value = {"replicates": good_report["replicates"] + bad_report["replicates"]}
+    result = contract_gate(report_value, scenes, expected_replicates=2, expected_scenes=["S"])
+    assert result["passes"] is False
+    assert len(result["runs"]) == 2
+    assert any("replicate 2" in reason for reason in result["reasons"])
+
+    missing = contract_gate(good_report, scenes, expected_replicates=2, expected_scenes=["S", "missing"])
+    assert missing["passes"] is False
+    assert any("scene missing" in reason for reason in missing["reasons"])
+
+    duplicate = {"replicates": good_report["replicates"] + json.loads(json.dumps(good_report["replicates"]))}
+    duplicate["replicates"][1]["replicate"] = 1
+    duplicate_result = contract_gate(duplicate, scenes, expected_replicates=2, expected_scenes=["S"])
+    assert any("duplicate replicate" in reason for reason in duplicate_result["reasons"])
+
+
+def test_contract_gate_rejects_empty_unexpected_and_missing_contract_rows() -> None:
+    _, scenes = outcome_report("healthy_no_failures")
+    empty = contract_gate({}, scenes, expected_replicates=1, expected_scenes=["S"])
+    assert empty["passes"] is False
+    assert "no usable rows" in empty["reasons"]
+
+    report_value, _ = outcome_report("healthy_no_failures")
+    report_value["replicates"][0]["scenes"][0]["scene"] = "other"
+    result = contract_gate(report_value, scenes, expected_replicates=1, expected_scenes=["S"])
+    assert result["passes"] is False
+    assert any("missing contract scene" in reason for reason in result["reasons"])
+    assert any("not expected" in reason for reason in result["reasons"])
+
+
+def test_contract_packets_use_fixture_adjudication_only_when_scenes_given() -> None:
+    raw_report, scenes = outcome_report("world_action_without_reveal", raw_stuck_turns=[1])
+    assert report_to_packets(raw_report, scenes=scenes) == []
+
+    futile_report, futile_scenes = outcome_report("futile_named_object_repeated")
+    packets = report_to_packets(futile_report, scenes=futile_scenes)
+    futile_case = outcome_case("futile_named_object_repeated")
+    assert packets
+    assert {int(packet["key"].rsplit("-t", 1)[1]) for packet in packets} == set(
+        futile_case["expected"]["confirmed_stuck"]
+    )
+    assert all(packet["stuck"] for packet in packets)
+
+    bookkeeping_report, bookkeeping_scenes = outcome_report("bookkeeping_voiced_with_earned_exit")
+    assert report_to_packets(bookkeeping_report) == []
+    assert report_to_packets(bookkeeping_report, scenes=bookkeeping_scenes)
 
 
 def test_player_usage_cost_and_report_shapes(tmp_path: Path) -> None:
