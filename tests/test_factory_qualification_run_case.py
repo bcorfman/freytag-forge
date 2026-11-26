@@ -214,6 +214,7 @@ def test_dry_run_writes_prompts_and_estimates_without_ledger_or_calls(
     )
     result = json.loads((out / "result.json").read_text())
     assert result["status"] == "dry_run"
+    assert result["evidence_basis"] == "raw_stuck_flags"
     assert result["calls"] == result["tokens"] == 0
     assert result["planner_prompt"]
     assert result["estimated_tokens"]["total"] > 0
@@ -241,11 +242,37 @@ def test_full_fake_run_writes_complete_transcript_and_manifest(tmp_path: Path, m
     assert transcript[0]["stdout"] == _stream(replies[0])
     result = json.loads((out / "result.json").read_text())
     assert result["status"] == "complete"
+    assert result["evidence_basis"] == "raw_stuck_flags"
     assert result["ceilings"] == {"max_calls": 3, "max_tokens": 100}
     assert result["calls"] == 2
     assert result["tokens"] == 4
     assert result["solver_tree_sha256"] == "tree-hash"
     assert len(calls) == 2
+
+
+def test_full_telemetry_healthy_case_is_no_change_without_controls(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    case = _case(tmp_path)
+    records = json.loads((case / "solver/records.json").read_text())
+    run = records["runs"][0]
+    run["stuck_turns"] = []
+    run["turns"] = []
+    (case / "solver/records.json").write_text(json.dumps(records), encoding="utf-8")
+
+    def fail_if_called(*_args: object, **_kwargs: object) -> None:
+        raise AssertionError("healthy case attempted a model call")
+
+    monkeypatch.setattr(run_case.subprocess, "run", fail_if_called)
+    out = tmp_path / "out"
+    assert run_case.main(["--case-dir", str(case), "--out", str(out), "--max-calls", "3", "--max-tokens", "100"]) == 0
+
+    result = json.loads((out / "result.json").read_text())
+    assert result["status"] == "no_change"
+    assert result["evidence_basis"] == "outcome_contract"
+    assert result["calls"] == result["tokens"] == 0
+    assert json.loads((out / "diagnosis.json").read_text()) == {"rows": [], "counts": {}}
+    assert not (tmp_path / "ledger.jsonl").exists()
 
 
 def test_provider_limit_is_blocked_without_retry(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

@@ -13,7 +13,9 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from factory.contract_scene import build_contract_scene
 from factory.guard import BudgetExhausted, Caps, LimitSleep, ModelGuard, ModelNotAllowed, ProviderLimit, SpendLedger
+from factory.outcome_contract import classify_run
 from factory.stations import diagnose as diagnose_station
 from factory.stations import planner as planner_station
 from factory.stations.diagnose import DIAGNOSE_EFFORT, DIAGNOSE_MODEL_ID
@@ -154,13 +156,49 @@ def _read_case(case_dir: Path, story: str | None) -> tuple[dict[str, Any], dict[
                 "turns": run["turns"],
                 "stuck_turns": run.get("stuck_turns", []),
                 "exit_cause": run.get("exit_cause"),
+                "entry_facts": run.get("entry_facts", []),
             }
             for run in runs
         ]
     }
-    packets = report_to_packets(report)
     package = load_story_package(_story_root(case_dir / "solver" / "repo", story))
-    return manifest, {"report": report, "packets": packets, "scene": runs[0]["scene"]}, package
+    complete = all(
+        isinstance(turn, dict) and isinstance(turn.get("committed_facts"), list)
+        for run in runs
+        for turn in run.get("turns", [])
+    )
+    evidence_basis = "outcome_contract" if complete else "raw_stuck_flags"
+    contract = None
+    if complete:
+        scenes = {run["scene"]: build_contract_scene(package, run["scene"]) for run in runs}
+        packets = report_to_packets(report, scenes=scenes)
+        contract = []
+        for run in runs:
+            summary = classify_run(run, scenes[run["scene"]])
+            contract.append(
+                {
+                    "scene": run["scene"],
+                    "replicate": run["replicate"],
+                    "status": summary["status"],
+                    "exit": summary["exit"],
+                    "confirmed_stuck": summary["confirmed_stuck"],
+                    "unresolved": summary["unresolved"],
+                    "provenance_flags": summary["provenance_flags"],
+                }
+            )
+    else:
+        packets = report_to_packets(report)
+    return (
+        manifest,
+        {
+            "report": report,
+            "packets": packets,
+            "scene": runs[0]["scene"],
+            "evidence_basis": evidence_basis,
+            "contract": contract,
+        },
+        package,
+    )
 
 
 def _ticket(ticket_id: str, scene: str, token_budget: int, payload: dict[str, Any], station: Station) -> Ticket:
@@ -253,6 +291,20 @@ def _run(
     manifest, case_data, package = _read_case(args.case_dir, args.story)
     packets = case_data["packets"]
     scene = case_data["scene"]
+    evidence_basis = case_data["evidence_basis"]
+    outcome = PlanOutcome(None, 0, [], 0)
+    recorder = _CallRecorder(args.max_calls, args.max_tokens)
+    result = _result_base(manifest, args.max_calls, args.max_tokens, 0, 0)
+    result["evidence_basis"] = evidence_basis
+    if case_data["contract"] is not None:
+        result["contract"] = case_data["contract"]
+    if not packets:
+        result["status"] = "no_change"
+        result["classifier_prompt"] = None
+        if args.dry_run:
+            result["estimated_tokens"] = {"classifier": 0, "planner": 0, "total": 0}
+        return result, packets, {"rows": [], "counts": {}}, outcome, recorder
+
     rule_rows = diagnose_station.diagnose_turns(packets, package)
     rule_counts = diagnose_station._counts(rule_rows)
     classifier_prompt = (
@@ -261,9 +313,6 @@ def _run(
         else None
     )
     diagnosis = {"rows": rule_rows, "counts": rule_counts}
-    outcome = PlanOutcome(None, 0, [], 0)
-    recorder = _CallRecorder(args.max_calls, args.max_tokens)
-    result = _result_base(manifest, args.max_calls, args.max_tokens, 0, 0)
     result["classifier_prompt"] = classifier_prompt
 
     if args.dry_run:

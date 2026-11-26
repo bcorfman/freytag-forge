@@ -862,12 +862,12 @@ def diagnose_handler(
         nonlocal resolved_classifier
         payload = getattr(ticket, "payload", None)
         failing_turns = payload.get("failing_turns") if isinstance(payload, dict) else None
-        if (
-            not isinstance(failing_turns, list)
-            or not failing_turns
-            or any(not isinstance(packet, dict) for packet in failing_turns)
-        ):
+        if not isinstance(failing_turns, list) or any(not isinstance(packet, dict) for packet in failing_turns):
             return StationResult(False, "diagnose", "missing payload key: failing_turns")
+        if not failing_turns:
+            return StationResult(
+                True, "diagnose", "no failing turns", payload_updates={"diagnosis": {"rows": [], "counts": {}}}
+            )
         try:
             package = resolved_package_loader(_story_root(repository_root))
         except Exception:

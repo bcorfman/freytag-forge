@@ -445,11 +445,18 @@ def test_handler_reuses_record_and_recomputes_when_input_changes(tmp_path: Path)
     assert len(calls) == 2
 
 
-def test_handler_fails_closed_and_does_not_mutate_payload() -> None:
+def test_handler_accepts_empty_failing_turns_without_loading_or_writing() -> None:
     original = {"failing_turns": []}
     result = diagnose_handler()(ticket(original), NOW)
-    assert not result.passed and result.output == "missing payload key: failing_turns"
+    assert result.passed
+    assert result.output == "no failing turns"
+    assert result.payload_updates == {"diagnosis": {"rows": [], "counts": {}}}
     assert original == {"failing_turns": []}
+
+
+def test_handler_still_rejects_missing_failing_turns() -> None:
+    result = diagnose_handler()(ticket({}), NOW)
+    assert not result.passed and result.output == "missing payload key: failing_turns"
 
     failing = {"failing_turns": [{"key": "x", "scene": "1A", "player_input": "look"}]}
     result = diagnose_handler(package_loader=lambda _path: (_ for _ in ()).throw(RuntimeError("bad")))(
