@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import argparse
+import json
 from copy import deepcopy
+from pathlib import Path
 from typing import Any
 
 from factory.contract_scene import build_contract_scene
@@ -37,10 +40,43 @@ def _neutral(turn: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _enrich_run(run: dict[str, Any], package: Any) -> None:
+def _derive_entry_state(run: dict[str, Any], package: Any, story_root: Path | None) -> None:
+    if isinstance(run.get("entry_state"), dict):
+        run["entry_state_source"] = "reported"
+        return
+    if story_root is None:
+        return
+    try:
+        mode = run.get("entry", {}).get("mode")
+        scene = run["scene"]
+        if mode == "start":
+            run["entry_state"] = {
+                "scene_id": scene,
+                "turn_index": 0,
+                "fired_pacing_event_ids": [],
+            }
+            run["entry_state_source"] = "derived_start"
+        elif mode == "seeded":
+            from storygame.runtime.entry_snapshots import load_entry_snapshot, state_from_snapshot
+
+            snapshot = load_entry_snapshot(story_root, scene)
+            state = state_from_snapshot(package, snapshot, story_root)
+            event_ids = {event.id for event in package.pacing.events if event.id in state.fired_event_ids}
+            run["entry_state"] = {
+                "scene_id": state.current_scene_id,
+                "turn_index": state.turn_index,
+                "fired_pacing_event_ids": sorted(event_ids),
+            }
+            run["entry_state_source"] = "derived_snapshot"
+    except Exception:
+        return
+
+
+def _enrich_run(run: dict[str, Any], package: Any, story_root: Path | None) -> None:
     turns = run.get("turns")
     if not isinstance(turns, list):
         return
+    _derive_entry_state(run, package, story_root)
     scene = build_contract_scene(package, run["scene"])
     effects = pacing_effects_by_event(package)
     bundles = {
@@ -93,17 +129,93 @@ def _enrich_run(run: dict[str, Any], package: Any) -> None:
         run["telemetry_gaps"] = gaps
 
 
-def _walk(value: Any, package: Any) -> None:
+def _walk(
+    value: Any,
+    package: Any,
+    story_root: Path | None,
+    bundles: dict[tuple[Any, str], list[Any]],
+    replicate: Any = None,
+) -> None:
+    if not isinstance(value, dict):
+        return
+    current_replicate = value.get("replicate", replicate)
+    if isinstance(value.get("scene"), str) and not isinstance(value.get("bundles"), list):
+        matching = bundles.get((current_replicate, value["scene"]))
+        if matching is not None:
+            value["bundles"] = deepcopy(matching)
+    if isinstance(value.get("turns"), list) and isinstance(value.get("scene"), str):
+        _enrich_run(value, package, story_root)
+    for child in value.get("scenes", []):
+        _walk(child, package, story_root, bundles, current_replicate)
+
+
+def enrich_report(
+    report: dict,
+    package: Any,
+    *,
+    bundles_report: dict | None = None,
+    story_root: Path | None = None,
+) -> dict:
+    result = deepcopy(report)
+    bundle_map: dict[tuple[Any, str], list[Any]] = {}
+    if isinstance(bundles_report, dict):
+        for replicate in bundles_report.get("replicates", []):
+            if not isinstance(replicate, dict):
+                continue
+            number = replicate.get("replicate")
+            for scene in replicate.get("scenes", []):
+                if (
+                    isinstance(scene, dict)
+                    and isinstance(scene.get("scene"), str)
+                    and isinstance(scene.get("bundles"), list)
+                ):
+                    bundle_map[(number, scene["scene"])] = scene["bundles"]
+    for row in result.get("replicates", []):
+        _walk(row, package, story_root, bundle_map)
+    return result
+
+
+def _iter_runs(value: Any):
     if not isinstance(value, dict):
         return
     if isinstance(value.get("turns"), list) and isinstance(value.get("scene"), str):
-        _enrich_run(value, package)
+        yield value
     for child in value.get("scenes", []):
-        _walk(child, package)
+        yield from _iter_runs(child)
 
 
-def enrich_report(report: dict, package: Any) -> dict:
-    result = deepcopy(report)
-    for row in result.get("replicates", []):
-        _walk(row, package)
-    return result
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("report", type=Path)
+    parser.add_argument("--bundles", type=Path, required=True)
+    parser.add_argument("--story-root", type=Path, required=True)
+    parser.add_argument("--out", type=Path, required=True)
+    args = parser.parse_args(argv)
+    try:
+        report = json.loads(args.report.read_text())
+        bundles = json.loads(args.bundles.read_text())
+        from storygame.story_package.loader import load_story_package
+
+        package = load_story_package(args.story_root)
+    except (OSError, ValueError, TypeError, RuntimeError):
+        return 2
+    enriched = enrich_report(report, package, bundles_report=bundles, story_root=args.story_root)
+    try:
+        args.out.write_text(json.dumps(enriched, indent=1) + "\n")
+    except OSError:
+        return 2
+    failed = False
+    for row in enriched.get("replicates", []):
+        for run in _iter_runs(row):
+            gaps = run.get("telemetry_gaps", [])
+            print(
+                f"{run['scene']} {run.get('replicate', row.get('replicate'))}: "
+                f"{len(run['turns'])} turns, {len(gaps)} gaps, "
+                f"entry {run.get('entry_state_source', 'unknown')}"
+            )
+            failed |= bool(gaps)
+    return 1 if failed else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
