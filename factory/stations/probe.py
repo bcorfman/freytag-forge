@@ -828,15 +828,21 @@ def probe_handler(
                             payload_updates=approval_updates,
                         )
                     arm_files[arm].append(records_path)
-            scenes = None
+            control_scenes = None
+            try:
+                package = load_story_package(control_package)
+                control_scenes = {scene: build_contract_scene(package, scene)}
+            except (OSError, RuntimeError, ValueError, TypeError, AttributeError):
+                pass
+            candidate_scenes = None
             try:
                 package = load_story_package(candidate_package)
-                scenes = {scene: build_contract_scene(package, scene)}
+                candidate_scenes = {scene: build_contract_scene(package, scene)}
             except (OSError, RuntimeError, ValueError, TypeError, AttributeError):
                 pass
             result = judge_probe(
-                summarize_arm(arm_files["control"], scenes=scenes),
-                summarize_arm(arm_files["candidate"], scenes=scenes),
+                summarize_arm(arm_files["control"], scenes=control_scenes),
+                summarize_arm(arm_files["candidate"], scenes=candidate_scenes),
                 selected_rules,
             )
             saved_result = {"input_hash": input_hash, **result, "feedback": _feedback(result)}

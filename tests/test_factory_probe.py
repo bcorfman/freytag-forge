@@ -113,7 +113,7 @@ def test_build_variation_is_story_package_only_and_bench_describes(tmp_path: Pat
 
     completed = subprocess.run(
         [
-            ".venv/bin/python",
+            "/home/bcorfman/dev/freytag-forge/.venv/bin/python",
             "-m",
             "bench",
             "describe",
@@ -634,6 +634,92 @@ def test_handler_full_path_reuses_hashes_and_records_spend(tmp_path: Path, monke
     changed = probe_handler(root, runner=make_runner(calls), rules=RULES, read_budget=lambda: next(budgets))
     changed(make_ticket(payload), NOW)
     assert len(calls) == 12
+
+
+def test_handler_summarizes_each_arm_with_its_story_scene(tmp_path: Path, monkeypatch) -> None:
+    root, tree = configure_probe_root(tmp_path)
+    monkeypatch.setattr(probe, "ticket_tree", lambda payload, ticket_id, root: tree)
+    payload = {
+        "workspace": str(tmp_path),
+        "story_package": "data/stories/base",
+        "runs": [{"run": "synthetic-r1", "scene": "S", "inputs": ["Open the door."] * 2}],
+        "billed_run_approved": True,
+    }
+    package_paths: list[Path] = []
+    scenes_by_path = {}
+
+    def load(package_path: Path):
+        package_paths.append(package_path)
+        return package_path
+
+    monkeypatch.setattr(probe, "load_story_package", load)
+    monkeypatch.setattr(
+        probe,
+        "build_contract_scene",
+        lambda package, scene: scenes_by_path.setdefault(package, {"id": str(package)}),
+    )
+    captured: list[dict | None] = []
+    original_summarize = probe.summarize_arm
+
+    def summarize(files, *, scenes=None):
+        captured.append(scenes)
+        return original_summarize(files, scenes=scenes)
+
+    monkeypatch.setattr(probe, "summarize_arm", summarize)
+    result = probe_handler(root, runner=make_runner([]), rules=RULES, read_budget=lambda: dict(BUDGET))(
+        make_ticket(payload, scene="S"), NOW
+    )
+
+    assert result.payload_updates is not None
+    assert package_paths == [Path(tmp_path / "data/stories/base"), Path(tree / "data/stories/base")]
+    assert captured == [
+        {"S": {"id": str(package_paths[0])}},
+        {"S": {"id": str(package_paths[1])}},
+    ]
+
+
+def test_handler_scene_loading_falls_back_per_arm(tmp_path: Path, monkeypatch) -> None:
+    root, tree = configure_probe_root(tmp_path)
+    monkeypatch.setattr(probe, "ticket_tree", lambda payload, ticket_id, root: tree)
+    payload = {
+        "workspace": str(tmp_path),
+        "story_package": "data/stories/base",
+        "runs": [{"run": "synthetic-r1", "scene": "S", "inputs": ["Open the door."] * 2}],
+        "billed_run_approved": True,
+    }
+    case = json.loads(OUTCOME_CONTRACT_FIXTURE.read_text(encoding="utf-8"))[0]
+    records = {"runs": [{**case["run"], "scene": "S", "status": "ok", "completed": True}]}
+
+    def runner(root: Path, argv: list[str], env: dict[str, str], timeout_s: int):
+        output = Path(argv[argv.index("--out") + 1])
+        output.mkdir(parents=True, exist_ok=True)
+        (output / "turn-records.json").write_text(json.dumps(records), encoding="utf-8")
+        return subprocess.CompletedProcess(argv, 0, stdout="", stderr="")
+
+    def load(package_path: Path):
+        if package_path == Path(tmp_path / "data/stories/base"):
+            raise ValueError("control package unavailable")
+        return package_path
+
+    monkeypatch.setattr(probe, "load_story_package", load)
+    monkeypatch.setattr(probe, "build_contract_scene", lambda package, scene: case["scene"])
+    captured: list[dict | None] = []
+    original_summarize = probe.summarize_arm
+
+    def summarize(files, *, scenes=None):
+        captured.append(scenes)
+        return original_summarize(files, scenes=scenes)
+
+    monkeypatch.setattr(probe, "summarize_arm", summarize)
+    result = probe_handler(root, runner=runner, rules=RULES, read_budget=lambda: dict(BUDGET))(
+        make_ticket(payload, scene="S"), NOW
+    )
+
+    assert captured[0] is None
+    assert captured[1] == {"S": case["scene"]}
+    assert result.payload_updates is not None
+    assert result.payload_updates["probe"]["verdict"] == "inconclusive"
+    assert "different evidence" in result.payload_updates["probe"]["reasons"][0]
 
 
 def test_handler_resumes_after_limit_sleep_and_reuses_completed_outputs(tmp_path: Path, monkeypatch) -> None:
