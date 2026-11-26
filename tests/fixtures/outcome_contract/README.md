@@ -1,4 +1,4 @@
-# Outcome contract v1 (draft, frozen examples in cases.json)
+# Outcome contract v2 (frozen examples in cases.json)
 
 One pure function classifies a run (one replicate of one scene) the same way for hosted play, the bench probe, qualification and delivery:
 `classify_run(run: dict, scene: dict) -> dict` in `factory/outcome_contract.py`. It never reads files, the network or a model, and never raises on malformed input (a bad field makes that turn `unknown_telemetry` or the run `unresolved`).
@@ -25,6 +25,7 @@ Attributed grounding = `grounding_ids` minus `null_grounding_ids`. NEW = attribu
 A stall run is a maximal sequence of turns whose `action_outcome` is `no_effect` and whose `authored_recovery` is false, ignoring neutral turns (`rejected`, `game_break`, `noncommitted`) which neither extend nor break it. Any other turn (world_changed, explored, authored_recovery true, unknown_telemetry) ends it.
 - If `scene.pacing_window` is null: every `no_effect` turn is `unresolved`.
 - Else if the run's length >= `pacing_window`: if at least one turn of the run has a non-empty `candidates_offered`, every turn of the run is `confirmed_stuck`; otherwise every turn of the run is `unresolved` (nothing was on offer, so it must be adjudicated, not certified).
+- A shorter run is also judged when its exit is `forced` or `timer`, its length is at least `ceil(pacing_window / 2)`, it is the first longest stall run in the replicate, and it offered at least one candidate. It is `confirmed_stuck`; without an offered candidate it is `unresolved`. This catches a long futile run cut short by a harness handoff or timer.
 - A `unknown_telemetry` turn is always `unresolved`.
 Lists are sorted ascending turn numbers.
 
@@ -44,6 +45,8 @@ If any turn has `story_complete` true: `ending` when `scene.terminal` is true an
 
 ## Telemetry gap (found while writing these examples)
 Saved blind-player reports carry `grounding_ids`, `candidates_offered`, `matched_candidate`, `transition_cause`, `outcome`, `game_break`, `story_complete` per turn, but NOT `committed_facts`, `null_grounding_ids`, `pressure_event`, `npc_move`, `ending_latched` or `recovery`. On today's saved reports `classify_run` therefore returns `unknown_telemetry` for committed turns and cannot certify anything. The hosted collection path must record those fields (separate task) before this contract can certify a run.
+
+Change note: v2 recognizes long futile runs ending in forced or timer exits.
 
 ## Comparing expected to actual
 `expected` in cases.json is a subset: every key present must match the actual result; `turns` is `{"<turn number>": {field: value}}` and is compared field by field for only the turns and fields listed.
