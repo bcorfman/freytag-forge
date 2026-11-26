@@ -16,6 +16,7 @@ from typing import Any
 from factory.contract_scene import build_contract_scene
 from factory.guard import BudgetExhausted, Caps, LimitSleep, ModelGuard, ModelNotAllowed, ProviderLimit, SpendLedger
 from factory.outcome_contract import classify_run
+from factory.report_telemetry import enrich_report
 from factory.stations import diagnose as diagnose_station
 from factory.stations import planner as planner_station
 from factory.stations.diagnose import DIAGNOSE_EFFORT, DIAGNOSE_MODEL_ID
@@ -157,6 +158,8 @@ def _read_case(case_dir: Path, story: str | None) -> tuple[dict[str, Any], dict[
                 "stuck_turns": run.get("stuck_turns", []),
                 "exit_cause": run.get("exit_cause"),
                 "entry_facts": run.get("entry_facts", []),
+                **({"bundles": run["bundles"]} if "bundles" in run else {}),
+                **({"entry_state": run["entry_state"]} if "entry_state" in run else {}),
             }
             for run in runs
         ]
@@ -167,6 +170,22 @@ def _read_case(case_dir: Path, story: str | None) -> tuple[dict[str, Any], dict[
         for run in runs
         for turn in run.get("turns", [])
     )
+    eligible_for_enrichment = any(
+        not all(
+            isinstance(turn, dict) and isinstance(turn.get("committed_facts"), list) for turn in run.get("turns", [])
+        )
+        and all(isinstance(turn, dict) and isinstance(turn.get("pacing_replay"), dict) for turn in run.get("turns", []))
+        and isinstance(run.get("bundles"), list)
+        for run in runs
+    )
+    if not complete and eligible_for_enrichment:
+        report = enrich_report(report, package)
+        runs = report["replicates"]
+        complete = all(
+            isinstance(turn, dict) and isinstance(turn.get("committed_facts"), list)
+            for run in runs
+            for turn in run.get("turns", [])
+        )
     evidence_basis = "outcome_contract" if complete else "raw_stuck_flags"
     contract = None
     if complete:

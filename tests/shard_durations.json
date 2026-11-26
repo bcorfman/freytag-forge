@@ -1,6 +1,7 @@
 {
   "version": 1,
   "files": {
+    "tests/test_report_telemetry.py": 2.0,
     "tests/test_turn_telemetry.py": 2.0,
     "tests/test_coverage_ledger.py": 3.0,
     "tests/test_pacing_links.py": 2.0,
