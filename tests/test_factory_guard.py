@@ -1,4 +1,5 @@
 import json
+import subprocess
 from dataclasses import replace
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
@@ -107,6 +108,7 @@ def test_total_budget_exhaustion(tmp_path: Path) -> None:
             scene="scene",
             ticket_id="ticket-2",
             now=NOW,
+            estimate_usd=1.0,
             fn=lambda: CallResult("unused", 1, 1.0),
         )
 
@@ -126,6 +128,7 @@ def test_daily_cap_sleeps_until_next_utc_day_across_month_boundary(tmp_path: Pat
             scene="scene",
             ticket_id="ticket-2",
             now=NOW,
+            estimate_usd=1.0,
             fn=lambda: CallResult("unused", 1, 1.0),
         )
 
@@ -146,6 +149,7 @@ def test_per_scene_and_per_day_call_caps(tmp_path: Path) -> None:
         "effort": "high",
         "ticket_id": "ticket-2",
         "now": NOW,
+        "estimate_usd": 1.0,
         "fn": lambda: CallResult("unused", 1, 1.0),
     }
 
@@ -175,6 +179,7 @@ def test_provider_limit_becomes_sleep_and_records_nothing(tmp_path: Path) -> Non
             scene="scene",
             ticket_id="ticket",
             now=NOW,
+            estimate_usd=1.0,
             fn=limited,
         )
 
@@ -220,6 +225,7 @@ def test_rate_of_spend_breaker_names_rate(tmp_path: Path) -> None:
             scene="scene",
             ticket_id="ticket-2",
             now=NOW,
+            estimate_usd=1.0,
             fn=lambda: CallResult("unused", 1, 1.0),
         )
 
@@ -265,6 +271,155 @@ def test_old_ledger_row_without_estimate_loads_as_none(tmp_path: Path) -> None:
     )
 
     assert SpendLedger(path)._read()[0].estimate_usd is None
+
+
+def test_reservation_counts_until_settled_and_old_rows_keep_totals(tmp_path: Path) -> None:
+    path = tmp_path / "ledger.jsonl"
+    ledger = SpendLedger(path)
+    ledger.record(_usage(NOW, usd=2.0))
+    reservation_id = ledger.reserve(
+        provider="claude_code",
+        model_id="claude-opus-5-5",
+        station="prose",
+        scene="scene",
+        ticket_id="reserved",
+        usd=3.0,
+        now=NOW,
+    )
+
+    assert ledger.total_usd() == 5.0
+    assert ledger.day_usd("claude_code", date(2026, 1, 31)) == 5.0
+    assert ledger.usd_in_window(NOW, 3600) == 5.0
+    assert ledger.open_reservations()[0]["reservation_id"] == reservation_id
+
+    ledger.record(_usage(NOW, usd=1.25), reservation_id=reservation_id)
+    assert ledger.total_usd() == 3.25
+    assert ledger.open_reservations() == []
+
+
+def test_reservation_caps_include_open_reservations_and_release_frees_them(tmp_path: Path) -> None:
+    ledger = SpendLedger(tmp_path / "ledger.jsonl")
+    reservation_id = ledger.reserve(
+        provider="claude_code",
+        model_id="model",
+        station="station",
+        scene="scene",
+        ticket_id="ticket",
+        usd=3.0,
+        now=NOW,
+        caps=_caps(total_budget_usd=3.0),
+    )
+    with pytest.raises(BudgetExhausted):
+        ledger.reserve(
+            provider="claude_code",
+            model_id="model",
+            station="station",
+            scene="scene",
+            ticket_id="second",
+            usd=0.01,
+            now=NOW,
+            caps=_caps(total_budget_usd=3.0),
+        )
+    assert len((tmp_path / "ledger.jsonl").read_text().splitlines()) == 1
+    ledger.release(reservation_id)
+    assert ledger.total_usd() == 0
+    with pytest.raises(ValueError):
+        ledger.release(reservation_id)
+
+
+def test_reservation_daily_cap_and_unknown_or_corrupt_rows(tmp_path: Path) -> None:
+    ledger = SpendLedger(tmp_path / "ledger.jsonl")
+    with pytest.raises(BudgetExhausted):
+        ledger.reserve(
+            provider="claude_code",
+            model_id="model",
+            station="station",
+            scene="scene",
+            ticket_id="ticket",
+            usd=1.01,
+            now=NOW,
+            caps=_caps(daily_cap_usd={"claude_code": 1.0}),
+        )
+    assert not ledger.path.exists()
+    with pytest.raises(ValueError):
+        ledger.release("missing")
+    ledger.path.write_text(json.dumps({"kind": "reservation", "reservation_id": "bad"}) + "\n")
+    with pytest.raises(ValueError, match="line 1"):
+        ledger.total_usd()
+
+
+def test_crash_left_reservation_is_reopened_and_blocks_spend(tmp_path: Path) -> None:
+    path = tmp_path / "ledger.jsonl"
+    script = """
+from datetime import UTC, datetime
+import os
+from factory.guard import SpendLedger
+ledger = SpendLedger(__import__('sys').argv[1])
+ledger.reserve(
+    provider='claude_code', model_id='model', station='station', scene='scene',
+    ticket_id='ticket', usd=2.0, now=datetime(2026, 1, 31, tzinfo=UTC)
+)
+os._exit(0)
+"""
+    subprocess.run(
+        ["/home/bcorfman/dev/freytag-forge/.venv/bin/python", "-c", script, str(path)],
+        check=True,
+        env={"PYTHONPATH": str(ROOT)},
+    )
+    ledger = SpendLedger(path)
+    assert len(ledger.open_reservations()) == 1
+    with pytest.raises(BudgetExhausted):
+        ledger.reserve(
+            provider="claude_code",
+            model_id="model",
+            station="station",
+            scene="scene",
+            ticket_id="second",
+            usd=0.01,
+            now=NOW,
+            caps=_caps(total_budget_usd=2.0),
+        )
+
+
+def test_guarded_call_reservation_lifecycle(tmp_path: Path) -> None:
+    ledger = SpendLedger(tmp_path / "ledger.jsonl")
+    seen: list[int] = []
+
+    def successful() -> CallResult:
+        seen.append(len(ledger.open_reservations()))
+        return CallResult("ok", 1, 0.5)
+
+    guarded_call(
+        guard=_guard(tmp_path),
+        ledger=ledger,
+        caps=_caps(),
+        station="prose",
+        model_id="claude-opus-5-5",
+        effort="high",
+        scene="scene",
+        ticket_id="success",
+        now=NOW,
+        estimate_usd=1.0,
+        fn=successful,
+    )
+    assert seen == [1]
+    assert ledger.open_reservations() == []
+
+    with pytest.raises(RuntimeError):
+        guarded_call(
+            guard=_guard(tmp_path),
+            ledger=ledger,
+            caps=_caps(),
+            station="prose",
+            model_id="claude-opus-5-5",
+            effort="high",
+            scene="scene",
+            ticket_id="error",
+            now=NOW,
+            estimate_usd=1.0,
+            fn=lambda: (_ for _ in ()).throw(RuntimeError("unknown billing")),
+        )
+    assert len(ledger.open_reservations()) == 1
 
 
 @pytest.mark.parametrize("estimate", [-0.01, True])
@@ -327,6 +482,7 @@ def test_reported_missing_cost_is_unknown(tmp_path: Path) -> None:
         scene="scene",
         ticket_id="unknown",
         now=NOW,
+        estimate_usd=1.0,  # Reported providers must reserve before the call.
         fn=lambda: CallResult("ok", 4),
     )
 
@@ -433,6 +589,7 @@ def test_rate_limited_call_retries_without_duplicate_rows(tmp_path: Path) -> Non
         scene="scene",
         ticket_id="retry",
         now=NOW,
+        estimate_usd=1.0,
         fn=fn,
         sleep=sleeps.append,
         rand=lambda: 0.0,
@@ -456,6 +613,7 @@ def test_six_rate_limits_raise_after_five_sleeps(tmp_path: Path) -> None:
             scene="scene",
             ticket_id="retry",
             now=NOW,
+            estimate_usd=1.0,
             fn=lambda: (_ for _ in ()).throw(RateLimited()),
             sleep=sleeps.append,
             rand=lambda: 1.0,
@@ -488,6 +646,7 @@ def test_overloaded_call_uses_exponential_retry_delays(tmp_path: Path) -> None:
         scene="scene",
         ticket_id="retry",
         now=NOW,
+        estimate_usd=1.0,
         fn=fn,
         sleep=sleeps.append,
     )
@@ -507,6 +666,7 @@ def test_fifth_overload_raises_after_four_sleeps(tmp_path: Path) -> None:
             scene="scene",
             ticket_id="retry",
             now=NOW,
+            estimate_usd=1.0,
             fn=lambda: (_ for _ in ()).throw(Overloaded()),
             sleep=sleeps.append,
         )
