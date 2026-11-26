@@ -47,21 +47,19 @@ def _stall_marks(
     classified: list[dict[str, Any]],
     candidates: list[list[str]],
     pacing_window: int | None,
+    exit_value: str,
 ) -> tuple[set[int], set[int]]:
     confirmed: set[int] = set()
     unresolved: set[int] = set()
     active: list[int] = []
     active_candidates = False
 
+    runs: list[tuple[list[int], bool]] = []
+
     def finish() -> None:
         nonlocal active, active_candidates
         if active:
-            if pacing_window is None:
-                unresolved.update(active)
-            elif len(active) >= pacing_window and active_candidates:
-                confirmed.update(active)
-            elif len(active) >= pacing_window:
-                unresolved.update(active)
+            runs.append((active, active_candidates))
         active = []
         active_candidates = False
 
@@ -75,6 +73,21 @@ def _stall_marks(
         else:
             finish()
     finish()
+    longest = max((len(turns) for turns, _ in runs), default=0)
+    half_window = (pacing_window + 1) // 2 if pacing_window is not None else None
+    for turns, has_candidates in runs:
+        full_window = pacing_window is not None and len(turns) >= pacing_window
+        forced_long_run = (
+            pacing_window is not None
+            and len(turns) >= half_window
+            and len(turns) < pacing_window
+            and len(turns) == longest
+            and exit_value in {"forced", "timer"}
+        )
+        if pacing_window is None:
+            unresolved.update(turns)
+        elif full_window or forced_long_run:
+            (confirmed if has_candidates else unresolved).update(turns)
     return confirmed, unresolved
 
 
@@ -277,11 +290,6 @@ def classify_run(run: dict, scene: dict) -> dict:
         )
         offered.append([])
 
-    confirmed, unresolved = _stall_marks(classified, offered, pacing_window)
-    for item in classified:
-        if item["action_outcome"] == "unknown_telemetry":
-            unresolved.add(item["turn"])
-
     completed = any(isinstance(turn, dict) and turn.get("story_complete") is True for turn in turns)
     if completed:
         requirements = set(_scene_strings(scene_data, "ending_requires"))
@@ -296,6 +304,11 @@ def classify_run(run: dict, scene: dict) -> dict:
                     raw_turn.get("transition_cause"), "unknown"
                 )
                 break
+
+    confirmed, unresolved = _stall_marks(classified, offered, pacing_window, exit_value)
+    for item in classified:
+        if item["action_outcome"] == "unknown_telemetry":
+            unresolved.add(item["turn"])
 
     provenance_flags = _provenance_flags(turns, scene_data, delivered_before)
     epilogue, epilogue_not_offered = _epilogue(turns, scene_data, exit_value)
@@ -315,5 +328,5 @@ def classify_run(run: dict, scene: dict) -> dict:
         "status": status,
         "pacing": pacing,
         "epilogue": epilogue,
-        "contract_version": "v1",
+        "contract_version": "v2",
     }

@@ -162,3 +162,34 @@ def test_separate_stalls_are_judged_independently() -> None:
 def test_window_boundary() -> None:
     assert classify_run({"turns": [_turn(1), _turn(2)]}, _scene(2))["confirmed_stuck"] == [1, 2]
     assert classify_run({"turns": [_turn(1)]}, _scene(2))["confirmed_stuck"] == []
+
+
+def test_half_window_boundary_uses_ceiling() -> None:
+    def run(stall_length: int, window: int) -> dict:
+        turns = [_turn(i) for i in range(1, stall_length + 1)]
+        turns.append(_turn(stall_length + 1, committed_facts=["exit"], transition_cause="forced"))
+        return classify_run({"turns": turns}, _scene(window))
+
+    assert run(2, 6)["confirmed_stuck"] == []
+    assert run(3, 6)["confirmed_stuck"] == [1, 2, 3]
+    assert run(3, 7)["confirmed_stuck"] == []
+    assert run(4, 7)["confirmed_stuck"] == [1, 2, 3, 4]
+
+
+def test_timer_exit_can_confirm_long_shorter_stall() -> None:
+    turns = [_turn(i) for i in range(1, 4)] + [_turn(4, committed_facts=["exit"], transition_cause="timer")]
+    result = classify_run({"turns": turns}, _scene(6))
+    assert result["exit"] == "timer"
+    assert result["confirmed_stuck"] == [1, 2, 3]
+
+
+def test_only_first_longest_short_stall_is_marked() -> None:
+    turns = [_turn(i) for i in range(1, 4)] + [_turn(4, committed_facts=["break"])]
+    turns += [_turn(i) for i in range(5, 9)] + [_turn(9, committed_facts=["exit"], transition_cause="forced")]
+    assert classify_run({"turns": turns}, _scene(8))["confirmed_stuck"] == [5, 6, 7, 8]
+
+
+def test_null_window_stays_unresolved() -> None:
+    result = classify_run({"turns": [_turn(1), _turn(2), _turn(3), _turn(4)]}, _scene(None))
+    assert result["confirmed_stuck"] == []
+    assert result["unresolved"] == [1, 2, 3, 4]
