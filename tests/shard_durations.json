@@ -472,6 +472,7 @@
     "tests/test_world_placements.py": 1.31,
     "tests/test_world_seats.py": 0.55,
     "tests/test_world_second_package.py": 0.11,
-    "tests/test_x1_condition_count.py": 0.07
+    "tests/test_x1_condition_count.py": 0.07,
+    "tests/test_final_report.py": 2.0
   }
 }

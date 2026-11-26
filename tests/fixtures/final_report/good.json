@@ -1,0 +1,2491 @@
+{
+  "candidate_sha": "x",
+  "turn_ceiling": 200,
+  "total_turns": 108,
+  "replicates": [
+    {
+      "replicate": 1,
+      "profile": "canonical",
+      "status": "complete",
+      "scenes": [
+        {
+          "scene": "1A",
+          "entry": {
+            "source": "fresh",
+            "facts_sha256": ""
+          },
+          "exit_facts_sha256": "10",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "1B",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "10"
+          },
+          "exit_facts_sha256": "11",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "1C",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "11"
+          },
+          "exit_facts_sha256": "12",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "2A",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "12"
+          },
+          "exit_facts_sha256": "13",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "2B",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "13"
+          },
+          "exit_facts_sha256": "14",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "2C",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "14"
+          },
+          "exit_facts_sha256": "15",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "3A",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "15"
+          },
+          "exit_facts_sha256": "16",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "3B",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "16"
+          },
+          "exit_facts_sha256": "17",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "3C",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "17"
+          },
+          "exit_facts_sha256": "18",
+          "transition_cause": "none",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "ending",
+            "status": "healthy",
+            "epilogue": {
+              "offered": true,
+              "taken": false
+            }
+          }
+        }
+      ],
+      "ending_reached": true,
+      "epilogue": {
+        "offered": true,
+        "taken": false
+      },
+      "continuity": {
+        "passed": true
+      },
+      "fun": {
+        "passed": true
+      }
+    },
+    {
+      "replicate": 2,
+      "profile": "canonical",
+      "status": "complete",
+      "scenes": [
+        {
+          "scene": "1A",
+          "entry": {
+            "source": "fresh",
+            "facts_sha256": ""
+          },
+          "exit_facts_sha256": "20",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "1B",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "20"
+          },
+          "exit_facts_sha256": "21",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "1C",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "21"
+          },
+          "exit_facts_sha256": "22",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "2A",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "22"
+          },
+          "exit_facts_sha256": "23",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "2B",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "23"
+          },
+          "exit_facts_sha256": "24",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "2C",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "24"
+          },
+          "exit_facts_sha256": "25",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "3A",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "25"
+          },
+          "exit_facts_sha256": "26",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "3B",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "26"
+          },
+          "exit_facts_sha256": "27",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "3C",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "27"
+          },
+          "exit_facts_sha256": "28",
+          "transition_cause": "none",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "ending",
+            "status": "healthy",
+            "epilogue": {
+              "offered": true,
+              "taken": false
+            }
+          }
+        }
+      ],
+      "ending_reached": true,
+      "epilogue": {
+        "offered": true,
+        "taken": false
+      },
+      "continuity": {
+        "passed": true
+      },
+      "fun": {
+        "passed": true
+      }
+    },
+    {
+      "replicate": 3,
+      "profile": "canonical",
+      "status": "complete",
+      "scenes": [
+        {
+          "scene": "1A",
+          "entry": {
+            "source": "fresh",
+            "facts_sha256": ""
+          },
+          "exit_facts_sha256": "30",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "1B",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "30"
+          },
+          "exit_facts_sha256": "31",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "1C",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "31"
+          },
+          "exit_facts_sha256": "32",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "2A",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "32"
+          },
+          "exit_facts_sha256": "33",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "2B",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "33"
+          },
+          "exit_facts_sha256": "34",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "2C",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "34"
+          },
+          "exit_facts_sha256": "35",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "3A",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "35"
+          },
+          "exit_facts_sha256": "36",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "3B",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "36"
+          },
+          "exit_facts_sha256": "37",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "3C",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "37"
+          },
+          "exit_facts_sha256": "38",
+          "transition_cause": "none",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "ending",
+            "status": "healthy",
+            "epilogue": {
+              "offered": true,
+              "taken": false
+            }
+          }
+        }
+      ],
+      "ending_reached": true,
+      "epilogue": {
+        "offered": true,
+        "taken": false
+      },
+      "continuity": {
+        "passed": true
+      },
+      "fun": {
+        "passed": true
+      }
+    },
+    {
+      "replicate": 4,
+      "profile": "canonical",
+      "status": "complete",
+      "scenes": [
+        {
+          "scene": "1A",
+          "entry": {
+            "source": "fresh",
+            "facts_sha256": ""
+          },
+          "exit_facts_sha256": "40",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "1B",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "40"
+          },
+          "exit_facts_sha256": "41",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "1C",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "41"
+          },
+          "exit_facts_sha256": "42",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "2A",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "42"
+          },
+          "exit_facts_sha256": "43",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "2B",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "43"
+          },
+          "exit_facts_sha256": "44",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "2C",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "44"
+          },
+          "exit_facts_sha256": "45",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "3A",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "45"
+          },
+          "exit_facts_sha256": "46",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "3B",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "46"
+          },
+          "exit_facts_sha256": "47",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "3C",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "47"
+          },
+          "exit_facts_sha256": "48",
+          "transition_cause": "none",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "ending",
+            "status": "healthy",
+            "epilogue": {
+              "offered": true,
+              "taken": false
+            }
+          }
+        }
+      ],
+      "ending_reached": true,
+      "epilogue": {
+        "offered": true,
+        "taken": false
+      },
+      "continuity": {
+        "passed": true
+      },
+      "fun": {
+        "passed": true
+      }
+    },
+    {
+      "replicate": 5,
+      "profile": "canonical",
+      "status": "complete",
+      "scenes": [
+        {
+          "scene": "1A",
+          "entry": {
+            "source": "fresh",
+            "facts_sha256": ""
+          },
+          "exit_facts_sha256": "50",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "1B",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "50"
+          },
+          "exit_facts_sha256": "51",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "1C",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "51"
+          },
+          "exit_facts_sha256": "52",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "2A",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "52"
+          },
+          "exit_facts_sha256": "53",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "2B",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "53"
+          },
+          "exit_facts_sha256": "54",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "2C",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "54"
+          },
+          "exit_facts_sha256": "55",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "3A",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "55"
+          },
+          "exit_facts_sha256": "56",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "3B",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "56"
+          },
+          "exit_facts_sha256": "57",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "3C",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "57"
+          },
+          "exit_facts_sha256": "58",
+          "transition_cause": "none",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "ending",
+            "status": "healthy",
+            "epilogue": {
+              "offered": true,
+              "taken": false
+            }
+          }
+        }
+      ],
+      "ending_reached": true,
+      "epilogue": {
+        "offered": true,
+        "taken": false
+      },
+      "continuity": {
+        "passed": true
+      },
+      "fun": {
+        "passed": true
+      }
+    },
+    {
+      "replicate": 6,
+      "profile": "canonical",
+      "status": "complete",
+      "scenes": [
+        {
+          "scene": "1A",
+          "entry": {
+            "source": "fresh",
+            "facts_sha256": ""
+          },
+          "exit_facts_sha256": "60",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "1B",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "60"
+          },
+          "exit_facts_sha256": "61",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "1C",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "61"
+          },
+          "exit_facts_sha256": "62",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "2A",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "62"
+          },
+          "exit_facts_sha256": "63",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "2B",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "63"
+          },
+          "exit_facts_sha256": "64",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "2C",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "64"
+          },
+          "exit_facts_sha256": "65",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "3A",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "65"
+          },
+          "exit_facts_sha256": "66",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "3B",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "66"
+          },
+          "exit_facts_sha256": "67",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "3C",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "67"
+          },
+          "exit_facts_sha256": "68",
+          "transition_cause": "none",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "ending",
+            "status": "healthy",
+            "epilogue": {
+              "offered": true,
+              "taken": false
+            }
+          }
+        }
+      ],
+      "ending_reached": true,
+      "epilogue": {
+        "offered": true,
+        "taken": false
+      },
+      "continuity": {
+        "passed": true
+      },
+      "fun": {
+        "passed": true
+      }
+    },
+    {
+      "replicate": 7,
+      "profile": "canonical",
+      "status": "complete",
+      "scenes": [
+        {
+          "scene": "1A",
+          "entry": {
+            "source": "fresh",
+            "facts_sha256": ""
+          },
+          "exit_facts_sha256": "70",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "1B",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "70"
+          },
+          "exit_facts_sha256": "71",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "1C",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "71"
+          },
+          "exit_facts_sha256": "72",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "2A",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "72"
+          },
+          "exit_facts_sha256": "73",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "2B",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "73"
+          },
+          "exit_facts_sha256": "74",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "2C",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "74"
+          },
+          "exit_facts_sha256": "75",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "3A",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "75"
+          },
+          "exit_facts_sha256": "76",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "3B",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "76"
+          },
+          "exit_facts_sha256": "77",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "3C",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "77"
+          },
+          "exit_facts_sha256": "78",
+          "transition_cause": "none",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "ending",
+            "status": "healthy",
+            "epilogue": {
+              "offered": true,
+              "taken": false
+            }
+          }
+        }
+      ],
+      "ending_reached": true,
+      "epilogue": {
+        "offered": true,
+        "taken": false
+      },
+      "continuity": {
+        "passed": true
+      },
+      "fun": {
+        "passed": true
+      }
+    },
+    {
+      "replicate": 8,
+      "profile": "canonical",
+      "status": "complete",
+      "scenes": [
+        {
+          "scene": "1A",
+          "entry": {
+            "source": "fresh",
+            "facts_sha256": ""
+          },
+          "exit_facts_sha256": "80",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "1B",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "80"
+          },
+          "exit_facts_sha256": "81",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "1C",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "81"
+          },
+          "exit_facts_sha256": "82",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "2A",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "82"
+          },
+          "exit_facts_sha256": "83",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "2B",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "83"
+          },
+          "exit_facts_sha256": "84",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "2C",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "84"
+          },
+          "exit_facts_sha256": "85",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "3A",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "85"
+          },
+          "exit_facts_sha256": "86",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "3B",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "86"
+          },
+          "exit_facts_sha256": "87",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "3C",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "87"
+          },
+          "exit_facts_sha256": "88",
+          "transition_cause": "none",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "ending",
+            "status": "healthy",
+            "epilogue": {
+              "offered": true,
+              "taken": false
+            }
+          }
+        }
+      ],
+      "ending_reached": true,
+      "epilogue": {
+        "offered": true,
+        "taken": false
+      },
+      "continuity": {
+        "passed": true
+      },
+      "fun": {
+        "passed": true
+      }
+    },
+    {
+      "replicate": 9,
+      "profile": "canonical",
+      "status": "complete",
+      "scenes": [
+        {
+          "scene": "1A",
+          "entry": {
+            "source": "fresh",
+            "facts_sha256": ""
+          },
+          "exit_facts_sha256": "90",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "1B",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "90"
+          },
+          "exit_facts_sha256": "91",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "1C",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "91"
+          },
+          "exit_facts_sha256": "92",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "2A",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "92"
+          },
+          "exit_facts_sha256": "93",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "2B",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "93"
+          },
+          "exit_facts_sha256": "94",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "2C",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "94"
+          },
+          "exit_facts_sha256": "95",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "3A",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "95"
+          },
+          "exit_facts_sha256": "96",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "3B",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "96"
+          },
+          "exit_facts_sha256": "97",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "3C",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "97"
+          },
+          "exit_facts_sha256": "98",
+          "transition_cause": "none",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "ending",
+            "status": "healthy",
+            "epilogue": {
+              "offered": true,
+              "taken": false
+            }
+          }
+        }
+      ],
+      "ending_reached": true,
+      "epilogue": {
+        "offered": true,
+        "taken": false
+      },
+      "continuity": {
+        "passed": true
+      },
+      "fun": {
+        "passed": true
+      }
+    },
+    {
+      "replicate": 10,
+      "profile": "canonical",
+      "status": "complete",
+      "scenes": [
+        {
+          "scene": "1A",
+          "entry": {
+            "source": "fresh",
+            "facts_sha256": ""
+          },
+          "exit_facts_sha256": "100",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "1B",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "100"
+          },
+          "exit_facts_sha256": "101",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "1C",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "101"
+          },
+          "exit_facts_sha256": "102",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "2A",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "102"
+          },
+          "exit_facts_sha256": "103",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "2B",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "103"
+          },
+          "exit_facts_sha256": "104",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "2C",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "104"
+          },
+          "exit_facts_sha256": "105",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "3A",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "105"
+          },
+          "exit_facts_sha256": "106",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "3B",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "106"
+          },
+          "exit_facts_sha256": "107",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "3C",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "107"
+          },
+          "exit_facts_sha256": "108",
+          "transition_cause": "none",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "ending",
+            "status": "healthy",
+            "epilogue": {
+              "offered": true,
+              "taken": false
+            }
+          }
+        }
+      ],
+      "ending_reached": true,
+      "epilogue": {
+        "offered": true,
+        "taken": false
+      },
+      "continuity": {
+        "passed": true
+      },
+      "fun": {
+        "passed": true
+      }
+    },
+    {
+      "replicate": 11,
+      "profile": "canonical",
+      "status": "complete",
+      "scenes": [
+        {
+          "scene": "1A",
+          "entry": {
+            "source": "fresh",
+            "facts_sha256": ""
+          },
+          "exit_facts_sha256": "110",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "1B",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "110"
+          },
+          "exit_facts_sha256": "111",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "1C",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "111"
+          },
+          "exit_facts_sha256": "112",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "2A",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "112"
+          },
+          "exit_facts_sha256": "113",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "2B",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "113"
+          },
+          "exit_facts_sha256": "114",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "2C",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "114"
+          },
+          "exit_facts_sha256": "115",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "3A",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "115"
+          },
+          "exit_facts_sha256": "116",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "3B",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "116"
+          },
+          "exit_facts_sha256": "117",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "3C",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "117"
+          },
+          "exit_facts_sha256": "118",
+          "transition_cause": "none",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "ending",
+            "status": "healthy",
+            "epilogue": {
+              "offered": true,
+              "taken": false
+            }
+          }
+        }
+      ],
+      "ending_reached": true,
+      "epilogue": {
+        "offered": true,
+        "taken": false
+      },
+      "continuity": {
+        "passed": true
+      },
+      "fun": {
+        "passed": true
+      }
+    },
+    {
+      "replicate": 12,
+      "profile": "canonical",
+      "status": "complete",
+      "scenes": [
+        {
+          "scene": "1A",
+          "entry": {
+            "source": "fresh",
+            "facts_sha256": ""
+          },
+          "exit_facts_sha256": "120",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "1B",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "120"
+          },
+          "exit_facts_sha256": "121",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "1C",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "121"
+          },
+          "exit_facts_sha256": "122",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "2A",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "122"
+          },
+          "exit_facts_sha256": "123",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "2B",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "123"
+          },
+          "exit_facts_sha256": "124",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "2C",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "124"
+          },
+          "exit_facts_sha256": "125",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "3A",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "125"
+          },
+          "exit_facts_sha256": "126",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "3B",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "126"
+          },
+          "exit_facts_sha256": "127",
+          "transition_cause": "earned",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "earned",
+            "status": "healthy",
+            "epilogue": {
+              "offered": false,
+              "taken": false
+            }
+          }
+        },
+        {
+          "scene": "3C",
+          "entry": {
+            "source": "carried",
+            "facts_sha256": "127"
+          },
+          "exit_facts_sha256": "128",
+          "transition_cause": "none",
+          "turns": 1,
+          "contract": {
+            "confirmed_stuck": [],
+            "unresolved": [],
+            "provenance_flags": [],
+            "exit": "ending",
+            "status": "healthy",
+            "epilogue": {
+              "offered": true,
+              "taken": false
+            }
+          }
+        }
+      ],
+      "ending_reached": true,
+      "epilogue": {
+        "offered": true,
+        "taken": false
+      },
+      "continuity": {
+        "passed": true
+      },
+      "fun": {
+        "passed": true
+      }
+    }
+  ]
+}
