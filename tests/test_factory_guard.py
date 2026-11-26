@@ -1,5 +1,6 @@
 import json
 import subprocess
+import sys
 from dataclasses import replace
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
@@ -362,7 +363,7 @@ ledger.reserve(
 os._exit(0)
 """
     subprocess.run(
-        ["/home/bcorfman/dev/freytag-forge/.venv/bin/python", "-c", script, str(path)],
+        [sys.executable, "-c", script, str(path)],
         check=True,
         env={"PYTHONPATH": str(ROOT)},
     )

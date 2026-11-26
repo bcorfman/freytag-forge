@@ -113,7 +113,7 @@ def test_build_variation_is_story_package_only_and_bench_describes(tmp_path: Pat
 
     completed = subprocess.run(
         [
-            "/home/bcorfman/dev/freytag-forge/.venv/bin/python",
+            ".venv/bin/python",
             "-m",
             "bench",
             "describe",
