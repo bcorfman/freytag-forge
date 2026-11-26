@@ -241,6 +241,7 @@ export function turnRecord({ turn, input, raw_input = input, profile = "canonica
     semantic_match: payload.semantic_match || null,
     prompt: payload.prompt || null,
     attempt_bundle: attemptBundle,
+    pacing_replay: payload.pacing_replay ?? null,
     game_break,
   };
 }
@@ -269,7 +270,7 @@ export function bundlesCategory(category) {
 }
 
 export function turnLog(turns = []) {
-  return turns.map(({ turn, input, raw_input = input, profile = "canonical", profile_requested, profile_warning, text, state, grounding_ids, semantic_match, story_complete, rejected, rejection, attempt_bundle, game_break = null, clarification = null, question_turn = false }) => {
+  return turns.map(({ turn, input, raw_input = input, profile = "canonical", profile_requested, profile_warning, text, state, pacing_replay, fired_pacing_event_ids, grounding_ids, semantic_match, story_complete, rejected, rejection, attempt_bundle, game_break = null, clarification = null, question_turn = false }) => {
     const revealSelection = attempt_bundle && typeof attempt_bundle === "object" && !Array.isArray(attempt_bundle)
       && attempt_bundle.reveal_selection && typeof attempt_bundle.reveal_selection === "object" && !Array.isArray(attempt_bundle.reveal_selection)
       ? attempt_bundle.reveal_selection
@@ -295,6 +296,9 @@ export function turnLog(turns = []) {
       scene_id: state?.scene_id ?? null,
       turn_index: state?.turn_index ?? null,
       turns_since_entry: state?.turns_since_scene_entry ?? null,
+      pacing_replay: pacing_replay && typeof pacing_replay === "object" && !Array.isArray(pacing_replay)
+        && Array.isArray(pacing_replay.fired_event_ids) && Array.isArray(pacing_replay.null_grounding_ids) ? pacing_replay : null,
+      fired_pacing_event_ids: Array.isArray(state?.fired_pacing_event_ids) && state.fired_pacing_event_ids.every((id) => typeof id === "string") ? state.fired_pacing_event_ids : null,
       semantic_match: semantic_match ?? null,
       grounding_ids: grounding_ids || [],
       candidates_offered: candidatesOffered,

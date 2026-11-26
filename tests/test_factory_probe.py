@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from factory.guard import LimitSleep
+from factory.outcome_contract import classify_run
 from factory.stations import probe
 from factory.stations.probe import (
     PROBE_RULES,
@@ -20,6 +21,7 @@ from factory.tickets import Station, Ticket
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURE = ROOT / "tests/fixtures/factory/probe_turn_records.json"
+OUTCOME_CONTRACT_FIXTURE = ROOT / "tests/fixtures/outcome_contract/cases.json"
 NOW = datetime(2026, 11, 22, 12, tzinfo=UTC)
 RULES = {**PROBE_RULES, "replicates": 2}
 BUDGET = {"day": "2026-11-22", "spent_micro_usd": 100}
@@ -149,6 +151,9 @@ def test_summarize_arm_counts_fixture_and_rejects_malformed(tmp_path: Path) -> N
         "unknown_exits": 2,
         "provider_features": None,
         "semantic_ask_missing": False,
+        "unresolved_turns": 0,
+        "contract_runs": 0,
+        "raw_runs": 2,
     }
 
     extra = {
@@ -183,12 +188,58 @@ def test_summarize_arm_counts_fixture_and_rejects_malformed(tmp_path: Path) -> N
         "unknown_exits": 0,
         "provider_features": None,
         "semantic_ask_missing": False,
+        "unresolved_turns": 0,
+        "contract_runs": 0,
+        "raw_runs": 1,
     }
 
     malformed = tmp_path / "malformed.json"
     malformed.write_text("[]", encoding="utf-8")
     with pytest.raises(ValueError, match=str(malformed)):
         summarize_arm([malformed])
+
+
+def test_probe_matches_outcome_contract_fixture_cases(tmp_path: Path) -> None:
+    cases = json.loads(OUTCOME_CONTRACT_FIXTURE.read_text(encoding="utf-8"))
+    covered = []
+    summaries = []
+    for case in cases:
+        expected = case.get("expected", {})
+        run = case.get("run", {})
+        scene = case.get("scene", {})
+        if not isinstance(run, dict) or not isinstance(scene, dict):
+            continue
+        # Older fixture cases omit empty outcome lists; those mean no marked turns.
+        expected = {
+            **expected,
+            "confirmed_stuck": expected.get("confirmed_stuck", []),
+            "unresolved": expected.get("unresolved", []),
+        }
+        if not isinstance(expected["confirmed_stuck"], list) or not isinstance(expected["unresolved"], list):
+            continue
+        direct = classify_run(run, scene)
+        if any(turn.get("action_outcome") == "unknown_telemetry" for turn in direct["turns"]):
+            continue
+        case_id = case["id"]
+        scene_id = scene["id"]
+        probe_run = {**run, "scene": scene_id, "status": "ok"}
+        records_path = tmp_path / f"{case_id}.json"
+        records_path.write_text(json.dumps({"runs": [probe_run]}), encoding="utf-8")
+        summaries.append(summarize_arm([records_path], scenes={scene_id: scene}))
+        covered.append((case_id, direct, expected))
+
+    assert len(covered) >= 20, f"expected at least 20 parity cases, covered {len(covered)}"
+    assert sum(summary["contract_runs"] for summary in summaries) == len(covered)
+    assert sum(summary["raw_runs"] for summary in summaries) == 0
+    assert sum(summary["stuck_turns"] for summary in summaries) == sum(
+        len(expected["confirmed_stuck"]) for _, _, expected in covered
+    )
+    assert sum(summary["unresolved_turns"] for summary in summaries) == sum(
+        len(expected["unresolved"]) for _, _, expected in covered
+    )
+    for case_id, direct, expected in covered:
+        assert direct["confirmed_stuck"] == expected["confirmed_stuck"], case_id
+        assert direct["unresolved"] == expected["unresolved"], case_id
 
 
 def base_summary(**changes: int) -> dict:
@@ -259,6 +310,9 @@ def test_summarize_arm_counts_failed_run_without_its_turns(tmp_path: Path) -> No
         "unknown_exits": 0,
         "provider_features": None,
         "semantic_ask_missing": False,
+        "unresolved_turns": 0,
+        "contract_runs": 0,
+        "raw_runs": 0,
     }
 
 
@@ -580,6 +634,92 @@ def test_handler_full_path_reuses_hashes_and_records_spend(tmp_path: Path, monke
     changed = probe_handler(root, runner=make_runner(calls), rules=RULES, read_budget=lambda: next(budgets))
     changed(make_ticket(payload), NOW)
     assert len(calls) == 12
+
+
+def test_handler_summarizes_each_arm_with_its_story_scene(tmp_path: Path, monkeypatch) -> None:
+    root, tree = configure_probe_root(tmp_path)
+    monkeypatch.setattr(probe, "ticket_tree", lambda payload, ticket_id, root: tree)
+    payload = {
+        "workspace": str(tmp_path),
+        "story_package": "data/stories/base",
+        "runs": [{"run": "synthetic-r1", "scene": "S", "inputs": ["Open the door."] * 2}],
+        "billed_run_approved": True,
+    }
+    package_paths: list[Path] = []
+    scenes_by_path = {}
+
+    def load(package_path: Path):
+        package_paths.append(package_path)
+        return package_path
+
+    monkeypatch.setattr(probe, "load_story_package", load)
+    monkeypatch.setattr(
+        probe,
+        "build_contract_scene",
+        lambda package, scene: scenes_by_path.setdefault(package, {"id": str(package)}),
+    )
+    captured: list[dict | None] = []
+    original_summarize = probe.summarize_arm
+
+    def summarize(files, *, scenes=None):
+        captured.append(scenes)
+        return original_summarize(files, scenes=scenes)
+
+    monkeypatch.setattr(probe, "summarize_arm", summarize)
+    result = probe_handler(root, runner=make_runner([]), rules=RULES, read_budget=lambda: dict(BUDGET))(
+        make_ticket(payload, scene="S"), NOW
+    )
+
+    assert result.payload_updates is not None
+    assert package_paths == [Path(tmp_path / "data/stories/base"), Path(tree / "data/stories/base")]
+    assert captured == [
+        {"S": {"id": str(package_paths[0])}},
+        {"S": {"id": str(package_paths[1])}},
+    ]
+
+
+def test_handler_scene_loading_falls_back_per_arm(tmp_path: Path, monkeypatch) -> None:
+    root, tree = configure_probe_root(tmp_path)
+    monkeypatch.setattr(probe, "ticket_tree", lambda payload, ticket_id, root: tree)
+    payload = {
+        "workspace": str(tmp_path),
+        "story_package": "data/stories/base",
+        "runs": [{"run": "synthetic-r1", "scene": "S", "inputs": ["Open the door."] * 2}],
+        "billed_run_approved": True,
+    }
+    case = json.loads(OUTCOME_CONTRACT_FIXTURE.read_text(encoding="utf-8"))[0]
+    records = {"runs": [{**case["run"], "scene": "S", "status": "ok", "completed": True}]}
+
+    def runner(root: Path, argv: list[str], env: dict[str, str], timeout_s: int):
+        output = Path(argv[argv.index("--out") + 1])
+        output.mkdir(parents=True, exist_ok=True)
+        (output / "turn-records.json").write_text(json.dumps(records), encoding="utf-8")
+        return subprocess.CompletedProcess(argv, 0, stdout="", stderr="")
+
+    def load(package_path: Path):
+        if package_path == Path(tmp_path / "data/stories/base"):
+            raise ValueError("control package unavailable")
+        return package_path
+
+    monkeypatch.setattr(probe, "load_story_package", load)
+    monkeypatch.setattr(probe, "build_contract_scene", lambda package, scene: case["scene"])
+    captured: list[dict | None] = []
+    original_summarize = probe.summarize_arm
+
+    def summarize(files, *, scenes=None):
+        captured.append(scenes)
+        return original_summarize(files, scenes=scenes)
+
+    monkeypatch.setattr(probe, "summarize_arm", summarize)
+    result = probe_handler(root, runner=runner, rules=RULES, read_budget=lambda: dict(BUDGET))(
+        make_ticket(payload, scene="S"), NOW
+    )
+
+    assert captured[0] is None
+    assert captured[1] == {"S": case["scene"]}
+    assert result.payload_updates is not None
+    assert result.payload_updates["probe"]["verdict"] == "inconclusive"
+    assert "different evidence" in result.payload_updates["probe"]["reasons"][0]
 
 
 def test_handler_resumes_after_limit_sleep_and_reuses_completed_outputs(tmp_path: Path, monkeypatch) -> None:

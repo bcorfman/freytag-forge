@@ -27,6 +27,7 @@ from storygame.runtime.item_facts import ItemFactsProvider
 from storygame.runtime.jev import JevClient
 from storygame.runtime.knowledge_audit import build_knowledge_audit
 from storygame.runtime.observation_verifier import ObservationVerifier
+from storygame.runtime.pacing_replay import replay_pacing
 from storygame.runtime.persistence import RuntimeSaveError, RuntimeStateSqliteStore
 from storygame.runtime.scripted_provider import ScriptedTurnProvider
 from storygame.runtime.state import RuntimeState, RuntimeStateError
@@ -381,6 +382,12 @@ def create_demo_app(
             provider = None if state.story_complete else provider_for(state)
             test_clock = _test_clock_seconds(body, request)
             engine = RuntimeEngine(state, lambda _command: {}) if provider is None else engine_for(state, provider)
+            pacing_replay = None
+            if provider is not None and getenv("FREYTAG_EXPOSE_TURN_TELEMETRY", "") == "1":
+                try:
+                    pacing_replay = replay_pacing(engine)
+                except Exception:
+                    logger.warning("turn pacing replay failed", exc_info=True)
             clarification_args = (
                 {"clarifies": body.clarifies, "clarification_round": body.clarification_round}
                 if body.clarifies is not None
@@ -485,6 +492,15 @@ def create_demo_app(
                 payload["semantic_match"] = semantic_match
         if getenv("FREYTAG_EXPOSE_KNOWLEDGE_AUDIT", "") == "1":
             payload["knowledge_audit"] = build_knowledge_audit(engine, proposal, fact_keys_before)
+        if pacing_replay is not None or (provider is not None and getenv("FREYTAG_EXPOSE_TURN_TELEMETRY", "") == "1"):
+            payload["pacing_replay"] = (
+                None
+                if pacing_replay is None
+                else {
+                    "fired_event_ids": list(pacing_replay.fired_event_ids),
+                    "null_grounding_ids": list(pacing_replay.null_grounding_ids),
+                }
+            )
         return payload
 
     @app.post("/api/v1/game-break")

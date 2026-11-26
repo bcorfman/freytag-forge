@@ -145,10 +145,12 @@ test("a player who only reads the screen can leave the scene @blind-player", asy
     } else if (!allMode && requestedScene !== "1A") {
       const startState = blindEntryState();
       entry = { mode: "seeded", state: startState };
-      await startSceneSession(page, { startScene: requestedScene, startState });
+      const payload = await startSceneSession(page, { startScene: requestedScene, startState });
+      entry.state = payload?.state ? { scene_id: payload.state.scene_id, turn_index: payload.state.turn_index, fired_pacing_event_ids: Array.isArray(payload.state.fired_pacing_event_ids) ? payload.state.fired_pacing_event_ids : null } : null;
       openingText = (await page.locator(".entry-output").first().textContent())?.trim() || "";
     } else {
-      await startSceneSession(page);
+      const payload = await startSceneSession(page);
+      entry.state = payload?.state ? { scene_id: payload.state.scene_id, turn_index: payload.state.turn_index, fired_pacing_event_ids: Array.isArray(payload.state.fired_pacing_event_ids) ? payload.state.fired_pacing_event_ids : null } : null;
       openingText = (await page.locator(".entry-output").first().textContent())?.trim() || "";
     }
     const totalCounter = { calls: 0 };
@@ -160,6 +162,9 @@ test("a player who only reads the screen can leave the scene @blind-player", asy
       run.entry = allMode
         ? { mode: sceneId === "1A" ? "start" : "walk", state: null }
         : entry;
+      run.entry_state = !allMode ? entry.state : sceneId === "1A"
+        ? entry.state
+        : (sceneRuns.at(-1)?.turns?.at(-1) ? { scene_id: sceneRuns.at(-1).turns.at(-1).scene_id, turn_index: sceneRuns.at(-1).turns.at(-1).turn_index, fired_pacing_event_ids: sceneRuns.at(-1).turns.at(-1).fired_pacing_event_ids } : null);
       sceneRuns.push(run);
       if (run.stopped_on_rejections) {
         stoppedReason = `scene ${sceneId} rejected ${MAX_CONSECUTIVE_REJECTIONS} times in a row`;

@@ -31,6 +31,7 @@ from factory.cloudflare_spend import read_worker_budget, spend_between
 from factory.guard import BudgetExhausted, Caps, LimitSleep, ProviderLimit, SpendLedger, Usage
 from factory.limits import LimitReport
 from factory.line import StationHandler, StationResult
+from factory.outcome_contract import classify_run
 
 EARNED_EXIT_CAUSES = frozenset({"play", "earned"})
 """Exit labels treated as earned by the station-7 gate."""
@@ -320,11 +321,25 @@ def _packet_for_turn(
     return packet
 
 
-def _turn_fails(scene_run: dict[str, Any], turn: dict[str, Any]) -> bool:
+def _turn_fails(scene_run: dict[str, Any], turn: dict[str, Any], contract: dict[str, Any] | None = None) -> bool:
     stuck_turns = scene_run.get("stuck_turns")
-    stuck = isinstance(stuck_turns, list) and turn["turn"] in stuck_turns
+    stuck = (
+        turn["turn"] in contract.get("confirmed_stuck", [])
+        if contract is not None
+        else isinstance(stuck_turns, list) and turn["turn"] in stuck_turns
+    )
+    adjudicated = contract is not None and (
+        turn["turn"] in contract.get("unresolved", [])
+        or any(flag.get("turn") == turn["turn"] for flag in contract.get("provenance_flags", []))
+        or (
+            turn["turn"]
+            == max((item.get("turn", 0) for item in scene_run.get("turns", []) if isinstance(item, dict)), default=0)
+            and any(flag.get("turn") is None for flag in contract.get("provenance_flags", []))
+        )
+    )
     return (
         stuck
+        or adjudicated
         or turn.get("rejected") is True
         or turn.get("game_break") is not None
         or turn.get("outcome") != "committed"
@@ -332,24 +347,37 @@ def _turn_fails(scene_run: dict[str, Any], turn: dict[str, Any]) -> bool:
     )
 
 
-def report_to_packets(report: dict, *, key_prefix: str = "") -> list[dict]:
+def report_to_packets(
+    report: dict, *, key_prefix: str = "", scenes: dict[str, dict[str, Any]] | None = None
+) -> list[dict]:
     """Convert each failing turn in a report to one validated-shape packet."""
 
     packets: list[dict] = []
     for replicate, scene_run in _scene_runs(report):
         turns = _valid_turns(scene_run)
+        contract = None
+        if scenes is not None and scene_run["scene"] in scenes:
+            contract = classify_run(
+                {
+                    "replicate": replicate,
+                    "turns": scene_run.get("turns", []),
+                    "entry_facts": scene_run.get("entry_facts", []),
+                },
+                scenes[scene_run["scene"]],
+            )
         for index, turn in enumerate(turns):
-            if _turn_fails(scene_run, turn):
-                packets.append(
-                    _packet_for_turn(
-                        key_prefix,
-                        replicate,
-                        scene_run,
-                        turn,
-                        earlier_turns=turns[:index],
-                        previous_turn=turns[index - 1] if index else None,
-                    )
+            if _turn_fails(scene_run, turn, contract):
+                packet = _packet_for_turn(
+                    key_prefix,
+                    replicate,
+                    scene_run,
+                    turn,
+                    earlier_turns=turns[:index],
+                    previous_turn=turns[index - 1] if index else None,
                 )
+                if contract is not None:
+                    packet["stuck"] = turn["turn"] in contract.get("confirmed_stuck", [])
+                packets.append(packet)
         if (
             not any(packet["key"].startswith(f"{key_prefix}{scene_run['scene']}-r{replicate}-") for packet in packets)
             and scene_run.get("exit_cause") in {"forced", "timer"}
@@ -366,6 +394,85 @@ def report_to_packets(report: dict, *, key_prefix: str = "") -> list[dict]:
                 )
             )
     return packets
+
+
+def contract_gate(
+    report: dict,
+    scenes: dict[str, dict[str, Any]],
+    *,
+    expected_replicates: int,
+    expected_scenes: list[str],
+) -> dict:
+    """Apply the outcome contract independently to every expected run."""
+    rows = _scene_runs(report)
+    result_runs: list[dict[str, Any]] = []
+    reasons: list[str] = []
+    counts: dict[str, dict[str, int]] = {scene: {} for scene in expected_scenes}
+    seen: set[tuple[str, str]] = set()
+    version = "v1"
+    for replicate, scene_run in rows:
+        scene_id = scene_run["scene"]
+        raw = scene_run.get("stuck_turns")
+        raw_count = len(raw) if isinstance(raw, list) else 0
+        if scene_id not in scenes:
+            reasons.append(f"scene {scene_id} replicate {replicate}: missing contract scene")
+            result_runs.append(
+                {
+                    "scene": scene_id,
+                    "replicate": replicate,
+                    "status": "unknown",
+                    "exit": "unknown",
+                    "confirmed_stuck": [],
+                    "unresolved": [],
+                    "provenance_flags": [],
+                    "raw_stuck_turns": raw_count,
+                }
+            )
+            continue
+        key = (scene_id, replicate)
+        counts.setdefault(scene_id, {})[replicate] = counts.setdefault(scene_id, {}).get(replicate, 0) + 1
+        if key in seen:
+            reasons.append(f"scene {scene_id} replicate {replicate}: duplicate replicate")
+        seen.add(key)
+        outcome = classify_run(
+            {
+                "replicate": replicate,
+                "turns": scene_run.get("turns", []),
+                "entry_facts": scene_run.get("entry_facts", []),
+            },
+            scenes[scene_id],
+        )
+        version = outcome.get("contract_version", version)
+        result_runs.append(
+            {
+                "scene": scene_id,
+                "replicate": replicate,
+                "status": outcome["status"],
+                "exit": outcome["exit"],
+                "confirmed_stuck": outcome["confirmed_stuck"],
+                "unresolved": outcome["unresolved"],
+                "provenance_flags": outcome["provenance_flags"],
+                "raw_stuck_turns": raw_count,
+            }
+        )
+        terminal = scenes[scene_id].get("terminal") is True
+        expected_exit = "ending" if terminal else "earned"
+        if outcome["status"] != "healthy" or outcome["exit"] != expected_exit:
+            reasons.append(
+                f"scene {scene_id} replicate {replicate}: status={outcome['status']} exit={outcome['exit']} "
+                f"confirmed={len(outcome['confirmed_stuck'])} unresolved={len(outcome['unresolved'])} "
+                f"provenance={len(outcome['provenance_flags'])}"
+            )
+    if not rows:
+        reasons.append("no usable rows")
+    expected = set(expected_scenes)
+    for scene_id in expected_scenes:
+        actual = counts.get(scene_id, {})
+        if sum(actual.values()) != expected_replicates:
+            reasons.append(f"scene {scene_id}: expected {expected_replicates} replicates, found {sum(actual.values())}")
+    for scene_id in {run["scene"] for run in result_runs} - expected:
+        reasons.append(f"scene {scene_id}: not expected")
+    return {"passes": not reasons, "reasons": reasons, "runs": result_runs, "contract_version": version}
 
 
 def _run_summary(replicate: str, scene_run: dict[str, Any]) -> dict[str, Any]:
@@ -501,6 +608,7 @@ def _record_player_spend(
     now: datetime,
     scene: str,
     ticket_id: str,
+    reservation_id: str | None = None,
 ) -> tuple[float | None, int, int]:
     model_id = "gpt-5.6-luna"
     if report is not None:
@@ -524,7 +632,8 @@ def _record_player_spend(
             tokens=tokens,
             usd=spend,
             cost_kind="dollars" if spend is not None else "unknown",
-        )
+        ),
+        reservation_id=reservation_id,
     )
     return spend, tokens, calls
 
@@ -546,6 +655,7 @@ def _record_cloudflare_spend(
     scene: str,
     ticket_id: str,
     estimate_usd: float,
+    reservation_id: str | None = None,
 ) -> int | None:
     micro_usd = spend_between(before, after)
     ledger.record(
@@ -560,7 +670,8 @@ def _record_cloudflare_spend(
             usd=micro_usd / 1_000_000 if micro_usd is not None else None,
             cost_kind="dollars" if micro_usd is not None else "unknown",
             estimate_usd=estimate_usd,
-        )
+        ),
+        reservation_id=reservation_id,
     )
     return micro_usd
 
@@ -786,6 +897,30 @@ def live_playtest_handler(
         except OSError as error:
             return StationResult(False, "live_playtest", f"could not create staged run lock: {error}", turns=None)
         try:
+            openai_reservation_id = configured_ledger.reserve(
+                provider="openai",
+                model_id="gpt-5.6-luna",
+                station="live_playtest",
+                scene=scene,
+                ticket_id=ticket_id,
+                usd=estimate_usd,
+                now=now,
+                caps=caps,
+            )
+            try:
+                cloudflare_reservation_id = configured_ledger.reserve(
+                    provider="cloudflare",
+                    model_id="workers-ai",
+                    station="live_playtest",
+                    scene=scene,
+                    ticket_id=ticket_id,
+                    usd=estimate_usd,
+                    now=now,
+                    caps=caps,
+                )
+            except Exception:
+                configured_ledger.release(openai_reservation_id)
+                raise
             try:
                 completed = run(environment, _RUN_TIMEOUT_S * replicates)
             except (LimitSleep, ProviderLimit):
@@ -797,6 +932,7 @@ def live_playtest_handler(
                     now=now,
                     scene=scene,
                     ticket_id=ticket_id,
+                    reservation_id=openai_reservation_id,
                 )
                 _record_cloudflare_spend(
                     configured_ledger,
@@ -806,6 +942,7 @@ def live_playtest_handler(
                     scene=scene,
                     ticket_id=ticket_id,
                     estimate_usd=estimate_usd,
+                    reservation_id=cloudflare_reservation_id,
                 )
                 raise
             except Exception as error:
@@ -817,6 +954,7 @@ def live_playtest_handler(
                     now=now,
                     scene=scene,
                     ticket_id=ticket_id,
+                    reservation_id=openai_reservation_id,
                 )
                 _record_cloudflare_spend(
                     configured_ledger,
@@ -826,6 +964,7 @@ def live_playtest_handler(
                     scene=scene,
                     ticket_id=ticket_id,
                     estimate_usd=estimate_usd,
+                    reservation_id=cloudflare_reservation_id,
                 )
                 _raise_quota(str(error), now)
                 return StationResult(False, "live_playtest", f"runner failed: {error}", turns=None)
@@ -847,6 +986,7 @@ def live_playtest_handler(
                 now=now,
                 scene=scene,
                 ticket_id=ticket_id,
+                reservation_id=openai_reservation_id,
             )
             _record_cloudflare_spend(
                 configured_ledger,
@@ -856,6 +996,7 @@ def live_playtest_handler(
                 scene=scene,
                 ticket_id=ticket_id,
                 estimate_usd=estimate_usd,
+                reservation_id=cloudflare_reservation_id,
             )
             raise
         except Exception as error:
@@ -866,6 +1007,7 @@ def live_playtest_handler(
                 now=now,
                 scene=scene,
                 ticket_id=ticket_id,
+                reservation_id=openai_reservation_id,
             )
             _record_cloudflare_spend(
                 configured_ledger,
@@ -875,6 +1017,7 @@ def live_playtest_handler(
                 scene=scene,
                 ticket_id=ticket_id,
                 estimate_usd=estimate_usd,
+                reservation_id=cloudflare_reservation_id,
             )
             _raise_quota(str(error), now)
             return StationResult(False, "live_playtest", f"runner failed: {error}", turns=None)
@@ -887,6 +1030,7 @@ def live_playtest_handler(
             now=now,
             scene=scene,
             ticket_id=ticket_id,
+            reservation_id=openai_reservation_id,
         )
         micro_usd = _record_cloudflare_spend(
             configured_ledger,
@@ -896,6 +1040,7 @@ def live_playtest_handler(
             scene=scene,
             ticket_id=ticket_id,
             estimate_usd=estimate_usd,
+            reservation_id=cloudflare_reservation_id,
         )
         returncode = getattr(completed, "returncode", 0)
         if returncode != 0:

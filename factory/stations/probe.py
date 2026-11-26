@@ -28,9 +28,11 @@ from pathlib import Path
 from typing import Any
 
 from factory.cloudflare_spend import read_worker_budget, spend_between
+from factory.contract_scene import build_contract_scene
 from factory.followups import _safe_id
 from factory.guard import BudgetExhausted, Caps, LimitSleep, ProviderLimit, SpendLedger, Usage
 from factory.line import StationHandler, StationResult
+from factory.outcome_contract import classify_run
 from factory.stations.live_playtest import (
     _factory_config,
     _fresh_staged_lock,
@@ -45,6 +47,7 @@ from factory.stations.live_playtest import (
 from factory.stations.tree import ticket_tree
 from factory.stations.wiring import _story_root
 from factory.tickets import _atomic_json_write
+from storygame.story_package.loader import load_story_package
 
 PROBE_VERSION = "probe-v1"
 _RULES_PATH = Path(__file__).resolve().parents[1] / "config" / "probe_rules.json"
@@ -148,7 +151,7 @@ def _run_is_complete(run: dict[str, Any]) -> bool:
     return run.get("status") in {"ok", "completed"} and run.get("completed") is not False
 
 
-def summarize_arm(turn_records_files: list[Path]) -> dict:
+def summarize_arm(turn_records_files: list[Path], *, scenes: dict[str, dict[str, Any]] | None = None) -> dict:
     """Summarize bench runs, rejecting malformed record files."""
 
     summary = {
@@ -163,6 +166,9 @@ def summarize_arm(turn_records_files: list[Path]) -> dict:
         "unknown_exits": 0,
         "provider_features": None,
         "semantic_ask_missing": False,
+        "unresolved_turns": 0,
+        "contract_runs": 0,
+        "raw_runs": 0,
     }
     first_provider_features: dict[str, Any] | None = None
     provider_features_seen = False
@@ -181,6 +187,25 @@ def summarize_arm(turn_records_files: list[Path]) -> dict:
                 raise ValueError(f"malformed turn-records file: {path}")
             turns = [turn for turn in raw_turns if isinstance(turn, dict)]
             summary["replicates"] += 1
+            contract_result = None
+            scene_id = run.get("scene")
+            if scenes is not None and isinstance(scene_id, str) and scene_id in scenes:
+                try:
+                    candidate = classify_run(run, scenes[scene_id])
+                    if not any(
+                        turn.get("action_outcome") == "unknown_telemetry"
+                        for turn in candidate.get("turns", [])
+                        if isinstance(turn, dict)
+                    ):
+                        contract_result = candidate
+                except (AttributeError, KeyError, TypeError, ValueError):
+                    contract_result = None
+            if contract_result is not None:
+                summary["contract_runs"] += 1
+                summary["stuck_turns"] += len(contract_result["confirmed_stuck"])
+                summary["unresolved_turns"] += len(contract_result["unresolved"])
+            else:
+                summary["raw_runs"] += 1
             run_features = run.get("provider_features")
             normalized_features = dict(run_features) if isinstance(run_features, dict) else None
             if not provider_features_seen:
@@ -202,7 +227,7 @@ def summarize_arm(turn_records_files: list[Path]) -> dict:
                     {item for item in grounding if isinstance(item, str)} if isinstance(grounding, list) else set()
                 )
                 selected = turn.get("selected_knowledge_ids")
-                if (
+                if contract_result is None and (
                     turn.get("rejected") is not True
                     and not selected
                     and not grounding_ids.difference(earlier_grounding)
@@ -244,6 +269,15 @@ def judge_probe(control: dict, candidate: dict, rules: dict) -> dict:
 
     rules = _rules(rules)
     reasons: list[str] = []
+    if control.get("unresolved_turns", 0) or candidate.get("unresolved_turns", 0):
+        reasons.append(
+            f"Unresolved turns: control {control.get('unresolved_turns', 0)}, "
+            f"candidate {candidate.get('unresolved_turns', 0)}."
+        )
+    if control.get("contract_runs", 0) != candidate.get("contract_runs", 0) or control.get(
+        "raw_runs", 0
+    ) != candidate.get("raw_runs", 0):
+        reasons.append("Control and candidate arms use different evidence.")
     exit_evidence = "incomplete" if control.get("unknown_exits", 0) or candidate.get("unknown_exits", 0) else "complete"
     if exit_evidence == "incomplete":
         reasons.append("Exit evidence is incomplete because one or both arms have unknown exits.")
@@ -794,8 +828,22 @@ def probe_handler(
                             payload_updates=approval_updates,
                         )
                     arm_files[arm].append(records_path)
+            control_scenes = None
+            try:
+                package = load_story_package(control_package)
+                control_scenes = {scene: build_contract_scene(package, scene)}
+            except (OSError, RuntimeError, ValueError, TypeError, AttributeError):
+                pass
+            candidate_scenes = None
+            try:
+                package = load_story_package(candidate_package)
+                candidate_scenes = {scene: build_contract_scene(package, scene)}
+            except (OSError, RuntimeError, ValueError, TypeError, AttributeError):
+                pass
             result = judge_probe(
-                summarize_arm(arm_files["control"]), summarize_arm(arm_files["candidate"]), selected_rules
+                summarize_arm(arm_files["control"], scenes=control_scenes),
+                summarize_arm(arm_files["candidate"], scenes=candidate_scenes),
+                selected_rules,
             )
             saved_result = {"input_hash": input_hash, **result, "feedback": _feedback(result)}
             _atomic_json_write(saved_path, saved_result)

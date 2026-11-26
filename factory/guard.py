@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import json
+import math
+import os
 import random
 import time
+import uuid
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, timedelta
@@ -106,6 +109,7 @@ class Usage:
     limits: LimitReport | None = None
     paid_usage: str | None = None
     estimate_usd: float | None = None
+    reservation_id: str | None = None
 
     def __post_init__(self) -> None:
         if self.at.tzinfo is None or self.at.utcoffset() is None:
@@ -182,7 +186,87 @@ class SpendLedger:
     def __init__(self, path: str | Path) -> None:
         self.path = Path(path)
 
-    def record(self, usage: Usage) -> None:
+    def _append(self, payload: dict[str, Any]) -> None:
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        with self.path.open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(payload, separators=(",", ":")) + "\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+
+    def _events(self) -> tuple[list[Usage], list[dict[str, Any]]]:
+        usages: list[Usage] = []
+        events: list[dict[str, Any]] = []
+        if not self.path.exists():
+            return usages, events
+        with self.path.open(encoding="utf-8") as handle:
+            for line_number, line in enumerate(handle, start=1):
+                try:
+                    if not line.strip():
+                        raise ValueError("blank line")
+                    payload = json.loads(line)
+                    if not isinstance(payload, dict):
+                        raise ValueError("ledger row must be an object")
+                    kind = payload.get("kind")
+                    if kind in {"reservation", "release"}:
+                        if kind == "reservation":
+                            timestamp = payload["at"]
+                            if isinstance(timestamp, str) and timestamp.endswith("Z"):
+                                timestamp = timestamp[:-1] + "+00:00"
+                            at = datetime.fromisoformat(timestamp)
+                            usd = payload["usd"]
+                            if at.tzinfo is None or at.utcoffset() is None:
+                                raise ValueError("reservation timestamp must be timezone-aware")
+                            if (
+                                isinstance(usd, bool)
+                                or not isinstance(usd, (int, float))
+                                or not math.isfinite(usd)
+                                or usd < 0
+                            ):
+                                raise ValueError("reservation usd must be a finite non-negative number")
+                            for key in ("reservation_id", "provider", "model_id", "station", "scene", "ticket_id"):
+                                if not isinstance(payload[key], str) or not payload[key]:
+                                    raise ValueError(f"reservation {key} must be a non-empty string")
+                        else:
+                            if not isinstance(payload["reservation_id"], str) or not payload["reservation_id"]:
+                                raise ValueError("release reservation_id must be a non-empty string")
+                            timestamp = payload["at"]
+                            if isinstance(timestamp, str) and timestamp.endswith("Z"):
+                                timestamp = timestamp[:-1] + "+00:00"
+                            release_at = datetime.fromisoformat(timestamp)
+                            if release_at.tzinfo is None or release_at.utcoffset() is None:
+                                raise ValueError("release timestamp must be timezone-aware")
+                        events.append(payload)
+                        continue
+                    usage = Usage(
+                        at=datetime.fromisoformat(payload["at"].replace("Z", "+00:00")),
+                        provider=payload["provider"],
+                        model_id=payload["model_id"],
+                        station=payload["station"],
+                        scene=payload["scene"],
+                        ticket_id=payload["ticket_id"],
+                        tokens=payload["tokens"],
+                        usd=payload.get("usd"),
+                        cost_kind=payload.get("cost_kind", "dollars"),
+                        list_usd=payload.get("list_usd"),
+                        limits=_limits_from_payload(payload.get("limits")),
+                        paid_usage=payload.get("paid_usage"),
+                        estimate_usd=payload.get("estimate_usd"),
+                        reservation_id=payload.get("reservation_id"),
+                    )
+                except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
+                    raise ValueError(f"corrupt ledger line {line_number}: {exc}") from exc
+                usages.append(usage)
+        return usages, events
+
+    def record(self, usage: Usage, reservation_id: str | None = None) -> None:
+        reservation_id = reservation_id if reservation_id is not None else usage.reservation_id
+        if reservation_id is not None:
+            _, events = self._events()
+            reservations = {event["reservation_id"] for event in events if event["kind"] == "reservation"}
+            settled = {event["reservation_id"] for event in events if event["kind"] == "release"}
+            settled.update(usage.reservation_id for usage in self._read() if usage.reservation_id is not None)
+            if reservation_id not in reservations or reservation_id in settled:
+                raise ValueError(f"unknown or settled reservation id: {reservation_id}")
         payload = {
             "at": usage.at.isoformat(),
             "provider": usage.provider,
@@ -198,52 +282,77 @@ class SpendLedger:
             "paid_usage": usage.paid_usage,
             "limits": _limits_payload(usage.limits),
         }
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        with self.path.open("a", encoding="utf-8") as handle:
-            handle.write(json.dumps(payload, separators=(",", ":")) + "\n")
+        if reservation_id is not None:
+            payload["reservation_id"] = reservation_id
+        self._append(payload)
+
+    def reserve(
+        self,
+        *,
+        provider: str,
+        model_id: str,
+        station: str,
+        scene: str,
+        ticket_id: str,
+        usd: float,
+        now: datetime,
+        caps: Caps | None = None,
+    ) -> str:
+        if isinstance(usd, bool) or not isinstance(usd, (int, float)) or not math.isfinite(usd) or usd < 0:
+            raise ValueError("reservation usd must be a finite non-negative number")
+        if caps is not None:
+            if self.total_usd() + usd > caps.total_budget_usd:
+                raise BudgetExhausted("total model budget exhausted")
+            if self.day_usd(provider, _utc_day(now)) + usd > caps.daily_cap_usd.get(provider, math.inf):
+                raise BudgetExhausted("daily model budget exhausted")
+        reservation_id = uuid.uuid4().hex
+        self._append(
+            {
+                "kind": "reservation",
+                "reservation_id": reservation_id,
+                "at": now.isoformat(),
+                "provider": provider,
+                "model_id": model_id,
+                "station": station,
+                "scene": scene,
+                "ticket_id": ticket_id,
+                "usd": usd,
+            }
+        )
+        return reservation_id
+
+    def release(self, reservation_id: str) -> None:
+        _, events = self._events()
+        reservations = {event["reservation_id"] for event in events if event["kind"] == "reservation"}
+        settled = {event["reservation_id"] for event in events if event["kind"] == "release"}
+        settled.update(usage.reservation_id for usage in self._read() if usage.reservation_id is not None)
+        if reservation_id not in reservations or reservation_id in settled:
+            raise ValueError(f"unknown or settled reservation id: {reservation_id}")
+        self._append({"kind": "release", "reservation_id": reservation_id, "at": datetime.now(UTC).isoformat()})
+
+    def open_reservations(self) -> list[dict[str, Any]]:
+        usages, events = self._events()
+        settled = {event["reservation_id"] for event in events if event["kind"] == "release"}
+        settled.update(usage.reservation_id for usage in usages if usage.reservation_id is not None)
+        return [event for event in events if event["kind"] == "reservation" and event["reservation_id"] not in settled]
 
     def _read(self) -> list[Usage]:
-        if not self.path.exists():
-            return []
-
-        usages: list[Usage] = []
-        with self.path.open(encoding="utf-8") as handle:
-            for line_number, line in enumerate(handle, start=1):
-                try:
-                    if not line.strip():
-                        raise ValueError("blank line")
-                    payload = json.loads(line)
-                    timestamp = payload["at"]
-                    if isinstance(timestamp, str) and timestamp.endswith("Z"):
-                        timestamp = timestamp[:-1] + "+00:00"
-                    usage = Usage(
-                        at=datetime.fromisoformat(timestamp),
-                        provider=payload["provider"],
-                        model_id=payload["model_id"],
-                        station=payload["station"],
-                        scene=payload["scene"],
-                        ticket_id=payload["ticket_id"],
-                        tokens=payload["tokens"],
-                        usd=payload.get("usd"),
-                        cost_kind=payload.get("cost_kind", "dollars"),
-                        list_usd=payload.get("list_usd"),
-                        limits=_limits_from_payload(payload.get("limits")),
-                        paid_usage=payload.get("paid_usage"),
-                        estimate_usd=payload.get("estimate_usd"),
-                    )
-                except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
-                    raise ValueError(f"corrupt ledger line {line_number}: {exc}") from exc
-                usages.append(usage)
-        return usages
+        return self._events()[0]
 
     def total_usd(self) -> float:
-        return sum(usage.usd for usage in self._read() if usage.cost_kind == "dollars")
+        return sum(usage.usd for usage in self._read() if usage.cost_kind == "dollars") + sum(
+            event["usd"] for event in self.open_reservations()
+        )
 
     def day_usd(self, provider: str, day: date) -> float:
         return sum(
             usage.usd
             for usage in self._read()
             if usage.cost_kind == "dollars" and usage.provider == provider and _utc_day(usage.at) == day
+        ) + sum(
+            event["usd"]
+            for event in self.open_reservations()
+            if event["provider"] == provider and _utc_day(_event_time(event)) == day
         )
 
     def calls(self, model_id: str, day: date, scene: str | None = None) -> int:
@@ -257,7 +366,7 @@ class SpendLedger:
         window_start = now - timedelta(seconds=window_s)
         return sum(
             usage.usd for usage in self._read() if usage.cost_kind == "dollars" and window_start <= usage.at <= now
-        )
+        ) + sum(event["usd"] for event in self.open_reservations() if window_start <= _event_time(event) <= now)
 
     def unknown_cost_rows(self) -> int:
         return sum(1 for usage in self._read() if usage.cost_kind == "unknown")
@@ -378,6 +487,13 @@ def _utc_day(at: datetime) -> date:
     return at.astimezone(UTC).date()
 
 
+def _event_time(event: dict[str, Any]) -> datetime:
+    timestamp = event["at"]
+    if timestamp.endswith("Z"):
+        timestamp = timestamp[:-1] + "+00:00"
+    return datetime.fromisoformat(timestamp)
+
+
 def _next_midnight_utc(now: datetime) -> datetime:
     utc_now = now.astimezone(UTC)
     tomorrow = utc_now.date() + timedelta(days=1)
@@ -404,6 +520,8 @@ def guarded_call(
     policy = caps.providers.get(pin.provider, ProviderPolicy("reported", {}))
 
     if policy.kind == "reported":
+        if estimate_usd is None:
+            raise BudgetExhausted("a dollar-priced call needs an estimate_usd to reserve")
         if ledger.total_usd() >= caps.total_budget_usd:
             raise BudgetExhausted("total model budget exhausted")
 
@@ -435,20 +553,38 @@ def guarded_call(
     overload_retries = 0
     overload_delays = (45.0, 90.0, 180.0, 300.0)
     while True:
+        reservation_id = None
+        if policy.kind == "reported":
+            reservation_id = ledger.reserve(
+                provider=pin.provider,
+                model_id=pin.model_id,
+                station=station,
+                scene=scene,
+                ticket_id=ticket_id,
+                usd=estimate_usd,
+                now=now,
+                caps=caps,
+            )
         try:
             result = fn()
             break
         except RateLimited:
+            if reservation_id is not None:
+                ledger.release(reservation_id)
             if rate_retries >= 5:
                 raise LimitSleep(pin.provider, None) from None
             sleep(45 + 15 * rand())
             rate_retries += 1
         except Overloaded:
+            if reservation_id is not None:
+                ledger.release(reservation_id)
             if overload_retries >= len(overload_delays):
                 raise LimitSleep(pin.provider, None) from None
             sleep(overload_delays[overload_retries])
             overload_retries += 1
         except ProviderLimit as exc:
+            if reservation_id is not None:
+                ledger.release(reservation_id)
             resume_at = exc.resume_at
             if resume_at is None and exc.report is not None:
                 resume_at = window_sleep(exc.report, policy.ceilings).until
@@ -476,6 +612,7 @@ def guarded_call(
             limits=result.limits,
             paid_usage=paid_reason,
             estimate_usd=estimate_usd,
-        )
+        ),
+        reservation_id=reservation_id,
     )
     return result
