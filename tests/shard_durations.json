@@ -463,6 +463,7 @@
     "tests/test_web_demo.py": 3.74,
     "tests/test_web_demo_clarification.py": 0.06,
     "tests/test_web_demo_fixed_refusal.py": 1.12,
+    "tests/test_web_demo_turn_telemetry.py": 2.0,
     "tests/test_web_demo_observation_enforce.py": 0.35,
     "tests/test_web_demo_server_error.py": 0.01,
     "tests/test_world_companions.py": 0.08,
