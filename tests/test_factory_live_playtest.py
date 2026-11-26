@@ -1,6 +1,7 @@
 import json
 import os
 import subprocess
+import sys
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from types import SimpleNamespace
@@ -612,6 +613,66 @@ def test_runner_failure_records_unknown_spend(tmp_path: Path) -> None:
     assert rows[1].provider == "cloudflare"
     assert rows[1].cost_kind == "unknown"
     assert rows[1].usd is None
+
+
+def test_killed_live_run_leaves_reservations_for_restart_budgeting(tmp_path: Path) -> None:
+    ledger_path = tmp_path / "ledger.jsonl"
+    child_code = f"""
+from datetime import UTC, datetime
+from pathlib import Path
+import os
+from types import SimpleNamespace
+
+from factory.guard import SpendLedger
+from factory.stations.live_playtest import live_playtest_handler
+
+root = Path({str(tmp_path)!r})
+def runner(_env, _timeout):
+    os._exit(9)
+
+handler = live_playtest_handler(
+    root,
+    runner=runner,
+    fetch_version=lambda _url: {{"channel": "staging", "runtime": "scene-v1", "sha": "abc"}},
+    ledger=SpendLedger(root / "ledger.jsonl"),
+)
+handler(
+    SimpleNamespace(payload={{"expected_sha": "abc", "max_usd": 1.0}}, scene="1A", id="stage7"),
+    datetime(2026, 1, 1, 12, tzinfo=UTC),
+)
+"""
+    completed = subprocess.run([sys.executable, "-c", child_code], cwd=ROOT)
+    assert completed.returncode == 9
+
+    ledger = SpendLedger(ledger_path)
+    reservations = ledger.open_reservations()
+    assert [reservation["provider"] for reservation in reservations] == ["openai", "cloudflare"]
+    assert all(reservation["usd"] == pytest.approx(0.148) for reservation in reservations)
+    assert ledger.total_usd() == pytest.approx(0.296)
+    (tmp_path / "factory/state/staged_run.lock").unlink()
+
+    config_path = tmp_path / "factory/config/factory.json"
+    config_path.parent.mkdir(parents=True)
+    config = json.loads((ROOT / "factory/config/factory.json").read_text(encoding="utf-8"))
+    # Leave room for the first new reservation, but not both reservations.
+    config["caps"]["total_budget_usd"] = 0.45
+    config_path.write_text(json.dumps(config), encoding="utf-8")
+    called = False
+
+    def runner(_env, _timeout):
+        nonlocal called
+        called = True
+        return subprocess.CompletedProcess([], 0)
+
+    with pytest.raises(BudgetExhausted):
+        live_playtest_handler(
+            tmp_path,
+            runner=runner,
+            fetch_version=lambda _url: {"channel": "staging", "runtime": "scene-v1", "sha": "abc"},
+            ledger=ledger,
+        )(ticket({"expected_sha": "abc", "max_usd": 1.0}), NOW)
+    assert called is False
+    assert len(ledger.open_reservations()) == 2
 
 
 def _record_dollars(ledger: SpendLedger, provider: str, usd: float, at: datetime = NOW) -> None:

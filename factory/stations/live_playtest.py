@@ -608,6 +608,7 @@ def _record_player_spend(
     now: datetime,
     scene: str,
     ticket_id: str,
+    reservation_id: str | None = None,
 ) -> tuple[float | None, int, int]:
     model_id = "gpt-5.6-luna"
     if report is not None:
@@ -631,7 +632,8 @@ def _record_player_spend(
             tokens=tokens,
             usd=spend,
             cost_kind="dollars" if spend is not None else "unknown",
-        )
+        ),
+        reservation_id=reservation_id,
     )
     return spend, tokens, calls
 
@@ -653,6 +655,7 @@ def _record_cloudflare_spend(
     scene: str,
     ticket_id: str,
     estimate_usd: float,
+    reservation_id: str | None = None,
 ) -> int | None:
     micro_usd = spend_between(before, after)
     ledger.record(
@@ -667,7 +670,8 @@ def _record_cloudflare_spend(
             usd=micro_usd / 1_000_000 if micro_usd is not None else None,
             cost_kind="dollars" if micro_usd is not None else "unknown",
             estimate_usd=estimate_usd,
-        )
+        ),
+        reservation_id=reservation_id,
     )
     return micro_usd
 
@@ -893,6 +897,30 @@ def live_playtest_handler(
         except OSError as error:
             return StationResult(False, "live_playtest", f"could not create staged run lock: {error}", turns=None)
         try:
+            openai_reservation_id = configured_ledger.reserve(
+                provider="openai",
+                model_id="gpt-5.6-luna",
+                station="live_playtest",
+                scene=scene,
+                ticket_id=ticket_id,
+                usd=estimate_usd,
+                now=now,
+                caps=caps,
+            )
+            try:
+                cloudflare_reservation_id = configured_ledger.reserve(
+                    provider="cloudflare",
+                    model_id="workers-ai",
+                    station="live_playtest",
+                    scene=scene,
+                    ticket_id=ticket_id,
+                    usd=estimate_usd,
+                    now=now,
+                    caps=caps,
+                )
+            except Exception:
+                configured_ledger.release(openai_reservation_id)
+                raise
             try:
                 completed = run(environment, _RUN_TIMEOUT_S * replicates)
             except (LimitSleep, ProviderLimit):
@@ -904,6 +932,7 @@ def live_playtest_handler(
                     now=now,
                     scene=scene,
                     ticket_id=ticket_id,
+                    reservation_id=openai_reservation_id,
                 )
                 _record_cloudflare_spend(
                     configured_ledger,
@@ -913,6 +942,7 @@ def live_playtest_handler(
                     scene=scene,
                     ticket_id=ticket_id,
                     estimate_usd=estimate_usd,
+                    reservation_id=cloudflare_reservation_id,
                 )
                 raise
             except Exception as error:
@@ -924,6 +954,7 @@ def live_playtest_handler(
                     now=now,
                     scene=scene,
                     ticket_id=ticket_id,
+                    reservation_id=openai_reservation_id,
                 )
                 _record_cloudflare_spend(
                     configured_ledger,
@@ -933,6 +964,7 @@ def live_playtest_handler(
                     scene=scene,
                     ticket_id=ticket_id,
                     estimate_usd=estimate_usd,
+                    reservation_id=cloudflare_reservation_id,
                 )
                 _raise_quota(str(error), now)
                 return StationResult(False, "live_playtest", f"runner failed: {error}", turns=None)
@@ -954,6 +986,7 @@ def live_playtest_handler(
                 now=now,
                 scene=scene,
                 ticket_id=ticket_id,
+                reservation_id=openai_reservation_id,
             )
             _record_cloudflare_spend(
                 configured_ledger,
@@ -963,6 +996,7 @@ def live_playtest_handler(
                 scene=scene,
                 ticket_id=ticket_id,
                 estimate_usd=estimate_usd,
+                reservation_id=cloudflare_reservation_id,
             )
             raise
         except Exception as error:
@@ -973,6 +1007,7 @@ def live_playtest_handler(
                 now=now,
                 scene=scene,
                 ticket_id=ticket_id,
+                reservation_id=openai_reservation_id,
             )
             _record_cloudflare_spend(
                 configured_ledger,
@@ -982,6 +1017,7 @@ def live_playtest_handler(
                 scene=scene,
                 ticket_id=ticket_id,
                 estimate_usd=estimate_usd,
+                reservation_id=cloudflare_reservation_id,
             )
             _raise_quota(str(error), now)
             return StationResult(False, "live_playtest", f"runner failed: {error}", turns=None)
@@ -994,6 +1030,7 @@ def live_playtest_handler(
             now=now,
             scene=scene,
             ticket_id=ticket_id,
+            reservation_id=openai_reservation_id,
         )
         micro_usd = _record_cloudflare_spend(
             configured_ledger,
@@ -1003,6 +1040,7 @@ def live_playtest_handler(
             scene=scene,
             ticket_id=ticket_id,
             estimate_usd=estimate_usd,
+            reservation_id=cloudflare_reservation_id,
         )
         returncode = getattr(completed, "returncode", 0)
         if returncode != 0:
