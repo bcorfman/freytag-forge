@@ -2,6 +2,7 @@
   "version": 1,
   "files": {
     "tests/test_report_telemetry.py": 2.0,
+    "tests/test_review_outcomes.py": 2.16,
     "tests/test_review_risk.py": 2.46,
     "tests/test_turn_telemetry.py": 2.0,
     "tests/test_coverage_ledger.py": 3.0,

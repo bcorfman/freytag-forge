@@ -29,10 +29,12 @@ The judging tools in `frontend/e2e` read the live story through `python -m story
 
 **Cleanup:** None. `frontend/dist/` is generated; delete it freely.
 
-**Notes:** CI (`.github/workflows/test.yml`) runs static checks and six `--no-cov`
-test shards, then deploys the tested SHA to staging and reruns
-`tests/test_web_demo.py tests/test_cloudflare_transport.py` against the
-adapter contract. `coverage-nightly.yml` enforces the 90% coverage floor on a
+**Notes:** CI (`.github/workflows/test.yml`) runs static checks (full
+`ruff check .` and `ruff format --check .`, which skip `.plans/` and
+`scripts/ringer/`, plus the story format and snapshot gates) and six `--no-cov`
+test shards. It then deploys the tested SHA to staging and runs
+`tests/test_web_demo.py tests/test_cloudflare_transport.py` on the CI runner;
+those tests do not call the deployed service. `coverage-nightly.yml` enforces the 90% coverage floor on a
 schedule, not on pushes. `frozen-runtime-regression.yml` runs
 `tests/test_markdown_story_package.py` weekly.
 
@@ -51,6 +53,8 @@ Use while editing; finish with section 1.
 | Witnessed card recovery, patrol consequences in 1B, officer pressure, and drawer action matching | `tests/test_1a_witnessed_recovery.py tests/test_1a_officer_press.py tests/test_drawer_gap_nudge.py` (deterministic, no live worker; the drawer tests call the matcher directly; verifies current behavior, not live narration) |
 | Pacing windows, handoff fallback, full canonical journeys | `tests/test_scene_relative_pacing.py tests/test_pacing_handoff.py tests/test_canon_journey.py` |
 | API payloads and player-visible segments | `tests/test_web_demo.py` |
+| Package boundaries: imports into `worldkeeper`, `World` internals, story IDs in shared runtime | `tests/test_architecture_boundaries.py packages/worldkeeper/tests` |
+| Review risk tiers, staging evidence, review outcome report | `tests/test_review_risk.py tests/test_staging_evidence.py tests/test_review_outcomes.py` |
 | Bench harness and ledger | `tests/test_bench.py` |
 
 ```bash

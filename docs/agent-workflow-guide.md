@@ -1,5 +1,30 @@
 # Agent workflow guide
 
+## Ownership
+
+The repository has one maintainer, the owner.
+
+| Responsibility | Who |
+| --- | --- |
+| Accepts a change | The owner. Their merge word for that PR is the human approval, at every [risk tier](../REVIEW.md#risk-tiers). An earlier word does not cover a later PR. |
+| Promotes to production | The owner, by dispatching the promotion workflow or asking for it. |
+| Owns rollback | The owner, using the [rollback procedure](railway-production-promotion.md#rollback). |
+
+One exception to the merge word: the dark factory may merge a PR it generated
+from a repair ticket once its free gates and CI pass and the ticket has a
+passing fun review. This does not cover hand-built changes, including changes
+to the factory itself, and it covers neither promotion nor rollback.
+
+GitHub does not enforce any of this: the `main` ruleset only blocks deletion and
+non-fast-forward pushes, and an author cannot approve their own PR. Risk tiers
+and the `fresh-review` status are advisory.
+
+The weekly "review outcomes" workflow reports review and promotion history
+(`uv run python scripts/review_outcomes.py`). Collect that data before reducing
+any review requirement.
+
+## Working rules
+
 - Verify CLI, environment, CI, and endpoint behavior in source, help,
   configuration, or workflows before relying on it.
 - When a verification procedure changes, update its existing entry in
