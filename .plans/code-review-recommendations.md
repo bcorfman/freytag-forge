@@ -228,7 +228,27 @@ second to fifth merges; the first and last passed. On `0b9534b1`:
 - Run the rollback drill (see the promotion guide). It needs a second proven
   release, so it depends on a promotion first.
 
+## Production blocker: nightly coverage (2026-11-27)
+
+The owner asked to clear production blockers while staying in staging until they
+say otherwise. On `0b9534b1`, `coverage-nightly` passed every test and failed
+only the coverage floor: 89% shown, 88.76% exact on the same code paths
+measured from the previous run's data. The floor rounds to a whole percent, so
+89.5% passes. The floor and the measured file set are unchanged.
+
+Added tests for untested behaviour: `story_cli` editing commands (record
+lookup, refusals, restore after a failed edit) and package validation refusals.
+Ringer checks disabled behaviours one at a time: editing tests noticed 19 of 22,
+validation tests 22 of the 24 sampled. Unnoticed: the match-file claim fallback
+(the worker found no valid fixture that reaches it) and a refusal duplicated
+earlier in the validator. Three editing cases (bridge, outcome, ending) write
+the value already present, so they prove lookup and acceptance, not a change.
+
+No production code changed. Not checked, because it needs production access:
+Railway's known-good deployment and the production service's settings.
+
 ## Resume here
 
-Nothing is in progress. Next: fix nightly coverage, promote when ready, then
-run the rollback drill.
+Waiting for the branch's `coverage-nightly` result, then the owner's merge word.
+Do not dispatch the production promotion without the owner's go-ahead. After
+merge, `main` needs its own passing nightly run before it can be promoted.
