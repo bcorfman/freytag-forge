@@ -2,7 +2,8 @@
 
 Date: 2026-11-27
 
-Status: Proposed; implementation has not started.
+Status: Implemented on local branches (2026-11-27); not pushed, no PRs, not deployed.
+The rollback drill has not been run.
 
 Based on [code-reviews.txt](code-reviews.txt) and inspection of the repository's
 engineering guidance, configuration, and CI workflows. The article's external
@@ -131,7 +132,84 @@ Follow the [testing runbook](../docs/testing-runbook.md) during implementation.
 When verification procedures change, update their existing runbook entries in
 place. Record implementation results and remaining work in the active plan.
 
+## Owner decisions (2026-11-27)
+
+- Lint: exclude `.plans/` and `scripts/ringer/` from Ruff entirely.
+- Approval: the owner's per-PR merge word; risk tiers are advisory. The owner
+  accepts, promotes and owns rollback. The factory keeps its narrow right to
+  merge its own gated repair-ticket PRs.
+- Architecture: move the direct `World.schema` reads into `World` methods now.
+- Rollback: write the procedure; the owner runs the drill later.
+- Rollback gate: a SHA with any successful `production-promotion` status skips
+  the nightly coverage requirement.
+
+## Corrections to the review above
+
+- `.plans/code-reviews.txt` does not exist in the repository.
+- All lint violations were in `.plans/` and `scripts/ringer/`.
+- The `main` ruleset only blocks deletion and non-fast-forward pushes. There is
+  one collaborator, so a required approval would block every merge. The Railway
+  GitHub environments have no protection rules. Settings were not changed.
+- No workflow ran hosted E2E, and the diagnostic E2E workflow the guide named
+  does not exist.
+- Each Pages deploy deleted the other channel's `deployment.json`; the live
+  root file returned 404.
+- Live production (`62d23f5c`) has no successful nightly run, so the promotion
+  workflow would have refused to restore it.
+
+## Results
+
+| Rec | Branch (stacked in this order) | Delivered |
+| --- | --- | --- |
+| 1 | `review-rec1-lint` | Full Ruff check and format check in CI |
+| 2 | `review-rec2-checklist` | `REVIEW.md`, PR template |
+| 3 | `review-rec3-risk-tiers` | Policy file, classifier, advisory "review risk" workflow |
+| 4 | `review-rec4-arch-checks` | Six declared-only `World` methods; boundary tests |
+| 5 | `review-rec5-release` | Evidence v2, previous-version record, production Pages check, Pages metadata fix, rollback gate and procedure, corrected guide |
+| 6 | `review-rec6-outcomes` | Weekly outcomes report, ownership section, runbook entries |
+
+Code was written by Ringer Luna workers (run `code-review-recs`). Review of
+patches that had passed their checks found classifier defects (tier order,
+paths with spaces, interpreter) and report defects (revert count, fresh-review
+order, backwards comparison, import failure, API volume); all were fixed.
+
+Verification, on the final combined tree: full suite 5291 passed, 27 skipped;
+`worldkeeper` 152 passed. After that run one workflow line changed (the weekly
+report now uses a 7-day window). Each branch tip passes Ruff, its new tests and
+the quick-suite and shard-manifest tests without `PYTHONPATH`; only the final
+tree ran the full suite. `defect-design`, `goal-tracking`, `prompt-probe`,
+`strategy-goals` and `synthetic-struct-2a-g` each merge cleanly with the last
+branch and pass Ruff and the boundary tests. A live read-only 7-day outcomes report ran in about three
+minutes using 225 REST requests (42 merged PRs, none with a review).
+
+## Not verified
+
+- No workflow change has run on GitHub: lint step, risk summary, staging
+  evidence, Pages preservation, promotion changes and the weekly report.
+- Nothing was deployed and the rollback drill has not run.
+- The weekly report has not run with the workflow's own token. A 30-day manual
+  window may come close to its 1000 requests per hour.
+- The weakened-assertion flag has false positives (for example, skip calls
+  inside test strings); the rec 3 PR will flag its own test file.
+
+## PR description notes
+
+- Rec 4: one edge changes behavior. In the narrator's THINGS text, an entity
+  created during play used to raise `KeyError` in the opening check; it is now
+  treated as not an opening.
+- Rec 5: production promotion can now fail if the published root
+  `deployment.json` does not match within about five minutes or more.
+  `scene-staging-evaluation` now also runs when the staging deploy fails.
+
+## Remaining
+
+- Push and open the stacked PRs when the owner says so; merge in order, each on
+  its own merge word after its `tests` run passes.
+- Production's root `deployment.json` stays missing until the next promotion.
+- Run the rollback drill (see the promotion guide).
+- Before a checkout takes these branches, the untracked copy of this plan in the
+  main checkout has to be moved or removed.
+
 ## Resume here
 
-Assess existing Ruff violations and the scope of mechanical cleanup before
-implementing recommendation 1. All six recommendations remain proposed.
+Waiting for the owner's word to push the branches and open PRs.
