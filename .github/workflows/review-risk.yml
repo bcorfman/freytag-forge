@@ -1,0 +1,27 @@
+name: review risk
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  review-risk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
+        with:
+          version: latest
+      - run: uv sync --locked
+      - name: Classify review risk
+        shell: bash
+        run: |
+          set -o pipefail
+          uv run python scripts/review_risk.py \
+            --base "${{ github.event.pull_request.base.sha }}" \
+            --head "${{ github.event.pull_request.head.sha }}" | tee -a "$GITHUB_STEP_SUMMARY"
