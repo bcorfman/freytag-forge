@@ -54,6 +54,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
+          production_promotion_statuses="$(gh api "repos/${GITHUB_REPOSITORY}/commits/${CANDIDATE_SHA}/statuses" --paginate --jq '.[] | select(.context == "production-promotion" and .state == "success") | .state')"
+          if test -n "$production_promotion_statuses"; then
+            echo "$CANDIDATE_SHA has already run in production; nightly requirement skipped" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
           nightly_run_count="$(gh run list --workflow coverage-nightly.yml --commit "$CANDIDATE_SHA" --status success --limit 1 --json databaseId --jq length)"
           if test "$nightly_run_count" -ne 1; then
             echo "No successful coverage-nightly run exists for SHA $CANDIDATE_SHA; run gh workflow run coverage-nightly.yml --ref main to get one." >&2
@@ -111,6 +116,29 @@ jobs:
             exit 1
           fi
           echo "- Railway known-good deployment before promotion: \`$known_good_deployment_id\`" >> "$GITHUB_STEP_SUMMARY"
+          repository_name="${GITHUB_REPOSITORY#*/}"
+          production_pages_metadata_url="https://${GITHUB_REPOSITORY_OWNER}.github.io/${repository_name}/deployment.json"
+          previous_api_version="$(curl --fail --silent --show-error --max-time 10 "${RAILWAY_PUBLIC_API_URL%/}/api/v1/version" || true)"
+          previous_api_sha="$(jq -r '.sha // empty' <<<"$previous_api_version" 2>/dev/null || true)"
+          previous_pages_metadata="$(curl --fail --silent --show-error --max-time 10 "$production_pages_metadata_url" || true)"
+          previous_pages_sha="$(jq -r '.sha // empty' <<<"$previous_pages_metadata" 2>/dev/null || true)"
+          if [[ "$previous_api_sha" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "- Previous live production API SHA: \`$previous_api_sha\`" >> "$GITHUB_STEP_SUMMARY"
+            if test "$previous_api_sha" = "$DEPLOYED_SHA"; then
+              echo "- The previous API record matches the candidate SHA; this record is not a rollback target." >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo '- Rollback: dispatch the existing promotion workflow with the previous production API SHA:' >> "$GITHUB_STEP_SUMMARY"
+              echo "  \`gh workflow run promote-production.yml --ref main -f sha=$previous_api_sha\`" >> "$GITHUB_STEP_SUMMARY"
+            fi
+          else
+            echo "- Previous live production API SHA: \`unknown\`" >> "$GITHUB_STEP_SUMMARY"
+            echo "- The last good SHA can be found as the newest commit with a successful \`production-promotion\` status." >> "$GITHUB_STEP_SUMMARY"
+          fi
+          if [[ "$previous_pages_sha" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "- Previous live production root frontend SHA: \`$previous_pages_sha\`" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "- Previous live production root frontend SHA: \`unknown\`" >> "$GITHUB_STEP_SUMMARY"
+          fi
           railway variable set "FREYTAG_DEPLOYMENT_SHA=$DEPLOYED_SHA" --skip-deploys --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" --environment "$RAILWAY_ENVIRONMENT_ID"
           timeout 300s railway up --ci --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" --environment "$RAILWAY_ENVIRONMENT_ID" --message "github-sha=$DEPLOYED_SHA"
           version=''
@@ -160,6 +188,21 @@ jobs:
           done
           test -n "$run_id"
           gh run watch "$run_id" --exit-status
+          repository_name="${GITHUB_REPOSITORY#*/}"
+          pages_metadata_url="https://${GITHUB_REPOSITORY_OWNER}.github.io/${repository_name}/deployment.json"
+          pages_metadata=''
+          pages_channel=''
+          pages_sha=''
+          for attempt in $(seq 1 60); do
+            pages_metadata="$(curl --fail --silent --show-error --max-time 10 "${pages_metadata_url}?sha=${DEPLOYED_SHA}&attempt=${attempt}" || true)"
+            pages_channel="$(jq -r '.channel // empty' <<<"$pages_metadata" 2>/dev/null || true)"
+            pages_sha="$(jq -r '.sha // empty' <<<"$pages_metadata" 2>/dev/null || true)"
+            test "$pages_channel" = production && test "$pages_sha" = "$DEPLOYED_SHA" && break
+            sleep 5
+          done
+          echo "Last seen production Pages metadata: channel=$pages_channel sha=$pages_sha"
+          test "$pages_channel" = production
+          test "$pages_sha" = "$DEPLOYED_SHA"
 
   record-production-promotion:
     name: Record production promotion
