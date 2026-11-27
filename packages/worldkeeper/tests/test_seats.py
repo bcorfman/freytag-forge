@@ -80,6 +80,18 @@ def test_moving_seat_carries_sitter_and_seats_are_visible_in_declaration_order()
     assert hidden.seats("table") == ()
 
 
+def test_declared_seat_queries_ignore_created_entities():
+    w = world()
+    created = w.create("created seat", parent="table", kind="seat")
+
+    assert w.declared_seat_of("chair") == "table"
+    assert w.declared_seat_of(None) is None
+    assert w.declared_seat_of(created.id) is None
+    assert w.declared_enter_pole("chair") == "occupied"
+    assert w.declared_enter_pole("missing") is None
+    assert w.declared_seat_ids() == frozenset({"chair"})
+
+
 @pytest.mark.parametrize(
     "entity, update, message",
     [

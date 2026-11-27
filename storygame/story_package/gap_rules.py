@@ -220,7 +220,7 @@ def _candidate_items(package: StoryPackage, state: RuntimeState, claim: Knowledg
     return sorted(
         entity_id
         for entity_id in _claim_names(claim)
-        if world.exists(entity_id) and world.is_item(entity_id) and not world.schema.is_fixed(entity_id)
+        if world.exists(entity_id) and world.is_item(entity_id) and not world.is_declared_fixed(entity_id)
     )
 
 

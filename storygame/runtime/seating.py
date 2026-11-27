@@ -89,7 +89,7 @@ def seat_before_use(world, package, player_input: str, uses_thing: Callable[[str
                         preferred_places.update((place, *world.chain(place)))
                 preferred = [candidate for candidate in seats if items[candidate].seat_for in preferred_places]
                 seat = (preferred or seats)[0]
-                enter_pole = world.schema.entities[seat].enter_pole
+                enter_pole = world.declared_enter_pole(seat)
                 if enter_pole and enter_pole not in world.axis_values(seat).values():
                     world.set_axis(seat, enter_pole)
                     steps.append(items[seat].right_text)
@@ -124,8 +124,7 @@ def board_vehicle(
     protagonist = package.protagonist_id
     items = {item.id: item for item in package.world.items}
     parent = world.parent(protagonist)
-    parent_entity = world.schema.entities.get(parent) if parent else None
-    seated_vehicle = parent_entity.seat_for if parent_entity and parent_entity.seat_for else None
+    seated_vehicle = world.declared_seat_of(parent)
     visible_vehicles = list(world.visible_vehicle_seats(item.id for item in package.world.items))
     candidates = []
     for item_id, seats in visible_vehicles:
