@@ -1,0 +1,40 @@
+version: 1
+enforcement: advisory
+approval: The repository owner's per-PR merge word is the human approval for every tier; this file enforces nothing.
+default_tier: ordinary
+tiers:
+  low:
+    treatment: Lightweight review is appropriate.
+    paths:
+      - docs/**/*.md
+      - .plans/**/*.md
+      - README.md
+      - LICENSE
+      - LICENSE.*
+  ordinary:
+    treatment: Owner approval plus relevant checks are appropriate.
+    paths:
+      - frontend/**
+      - package.json
+      - package-lock.json
+      - pyproject.toml
+      - uv.lock
+      - AGENTS.md
+      - REVIEW.md
+  high:
+    # Narrator prompts live inside storygame/runtime, so they are covered here.
+    treatment: Explicit invariant evidence, a fresh-session review, and owner approval are required as advisory guidance.
+    paths:
+      - storygame/runtime/**
+      - storygame/story_package/**
+      - storygame/web_demo.py
+      - packages/worldkeeper/src/**
+      - worker/**
+      - deployment/**
+      - .github/workflows/**
+      - .github/review-policy.yml
+      - scripts/review_risk.py
+      - scripts/staging_evidence.py
+      - railway.toml
+      - nixpacks.toml
+      - data/stories/**
