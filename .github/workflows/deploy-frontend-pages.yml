@@ -49,7 +49,13 @@ jobs:
           set -euo pipefail
           repository_name="${GITHUB_REPOSITORY#*/}"
           channel_path=""
-          if test "${{ inputs.channel }}" = production; then channel_path="dev/"; fi
+          opposite_channel=production
+          if test "${{ inputs.channel }}" = production; then
+            channel_path="dev/"
+            opposite_channel=staging
+          else
+            channel_path=""
+          fi
           page_url="https://${GITHUB_REPOSITORY_OWNER}.github.io/${repository_name}/${channel_path}"
           mirror_dir="$(mktemp -d)"
           wget --quiet --mirror --page-requisites --no-parent --directory-prefix="$mirror_dir" "$page_url"
@@ -57,12 +63,22 @@ jobs:
           test -d "$source_dir" || { echo "Cannot retrieve published opposite channel from $page_url" >&2; exit 1; }
           mkdir -p published-pages
           if test "${{ inputs.channel }}" = staging; then
+            preserved_dir=published-pages
             cp -R "$source_dir/." published-pages/
             test -f published-pages/index.html || { echo "Cannot preserve opposite-channel index: published root index is missing." >&2; exit 1; }
           else
+            preserved_dir=published-pages/dev
             mkdir -p published-pages/dev
             cp -R "$source_dir/." published-pages/dev/
             test -f published-pages/dev/index.html || { echo "Cannot preserve opposite-channel index: published dev index is missing." >&2; exit 1; }
+          fi
+          metadata_tmp="$(mktemp)"
+          rm -f "$preserved_dir/deployment.json"
+          if curl --fail --silent --show-error --max-time 10 -o "$metadata_tmp" "${page_url}deployment.json" && jq -e --arg channel "$opposite_channel" 'type == "object" and .channel == $channel and (.sha | type == "string") and (.sha | test("^[0-9a-f]{40}$"))' "$metadata_tmp" >/dev/null; then
+            mv "$metadata_tmp" "$preserved_dir/deployment.json"
+          else
+            echo "Warning: published opposite-channel deployment metadata is missing or invalid; leaving no deployment.json for $opposite_channel." >&2
+            rm -f "$metadata_tmp"
           fi
       - name: Build the selected channel bundle
         working-directory: frontend

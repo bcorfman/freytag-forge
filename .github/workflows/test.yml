@@ -88,6 +88,8 @@ jobs:
     outputs:
       api_base_url: ${{ steps.deployment.outputs.api_base_url }}
       sha: ${{ steps.deployment.outputs.sha }}
+      api_identity: ${{ steps.deployment.outcome }}
+      pages_identity: ${{ steps.pages.outcome }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -138,6 +140,7 @@ jobs:
             echo "sha=$GITHUB_SHA"
           } >> "$GITHUB_OUTPUT"
       - name: Publish staging Pages bundle
+        id: pages
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -175,36 +178,40 @@ jobs:
           test "$pages_sha" = "$GITHUB_SHA"
   scene-staging-evaluation:
     name: Scene staging evaluation and promotion gate
+    if: always() && github.ref == 'refs/heads/main' && needs.deploy-staging.result != 'skipped'
     needs: deploy-staging
     runs-on: ubuntu-latest
     env:
       HOSTED_DEMO_API_BASE_URL: ${{ needs.deploy-staging.outputs.api_base_url }}
-      DEPLOYED_SHA: ${{ needs.deploy-staging.outputs.sha }}
+      DEPLOYED_SHA: ${{ github.sha }}
       FREYTAG_EVALUATION_REPORT: artifacts/staging-evaluation.json
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: ${{ needs.deploy-staging.outputs.sha }}
+          ref: ${{ github.sha }}
       - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
         with:
           version: latest
       - name: Install dependencies
         run: uv sync --locked
       - name: Verify the scene-runtime adapter contract
+        id: adapter
+        if: needs.deploy-staging.result == 'success'
         run: TMPDIR=/tmp uv run pytest -q -o addopts='' tests/test_web_demo.py tests/test_cloudflare_transport.py
       - name: Write SHA-bound staging evidence
         if: always()
         env:
-          CANDIDATE_SHA: ${{ needs.deploy-staging.outputs.sha }}
+          CANDIDATE_SHA: ${{ github.sha }}
           API_BASE_URL: ${{ needs.deploy-staging.outputs.api_base_url }}
-        run: >-
-          mkdir -p artifacts &&
-          uv run python -c 'import json, os, pathlib; pathlib.Path(os.environ["FREYTAG_EVALUATION_REPORT"]).write_text(json.dumps({"schema_version": "scene-staging-evidence-v1", "sha": os.environ["CANDIDATE_SHA"], "api_base_url": os.environ["API_BASE_URL"], "runtime": "scene-v1", "verification": "tests/test_web_demo.py tests/test_cloudflare_transport.py"}, sort_keys=True) + "\n", encoding="utf-8")'
+          API_IDENTITY_OUTCOME: ${{ needs.deploy-staging.outputs.api_identity }}
+          PAGES_IDENTITY_OUTCOME: ${{ needs.deploy-staging.outputs.pages_identity }}
+          ADAPTER_CONTRACT_OUTCOME: ${{ steps.adapter.outcome }}
+        run: python3 scripts/staging_evidence.py
       - name: Upload SHA-bound staging evidence
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: staging-evaluation-${{ needs.deploy-staging.outputs.sha }}
+          name: staging-evaluation-${{ github.sha }}
           path: artifacts/staging-evaluation.json
           if-no-files-found: error
 
@@ -225,6 +232,6 @@ jobs:
           description="Staging deployment or runtime evaluation failed"
           if test "$DEPLOYMENT_RESULT" = success && test "$EVALUATION_RESULT" = success; then
             state=success
-            description="Staged API, Pages bundle, and runtime evaluation passed"
+            description="Staged API and Pages identity and local adapter tests passed"
           fi
           gh api --method POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state="$state" -f context=staging-deployment -f description="$description" -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
