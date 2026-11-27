@@ -27,6 +27,7 @@ variations).
 ## Detail index
 
 - [Local deterministic and focused checks](testing-runbook/local-checks.md): read this when you need the authoritative local suite or a focused test for a code boundary.
+- [Focused check notes](testing-runbook/focused-check-notes.md): read this when a focused-check table row links to its regeneration commands or limits.
 - [Prompt inspection](testing-runbook/prompt-inspection.md): read this when you need to inspect narrator payloads, saved artifacts, or runtime-composed player text.
 - [Live narration bench](testing-runbook/live-narration-bench.md): read this when you need billed model-based evidence or a Stage 7 door probe.
 - [Staged deployment and hosted E2E](testing-runbook/hosted-e2e.md): read this when you need to deploy to staging or run hosted browser categories.
