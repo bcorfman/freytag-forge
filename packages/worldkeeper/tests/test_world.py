@@ -72,6 +72,21 @@ def test_created_area_character_and_group_persist_and_follow_placement_rules():
     assert rebuilt.kind(group.id) == "group"
 
 
+def test_declared_queries_ignore_created_entities():
+    w = make()
+    created = w.create("created thing", parent="village")
+
+    assert w.is_declared_fixed("chest")
+    assert not w.is_declared_fixed(created.id)
+    assert not w.is_declared_fixed(None)
+    assert w.is_declared_a("chest", "thing")
+    assert not w.is_declared_a(created.id, "thing")
+    assert not w.is_declared_a("missing", "thing")
+    assert w.declared_axes("lamp")
+    assert w.declared_axes(created.id) == ()
+    assert w.declared_axes(None) == ()
+
+
 def test_together_includes_nested_areas_but_not_siblings_or_unplaced():
     w = make()
     w.schema = WorldSchema.from_data(

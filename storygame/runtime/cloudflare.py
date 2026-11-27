@@ -1263,7 +1263,7 @@ class CloudflareTurnProvider:
         protagonist_id = self.state.package.world.protagonist_id
         scene = self._current_scene()
         seat_id = world.parent(protagonist_id)
-        seated = bool(seat_id and world.schema.entities.get(seat_id) and world.schema.entities[seat_id].seat_for)
+        seated = bool(world.declared_seat_of(seat_id))
         if not seated and together_or_unplaced(world, protagonist_id, scene.location_id):
             return ""
         protagonist = self._protagonist_name()
@@ -1274,7 +1274,7 @@ class CloudflareTurnProvider:
             vehicle = world.name(vehicle_id) if vehicle_id else "a vehicle"
             seat = world.name(seat_id)
             where = f"{protagonist} is in the {seat} of {vehicle}, {area}."
-            seat_entities = {entity_id for entity_id, entity in world.schema.entities.items() if entity.seat_for}
+            seat_entities = world.declared_seat_ids()
             has_reachable_vehicle_entity = any(
                 entity_id not in seat_entities | {vehicle_id, protagonist_id}
                 and world.is_visible(entity_id)

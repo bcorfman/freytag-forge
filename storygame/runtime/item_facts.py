@@ -451,8 +451,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         if not entity_id:
             return ""
         if world.is_a(entity_id, "character"):
-            entity = world.schema.entities.get(entity_id)
-            axes = entity.axes if entity else ()
+            axes = world.declared_axes(entity_id)
         else:
             axes = world.axis_definitions(entity_id)
         axis_values = world.axis_values(entity_id)
@@ -519,7 +518,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 and narration
                 and name in self._referred_names
                 and entity_id
-                and world.schema.kind_is(world.schema.entities[entity_id].kind, "opening")
+                and world.is_declared_a(entity_id, "opening")
             ):
                 line += " It has no open or closed state and nothing inside."
             if facts["condition"]:
@@ -533,7 +532,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 and narration
                 and entity_id
                 and not world.is_a(entity_id, "area")
-                and world.schema.is_fixed(entity_id)
+                and world.is_declared_fixed(entity_id)
             ):
                 line += _FIXED_MARKERS[self.mark_fixed_variant]
             if narration and entity_id and world.is_a(entity_id, "group") and name in self._referred_names:
@@ -609,7 +608,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         )
         protagonist_id = self.state.package.world.protagonist_id
         seat_id = world.parent(protagonist_id)
-        seated = bool(seat_id and world.schema.entities.get(seat_id) and world.schema.entities[seat_id].seat_for)
+        seated = bool(world.declared_seat_of(seat_id))
         if not getattr(self, "_example_player_input", ""):
             if self._selected_names is None:
                 protagonist_area = world.area(protagonist_id)
@@ -875,7 +874,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 rules.insert(2, START_PLACE_RULE_TEMPLATE.format(protagonist=protagonist))
             world = self._world()
             seat = world.parent(self.state.package.protagonist_id)
-            if seat and world.schema.entities.get(seat) and world.schema.entities[seat].seat_for:
+            if world.declared_seat_of(seat):
                 rules.insert(
                     2 + start_place_rule_kept,
                     f"{protagonist} stays sitting in the {world.name(seat)}.",
@@ -942,8 +941,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         subjects = []
         for name in self._referred_names:
             entity_id = world.resolve(name)
-            entity = world.schema.entities.get(entity_id) if entity_id is not None else None
-            if entity is not None and world.schema.kind_is(entity.kind, OPENING_KIND):
+            if world.is_declared_a(entity_id, OPENING_KIND):
                 subjects.append(world.name(entity_id))
         return tuple(dict.fromkeys(subjects))
 
@@ -1243,7 +1241,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
         if target_id == protagonist_id:
             return player, player
         known = self._mapping_entity(world, target_id)
-        known["can_move"] = not world.is_a(target_id, "area") and not world.schema.is_fixed(target_id)
+        known["can_move"] = not world.is_a(target_id, "area") and not world.is_declared_fixed(target_id)
         return player, known
 
     def _match_payload(self, player_input, new_names, *, include_places=False, story=""):
@@ -1328,14 +1326,12 @@ class ItemFactsProvider(CloudflareTurnProvider):
             if world.is_a(place_parent, "vehicle"):
                 vehicle_id = place_parent
             else:
-                place_entity = world.schema.entities.get(place_parent)
-                if place_entity and place_entity.seat_for and world.is_a(place_entity.seat_for, "vehicle"):
-                    vehicle_id = place_entity.seat_for
+                seat_for = world.declared_seat_of(place_parent)
+                if seat_for and world.is_a(seat_for, "vehicle"):
+                    vehicle_id = seat_for
             current_parent = world.parent(entity_id)
-            current_parent_entity = world.schema.entities.get(current_parent) if current_parent else None
-            already_aboard = current_parent == vehicle_id or (
-                current_parent_entity is not None and current_parent_entity.seat_for == vehicle_id
-            )
+            current_parent_seat_for = world.declared_seat_of(current_parent)
+            already_aboard = current_parent == vehicle_id or (current_parent_seat_for == vehicle_id)
             if vehicle_id and not already_aboard:
                 area = world.area(vehicle_id)
                 issues.append(
@@ -1985,8 +1981,8 @@ class ItemFactsProvider(CloudflareTurnProvider):
                     place = None
                     place_pole = None
                     place_parent = None
-            entity = world.schema.entities.get(entity_id)
-            own_seat_place = bool(entity and entity.seat_for and place_parent == entity.seat_for)
+            declared_seat = world.declared_seat_of(entity_id)
+            own_seat_place = bool(declared_seat and place_parent == declared_seat)
             if own_seat_place:
                 place_parent = None
             unresolved_place = (
@@ -1998,7 +1994,7 @@ class ItemFactsProvider(CloudflareTurnProvider):
                 and not (world.place_label(entity_id) and world.place_label(entity_id).casefold() == place.casefold())
             )
             if unresolved_place:
-                if world.schema.is_fixed(entity_id):
+                if world.is_declared_fixed(entity_id):
                     self._record_refused_move(world, entity_id)
                     issues.append(f"item_facts for {name!r} refused place {place!r}: fixed things cannot move")
                 else:

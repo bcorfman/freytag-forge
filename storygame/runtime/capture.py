@@ -71,7 +71,7 @@ def _prefetch_targets(world, package, command: str, *, fixed_refusal: bool) -> t
         protagonist_area = world.area(package.protagonist_id)
         for item in package.world.items:
             if not (
-                (world.schema.is_fixed(item.id) or item.fixed)
+                (world.is_declared_fixed(item.id) or item.fixed)
                 and world.is_visible(item.id)
                 and not world.is_a(item.id, "area")
             ):
@@ -88,8 +88,7 @@ def _prefetch_targets(world, package, command: str, *, fixed_refusal: bool) -> t
         seats = tuple(seat.id for seat in package.world.items if seat.seat_for == item.id and world.is_visible(seat.id))
         visible_vehicles.append((item.id, seats))
     seated_parent = world.parent(package.protagonist_id)
-    seated_entity = world.schema.entities.get(seated_parent) if seated_parent else None
-    seated_vehicle = seated_entity.seat_for if seated_entity and seated_entity.seat_for else None
+    seated_vehicle = world.declared_seat_of(seated_parent)
     candidates = [
         (vehicle_id, seats) for vehicle_id, seats in visible_vehicles if seats and vehicle_id != seated_vehicle
     ]

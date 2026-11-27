@@ -545,6 +545,35 @@ class World(IncidentalWorldMixin):
         """Return whether an entity is of a kind or its ancestor."""
         return self._is_a(entity_id, kind)
 
+    def declared_seat_of(self, entity_id) -> str | None:
+        """Return the declared seat's supported entity, if any."""
+        entity = self.schema.entities.get(entity_id)
+        return entity.seat_for if entity else None
+
+    def declared_enter_pole(self, entity_id) -> str | None:
+        """Return the declared entity's enter pole, if any."""
+        entity = self.schema.entities.get(entity_id)
+        return entity.enter_pole if entity else None
+
+    def is_declared_fixed(self, entity_id) -> bool:
+        """Return whether a declared entity is fixed."""
+        entity = self.schema.entities.get(entity_id)
+        return bool(entity and entity.fixed)
+
+    def is_declared_a(self, entity_id, kind) -> bool:
+        """Return whether a declared entity is of a kind or its ancestor."""
+        entity = self.schema.entities.get(entity_id)
+        return bool(entity and self.schema.kind_is(entity.kind, kind))
+
+    def declared_axes(self, entity_id):
+        """Return the axes declared for an entity."""
+        entity = self.schema.entities.get(entity_id)
+        return entity.axes if entity else ()
+
+    def declared_seat_ids(self) -> frozenset[str]:
+        """Return IDs of all declared entities that have a seat target."""
+        return frozenset(entity.id for entity in self.schema.entities.values() if entity.seat_for)
+
     def is_enterable(self, entity_id):
         """Return whether an entity can contain a character."""
         entity = self._entity(entity_id)
