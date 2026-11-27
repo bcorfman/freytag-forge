@@ -30,7 +30,9 @@ jobs:
       - name: Install dependencies
         run: uv sync --locked
       - name: Lint
-        run: uv run ruff check --select E9,F63,F7,F82 .
+        run: uv run ruff check .
+      - name: Format (fix with `uv run ruff format .`)
+        run: uv run ruff format --check .
       - name: Story source is in the story CLI's format (fix with `story_cli fmt`)
         run: uv run python -m storygame.story_cli fmt --check
       - name: Scene-entry snapshots match the story source (fix with `entry_snapshots write`)

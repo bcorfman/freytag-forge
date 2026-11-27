@@ -72,6 +72,9 @@ omit = [
 fail_under = 90
 
 [tool.ruff]
+# Exclude one-off planning and orchestration scripts from linting.
+extend-exclude = [".plans", "scripts/ringer"]
+force-exclude = true
 line-length = 120
 target-version = "py312"
 
