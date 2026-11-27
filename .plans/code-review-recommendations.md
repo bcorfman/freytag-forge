@@ -2,8 +2,8 @@
 
 Date: 2026-11-27
 
-Status: Implemented on local branches (2026-11-27); not pushed, no PRs, not deployed.
-The rollback drill has not been run.
+Status: Merged to `main` and staged (2026-11-27). Not promoted to production;
+the rollback drill has not been run.
 
 Based on [code-reviews.txt](code-reviews.txt) and inspection of the repository's
 engineering guidance, configuration, and CI workflows. The article's external
@@ -182,15 +182,32 @@ tree ran the full suite. `defect-design`, `goal-tracking`, `prompt-probe`,
 branch and pass Ruff and the boundary tests. A live read-only 7-day outcomes report ran in about three
 minutes using 225 REST requests (42 merged PRs, none with a review).
 
+## Merge and staging
+
+PRs #838 to #843 were merged in order with merge commits, each after its own
+`tests` run passed on its head commit. `main` is `0b9534b1`, identical in
+content to the last branch. GitHub cancelled the superseded `main` runs for the
+second to fifth merges; the first and last passed. On `0b9534b1`:
+
+- Staging deploy and `staging-deployment` status succeeded.
+- The evidence artifact is `scene-staging-evidence-v2`, result `success`, with
+  both deployed identity checks and the local adapter tests passing.
+- `/dev/deployment.json` reports `0b9534b1`.
+- "review risk" passed on PRs #840 to #843.
+- "review outcomes", dispatched once (run 46059918146), succeeded with the
+  workflow token.
+
 ## Not verified
 
-- No workflow change has run on GitHub: lint step, risk summary, staging
-  evidence, Pages preservation, promotion changes and the weekly report.
-- Nothing was deployed and the rollback drill has not run.
-- The weekly report has not run with the workflow's own token. A 30-day manual
-  window may come close to its 1000 requests per hour.
+- The promotion workflow changes have not run: nightly exemption, previous
+  version record and production Pages check. The rollback drill has not run.
+- The Pages preservation fix has only been simulated for a valid file:
+  production's root `deployment.json` is still missing, so there was nothing to
+  preserve.
+- The scheduled (not dispatched) report run, and staging evidence on a failed
+  deploy.
 - The weakened-assertion flag has false positives (for example, skip calls
-  inside test strings); the rec 3 PR will flag its own test file.
+  inside test strings).
 
 ## PR description notes
 
@@ -203,13 +220,35 @@ minutes using 225 REST requests (42 merged PRs, none with a review).
 
 ## Remaining
 
-- Push and open the stacked PRs when the owner says so; merge in order, each on
-  its own merge word after its `tests` run passes.
+- `coverage-nightly` is failing: the last six runs failed, and the latest
+  (on `1e00fc29`) reported 89% against the 90% floor. A SHA that has not been
+  in production cannot be promoted until it has a passing run. This predates
+  these changes.
 - Production's root `deployment.json` stays missing until the next promotion.
-- Run the rollback drill (see the promotion guide).
-- Before a checkout takes these branches, the untracked copy of this plan in the
-  main checkout has to be moved or removed.
+- Run the rollback drill (see the promotion guide). It needs a second proven
+  release, so it depends on a promotion first.
+
+## Production blocker: nightly coverage (2026-11-27)
+
+The owner asked to clear production blockers while staying in staging until they
+say otherwise. On `0b9534b1`, `coverage-nightly` passed every test and failed
+only the coverage floor: 89% shown, 88.76% exact on the same code paths
+measured from the previous run's data. The floor rounds to a whole percent, so
+89.5% passes. The floor and the measured file set are unchanged.
+
+Added tests for untested behaviour: `story_cli` editing commands (record
+lookup, refusals, restore after a failed edit) and package validation refusals.
+Ringer checks disabled behaviours one at a time: editing tests noticed 19 of 22,
+validation tests 22 of the 24 sampled. Unnoticed: the match-file claim fallback
+(the worker found no valid fixture that reaches it) and a refusal duplicated
+earlier in the validator. Three editing cases (bridge, outcome, ending) write
+the value already present, so they prove lookup and acceptance, not a change.
+
+No production code changed. Not checked, because it needs production access:
+Railway's known-good deployment and the production service's settings.
 
 ## Resume here
 
-Waiting for the owner's word to push the branches and open PRs.
+Waiting for the branch's `coverage-nightly` result, then the owner's merge word.
+Do not dispatch the production promotion without the owner's go-ahead. After
+merge, `main` needs its own passing nightly run before it can be promoted.
