@@ -30,5 +30,9 @@ Part of [the contributor guide](../contributor-guide.md).
   only adapts the story package and facts to `worldkeeper`; other modules
   call `World` methods and never walk the tree themselves. Code that needs the
   story package, prose, or a model call stays in `storygame`.
+- `tests/test_architecture_boundaries.py` fails when `worldkeeper` imports
+  `storygame`, when code outside the adapter reads `World` internals, or when
+  shared runtime names a story identifier. It matches receivers by name, so an
+  alias can evade it; review still applies.
 - Keep the hosted adapter as a thin boundary when it is rebuilt. Share code
   only below that boundary and preserve fail-closed behavior.
